@@ -1,0 +1,3603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>服务商助手 - 工作台</title>
+<style>
+:root{
+  --bg:#f5f7fb;--card:#fff;--text:#162033;--sub:#667085;--muted:#98a2b3;--line:#e6ebf2;
+  --blue:#1263e6;--blue2:#eaf3ff;--green:#13b96f;--orange:#ff8a00;--red:#ef4444;
+  --shadow:0 20px 50px rgba(20,34,64,.08);--soft:0 8px 24px rgba(20,34,64,.06);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:linear-gradient(180deg,#f7faff 0%,#f3f6fb 100%)}
+.app{height:100vh;display:grid;grid-template-columns:236px minmax(620px,1fr) 356px;gap:18px;padding:18px;overflow:hidden}
+.panel{background:rgba(255,255,255,.92);border:1px solid rgba(229,235,245,.9);border-radius:26px;box-shadow:var(--shadow);backdrop-filter:blur(18px);overflow:hidden}
+
+/* ==== SIDEBAR ==== */
+.sidebar{padding:18px;display:flex;flex-direction:column;gap:16px}
+.brand{height:64px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.logo{width:42px;height:42px;border-radius:15px;background:linear-gradient(135deg,#1263e6,#19c58a);display:grid;place-items:center;color:#fff;font-weight:900;letter-spacing:.5px;box-shadow:0 10px 24px rgba(18,99,230,.22);font-size:18px}
+.brand-title{font-weight:900;font-size:17px}
+.brand-sub{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;max-width:150px}
+.flow{position:relative;margin-top:6px;padding-left:3px}
+.flow:before{content:"";position:absolute;left:25px;top:24px;bottom:24px;width:2px;background:linear-gradient(#1263e6 0 28%,#dfe6ef 28% 100%)}
+.step{position:relative;display:grid;grid-template-columns:50px 1fr;gap:10px;align-items:start;padding:12px 8px;border-radius:18px;cursor:pointer;transition:.18s;margin:4px 0}
+.step:hover{background:#f7faff}
+.num{position:relative;z-index:2;width:34px;height:34px;margin-left:5px;border-radius:50%;display:grid;place-items:center;background:#eef2f7;color:#98a2b3;font-weight:900;border:4px solid #fff;box-shadow:0 3px 10px rgba(16,24,40,.08)}
+.step.done .num{background:var(--green);color:#fff}
+.step.active{background:linear-gradient(135deg,#eef6ff,#f8fbff);box-shadow:inset 0 0 0 1px #d7eaff}
+.step.active .num{background:var(--blue);color:#fff;box-shadow:0 0 0 6px #e8f2ff}
+.step h3{margin:2px 0 4px;font-size:14px}
+.step p{margin:0;color:var(--muted);font-size:12px;line-height:1.45}
+.side-stat{margin-top:auto;border-radius:20px;padding:15px;background:linear-gradient(135deg,#f6fbff,#ffffff);border:1px solid #e5eefb}
+.side-stat b{font-size:13px}
+.side-stat .stat-num{font-size:22px;font-weight:950;color:#182235;margin-top:8px;letter-spacing:-.4px}
+.side-stat .meter{height:7px;background:#edf2f7;border-radius:99px;overflow:hidden;margin:12px 0 8px}
+.side-stat .meter i{display:block;width:48%;height:100%;background:linear-gradient(90deg,#1263e6,#13b96f)}
+.side-stat span{color:var(--muted);font-size:12px}
+
+/* ==== MAIN AREA ==== */
+.main{display:flex;flex-direction:column;min-width:0;height:100%}
+.content{padding:28px 38px 90px;overflow:auto;height:100%}
+.page{display:none;animation:fade .2s ease}
+.page.active{display:block}
+@keyframes fade{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* Generate Modal - centered overlay for Step1→Step2 transition */
+#generate-modal{display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center}
+#generate-modal.active{display:flex}
+#generate-modal .modal-overlay{position:absolute;inset:0;background:rgba(255,255,255,0.88);backdrop-filter:blur(8px)}
+#generate-modal .modal-card{
+  position:relative;width:460px;max-width:92vw;background:#fff;border-radius:24px;
+  box-shadow:0 24px 60px rgba(20,34,64,.12);padding:40px 36px 32px;
+  display:flex;flex-direction:column;align-items:center;gap:0;text-align:center
+}
+#generate-modal .modal-icon{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-size:32px}
+#generate-modal .modal-icon.loading{background:linear-gradient(135deg,#e8edf5,#f5f7fb);animation:spin 1s linear infinite}
+#generate-modal .modal-icon.success{background:linear-gradient(135deg,#13b96f,#10a85c)}
+#generate-modal .modal-icon.error{background:linear-gradient(135deg,#e84040,#d32f2f)}
+#generate-modal h3{font-size:18px;font-weight:800;color:#182235;margin:0 0 8px}
+#generate-modal .subtitle{font-size:13px;color:#667085;margin:0 0 24px}
+#generate-modal .progress-wrap{margin:0 0 24px;width:100%}
+#generate-modal .progress-step{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f2f5}
+#generate-modal .progress-step:last-child{border-bottom:none}
+#generate-modal .step-check{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+#generate-modal .step-check.done{background:#13b96f;color:#fff}
+#generate-modal .step-check.pending{background:#e8edf5;color:#98a2b3}
+#generate-modal .step-check.active{background:#1263e6;color:#fff;animation:spin .8s linear infinite}
+#generate-modal .step-label{font-size:13px;color:#182235;flex:1;text-align:left}
+#generate-modal .step-status{font-size:11px;color:#98a2b3}
+#generate-modal .step-status.active{color:#1263e6}
+#generate-modal .btn-enter{
+  width:100%;padding:14px 24px;border:none;border-radius:14px;background:linear-gradient(135deg,#1263e6,#0c55cf);
+  color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;
+  box-shadow:0 4px 16px rgba(18,99,230,.25);transition:.2s
+}
+#generate-modal .btn-enter:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(18,99,230,.3)}
+#generate-modal .btn-enter:active{transform:none}
+#generate-modal .error-tip{font-size:12px;color:#e84040;margin-top:12px}
+
+/* Loading page - controlled by .page.active */
+#page-loading{display:none}
+#page-loading.active{display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px}
+.spinner{width:34px;height:34px;border-radius:50%;border:4px solid #e8edf5;border-top-color:#1263e6;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#page-loading p{color:var(--muted);font-size:13px}
+
+/* Page title */
+.page-title{margin:0 0 18px;padding:0}
+.page-title h2{margin:0;font-size:26px;letter-spacing:-.4px;line-height:1.15}
+.page-title p{margin:8px 0 0;color:#667085;font-size:13px}
+
+/* Input fields - v28 plain white style */
+.input,.select,.textarea{
+  width:100%;border:1px solid #d9e0ea;background:#fbfcfe;
+  border-radius:15px;padding:12px 14px;font-size:13px;outline:none;transition:.15s;color:#182235;
+}
+.input:focus,.select:focus,.textarea:focus{
+  background:#fff;border-color:#88b8ff;box-shadow:0 0 0 4px rgba(18,99,230,.08)
+}
+.textarea{min-height:140px;line-height:1.78;resize:vertical}
+
+/* Section card */
+.section{border:1px solid var(--line);border-radius:24px;background:#fff;padding:22px;box-shadow:var(--soft);margin-bottom:16px}
+.section-slim{padding:20px 22px}
+.field{margin-bottom:20px}
+.label{display:flex;justify-content:space-between;align-items:center;font-weight:850;font-size:13px;margin-bottom:8px}
+.hint{font-size:12px;color:var(--muted);font-weight:500}
+.input,.select,.textarea{width:100%;border:1px solid #d9e0ea;background:#fbfcfe;border-radius:15px;padding:12px 14px;font-size:13px;outline:none;transition:.15s;color:#182235}
+.input:focus,.select:focus,.textarea:focus{background:#fff;border-color:#88b8ff;box-shadow:0 0 0 4px rgba(18,99,230,.08)}
+.textarea{min-height:140px;line-height:1.78;resize:vertical}
+.search{display:flex;gap:10px}
+.search .input{flex:1}
+.search-row{display:flex;gap:12px;align-items:stretch}
+.search-row .input{flex:1;border-radius:18px;padding:15px 18px;font-size:14px;font-weight:600;background:linear-gradient(135deg,#fafbfc,#fff);border:1.5px solid #e2e8f0;transition:.2s}
+.search-row .input:focus{border-color:#93b4ff;box-shadow:0 0 0 4px rgba(18,99,230,.08),0 4px 16px rgba(18,99,230,.06)}
+.ai-search-btn{display:flex;align-items:center;gap:10px;padding:15px 24px;border:0;border-radius:18px;background:linear-gradient(135deg,#1263e6,#0c55cf);color:#fff;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 8px 28px rgba(18,99,230,.3),0 2px 8px rgba(18,99,230,.2);transition:.25s;position:relative;overflow:hidden}
+.ai-search-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);opacity:0;transition:.25s}
+.ai-search-btn:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(18,99,230,.4),0 4px 12px rgba(18,99,230,.25)}
+.ai-search-btn:hover::before{opacity:1}
+.ai-search-btn:active{transform:translateY(0)}
+.ai-search-btn .ai-icon{font-size:18px}
+.ai-search-btn.loading{opacity:0.8;pointer-events:none}
+.ai-search-btn.loading .ai-icon{animation:sparkle 1s infinite}
+@keyframes sparkle{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+
+.ai-search-panel{margin-top:16px;margin-bottom:20px;border-radius:20px;overflow:hidden;border:1.5px solid #dce8f8;background:#fff;box-shadow:0 16px 48px rgba(18,99,230,.1),0 4px 16px rgba(18,99,230,.05)}
+.ai-search-panel.is-hidden{display:none}
+.ai-panel-header{background:linear-gradient(135deg,#f8fbff,#f4f7fb);padding:14px 18px;border-bottom:1px solid #e8edf5;display:flex;align-items:center;justify-content:space-between}
+.ai-panel-indicator{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:800;color:#13b96f}
+.ai-panel-indicator .check-icon{width:18px;height:18px;background:#13b96f;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:11px}
+.ai-panel-indicator .pulse{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,#1263e6,#0c55cf);box-shadow:0 0 12px rgba(18,99,230,.5);animation:pulse 2s infinite}
+.ai-panel-indicator.loading{color:#1263e6}
+.ai-panel-indicator.error{color:#ef4444}
+.ai-panel-body{padding:16px 18px}
+.ai-panel-body.loading{min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.ai-panel-spinner{width:32px;height:32px;border-radius:50%;border:3px solid #e8edf5;border-top-color:#1263e6;border-right-color:#13b96f;animation:spin .9s linear infinite}
+.ai-result-conclusion{background:linear-gradient(135deg,#eef6ff,#f5f9ff);border-radius:14px;padding:14px 16px;margin-bottom:12px;border:1px solid #b8d4ff}
+.ai-result-conclusion-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ai-result-type{font-size:13px;font-weight:900;color:#182235}
+.ai-result-type strong{color:#1263e6}
+.ai-result-tags{display:flex;gap:8px;flex-wrap:wrap}
+.ai-result-tag{background:linear-gradient(135deg,#eef6ff,#f5f9ff);color:#1263e6;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;border:1px solid #b8d4ff}
+.ai-result-basis-inline{font-size:11px;color:#98a2b3;margin-bottom:14px}
+.ai-retry-btn-small{border:0;background:#fff;color:#667085;border-radius:8px;padding:6px 10px;font-weight:800;font-size:11px;cursor:pointer;transition:.15s;border:1px solid #e2e8f0}
+.ai-retry-btn-small:hover{background:#f5f7fb}
+.ai-panel-actions{display:flex;gap:10px;justify-content:flex-end}
+.ai-adopt-btn{flex:1;max-width:140px;border:0;background:linear-gradient(135deg,#13b96f,#0ea56d);color:#fff;border-radius:12px;padding:10px 16px;font-weight:900;font-size:13px;cursor:pointer;transition:.2s;box-shadow:0 4px 14px rgba(19,185,111,.25)}
+.ai-adopt-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(19,185,111,.35)}
+.ai-edit-btn{flex:1;max-width:100px;border:1.5px solid #e2e8f0;background:#fff;color:#475467;border-radius:12px;padding:10px 16px;font-weight:800;font-size:13px;cursor:pointer;transition:.2s}
+.ai-edit-btn:hover{background:#f8fafc;border-color:#c8d4e0}
+.ai-retry-btn{border:0;background:#f3f6fa;color:#667085;border-radius:12px;padding:10px 14px;font-weight:800;font-size:13px;cursor:pointer;transition:.2s}
+.ai-retry-btn:hover{background:#eef2f7}
+
+@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(1.1)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* Buttons */
+.btn{border:0;border-radius:14px;padding:11px 16px;font-size:13px;font-weight:900;cursor:pointer;transition:.15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{transform:translateY(-1px)}
+.primary{background:linear-gradient(135deg,#1263e6,#0c55cf);color:#fff;box-shadow:0 12px 24px rgba(18,99,230,.22)}
+.ghost{background:#eef2f7;color:#344054}
+.light{background:#fff;border:1px solid #d7e0ec;color:#344054}
+.small-btn{border:1px solid #d9e2ef;background:#fff;color:#344054;border-radius:12px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer}
+.edit-btn{border:0;background:#eef6ff;color:#1263e6;border-radius:10px;padding:7px 10px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap}
+.actions{display:flex;gap:12px;margin-top:24px}
+
+/* Chips */
+.chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{border:1px solid #d8dee8;border-radius:999px;padding:8px 12px;background:#fff;color:#475467;font-size:12px;font-weight:750;cursor:pointer}
+.chip.active{border-color:#b9d8ff;background:#edf6ff;color:#1263e6}
+.chip-input{border:1px solid #d8dee8;border-radius:999px;padding:8px 12px;background:#fff;color:#475467;font-size:12px;font-weight:750;cursor:text;outline:none;min-width:80px}
+.chip-input:focus{border-color:#b9d8ff;background:#edf6ff}
+
+/* AI result card */
+.result-card{border:1px solid #e1ebf8;background:linear-gradient(180deg,#fbfdff,#f8fbff);border-radius:22px;padding:20px;margin-top:22px}
+.result-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.result-title b{font-size:14px}
+.result-title span{font-size:12px;color:#1263e6;background:#eaf3ff;border-radius:999px;padding:5px 8px;font-weight:800}
+.profile-lines{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.profile-lines div{background:#fff;border:1px solid #edf1f7;border-radius:16px;padding:14px}
+.profile-lines small{display:block;color:#98a2b3;font-size:11px;margin-bottom:5px}
+.profile-lines strong{font-size:13px;color:#344054}
+.web-summary{margin-top:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid #e8edf5;background:#fff;border-radius:16px;padding:12px 12px 12px 14px}
+.web-summary b{font-size:13px}
+.web-summary p{margin:5px 0 0;color:#667085;font-size:12px;line-height:1.55}
+.web-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.adopt{border:1px solid #b9d8ff;background:#eef6ff;color:#1263e6;border-radius:12px;padding:9px 13px;font-weight:900;cursor:pointer;white-space:nowrap}
+.ghost-adopt{background:#fff;color:#475467;border-color:#d8dee8}
+.guide{border:1px solid #e8edf5;background:#f8fafc;border-radius:16px;color:#667085;font-size:12px;line-height:1.8;padding:12px 14px;margin-bottom:10px}
+
+/* Context bar */
+.ctx-bar{border:1px solid #dce8f8;background:linear-gradient(135deg,#fff,#f8fbff);border-radius:16px;padding:11px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 22px rgba(20,34,64,.04);margin:0 0 16px;color:#667085;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctx-bar .ctx-name{font-size:13px;font-weight:900;color:#182235;flex:0 0 auto}
+.ctx-bar .ctx-meta{flex:0 0 auto}
+.ctx-bar .ctx-summary{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.ctx-bar .ctx-dot{color:#c3ccd9;flex:0 0 auto}
+
+
+/* Loading */
+.loading-overlay{display:none;align-items:center;justify-content:center;gap:12px;flex-direction:column;padding:40px;text-align:center;color:#667085}
+.loading-overlay.visible{display:flex}
+.is-hidden{display:none!important}
+
+/* Floating actions */
+.step-action-bar{display:flex;justify-content:flex-end;gap:12px;padding:20px 0 4px;border-top:1px solid #f0f2f7;margin-top:20px}
+.step-action-bar .btn{padding:0 20px;height:42px;border-radius:14px;font-size:13px;font-weight:900;cursor:pointer;transition:.18s}
+.step-action-bar .btn.secondary{background:#fff;color:#667085;border:1.5px solid #e2e8f0}
+.step-action-bar .btn.secondary:hover{background:#f8fafc;border-color:#cfd8e6}
+.step-action-bar .btn.secondary.loading{opacity:.7;cursor:wait}
+.step-action-bar .btn.primary{background:linear-gradient(135deg,#1263e6,#0c55cf);color:#fff;border:0;box-shadow:0 4px 14px rgba(18,99,230,.3)}
+.step-action-bar .btn.primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(18,99,230,.35)}
+.step-action-bar .btn.primary:disabled{background:#dde2eb;color:#98a2b3;box-shadow:none;cursor:not-allowed;transform:none}
+
+/* Step 2 */
+.s2-header{margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e6ebf2}
+.s2-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.s2-title{margin:0;font-size:22px;font-weight:900;color:#182235;letter-spacing:-.3px}
+.s2-subtitle{margin:0 0 12px;font-size:13px;color:#667085}
+.ctx-bar{display:flex;align-items:center;gap:6px;font-size:12px;color:#667085;flex-wrap:wrap}
+.ctx-bar .ctx-dot{color:#d0d7e2}
+.ctx-name{font-weight:800;color:#182235}
+.prep-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--soft);padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+.card-accent{position:absolute;top:0;left:0;right:0;height:4px}
+.accent-blue{background:linear-gradient(90deg,#1263e6,#4a8af4)}
+.accent-green{background:linear-gradient(90deg,#13b96f,#4dd4a0)}
+.accent-orange{background:linear-gradient(90deg,#ff8a00,#ffb347)}
+.prep-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+.prep-card-head h3{margin:0;font-size:17px;color:#182235}
+.prep-card-head span{display:block;color:#98a2b3;font-size:12px;margin-top:4px}
+.subhead{font-size:13px;color:#344054;font-weight:900;margin:16px 0 9px}
+.s2-profile-summary{border:1px solid #e5ebf3;background:#f8fafc;border-radius:16px;padding:14px 15px;color:#344054;font-size:13px;line-height:1.85;outline:none;min-height:48px;margin-bottom:4px}
+.s2-profile-summary:focus{background:#fff;border-color:#8abaff;box-shadow:0 0 0 4px rgba(18,99,230,.08)}
+.pain-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.pain{border:1px solid #e8edf5;background:rgba(251,252,254,.8);border-radius:15px;padding:12px 13px;font-size:13px;font-weight:400;color:#344054;backdrop-filter:blur(12px);line-height:1.5}
+.gap-list{display:grid;gap:9px}
+.gap{display:grid;grid-template-columns:22px 1fr auto 32px;gap:10px;align-items:center;border:1px solid #e8edf5;background:rgba(251,252,254,.8);border-radius:14px;padding:10px 12px;backdrop-filter:blur(12px)}
+.check{width:16px;height:16px;border:1px solid #cfd8e6;border-radius:5px;background:#fff;flex-shrink:0}
+.gap-text{flex:1;min-width:0}
+.gap b{font-size:13px;color:#344054;word-break:break-word}
+.priority{flex-shrink:0;font-size:11px;border-radius:999px;padding:5px 10px;background:#fff7ed;color:#c2410c;font-weight:800}
+.priority.mid{background:#f2f4f7;color:#667085}
+.priority.low{background:#ecfdf5;color:#059669}
+.priority-select{flex-shrink:0;font-size:11px;border-radius:999px;padding:5px 8px;background:#fff;border:1px solid #e8edf5;color:#344054;font-weight:800;cursor:pointer;outline:none}
+.add-gap-btn{width:100%;margin-top:10px;border:2px dashed #b9d8ff;background:#eef6ff;color:#1263e6;border-radius:14px;padding:12px;font-weight:800;font-size:13px;cursor:pointer;transition:.2s}
+.add-gap-btn:hover{background:#dceeff}
+.drag-handle{cursor:grab;width:28px;height:28px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2398a2b3' stroke-width='2'%3E%3Ccircle cx='9' cy='5' r='1'/%3E%3Ccircle cx='9' cy='12' r='1'/%3E%3Ccircle cx='9' cy='19' r='1'/%3E%3Ccircle cx='15' cy='5' r='1'/%3E%3Ccircle cx='15' cy='12' r='1'/%3E%3Ccircle cx='15' cy='19' r='1'/%3E%3C/svg%3E") center/18px no-repeat;opacity:.5;transition:.15s;border:none;background-color:transparent}
+.drag-handle:hover{opacity:1}
+.tabs{display:flex;gap:8px;background:#f3f6fa;border-radius:14px;padding:4px;width:max-content;margin-bottom:14px}
+.tab{border:0;background:transparent;border-radius:11px;padding:8px 13px;font-size:12px;color:#667085;font-weight:900;cursor:pointer;display:flex;align-items:center;gap:4px}
+.tab.on{background:#fff;color:#1263e6;box-shadow:0 5px 14px rgba(16,24,40,.07)}
+.tab-count{font-size:10px;background:#f0f2f5;padding:2px 6px;border-radius:999px}
+.tab.on .tab-count{background:#eef6ff;color:#1263e6}
+.q-list{display:grid;gap:12px}
+.q-card{display:grid;grid-template-columns:1fr 60px;gap:12px;align-items:start;border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px 18px}
+.q-card-main{min-width:0}
+.q-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.dim{font-size:11px;color:#1263e6;font-weight:900;background:#eef6ff;border-radius:999px;padding:4px 10px;display:inline-block;outline:none}
+.dim:focus{background:#dceeff}
+.q-card h3{margin:0 0 8px;font-size:14px;color:#182235;line-height:1.5;outline:none}
+.q-purpose{margin:0;font-size:12px;color:#667085;line-height:1.6;padding:8px 12px;background:#f8fafc;border-radius:10px;border-left:3px solid #e2e8f0}
+.add-q-btn{width:100%;margin-top:10px;border:2px dashed #cfd8e6;background:#fbfdff;color:#667085;border-radius:14px;padding:12px;font-weight:800;font-size:13px;cursor:pointer;transition:.2s}
+.add-q-btn:hover{background:#eef6ff;border-color:#b9d8ff;color:#1263e6}
+.q-actions{display:flex;flex-direction:column;gap:6px;align-items:center}
+.q-actions .edit-btn,.q-actions .drag-handle{width:32px;height:32px;border-radius:10px}
+.q-actions .edit-btn{font-size:11px;padding:0;background:#f3f6fa;color:#667085;border:0}
+.q-actions .edit-btn:hover{background:#eef6ff;color:#1263e6}
+.more{display:block;width:100%;margin-top:12px;border:1px dashed #cfd8e6;background:#fbfdff;color:#667085;border-radius:14px;padding:11px;font-weight:800;cursor:pointer;text-align:center}
+.more.is-open{border-style:solid;background:#eef6ff;color:#1263e6}
+.gap.hidden-gaps{display:none}
+.gaps-expanded .gap.hidden-gaps{display:grid}
+
+/* Step 3 */
+.note-list{display:grid;gap:12px;margin-bottom:16px}
+.saved-note{border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:14px 15px;box-shadow:0 6px 16px rgba(20,34,64,.035)}
+.saved-note-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+.saved-note h4{margin:0;font-size:14px;color:#182235}
+.saved-note p{margin:0;color:#667085;font-size:12px;line-height:1.7}
+.note-meta{display:flex;gap:8px;flex-wrap:wrap;color:#98a2b3;font-size:12px}
+.note-pill{border-radius:999px;background:#f2f4f7;color:#667085;padding:4px 8px;font-size:11px;font-weight:800}
+.add-note-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--soft);padding:20px;margin-bottom:16px}
+.add-note-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.add-note-head h3{margin:0;font-size:17px;color:#182235}
+.add-note-head span{display:block;color:#98a2b3;font-size:12px;margin-top:4px}
+.record-actions{display:flex;gap:8px;align-items:center}
+.record-tools{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.record-tools label>span{display:block;color:#344054;font-size:12px;font-weight:900;margin-bottom:7px}
+.compact-select{height:42px;padding:0 13px;background:#fbfcfe;font-size:13px}
+.record-field{margin-bottom:0}
+.note-textarea{min-height:220px;background:rgba(251,252,254,.8);border-radius:18px;font-size:13px;line-height:1.85;padding:15px 16px;backdrop-filter:blur(12px)}
+.note-foot-hint{border:1px solid #e8edf5;background:#f8fafc;border-radius:14px;color:#667085;font-size:12px;line-height:1.7;padding:11px 12px;margin-top:12px}
+.compact-note{font-size:12px;padding:10px 12px;margin-top:10px}
+
+/* File upload - dual mode (v22 glass) */
+.file-upload-area{margin-bottom:14px}
+.upload-drop-zone{
+  border:2px dashed rgba(18,99,230,.35);background:rgba(251,252,254,.6);
+  border-radius:16px;padding:20px;text-align:center;color:#667085;font-size:13px;
+  cursor:pointer;transition:.15s;backdrop-filter:blur(12px);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.upload-drop-zone:hover{border-color:#1263e6;background:rgba(18,99,230,.05);color:#1263e6}
+.upload-drop-zone.has-file{border-color:#13b96f;background:rgba(19,185,111,.05);color:#047857}
+.upload-drop-zone .dz-icon{font-size:28px;margin-bottom:4px}
+.upload-drop-zone .dz-hint{font-size:12px;color:#98a2b3}
+.upload-drop-zone .file-name{font-weight:800;font-size:13px}
+.upload-drop-zone .dz-actions{display:flex;gap:8px;margin-top:4px}
+.upload-drop-zone .dz-actions button{
+  border:1px solid #d8dee8;background:#fff;border-radius:10px;padding:6px 12px;
+  color:#475467;font-size:11px;font-weight:800;cursor:pointer;
+}
+.upload-drop-zone .dz-actions button:hover{background:#f7faff}
+
+/* Step 4 */
+.analysis-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--soft);padding:20px;margin-bottom:16px}
+.analysis-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+.analysis-card-head h3{margin:0;font-size:17px;color:#182235}
+.analysis-card-head span{display:block;color:#98a2b3;font-size:12px;margin-top:4px}
+.requirement-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.req-box{border:1px solid #e8edf5;background:rgba(251,252,254,.8);border-radius:16px;padding:13px 14px;backdrop-filter:blur(12px)}
+.req-box.wide{grid-column:1/-1}
+.req-box b{display:block;font-size:13px;color:#182235;margin-bottom:7px}
+.req-box p{margin:0;color:#667085;font-size:12px;line-height:1.7;outline:none}
+.flow-line{color:#344054;font-size:12px;line-height:1.8;outline:none}
+.flow-line span{display:inline-block;border:1px solid #dce8f8;background:#f8fbff;border-radius:999px;padding:5px 8px;margin:3px 2px}
+.solution-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.solution-box{border:1px solid #e8edf5;background:rgba(251,252,254,.8);border-radius:16px;padding:13px 14px;backdrop-filter:blur(12px)}
+.solution-box.wide{grid-column:1/-1}
+.solution-box b{display:block;font-size:13px;color:#182235;margin-bottom:7px}
+.solution-box p{margin:0;color:#667085;font-size:12px;line-height:1.7;outline:none}
+.extract-hint{border:1px solid #e8edf5;background:#f8fafc;border-radius:14px;color:#667085;font-size:12px;line-height:1.7;padding:11px 12px;margin-top:12px}
+
+/* Step 5 */
+.demo-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--soft);padding:20px;margin-bottom:16px}
+.demo-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+.demo-card-head h3{margin:0;font-size:17px;color:#182235}
+.demo-card-head span{display:block;color:#98a2b3;font-size:12px;margin-top:4px}
+.demo-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.demo-type{border:1px solid #e8edf5;background:rgba(251,252,254,.8);border-radius:18px;padding:15px;cursor:pointer;position:relative;backdrop-filter:blur(12px)}
+.demo-type.active{border-color:#b9d8ff;background:rgba(240,247,255,.8)}
+.demo-type b{font-size:14px;color:#182235}
+.demo-type p{margin:8px 0 0;color:#667085;font-size:12px;line-height:1.6}
+.demo-type:after{content:'切换';position:absolute;right:14px;top:14px;font-size:11px;color:#98a2b3;background:#fff;border:1px solid #edf1f7;border-radius:999px;padding:4px 8px}
+.demo-type.active:after{content:'当前';color:#1263e6;background:#eef6ff;border-color:#b9d8ff}
+.demo-workspace,#page5 .agent-workspace{display:grid;grid-template-columns:260px 1fr;border:1px solid #dce8f8;border-radius:20px;overflow:hidden;background:#fff;min-height:420px}
+.demo-nav{background:#f8fbff;border-right:1px solid #edf1f7;padding:14px;display:flex;flex-direction:column;gap:10px}
+.demo-nav-item{border:1px solid #e3ebf6;background:#fff;border-radius:16px;padding:12px 13px;text-align:left;cursor:pointer;color:#344054;transition:.16s;box-shadow:0 4px 10px rgba(20,34,64,.03)}
+.demo-nav-item b{display:block;font-size:13px;color:#182235;margin-bottom:5px}
+.demo-nav-item span{display:block;font-size:11px;color:#667085;line-height:1.45}
+.demo-nav-item.active{border-color:#b9d8ff;background:linear-gradient(135deg,#eef6ff,#ffffff);box-shadow:0 10px 24px rgba(18,99,230,.10)}
+.demo-nav-item.active b{color:#1263e6}
+.demo-canvas,#page5 .agent-canvas{padding:18px;background:#fbfcff;min-width:0}
+.sheet-panel,#page5 .agent-chat-panel{display:none;animation:fade .18s ease}
+.sheet-panel.active,#page5 .agent-chat-panel.active{display:block}
+.sheet-demo.refined{height:100%}
+.fake-table{padding:12px}
+.fake-row{display:grid;grid-template-columns:1fr 1fr 1fr .8fr 1fr 1fr}
+.fake-row span{border:1px solid #edf1f7;border-left:0;border-top:0;padding:10px 9px;font-size:12px;color:#667085;background:#fff}
+.fake-row span:first-child{border-left:1px solid #edf1f7}
+.fake-row.head span{background:#f8fafc;color:#344054;font-weight:900}
+.sheet-top{display:flex;justify-content:space-between;padding:14px 16px;background:#f8fbff;border-bottom:1px solid #edf1f7}
+.sheet-top b{font-size:14px}
+.sheet-top span{font-size:12px;color:#1263e6;font-weight:900}
+.sheet-tabs{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid #edf1f7;background:#fff}
+.sheet-tabs span{border-radius:10px;padding:7px 10px;color:#667085;font-size:12px;font-weight:800}
+.sheet-tabs .on{background:#eef6ff;color:#1263e6}
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.metric{border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:18px;text-align:center}
+.metric b{display:block;font-size:24px;color:#1263e6}
+.metric span{font-size:12px;color:#667085}
+.agent-demo{display:grid;grid-template-columns:210px 1fr;border:1px solid #dce8f8;border-radius:18px;overflow:hidden;background:#fff}
+.agent-side{background:#f8fbff;border-right:1px solid #edf1f7;padding:16px;display:flex;flex-direction:column;gap:10px}
+.agent-side b{font-size:15px}
+.agent-side span{font-size:12px;color:#667085;margin-bottom:8px}
+.agent-side button{border:1px solid #d8dee8;background:#fff;border-radius:12px;padding:10px;color:#344054;font-size:12px;font-weight:800;text-align:left;cursor:pointer}
+.agent-chat{padding:16px;display:flex;flex-direction:column;gap:10px;background:#fbfcff}
+.msg{max-width:78%;border-radius:14px;padding:10px 12px;font-size:12px;line-height:1.6}
+.msg.bot{background:#fff;border:1px solid #e8edf5;color:#344054}
+.msg.user{align-self:flex-end;background:#1263e6;color:#fff}
+.agent-input{margin-top:8px;border:1px solid #d8dee8;border-radius:14px;background:#fff;padding:12px;color:#98a2b3;font-size:12px}
+.agent-input span{float:right;color:#1263e6;font-weight:900}
+.agent-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #edf1f7;padding-bottom:12px;margin-bottom:14px}
+.agent-head b{font-size:15px}
+.agent-head span{font-size:12px;color:#1263e6;background:#eef6ff;border-radius:999px;padding:5px 9px;font-weight:900}
+
+/* ==== RIGHT PANEL (ARTIFACTS) - v22 enhanced ==== */
+.art{display:flex;flex-direction:column}
+.art-head{padding:21px 20px 15px;border-bottom:1px solid var(--line)}
+.art-head h2{margin:0;font-size:18px}
+.art-head p{margin:6px 0 0;color:var(--muted);font-size:12px}
+.art-list{padding:16px;overflow:auto;display:flex;flex-direction:column;gap:12px;flex:1}
+.artifact{border:1px solid var(--line);border-radius:20px;background:#fff;padding:15px;box-shadow:0 8px 18px rgba(20,34,64,.04)}
+.artifact-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.artifact h4{margin:0;font-size:14px}
+.tag{border-radius:999px;padding:5px 9px;background:#ecfdf5;color:#047857;font-size:12px;font-weight:900}
+.tag.todo{background:#fff7ed;color:#c2410c}
+.tag.editing{background:#fff7ed;color:#c2410c}
+.artifact p{margin:9px 0 0;color:#667085;font-size:12px;line-height:1.62}
+.barbox{height:6px;background:#eef2f7;border-radius:99px;overflow:hidden;margin-top:12px}
+.bar{height:100%;background:linear-gradient(90deg,#1263e6,#13b96f);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.artifact-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.art-btn{border:1px solid #d8dee8;background:#fff;border-radius:10px;padding:6px 10px;color:#475467;font-size:11px;font-weight:800;cursor:pointer}
+.art-btn:hover{background:#f7faff}
+.art-btn.danger{color:#dc2626;border-color:#fecaca}
+.art-btn.primary{background:#eef6ff;color:#1263e6;border-color:#b9d8ff}
+.art-btn.success{background:#ecfdf5;color:#047857;border-color:#bbf7d0}
+
+/* Artifact preview modal */
+.artifact-preview-modal{
+  display:none;position:fixed;inset:0;z-index:9998;
+  background:rgba(20,34,64,.45);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;padding:20px;
+}
+.artifact-preview-modal.visible{display:flex}
+.artifact-preview-modal .modal-box{
+  background:#fff;border-radius:24px;padding:28px;width:100%;max-width:720px;
+  max-height:85vh;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 30px 60px rgba(20,34,64,.2);
+}
+.artifact-preview-modal .modal-header{
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;
+}
+.artifact-preview-modal .modal-header b{font-size:17px;color:#182235}
+.artifact-preview-modal .modal-header .close-btn{
+  border:1px solid #d8dee8;background:#fff;border-radius:12px;padding:8px 14px;
+  color:#667085;font-size:12px;font-weight:800;cursor:pointer;
+}
+.artifact-preview-modal .modal-header .close-btn:hover{background:#f7faff}
+.artifact-preview-modal .modal-content{
+  flex:1;overflow:auto;background:#f8fafc;border-radius:16px;padding:16px;
+  font-size:13px;line-height:1.75;color:#344054;
+}
+
+/* ==== CLIENT LIST PAGE ==== */
+#page-list{padding:34px 38px;overflow:auto}
+.list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.list-header h2{margin:0;font-size:24px;letter-spacing:-.4px}
+.list-header p{margin:6px 0 0;color:#667085;font-size:13px}
+.list-actions{display:flex;gap:10px;align-items:center}
+.filter-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.filter-bar .select{height:38px;padding:0 12px;border:1px solid #d9e0ea;background:#fff;border-radius:12px;font-size:12px;outline:none}
+.sort-bar{display:flex;gap:6px}
+.sort-btn{border:1px solid #d8dee8;background:#fff;border-radius:10px;padding:6px 10px;font-size:11px;font-weight:800;color:#667085;cursor:pointer}
+.sort-btn.active{background:#eef6ff;color:#1263e6;border-color:#b9d8ff}
+.empty-list{height:320px;border:1px dashed #cfd8e6;background:#fbfdff;border-radius:22px;display:grid;place-items:center;text-align:center;color:#8b95a5;line-height:1.8}
+.empty-list b{color:#344054}
+.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.client-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 20px;cursor:pointer;border:1px solid #e5e7eb;transition:all .2s;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.client-card:hover{border-color:#1263e6;box-shadow:0 4px 12px rgba(18,99,230,.1);transform:translateY(-2px)}
+.client-card .c-name{font-size:14px;font-weight:600;color:#111827}
+.client-card .c-meta{font-size:12px;color:#9ca3af;margin-top:4px}
+.client-card .c-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.client-card .c-tag{font-size:11px;padding:3px 8px;border-radius:6px;background:#f3f4f6;color:#6b7280}
+.client-card .c-progress{display:flex;gap:5px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid #f3f4f6}
+.client-card .c-dot{width:8px;height:8px;border-radius:50%}
+.client-card .c-level{font-size:10px;color:#9ca3af;margin-left:6px}
+.add-card{background:transparent;border:2px dashed #d1d5db;display:flex;align-items:center;justify-content:center;min-height:100px;border-radius:14px;cursor:pointer;font-size:13px;color:#9ca3af;font-weight:500;transition:all .2s}
+.add-card:hover{border-color:#1263e6;color:#1263e6;background:#eef6ff}
+
+/* Drag handle */
+.drag-handle{justify-self:end;align-self:center;width:24px;height:34px;border-radius:10px;display:grid;place-items:center;color:#98a2b3;cursor:grab;font-weight:900;user-select:none}
+.drag-handle:active{cursor:grabbing}
+.drag-handle:before{content:'⋮⋮';letter-spacing:-3px;font-size:14px;line-height:1;color:#a5afbf}
+.sortable-item.dragging{opacity:.45;transform:scale(.995)}
+#page2 .q-card{display:grid;grid-template-columns:1fr 28px;gap:8px;align-items:start}
+#page2 .q-card-main{min-width:0}
+.hidden-q{display:none}
+
+/* Responsive */
+@media(max-width:1200px){.app{grid-template-columns:226px 1fr}.art{display:none}.row,.insights,.mini-grid,.profile-lines{grid-template-columns:1fr}}
+@media(max-width:820px){.app{grid-template-columns:1fr;height:auto;overflow:auto}.sidebar{display:none}.panel{border-radius:20px}.floating-actions{left:18px;right:18px;bottom:18px;justify-content:flex-end}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- LEFT SIDEBAR -->
+  <aside class="panel sidebar" id="sidebar">
+    <!-- Brand / current client -->
+    <div class="brand" id="sidebar-brand" onclick="goToList()">
+      <div class="logo" id="sidebar-logo">客</div>
+      <div>
+        <div class="brand-title" id="sidebar-client-name">当前客户</div>
+        <div class="brand-sub" id="sidebar-client-meta">点击选择客户</div>
+      </div>
+    </div>
+
+    <!-- 5-step flow nav -->
+    <div class="flow" id="step-flow">
+      <div class="step active" data-page="1" onclick="safeGo(1)"><div class="num">1</div><div><h3>客户录入</h3><p>搜索客户 · 确认画像</p></div></div>
+      <div class="step" data-page="2" onclick="safeGo(2)"><div class="num">2</div><div><h3>调研准备</h3><p>生成问题 · 明确边界</p></div></div>
+      <div class="step" data-page="3" onclick="safeGo(3)"><div class="num">3</div><div><h3>沟通纪要</h3><p>粘贴转写 · 提取需求</p></div></div>
+      <div class="step" data-page="4" onclick="safeGo(4)"><div class="num">4</div><div><h3>需求整理</h3><p>结构化需求 · 推荐模块</p></div></div>
+      <div class="step" data-page="5" onclick="safeGo(5)"><div class="num">5</div><div><h3>Demo生成</h3><p>智能表格 · Agent小样</p></div></div>
+    </div>
+
+    <!-- Completion stat -->
+    <div class="side-stat">
+      <b>完成度</b>
+      <div class="stat-num" id="completion-pct">0%</div>
+      <div class="meter"><i id="completion-bar"></i></div>
+      <span id="completion-label">Step 1 / 5 · 客户录入</span>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="panel main">
+    <div class="content">
+
+      <!-- Generate Modal - Step1→Step2 transition -->
+      <div id="generate-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-card">
+          <div class="modal-icon loading" id="gen-icon">⚙</div>
+          <h3 id="gen-title">正在生成调研准备材料</h3>
+          <p class="subtitle" id="gen-subtitle">AI 正在分析客户信息并生成调研问题</p>
+          <div class="progress-wrap" id="gen-progress">
+            <div class="progress-step" data-step="1">
+              <span class="step-check pending" id="pc1">○</span>
+              <span class="step-label">客户信息分析</span>
+              <span class="step-status" id="ps1">等待中</span>
+            </div>
+            <div class="progress-step" data-step="2">
+              <span class="step-check pending" id="pc2">○</span>
+              <span class="step-label">行业识别</span>
+              <span class="step-status" id="ps2">等待中</span>
+            </div>
+            <div class="progress-step" data-step="3">
+              <span class="step-check pending" id="pc3">○</span>
+              <span class="step-label">客户画像生成</span>
+              <span class="step-status" id="ps3">等待中</span>
+            </div>
+            <div class="progress-step" data-step="4">
+              <span class="step-check pending" id="pc4">○</span>
+              <span class="step-label">信息缺口分析</span>
+              <span class="step-status" id="ps4">等待中</span>
+            </div>
+            <div class="progress-step" data-step="5">
+              <span class="step-check pending" id="pc5">○</span>
+              <span class="step-label">调研问题生成</span>
+              <span class="step-status" id="ps5">等待中</span>
+            </div>
+          </div>
+          <button class="btn-enter" id="gen-btn" style="display:none" onclick="onGenBtnClick()">进入下一步</button>
+          <p class="error-tip" id="gen-error" style="display:none"></p>
+        </div>
+      </div>
+
+      <!-- Loading - simple spinner for other uses -->
+      <section class="page" id="page-loading">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px">
+          <div style="width:56px;height:56px;border-radius:50%;border:5px solid #e8edf5;border-top-color:#1263e6;border-right-color:#13b96f;animation:spin .9s linear infinite"></div>
+          <p id="loading-text" style="margin:0;font-size:15px;font-weight:800;color:#182235">加载中…</p>
+          <p id="loading-hint" style="margin:0;font-size:13px;color:#98a2b3">预计 8-10 秒</p>
+        </div>
+      </section>
+
+      <!-- Client List -->
+      <section class="page" id="page-list">
+        <div class="list-header">
+          <div>
+            <h2>客户列表</h2>
+            <p id="list-subtitle">共 0 个客户</p>
+          </div>
+          <div class="list-actions"></div>
+        </div>
+        <div class="filter-bar">
+          <select class="select" id="filter-industry" onchange="renderClientList()">
+            <option value="">全部行业</option>
+          </select>
+          <select class="select" id="filter-stage" onchange="renderClientList()">
+            <option value="">全部阶段</option>
+            <option value="pending">待完善</option>
+            <option value="prepared">已生成清单</option>
+            <option value="uploaded">待出报告</option>
+            <option value="done">已完成</option>
+          </select>
+          <div class="sort-bar">
+            <button class="sort-btn active" data-sort="updated" onclick="setSort('updated')">最新</button>
+            <button class="sort-btn" data-sort="name" onclick="setSort('name')">名称</button>
+            <button class="sort-btn" data-sort="progress" onclick="setSort('progress')">进度</button>
+          </div>
+        </div>
+        <div id="client-list-grid" class="client-grid"></div>
+        <div id="empty-list" class="empty-list" style="display:none">
+          <div><b>还没有客户</b><br>点击「+ 新建客户」创建第一个客户</div>
+        </div>
+      </section>
+
+      <!-- Step 1: 客户录入 -->
+      <section class="page" id="page1">
+        <div class="page-title">
+          <h2>客户录入</h2>
+          <p>确认客户基础信息、销售负责人与初始需求，用于后续所有步骤。</p>
+        </div>
+        <div class="section section-slim">
+          <div class="field">
+            <div class="label">客户名称 <span class="hint">公司名 / 简称 / 信用代码</span></div>
+            <div class="search-row">
+              <input class="input" id="s1-name" placeholder="输入客户名称">
+              <button class="ai-search-btn" id="aiSearchBtn" onclick="toggleAISearch()">
+                <span class="ai-icon">✨</span>
+                <span>AI 智搜</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- AI Search Panel - Expandable -->
+          <div class="ai-search-panel is-hidden" id="s1-ai-panel">
+            <div class="ai-panel-header" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <div class="ai-panel-indicator" id="s1-ai-indicator" style="display:flex;align-items:center;gap:10px">
+                <span class="pulse"></span>
+                <span id="s1-ai-status-text">AI 智搜中...</span>
+              </div>
+              <button id="s1-ai-retry" style="display:none;background:#f5f7fb;border:1px solid #d9e0ea;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer" onclick="doAISearch()">重试</button>
+            </div>
+            <div class="ai-panel-body" id="s1-ai-body">
+              <!-- Results will be injected here -->
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <div class="label">客户行业</div>
+              <select class="select" id="s1-industry">
+                <option value="">请选择行业</option>
+                <option>金融</option><option>制造业</option><option>服装生产</option>
+                <option>服装外贸</option><option>家居定制装修</option><option>B2B工业品</option>
+                <option>工业品生产销售</option><option>互联网教育</option><option>设计行业</option>
+                <option>企业行政</option><option>化工行业</option><option>医疗医药</option>
+                <option>餐饮</option><option>零售分销</option><option>物业</option>
+                <option>其他</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="label">公司规模</div>
+              <select class="select" id="s1-scale">
+                <option value="">暂不明确</option>
+                <option>1-50人</option><option>50-200人</option><option>200-1000人</option><option>1000人以上</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <div class="label">需求标签 <span class="hint">可多选，直接输入自定义标签后回车</span></div>
+            <div class="chips" id="s1-chips">
+              <span class="chip" data-tag="合规风控">合规风控</span>
+              <span class="chip" data-tag="客户运营">客户运营</span>
+              <span class="chip" data-tag="审批流程">审批流程</span>
+              <span class="chip" data-tag="销售管理">销售管理</span>
+              <span class="chip" data-tag="系统集成">系统集成</span>
+              <span class="chip" data-tag="项目交付">项目交付</span>
+              <span class="chip" data-tag="生产管理">生产管理</span>
+              <span class="chip" data-tag="人力资源">人力资源</span>
+              <input class="chip-input" id="s1-custom-tag" placeholder="+ 自定义" onkeydown="handleCustomTag(event)">
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:18px">
+            <div class="label">客户进线的初始需求表达 <span class="hint">原文粘贴，销售整理后补充即可</span></div>
+            <textarea class="textarea" id="s1-demand" style="min-height:108px" placeholder="粘贴客户的原始表达，或销售整理后的补充描述…"></textarea>
+          </div>
+
+          <div class="step-action-bar">
+            <button class="btn secondary" id="s1-gen-btn" onclick="doGenerateCustomerProfile()">生成客户画像</button>
+            <button class="btn primary" id="s1-next-btn" onclick="doStep1Next()">下一步 →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2: 调研准备 -->
+      <section class="page" id="page2">
+        <!-- Page Header -->
+        <div class="s2-header">
+          <div class="s2-title-row">
+            <h2 class="s2-title">售前准备材料</h2>
+            <button class="small-btn" onclick="doRegenerateStep2()">重新生成</button>
+          </div>
+          <p class="s2-subtitle">服务销售前，产品、商务可直接带着这份材料和客户开会</p>
+          <div class="ctx-bar" id="s2-ctx-bar">
+            <span class="ctx-name" id="s2-ctx-name">-</span>
+            <span class="ctx-dot">｜</span>
+            <span class="ctx-meta" id="s2-ctx-meta">-</span>
+            <span class="ctx-dot">｜</span>
+            <span class="ctx-summary" id="s2-ctx-summary">-</span>
+          </div>
+        </div>
+
+        <!-- PART 1: 客户画像 - 信息展示层 -->
+        <div class="prep-card layer-info">
+          <div class="card-accent accent-blue"></div>
+          <div class="prep-card-head">
+            <div><h3>客户画像</h3><span>会前快速理解客户与业务背景</span></div>
+            <button class="edit-btn" onclick="togglePartEdit(this, 'part1')">编辑</button>
+          </div>
+          <div class="s2-profile-summary" id="s2-profile-text" contenteditable="false">-</div>
+          <div class="subhead">行业常见痛点</div>
+          <div class="pain-grid" id="s2-pains">
+            <div class="pain" contenteditable="false">-</div>
+            <div class="pain" contenteditable="false">-</div>
+            <div class="pain" contenteditable="false">-</div>
+            <div class="pain" contenteditable="false">-</div>
+          </div>
+        </div>
+
+        <!-- PART 2: 待确认信息清单 - 核心工作层 -->
+        <div class="prep-card layer-work">
+          <div class="card-accent accent-green"></div>
+          <div class="prep-card-head">
+            <div><h3>待确认信息清单</h3><span>会议中必须补齐的信息，支持拖拽调整优先级</span></div>
+            <button class="edit-btn" onclick="togglePartEdit(this, 'part2')">编辑</button>
+          </div>
+          <div class="gap-list" id="s2-gaps"></div>
+          <button class="more" id="s2-gaps-more-btn" onclick="toggleMoreGaps()">查看更多问题（<span id="s2-gaps-total">0</span>）</button>
+          <button class="add-gap-btn" onclick="addGap()">+ 新增信息项</button>
+        </div>
+
+        <!-- PART 3: 产品经理访谈提纲 - 执行层 -->
+        <div class="prep-card layer-action">
+          <div class="card-accent accent-orange"></div>
+          <div class="prep-card-head">
+            <div><h3>访谈提纲</h3><span>可直接照着问，也可以按照客户情况调整</span></div>
+            <button class="edit-btn" onclick="togglePartEdit(this, 'part3')">编辑</button>
+          </div>
+          <div class="tabs" data-tabs="questions">
+            <button class="tab on" data-target="must" onclick="switchTab(this)">必问问题 <span class="tab-count" id="s2-must-count">0</span></button>
+            <button class="tab" data-target="deep" onclick="switchTab(this)">深挖问题 <span class="tab-count" id="s2-deep-count">0</span></button>
+            <button class="tab" data-target="industry" onclick="switchTab(this)">行业经验 <span class="tab-count" id="s2-industry-count">0</span></button>
+          </div>
+          <div class="q-list" id="s2-must-questions"></div>
+          <div class="q-list" id="s2-deep-questions" style="display:none"></div>
+          <div id="s2-industry-notes" style="display:none"></div>
+          <button class="more" id="s2-more-btn" onclick="toggleMoreQuestions()">查看更多问题（<span id="s2-deep-total">0</span>）</button>
+
+          <div class="step-action-bar">
+            <button class="btn secondary" id="s2-gen-btn" onclick="doRegenerateStep2()">重新生成调研准备材料</button>
+            <button class="btn primary" id="s2-next-btn" onclick="doStep2Next()">下一步 →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 3: 沟通纪要 -->
+      <section class="page" id="page3">
+        <div class="ctx-bar">
+          <span class="ctx-name" id="s3-ctx-name">-</span>
+          <span class="ctx-dot">·</span>
+          <span class="ctx-meta" id="s3-ctx-meta">-</span>
+          <span class="ctx-dot">·</span>
+          <span class="ctx-summary" id="s3-ctx-summary">-</span>
+        </div>
+        <div class="add-note-card">
+          <div class="add-note-head">
+            <div><h3>新增沟通记录</h3><span>只负责沉淀原始信息，不在这里做方案分析</span></div>
+            <div class="record-actions">
+              <button class="small-btn" onclick="clearNoteForm()">清空</button>
+            </div>
+          </div>
+          <div class="record-tools">
+            <label><span>纪要来源</span>
+              <select class="select compact-select" id="s3-source">
+                <option>会议转写</option><option>销售手工纪要</option><option>客户邮件/文档</option><option>微信群沟通</option>
+              </select>
+            </label>
+            <label><span>沟通阶段</span>
+              <select class="select compact-select" id="s3-stage">
+                <option>首次需求沟通</option><option>需求澄清</option><option>方案沟通</option><option>报价沟通</option><option>Demo后反馈</option>
+              </select>
+            </label>
+          </div>
+
+          <!-- Dual mode file upload (v22 glass) -->
+          <div class="field record-field">
+            <div class="label">上传文件 <span class="hint">支持 .docx / .txt / .pdf</span></div>
+            <div class="file-upload-area" id="s3-upload-area">
+              <input type="file" id="s3-file-input" accept=".docx,.txt,.pdf" style="display:none" onchange="handleFileUpload(this.files[0])">
+              <div class="upload-drop-zone" id="s3-drop-zone"
+                ondragover="event.preventDefault();this.classList.add('drag-over')"
+                ondragleave="this.classList.remove('drag-over')"
+                ondrop="handleFileDrop(event)"
+                onclick="document.getElementById('s3-file-input').click()">
+                <div class="dz-icon">📎</div>
+                <div class="dz-hint" id="s3-dz-hint">点击选择文件 或 拖拽文件到此处</div>
+                <div class="file-name" id="s3-file-name-display" style="display:none"></div>
+                <div class="dz-actions" id="s3-dz-actions" style="display:none">
+                  <button type="button" onclick="event.stopPropagation();clearFileUpload()">移除</button>
+                  <button type="button" class="primary" onclick="event.stopPropagation();doAddFileRecord()">添加到记录</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field record-field">
+            <div class="label">沟通记录 <span class="hint">原文粘贴即可，不需要整理格式</span></div>
+            <textarea class="textarea note-textarea" id="s3-note-text" placeholder="粘贴沟通记录…"></textarea>
+          </div>
+          <div style="color:#667085;font-size:12px;margin-top:8px">保存后会进入下方沟通记录库。多次会议可以重复保存，Step4 会基于全部记录统一提炼。</div>
+        </div>
+        <div class="add-note-card">
+          <div class="add-note-head">
+            <div><h3>已保存沟通记录</h3><span id="s3-saved-count">按时间沉淀，后续统一用于需求整理</span></div>
+            <button class="small-btn" onclick="loadAllNotes()">查看全部</button>
+          </div>
+          <div class="note-list" id="s3-note-list"></div>
+
+          <div class="step-action-bar">
+            <button class="btn secondary" id="s3-gen-btn" onclick="doRegenerateStep3()">重新生成沟通记录库</button>
+            <button class="btn primary" id="s3-next-btn" onclick="doStep3Next()">下一步 →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 4: 需求整理 -->
+      <section class="page" id="page4">
+        <div class="ctx-bar">
+          <span class="ctx-name" id="s4-ctx-name">-</span>
+          <span class="ctx-dot">·</span>
+          <span class="ctx-meta" id="s4-ctx-meta">-</span>
+          <span class="ctx-dot">·</span>
+          <span class="ctx-summary" id="s4-ctx-summary">-</span>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+          <button class="small-btn" onclick="doRegenerateStep4()">重新生成</button>
+        </div>
+        <div class="analysis-card">
+          <div class="analysis-card-head">
+            <div><h3>PART 1 · 需求输入确认</h3><span>来自 Step3 的多次沟通记录，作为方案与报价的输入</span></div>
+            <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
+          </div>
+          <div class="requirement-grid">
+            <div class="req-box"><b>客户现状</b><p id="s4-current" contenteditable="true">-</p></div>
+            <div class="req-box"><b>核心问题</b><p id="s4-pain" contenteditable="true">-</p></div>
+            <div class="req-box"><b>涉及角色</b><p id="s4-roles" contenteditable="true">-</p></div>
+            <div class="req-box"><b>建设目标</b><p id="s4-goals" contenteditable="true">-</p></div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <div class="analysis-card-head">
+            <div><h3>产物 1 · 售前解决方案</h3><span>面向客户汇报，说明为什么做、做什么、分几步做</span></div>
+            <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
+          </div>
+          <div class="solution-grid">
+            <div class="solution-box wide"><b>方案摘要</b><p id="s4-summary" contenteditable="true">-</p></div>
+            <div class="solution-box"><b>建设模块</b><p id="s4-modules" contenteditable="true">-</p></div>
+            <div class="solution-box"><b>业务价值</b><p id="s4-value" contenteditable="true">-</p></div>
+            <div class="solution-box wide"><b>实施阶段</b><div class="flow-line" id="s4-phases" contenteditable="true">-</div></div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <div class="analysis-card-head">
+            <div><h3>产物 2 · 技术路线及报价方案</h3><span>面向服务商内部评估，拆解技术路径、交付范围与报价口径</span></div>
+            <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
+          </div>
+          <div id="s4-tech-content"></div>
+          <div class="extract-hint">点击底部按钮后，右侧制品区会新增「售前解决方案」和「技术路线及报价方案」。</div>
+        </div>
+
+        <div class="step-action-bar">
+          <button class="btn secondary" id="s4-gen-btn" onclick="doRegenerateStep4()">重新生成售前报告</button>
+          <button class="btn primary" id="s4-next-btn" onclick="doStep4Next()">下一步 →</button>
+        </div>
+      </section>
+
+      <!-- Step 5: Demo生成 -->
+      <section class="page" id="page5">
+        <div class="ctx-bar">
+          <span class="ctx-name" id="s5-ctx-name">-</span>
+          <span class="ctx-dot">·</span>
+          <span class="ctx-meta" id="s5-ctx-meta">-</span>
+          <span class="ctx-dot">·</span>
+          <span class="ctx-summary" id="s5-ctx-summary">-</span>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+          <button class="small-btn" onclick="doRegenerateStep5()">重新生成</button>
+        </div>
+        <div class="demo-card">
+          <div class="demo-card-head">
+            <div><h3>选择项目类型</h3><span>点击切换不同 Demo 产物</span></div>
+          </div>
+          <div class="demo-type-grid">
+            <div class="demo-type active" data-demo="custom" onclick="switchDemoType(this)">
+              <b>定制开发项目</b>
+              <p>企业微信智能表格 Demo：字段、流程、权限、审批和看板。</p>
+            </div>
+            <div class="demo-type" data-demo="agent" onclick="switchDemoType(this)">
+              <b>AI 服务项目</b>
+              <p>Agent 小 Demo：对话入口、知识问答、任务处理和人工转接。</p>
+            </div>
+          </div>
+        </div>
+        <div class="demo-card demo-output active" id="customDemo">
+          <div class="demo-card-head">
+            <div><h3>企业微信智能表格 Demo</h3><span>左侧选择演示场景，右侧实时切换演示内容</span></div>
+            <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
+          </div>
+          <div class="demo-workspace">
+            <div class="demo-nav" data-demo-tabs="sheet">
+              <button class="demo-nav-item active" data-target="ledger" onclick="switchDemoScene(this,'sheet')"><b>客户台账</b><span>客户资料、审核状态、下一步动作</span></button>
+              <button class="demo-nav-item" data-target="approval" onclick="switchDemoScene(this,'sheet')"><b>合规审批</b><span>表单提交、审批流转、上下文联动</span></button>
+              <button class="demo-nav-item" data-target="record" onclick="switchDemoScene(this,'sheet')"><b>审批记录</b><span>时间线、操作人、审批意见</span></button>
+              <button class="demo-nav-item" data-target="dashboard" onclick="switchDemoScene(this,'sheet')"><b>数据看板</b><span>待审批、已归档、超时与运营进展</span></button>
+              <button class="demo-nav-item" data-target="chatsearch" onclick="switchDemoScene(this,'sheet')"><b>会话检索</b><span>按客户、关键词和业务标签查询</span></button>
+            </div>
+            <div class="demo-canvas" id="sheet-canvas"></div>
+          </div>
+        </div>
+        <div class="demo-card demo-output" id="agentDemo">
+          <div class="demo-card-head">
+            <div><h3>Agent 小 Demo</h3><span>左侧选择 Agent 能力，右侧自动切换对话演示</span></div>
+            <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
+          </div>
+          <div class="agent-workspace">
+            <div class="demo-nav" data-demo-tabs="agent">
+              <button class="demo-nav-item active" data-target="profile" onclick="switchDemoScene(this,'agent')"><b>客户资料查询</b><span>查询客户画像、负责人和历史记录</span></button>
+              <button class="demo-nav-item" data-target="material" onclick="switchDemoScene(this,'agent')"><b>审核材料检查</b><span>自动判断缺失附件和补充动作</span></button>
+              <button class="demo-nav-item" data-target="conversation" onclick="switchDemoScene(this,'agent')"><b>会话记录检索</b><span>检索客户原话和关键证据</span></button>
+              <button class="demo-nav-item" data-target="qa" onclick="switchDemoScene(this,'agent')"><b>知识问答</b><span>回答流程、权限、合规规则</span></button>
+              <button class="demo-nav-item" data-target="handoff" onclick="switchDemoScene(this,'agent')"><b>人工转接</b><span>复杂问题转交对应服务商人员</span></button>
+            </div>
+            <div class="agent-canvas" id="agent-canvas"></div>
+          </div>
+        </div>
+
+        <div class="step-action-bar">
+          <button class="btn secondary" id="s5-gen-btn" onclick="doRegenerateStep5()">重新生成Demo方案</button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- RIGHT PANEL (ARTIFACTS) - v22 enhanced -->
+  <aside class="panel art">
+    <div class="art-head">
+      <h2>完成制品</h2>
+      <p>右侧只展示可交付结果，不打断中间编辑</p>
+    </div>
+    <div class="art-list" id="art-list"></div>
+  </aside>
+
+</div>
+
+<!-- Artifact preview modal -->
+<div class="artifact-preview-modal" id="artifact-preview-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <b id="preview-modal-title">预览</b>
+      <button class="close-btn" onclick="closePreviewModal()">关闭</button>
+    </div>
+    <div class="modal-content" id="preview-modal-content"></div>
+  </div>
+</div>
+
+<!-- CREATE CLIENT MODAL -->
+<script>
+// ==================== CONSTANTS ====================
+const API_BASE = 'http://localhost:8000';
+const STORAGE_KEY = 'provider-assist-clients';
+const PROVIDER_KEY = 'provider-assist-name';
+const TOKEN_KEY = 'provider-token';
+let currentClientId = null;
+let currentStep = 1;
+let currentSort = 'updated';
+let debounceTimer = null;
+let _backendClientCache = {};
+
+// ==================== AUTH ====================
+function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
+function getAuthHeaders() {
+  const token = getToken();
+  return token ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } : { 'Content-Type': 'application/json' };
+}
+function isLoggedIn() { return !!getToken(); }
+
+// ==================== STORAGE ====================
+function getClients() {
+  let data = localStorage.getItem(STORAGE_KEY);
+  return JSON.parse(data || '[]');
+}
+function saveClients(clients) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
+}
+function getClient(id) { if (_backendClientCache[id]) return _backendClientCache[id]; return getClients().find(c => c.id === id); }
+function updateClient(id, updates) {
+  const clients = getClients();
+  const idx = clients.findIndex(c => c.id === id);
+  if (idx >= 0) { Object.assign(clients[idx], updates, { updated_at: new Date().toISOString() }); saveClients(clients); }
+  if (_backendClientCache[id]) {
+    _backendClientCache[id] = { ..._backendClientCache[id], ...updates };
+  }
+  fetch(API_BASE + '/api/clients/' + id, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(updates)
+  }).catch(() => {});
+}
+
+// ==================== GENERATE MODAL (Step1→Step2) ====================
+let genTimeout = null;
+let genCurrentStep = 0;
+let genReady = false;
+let genTargetStep = 2; // which step to go to on success
+
+function showGenerateModal(titleText, subtitleText, targetStep) {
+  genReady = false;
+  genTargetStep = targetStep || 2;
+  const modal = document.getElementById('generate-modal');
+  const icon = document.getElementById('gen-icon');
+  const title = document.getElementById('gen-title');
+  const subtitle = document.getElementById('gen-subtitle');
+  const btn = document.getElementById('gen-btn');
+  const error = document.getElementById('gen-error');
+  const progress = document.getElementById('gen-progress');
+  icon.className = 'modal-icon loading';
+  icon.textContent = '⚙';
+  title.textContent = titleText || '正在生成中';
+  subtitle.textContent = subtitleText || 'AI 正在处理，请稍候…';
+  btn.style.display = 'none';
+  error.style.display = 'none';
+  progress.style.display = 'block';
+  // Reset all steps
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('pc' + i).className = 'step-check pending';
+    document.getElementById('pc' + i).textContent = '○';
+    document.getElementById('ps' + i).className = 'step-status';
+    document.getElementById('ps' + i).textContent = '等待中';
+  }
+  modal.classList.add('active');
+}
+
+function hideGenerateModal() {
+  document.getElementById('generate-modal').classList.remove('active');
+  if (genTimeout) { clearTimeout(genTimeout); genTimeout = null; }
+}
+
+function setGenStep(step) {
+  // Mark previous steps as done
+  for (let i = 1; i < step; i++) {
+    document.getElementById('pc' + i).className = 'step-check done';
+    document.getElementById('pc' + i).textContent = '✓';
+    document.getElementById('ps' + i).className = 'step-status';
+    document.getElementById('ps' + i).textContent = '完成';
+  }
+  // Mark current step as active
+  genCurrentStep = step;
+  document.getElementById('pc' + step).className = 'step-check active';
+  document.getElementById('pc' + step).textContent = '◌';
+  document.getElementById('ps' + step).className = 'step-status active';
+  document.getElementById('ps' + step).textContent = '进行中';
+  // Mark future steps as pending
+  for (let i = step + 1; i <= 5; i++) {
+    document.getElementById('pc' + i).className = 'step-check pending';
+    document.getElementById('pc' + i).textContent = '○';
+    document.getElementById('ps' + i).className = 'step-status';
+    document.getElementById('ps' + i).textContent = '等待中';
+  }
+}
+
+function showGenSuccess(titleText, subtitleHtml) {
+  const icon = document.getElementById('gen-icon');
+  const title = document.getElementById('gen-title');
+  const subtitle = document.getElementById('gen-subtitle');
+  const btn = document.getElementById('gen-btn');
+  const progress = document.getElementById('gen-progress');
+  icon.className = 'modal-icon success';
+  icon.textContent = '✓';
+  title.textContent = titleText || '生成完成';
+  subtitle.innerHTML = subtitleHtml || '';
+  progress.style.display = 'none';
+  btn.style.display = 'block';
+  btn.textContent = '进入下一步';
+  genReady = true;
+}
+
+function showGenError2(msg, canRetry) {
+  const icon = document.getElementById('gen-icon');
+  const title = document.getElementById('gen-title');
+  const subtitle = document.getElementById('gen-subtitle');
+  const btn = document.getElementById('gen-btn');
+  const error = document.getElementById('gen-error');
+  const progress = document.getElementById('gen-progress');
+  icon.className = 'modal-icon error';
+  icon.textContent = '✕';
+  title.textContent = '生成失败';
+  subtitle.textContent = '';
+  progress.style.display = 'none';
+  btn.style.display = 'block';
+  btn.textContent = canRetry ? '重试' : '返回';
+  error.style.display = 'block';
+  error.textContent = msg;
+  genReady = false;
+}
+
+function showGenError(msg) {
+  const icon = document.getElementById('gen-icon');
+  const title = document.getElementById('gen-title');
+  const subtitle = document.getElementById('gen-subtitle');
+  const btn = document.getElementById('gen-btn');
+  const error = document.getElementById('gen-error');
+  const progress = document.getElementById('gen-progress');
+  icon.className = 'modal-icon error';
+  icon.textContent = '✕';
+  title.textContent = '生成失败';
+  subtitle.textContent = '';
+  progress.style.display = 'none';
+  btn.style.display = 'block';
+  btn.textContent = '重试';
+  error.style.display = 'block';
+  error.textContent = msg;
+  genReady = false;
+}
+
+function onGenBtnClick() {
+  if (genReady) {
+    hideGenerateModal();
+    go(genTargetStep);
+  } else {
+    hideGenerateModal();
+  }
+}
+
+// ==================== LOADING ====================
+function showFullscreenLoading(text, hint) {
+  const el = document.getElementById('page-loading');
+  if (el) {
+    const textEl = document.getElementById('loading-text');
+    const hintEl = document.getElementById('loading-hint');
+    if (textEl) textEl.textContent = text || '加载中…';
+    if (hintEl) hintEl.textContent = hint || '';
+    el.classList.add('active');
+  }
+}
+function hideFullscreenLoading() {
+  const el = document.getElementById('page-loading');
+  if (el) el.classList.remove('active');
+}
+
+// ==================== NAVIGATION ====================
+const META = {1:'客户录入',2:'调研准备',3:'沟通纪要',4:'需求整理',5:'Demo设计'};
+const LABELS = {1:'Step 1 / 5 · 客户录入',2:'Step 2 / 5 · 调研准备',3:'Step 3 / 5 · 沟通纪要',4:'Step 4 / 5 · 需求整理',5:'Step 5 / 5 · Demo生成'};
+
+function safeGo(n) {
+  // 只允许跳转到当前Step或已完成的Step
+  const c = getClient(currentClientId);
+  const isCompleted = {
+    1: !!(c && c.step1_result),
+    2: !!(c && c.step1_result),
+    3: !!(c && c.step1_result) && !!(c && (c.uploaded_files && c.uploaded_files.length > 0 || c.transcript)),
+    4: !!(c && c.step4_report),
+    5: !!(c && c.step5_schema)
+  };
+  if (n !== currentStep && !isCompleted[n]) {
+    showToast('请先完成当前步骤');
+    return;
+  }
+  go(n);
+}
+
+function go(n) {
+  currentStep = n;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page'+n).classList.add('active');
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.querySelector('.step[data-page="'+n+'"]').classList.add('active');
+  updateCompletion(n);
+  loadStepData(n);
+  updateStepLocks();
+}
+
+function updateStepLocks() {
+  const c = getClient(currentClientId);
+  // 定义每步的完成条件：该步的产物是否存在
+  const isCompleted = {
+    1: !!(c && c.step1_result),
+    2: !!(c && c.step1_result),
+    3: !!(c && c.step1_result) && !!(c && (c.uploaded_files && c.uploaded_files.length > 0 || c.transcript)),
+    4: !!(c && c.step4_report),
+    5: !!(c && c.step5_schema)
+  };
+  document.querySelectorAll('.step').forEach(s => {
+    const n = parseInt(s.dataset.page);
+    if (n === currentStep) return; // 当前Step永远可点
+    if (isCompleted[n]) return; // 已完成Step可点
+    // 未完成Step锁定
+    s.style.opacity = '0.45';
+    s.style.pointerEvents = 'none';
+    s.classList.remove('done');
+  });
+  // 已完成Step显示绿色
+  document.querySelectorAll('.step').forEach(s => {
+    const n = parseInt(s.dataset.page);
+    if (n === currentStep) return;
+    if (isCompleted[n]) {
+      s.style.opacity = '';
+      s.style.pointerEvents = '';
+      s.classList.add('done');
+    }
+  });
+}
+
+
+function updateFloatingAction(n) {
+  const fp = document.getElementById('floating-primary');
+  if (!fp) return;
+  const c = getClient(currentClientId);
+  const profilePct = calcProfilePct(c);
+  const hasSchema = !!(c && c.step5_schema);
+  const labels = {1:'保存客户信息',2:'生成调研准备材料',3:'保存沟通记录',4:'生成需求分析报告',5: hasSchema ? '完成' : '生成Demo方案'};
+  if (n === 1 && profilePct >= 100) {
+    fp.textContent = '下一步';
+  } else {
+    fp.textContent = labels[n] || '下一步';
+  }
+  // Enable/disable based on prerequisites
+  fp.disabled = false;
+  if (n === 5 && !hasSchema) {
+    fp.disabled = true;
+    fp.style.opacity = '0.5';
+  } else {
+    fp.style.opacity = '';
+  }
+}
+
+
+function updateCompletion(n) {
+  const pct = Math.round((n-1)/4*100);
+  document.getElementById('completion-pct').textContent = pct+'%';
+  document.getElementById('completion-bar').style.width = pct+'%';
+  document.getElementById('completion-label').textContent = LABELS[n];
+}
+
+function goToList() {
+  location.href = 'client_list.html';
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+}
+
+function loadStepData(n) {
+  const c = getClient(currentClientId);
+  if (!c) return;
+  if (n === 1) loadStep1(c);
+  else if (n === 2) loadStep2(c);
+  else if (n === 3) loadStep3(c);
+  else if (n === 4) loadStep4(c);
+  else if (n === 5) loadStep5(c);
+  renderArtifacts();
+  updateCtxBar(c);
+  if (n === 1) setTimeout(bindStep1Inputs, 50);
+  setTimeout(enableAutoSave, 100);
+}
+
+// ==================== CLIENT LIST ====================
+function renderClientList() {
+  const clients = getClients();
+  const filterIndustry = document.getElementById('filter-industry').value;
+  const filterStage = document.getElementById('filter-stage').value;
+
+  let filtered = clients;
+  if (filterIndustry) filtered = filtered.filter(c => c.industry === filterIndustry);
+  if (filterStage) filtered = filtered.filter(c => getStage(c) === filterStage);
+
+  if (currentSort === 'updated') filtered.sort((a,b) => (b.updated_at||b.created_at||'') > (a.updated_at||a.created_at||'') ? 1 : -1);
+  else if (currentSort === 'name') filtered.sort((a,b) => a.name.localeCompare(b.name));
+  else if (currentSort === 'progress') filtered.sort((a,b) => getProgress(b) - getProgress(a));
+
+  document.getElementById('list-subtitle').textContent = `共 ${clients.length} 个客户`;
+  const grid = document.getElementById('client-list-grid');
+  const empty = document.getElementById('empty-list');
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = clients.length === 0 ? 'grid' : 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.innerHTML = filtered.map(c => renderClientCard(c)).join('');
+
+  const allIndustries = [...new Set(clients.map(c => c.industry).filter(Boolean))];
+  const sel = document.getElementById('filter-industry');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">全部行业</option>' + allIndustries.map(i => `<option>${i}</option>`).join('');
+  sel.value = cur;
+}
+
+function renderClientCard(c) {
+  const progress = getProgress(c);
+  const stage = getStage(c);
+  const stageLabels = {pending:'待完善',prepared:'已生成清单',uploaded:'待出报告',done:'已完成'};
+  const stageColors = {pending:'#f3f4f6:#6b7280',prepared:'#e8f0fe:#1a56db',uploaded:'#fffbeb:#d97706',done:'#ecfdf5:#059669'};
+  const [bg, color] = stageColors[stage].split(':');
+  const tags = (c.tags || '').split(',').filter(Boolean);
+  let dots = '';
+  for (let i = 0; i < 5; i++) {
+    const color2 = i < progress ? '#1263e6' : (i === progress ? '#b9d8ff' : '#e5e7eb');
+    dots += `<div class="c-dot" style="background:${color2}"></div>`;
+  }
+  return `<div class="client-card" onclick="openClient('${c.id}')">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div class="c-name">${c.name||'未命名'}</div><div class="c-meta">${c.industry||'未定义行业'} · ${new Date(c.created_at||'').toLocaleDateString()}</div></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;padding:3px 10px;border-radius:6px;background:${bg};color:${color};font-weight:500">${stageLabels[stage]}</span>
+        <span onclick="event.stopPropagation();deleteClient('${c.id}')" style="cursor:pointer;font-size:16px;color:#ccc;line-height:1" title="删除">×</span>
+      </div>
+    </div>
+    ${tags.length ? `<div class="c-tags">${tags.map(t => `<span class="c-tag">${t}</span>`).join('')}</div>` : ''}
+    <div class="c-progress">${dots}<span class="c-level">${progress}/5</span></div>
+  </div>`;
+}
+
+function getStage(c) {
+  if (c.step4_report || c.step5_schema) return 'done';
+  if (c.transcript || (c.uploaded_files && c.uploaded_files.length > 0)) return 'uploaded';
+  if (c.step1_result) return 'prepared';
+  return 'pending';
+}
+
+function getProgress(c) {
+  let p = 0;
+  if (c.industry) p = 1;
+  if (c.step1_result) p = 2;
+  if (c.transcript || (c.uploaded_files && c.uploaded_files.length > 0)) p = 3;
+  if (c.step4_report) p = 4;
+  if (c.step5_schema) p = 5;
+  return p;
+}
+
+function setSort(sort) {
+  currentSort = sort;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.sort-btn[data-sort="${sort}"]`).classList.add('active');
+  renderClientList();
+}
+
+function openClient(id) {
+  location.href = 'workbench.html?client_id=' + encodeURIComponent(id);
+}
+
+function deleteClient(id) {
+  if (!confirm('确定删除这个客户？')) return;
+  const clients = getClients().filter(c => c.id !== id);
+  saveClients(clients);
+  renderClientList();
+}
+
+// ==================== STEP 1 ====================
+function loadStep1(c) {
+  document.getElementById('s1-name').value = c.name || '';
+  document.getElementById('s1-industry').value = c.industry || '';
+  document.getElementById('s1-demand').value = c.initial_demand || '';
+  document.querySelectorAll('#s1-chips .chip').forEach(chip => {
+    const tag = chip.dataset.tag;
+    chip.classList.toggle('active', (c.tags||'').split(',').includes(tag));
+  });
+  if (c.company_intro || c.company_type) {
+    document.getElementById('s1-ai-result').classList.remove('is-hidden');
+    document.getElementById('s1-ai-type').textContent = c.company_type || '-';
+    document.getElementById('s1-ai-main').textContent = c.main_customers || '-';
+    document.getElementById('s1-ai-focus').textContent = c.possible_focus || '-';
+    document.getElementById('s1-ai-intro').textContent = c.company_intro || '-';
+  }
+  // 绑定实时进度更新
+  bindStep1Inputs();
+}
+
+function bindStep1Inputs() {
+  const fields = ['s1-name', 's1-industry', 's1-scale', 's1-demand'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => {
+      updateProfileProgress();
+      updateProfileClient();
+    });
+  });
+  document.querySelectorAll('#s1-chips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('active');
+      updateProfileProgress();
+      updateProfileClient();
+    });
+  });
+}
+
+// 实时更新 client 对象（用于保存时能拿到最新值）
+function updateProfileClient() {
+  const nameVal = document.getElementById('s1-name')?.value || '';
+  const industryVal = document.getElementById('s1-industry')?.value || '';
+  const scaleVal = document.getElementById('s1-scale')?.value || '';
+  const demandVal = document.getElementById('s1-demand')?.value || '';
+  const activeTags = [...document.querySelectorAll('#s1-chips .chip.active')];
+  const tagsVal = activeTags.map(chip => chip.dataset.tag).join(',');
+  if (currentClientId) {
+    updateClient(currentClientId, { name: nameVal, industry: industryVal, scale: scaleVal, initial_demand: demandVal, tags: tagsVal });
+  }
+}
+
+function updateProfileProgress() {
+  let pct = 0;
+  const nameVal = document.getElementById('s1-name')?.value || '';
+  const industryVal = document.getElementById('s1-industry')?.value || '';
+  const scaleVal = document.getElementById('s1-scale')?.value || '';
+  const demandVal = document.getElementById('s1-demand')?.value || '';
+  const activeTags = [...document.querySelectorAll('#s1-chips .chip.active')];
+  const tagsVal = activeTags.map(chip => chip.dataset.tag).join(',');
+
+  if (nameVal) pct += 20;
+  if (industryVal) pct += 30;
+  if (scaleVal) pct += 10;
+  if (tagsVal) pct += 10;
+  if (demandVal) pct += 20;
+
+  // 更新制品区进度条
+  const artList = document.getElementById('art-list');
+  if (!artList) return;
+  const firstArtifact = artList.querySelector('.artifact');
+  if (!firstArtifact) return;
+  const bar = firstArtifact.querySelector('.bar');
+  const tagEl = firstArtifact.querySelector('.tag');
+  if (bar) bar.style.width = pct + '%';
+  if (tagEl) {
+    tagEl.textContent = pct >= 100 ? '已完成' : '进行中';
+    tagEl.className = 'tag' + (pct >= 100 ? '' : ' todo');
+  }
+}
+
+function toggleAISearch() {
+  const panel = document.getElementById('s1-ai-panel');
+  const btn = document.getElementById('aiSearchBtn');
+  if (panel.classList.contains('is-hidden')) {
+    // 展开面板，触发搜索
+    panel.classList.remove('is-hidden');
+    btn.classList.add('loading');
+    btn.querySelector('.ai-icon').textContent = '⏳';
+    setAIIndicator('loading', 'AI 智搜中...');
+    // 立即显示加载状态，更醒目
+    panel.querySelector('.ai-panel-body').innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 20px">
+        <div style="width:48px;height:48px;border-radius:50%;border:4px solid #e8edf5;border-top-color:#1263e6;border-right-color:#13b96f;animation:spin .8s linear infinite"></div>
+        <div style="font-size:14px;font-weight:800;color:#182235">正在搜索公司信息...</div>
+        <div style="font-size:12px;color:#98a2b3">预计 3-5 秒</div>
+      </div>`;
+    document.getElementById('s1-ai-retry').style.display = 'none';
+    doAISearch();
+  } else {
+    // 收起面板
+    panel.classList.add('is-hidden');
+    btn.classList.remove('loading');
+    btn.innerHTML = '<span class="ai-icon">✨</span><span>AI 智搜</span>';
+  }
+}
+
+function setAIIndicator(state, text) {
+  const indicator = document.getElementById('s1-ai-indicator');
+  const statusText = document.getElementById('s1-ai-status-text');
+  indicator.className = 'ai-panel-indicator ' + state;
+  statusText.textContent = text;
+  if (state === 'loading') {
+    indicator.innerHTML = '<span class="pulse"></span><span id="s1-ai-status-text">AI 智搜中...</span>';
+  } else if (state === 'success') {
+    indicator.innerHTML = '<span class="check-icon">✓</span><span id="s1-ai-status-text">AI 识别完成</span>';
+  } else if (state === 'error') {
+    indicator.innerHTML = '<span style="font-size:14px">⚠️</span><span id="s1-ai-status-text">AI 搜索失败</span>';
+  }
+}
+
+async function doAISearch() {
+  const name = document.getElementById('s1-name').value.trim();
+  if (!name) { alert('请先输入客户名称'); return; }
+  const industry = document.getElementById('s1-industry').value;
+  const btn = document.getElementById('aiSearchBtn');
+  const panel = document.getElementById('s1-ai-panel');
+  const body = document.getElementById('s1-ai-body');
+
+  // 显示加载状态
+  btn.classList.add('loading');
+  btn.innerHTML = '<span style="width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;animation:spin .8s linear infinite;display:inline-block"></span><span>搜索中...</span>';
+  setAIIndicator('loading', 'AI 智搜中...');
+  document.getElementById('s1-ai-retry').style.display = 'none';
+  body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 20px"><div style="width:48px;height:48px;border-radius:50%;border:4px solid #e8edf5;border-top-color:#1263e6;border-right-color:#13b96f;animation:spin .8s linear infinite"></div><div style="font-size:14px;font-weight:800;color:#182235">正在搜索公司信息...</div><div style="font-size:12px;color:#98a2b3">预计 3-5 秒</div></div>';
+
+  updateClient(currentClientId, { name, industry });
+
+  try {
+    const token = getToken();
+    const response = await fetch(API_BASE + '/api/company_search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ company_name: name, industry: industry || '' })
+    });
+
+    console.log('Response status:', response.status);
+
+    if (!response.ok) {
+      throw new Error('请求失败: ' + response.status);
+    }
+
+    const data = await response.json();
+    console.log('Response data:', data);
+
+    if (data.detail) {
+      throw new Error(data.detail);
+    }
+
+    renderAIResult(data);
+
+    updateClient(currentClientId, {
+      company_type: data.company_type || '',
+      main_customers: data.main_customers || '',
+      possible_focus: data.possible_focus || '',
+      company_intro: data.company_intro || ''
+    });
+  } catch (e) {
+    console.error('AI search error:', e);
+    alert('搜索失败: ' + e.message);
+    renderAIResultError();
+  }
+}
+
+function renderAIResult(data) {
+  console.log('renderAIResult received:', data);
+  const btn = document.getElementById('aiSearchBtn');
+  const body = document.getElementById('s1-ai-body');
+  const indicator = document.getElementById('s1-ai-indicator');
+
+  if (!body || !indicator) {
+    console.error('AI panel elements not found');
+    return;
+  }
+
+  btn.classList.remove('loading');
+  btn.innerHTML = '<span class="ai-icon">✨</span><span>AI 智搜</span>';
+  indicator.innerHTML = '<span class="check-icon">✓</span><span style="color:#13b96f;font-size:12px">已完成</span>';
+
+  const focusTags = (data.possible_focus || '').split(/[\/\s]+/).filter(t => t.length > 1);
+  const companyType = data.company_type || '-';
+  const mainCustomers = data.main_customers || '-';
+  const companyIntro = data.company_intro || '-';
+
+  body.innerHTML = `
+    <div style="padding:16px 18px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px">
+        <div>
+          <h3 style="margin:0 0 3px;font-size:15px;font-weight:900;color:#182235">AI 智搜结果</h3>
+          <span style="font-size:11px;color:#98a2b3">基于公开信息辅助生成</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button onclick="doAISearch()" class="btn ghost" style="padding:8px 14px;font-size:12px;border-radius:11px">重新生成</button>
+          <button onclick="adoptAIResult()" class="btn primary" style="padding:8px 18px;font-size:12px;border-radius:11px">采用</button>
+        </div>
+      </div>
+      <div class="insights" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px">
+        <div class="insight" style="border:1px solid #e6ebf2;border-radius:16px;background:#fff;padding:14px">
+          <b style="font-size:13px;color:#182235;display:block;margin-bottom:6px">${companyType}</b>
+          <span style="font-size:11px;color:#98a2b3">客户类型</span>
+        </div>
+        <div class="insight" style="border:1px solid #e6ebf2;border-radius:16px;background:#fff;padding:14px">
+          <b style="font-size:13px;color:#182235;display:block;margin-bottom:6px">${mainCustomers}</b>
+          <span style="font-size:11px;color:#98a2b3">主要客户</span>
+        </div>
+        <div class="insight" style="border:1px solid #e6ebf2;border-radius:16px;background:#fff;padding:14px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">${focusTags.map(t => '<span style="background:#eef6ff;color:#1263e6;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:800">'+t+'</span>').join('') || '<span style="color:#98a2b3;font-size:12px">暂无</span>'}</div>
+          <span style="font-size:11px;color:#98a2b3;margin-top:6px;display:block">可能关注</span>
+        </div>
+      </div>
+      ${companyIntro !== '-' ? '<div class="insight" style="border:1px solid #e6ebf2;border-radius:16px;background:#fff;padding:14px"><b style="font-size:13px;color:#182235;display:block;margin-bottom:6px">公司简介</b><p style="margin:0;font-size:12px;color:#667085;line-height:1.7">'+companyIntro+'</p></div>' : ''}
+    </div>
+  `;
+
+  body.dataset.companyType = data.company_type || '';
+  body.dataset.mainCustomers = data.main_customers || '';
+  body.dataset.possibleFocus = data.possible_focus || '';
+  body.dataset.companyIntro = data.company_intro || '';
+}
+
+function renderAIResultError() {
+  const panel = document.getElementById('s1-ai-panel');
+  const body = panel.querySelector('.ai-panel-body');
+  const btn = document.getElementById('aiSearchBtn');
+  btn.classList.remove('loading');
+  btn.innerHTML = '<span class="ai-icon">✨</span><span>AI 智搜</span>';
+  setAIIndicator('error', 'AI 搜索失败');
+  document.getElementById('s1-ai-retry').style.display = 'block';
+  body.innerHTML = `
+    <div style="text-align:center;padding:24px 20px">
+      <div style="font-size:32px;margin-bottom:10px">⚠️</div>
+      <div style="font-size:14px;font-weight:800;color:#182235;margin-bottom:6px">AI 搜索失败</div>
+      <div style="font-size:13px;color:#667085">请检查网络或稍后重试</div>
+    </div>`;
+}
+
+function adoptAIResult() {
+  const body = document.getElementById('s1-ai-body');
+  const type = body.dataset.companyType || '';
+  const main = body.dataset.mainCustomers || '';
+  const focus = body.dataset.possibleFocus || '';
+  const intro = body.dataset.companyIntro || '';
+
+  // 写入表单 - 尝试匹配行业选项
+  const industrySelect = document.getElementById('s1-industry');
+  if (industrySelect && type) {
+    const options = Array.from(industrySelect.options);
+    const matched = options.find(opt => type.includes(opt.text) || opt.text.includes(type.split(/[\_\s]/)[0]));
+    if (matched) industrySelect.value = matched.value;
+  }
+
+  // 保持面板显示，不隐藏
+  document.getElementById('aiSearchBtn').classList.remove('loading');
+  document.getElementById('aiSearchBtn').querySelector('.ai-icon').textContent = '✨';
+
+  // 保存到 client
+  updateClient(currentClientId, {
+    company_type: type,
+    main_customers: main,
+    possible_focus: focus,
+    company_intro: intro
+  });
+
+  showToast('已采用 AI 识别结果');
+}
+
+  function saveStep1() {
+    const name = document.getElementById('s1-name').value.trim();
+    const industry = document.getElementById('s1-industry').value;
+    const scale = document.getElementById('s1-scale').value;
+    const demand = document.getElementById('s1-demand').value.trim();
+    const activeTags = [...document.querySelectorAll('#s1-chips .chip.active')].map(c => c.dataset.tag);
+    const tags = activeTags.join(',');
+    updateClient(currentClientId, { name, industry, scale, initial_demand: demand, tags, _saved: true });
+    updateFloatingAction(1);
+    renderArtifacts();
+  }
+
+function handleCustomTag(e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const input = document.getElementById('s1-custom-tag');
+  const tag = input.value.trim();
+  if (!tag) return;
+  // Create new chip
+  const chip = document.createElement('span');
+  chip.className = 'chip active';
+  chip.dataset.tag = tag;
+  chip.textContent = tag;
+  chip.onclick = () => chip.classList.toggle('active');
+  // Insert before the input
+  const chips = document.getElementById('s1-chips');
+  chips.insertBefore(chip, input);
+  input.value = '';
+  // Add tag to active tags
+  saveStep1();
+}
+
+// Save to localStorage only (no backend)
+function saveStep1Local() {
+  const name = document.getElementById('s1-name').value.trim();
+  const industry = document.getElementById('s1-industry').value;
+  const scale = document.getElementById('s1-scale').value;
+  const demand = document.getElementById('s1-demand').value.trim();
+  const activeTags = [...document.querySelectorAll('#s1-chips .chip.active')].map(c => c.dataset.tag);
+  const tags = activeTags.join(',');
+  const clients = getClients();
+  const idx = clients.findIndex(c => c.id === currentClientId);
+  if (idx >= 0) Object.assign(clients[idx], { name, industry, scale, initial_demand: demand, tags, updated_at: new Date().toISOString() });
+  saveClients(clients);
+}
+
+// ==================== STEP 1 HANDLERS ====================
+async function doGenerateCustomerProfile() {
+  const btn = document.getElementById('s1-gen-btn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  const name = document.getElementById('s1-name').value.trim();
+  const industry = document.getElementById('s1-industry').value;
+  const demand = document.getElementById('s1-demand').value.trim();
+  if (!name || !industry || !demand) { showToast('请填写完整客户信息'); btn.classList.remove('loading'); btn.disabled = false; return; }
+  saveStep1Local();
+  showGenerateModal('正在生成客户画像', 'AI 正在分析客户信息并生成调研问题', 2);
+  setGenStep(1);
+  genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时，请重试', true); }, 30000);
+  setTimeout(() => { if (genReady) return; setGenStep(2); }, 500);
+  setTimeout(() => { if (genReady) return; setGenStep(3); }, 1500);
+  setTimeout(() => { if (genReady) return; setGenStep(4); }, 5000);
+  setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
+  fetch(API_BASE + '/api/question_list', {
+    method: 'POST', headers: getAuthHeaders(),
+    body: JSON.stringify({ industry, initial_demand: demand, company_name: name, company_intro: getClient(currentClientId)?.company_intro || '' })
+  }).then(r => r.json()).then(data => {
+    clearTimeout(genTimeout);
+    if (genReady) return;
+    if (data.result) {
+      updateClient(currentClientId, { step1_result: data.result });
+      showGenSuccess('客户画像生成完成', '客户画像已生成<br>调研问题已生成<br>信息缺口已生成');
+    } else {
+      showGenError2(data.error || '生成客户画像失败', true);
+    }
+  }).catch(e => { clearTimeout(genTimeout); if (genReady) return; showGenError2('网络错误，请检查连接', true); }).finally(() => {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  });
+}
+
+function doStep1Next() {
+  const c = getClient(currentClientId);
+  if (c.step1_result) {
+    go(2);
+  } else {
+    doGenerateCustomerProfile();
+  }
+}
+
+// ==================== STEP 2 HANDLERS ====================
+async function doRegenerateStep2() {
+  const btn = document.getElementById('s2-gen-btn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  saveStep2ToClient();
+  const c = getClient(currentClientId);
+  const name = c.name || '';
+  const industry = c.industry || '';
+  const demand = c.initial_demand || '';
+  showGenerateModal('正在重新生成调研准备材料', 'AI 正在分析客户信息并生成调研问题', 2);
+  setGenStep(1);
+  genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时，请重试', true); }, 30000);
+  setTimeout(() => { if (genReady) return; setGenStep(2); }, 500);
+  setTimeout(() => { if (genReady) return; setGenStep(3); }, 1500);
+  setTimeout(() => { if (genReady) return; setGenStep(4); }, 5000);
+  setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
+  fetch(API_BASE + '/api/question_list', {
+    method: 'POST', headers: getAuthHeaders(),
+    body: JSON.stringify({ industry, initial_demand: demand, company_name: name, company_intro: c.company_intro || '' })
+  }).then(r => r.json()).then(data => {
+    clearTimeout(genTimeout);
+    if (genReady) return;
+    if (data.result) {
+      updateClient(currentClientId, { step1_result: data.result });
+      loadStep2(getClient(currentClientId));
+      showGenSuccess('调研准备材料生成完成', '');
+    } else {
+      showGenError2(data.error || '生成失败', true);
+    }
+  }).catch(e => { clearTimeout(genTimeout); if (genReady) return; showGenError2('网络错误', true); }).finally(() => {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  });
+}
+
+function doStep2Next() {
+  const c = getClient(currentClientId);
+  saveStep2ToClient();
+  go(3);
+}
+
+// ==================== STEP 3 HANDLERS ====================
+async function doRegenerateStep3() {
+  const btn = document.getElementById('s3-gen-btn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  saveStep3();
+  const c = getClient(currentClientId);
+  if (!c.transcript && (!c.uploaded_files || c.uploaded_files.length === 0)) {
+    showToast('请先上传沟通记录或粘贴文字');
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    return;
+  }
+  showGenerateModal('正在生成售前报告', 'AI 正在分析沟通记录并生成需求报告', 4);
+  setGenStep(1);
+  genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时', true); }, 30000);
+  setTimeout(() => { if (genReady) return; setGenStep(2); }, 500);
+  setTimeout(() => { if (genReady) return; setGenStep(3); }, 1500);
+  setTimeout(() => { if (genReady) return; setGenStep(4); }, 5000);
+  setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
+  fetch(API_BASE + '/api/reports/generate', {
+    method: 'POST', headers: getAuthHeaders(),
+    body: JSON.stringify({ transcript: c.transcript || '', industry: c.industry || '' })
+  }).then(r => r.json()).then(data => {
+    clearTimeout(genTimeout);
+    if (genReady) return;
+    if (data.result) {
+      updateClient(currentClientId, { step4_report: data.result });
+      showGenSuccess('需求分析报告生成完成', '');
+    } else {
+      showGenError2(data.error || '生成失败', true);
+    }
+  }).catch(e => { clearTimeout(genTimeout); if (genReady) return; showGenError2('网络错误', true); }).finally(() => {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  });
+}
+
+function doStep3Next() {
+  const c = getClient(currentClientId);
+  if (!c.transcript && (!c.uploaded_files || c.uploaded_files.length === 0)) {
+    showToast('请先添加沟通记录后再点击生成');
+    return;
+  }
+  saveStep3();
+  if (c.step4_report) {
+    go(4);
+  } else {
+    doRegenerateStep3();
+  }
+}
+
+function doStep4Next() {
+  const c = getClient(currentClientId);
+  saveStep4ToClient();
+  if (c.step5_schema) {
+    go(5);
+  } else {
+    doRegenerateStep4();
+  }
+}
+
+// ==================== STEP 4 HANDLERS ====================
+async function doRegenerateStep4() {
+  const btn = document.getElementById('s4-gen-btn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  saveStep4ToClient();
+  const c = getClient(currentClientId);
+  showGenerateModal('正在重新生成售前报告', 'AI 正在分析沟通记录并生成需求报告', 4);
+  setGenStep(1);
+  genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时', true); }, 30000);
+  setTimeout(() => { if (genReady) return; setGenStep(2); }, 500);
+  setTimeout(() => { if (genReady) return; setGenStep(3); }, 1500);
+  setTimeout(() => { if (genReady) return; setGenStep(4); }, 5000);
+  setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
+  fetch(API_BASE + '/api/reports/generate', {
+    method: 'POST', headers: getAuthHeaders(),
+    body: JSON.stringify({ transcript: c.transcript || '', industry: c.industry || '' })
+  }).then(r => r.json()).then(data => {
+    clearTimeout(genTimeout);
+    if (genReady) return;
+    if (data.result) {
+      updateClient(currentClientId, { step4_report: data.result });
+      showGenSuccess('售前报告生成完成', '');
+    } else {
+      showGenError2(data.error || '生成失败', true);
+    }
+  }).catch(e => { clearTimeout(genTimeout); if (genReady) return; showGenError2('网络错误', true); }).finally(() => {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  });
+}
+
+// ==================== STEP 5 HANDLER ====================
+async function doRegenerateStep5() {
+  const btn = document.getElementById('s5-gen-btn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  saveStep5ToClient();
+  const c = getClient(currentClientId);
+  showGenerateModal('正在重新生成Demo方案', 'AI 正在设计智能表格结构', 5);
+  setGenStep(1);
+  genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时', true); }, 30000);
+  setTimeout(() => { if (genReady) return; setGenStep(2); }, 500);
+  setTimeout(() => { if (genReady) return; setGenStep(3); }, 1500);
+  setTimeout(() => { if (genReady) return; setGenStep(4); }, 5000);
+  setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
+  fetch(API_BASE + '/api/reports/generate', {
+    method: 'POST', headers: getAuthHeaders(),
+    body: JSON.stringify({ transcript: c.transcript || '', industry: c.industry || '', output_type: 'schema' })
+  }).then(r => r.json()).then(data => {
+    clearTimeout(genTimeout);
+    if (genReady) return;
+    if (data.demo_json) {
+      updateClient(currentClientId, { step5_schema: data.demo_json });
+      loadStep5(getClient(currentClientId));
+      showGenSuccess('Demo方案生成完成', '');
+    } else {
+      showGenError2(data.error || '生成失败', true);
+    }
+  }).catch(e => { clearTimeout(genTimeout); if (genReady) return; showGenError2('网络错误', true); }).finally(() => {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  });
+}
+
+// primaryAction and saveCurrentStep are deprecated - use the step-specific handlers instead
+async function primaryAction() {
+  // Redirect to appropriate next button handler
+  if (currentStep === 1) doStep1Next();
+  else if (currentStep === 2) doStep2Next();
+  else if (currentStep === 3) doStep3Next();
+  else if (currentStep === 4) doStep4Next();
+}
+
+function saveCurrentStep() {
+  if (currentStep === 1) saveStep1();
+  else if (currentStep === 2) saveStep2ToClient();
+  else if (currentStep === 3) saveStep3();
+  else if (currentStep === 4) saveStep4ToClient();
+  else if (currentStep === 5) saveStep5ToClient();
+  showToast('已保存');
+}
+
+// ==================== STEP 2 ====================
+function loadStep2(c) {
+  if (!c.step1_result) return;
+  const data = c.step1_result;
+  document.getElementById('s2-profile-text').textContent = data.part1?.company_background || '-';
+  const pains = data.part1?.pain_points || [];
+  document.querySelectorAll('#s2-pains .pain').forEach((el, i) => {
+    el.textContent = pains[i] || '-';
+  });
+  renderGaps(data.part2 || []);
+  // 先清空容器再渲染，避免 innerHTML+= 导致按钮叠加
+  document.getElementById('s2-must-questions').innerHTML = '';
+  document.getElementById('s2-deep-questions').innerHTML = '';
+  document.getElementById('s2-industry-notes').innerHTML = '';
+  renderQuestions(data.part3 || {});
+  updateCtxBar(c);
+}
+
+function renderGaps(gaps) {
+  const container = document.getElementById('s2-gaps');
+  const total = gaps.length;
+  document.getElementById('s2-gaps-total').textContent = total;
+  const btn = document.getElementById('s2-gaps-more-btn');
+  const showCount = 5;
+  container.innerHTML = gaps.map((g, i) => `
+    <div class="gap sortable-item${i >= showCount ? ' hidden-gaps' : ''}" draggable="true" data-idx="${i}" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)">
+      <span class="check"></span>
+      <span class="gap-text" contenteditable="false">${g.gap}</span>
+      <select class="priority-select" onchange="updateGapPriority(this)">
+        <option value="高" ${g.priority === '高' ? 'selected' : ''}>高</option>
+        <option value="中" ${g.priority === '中' ? 'selected' : ''}>中</option>
+        <option value="低" ${g.priority === '低' ? 'selected' : ''}>低</option>
+      </select>
+      <span class="drag-handle" title="拖拽排序"></span>
+    </div>
+  `).join('');
+  btn.style.display = total > showCount ? 'block' : 'none';
+  container.classList.remove('gaps-expanded');
+  btn.classList.remove('is-open');
+  btn.innerHTML = `查看更多问题（<span id="s2-gaps-total">${total}</span>）`;
+}
+
+function updateGapPriority(select) {
+  const priority = select.value;
+  // Visual feedback - the select itself shows the priority color via CSS
+}
+
+function toggleMoreGaps() {
+  const container = document.getElementById('s2-gaps');
+  const btn = document.getElementById('s2-gaps-more-btn');
+  const isOpen = container.classList.toggle('gaps-expanded');
+  btn.classList.toggle('is-open', isOpen);
+  btn.innerHTML = isOpen ? '收起问题' : `查看更多问题（<span id="s2-gaps-total">${container.querySelectorAll('.gap').length}</span>）`;
+}
+
+function renderQuestions(q) {
+  const mustList = document.getElementById('s2-must-questions');
+  mustList.innerHTML = (q.must_ask || []).map((item, i) => `
+    <div class="q-card sortable-item" draggable="true" data-idx="${i}" data-type="must" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)">
+      <div class="q-card-main">
+        <div class="q-top">
+          <span class="dim">${item.dimension || '信息收集'}</span>
+        </div>
+        <h3 class="q-title" contenteditable="false">${item.question}</h3>
+        ${item.note ? `<p class="q-purpose"><em class="q-note">${item.note}</em></p>` : ''}
+      </div>
+      <div class="q-actions">
+        <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
+        <span class="drag-handle" title="拖拽排序"></span>
+      </div>
+    </div>
+  `).join('');
+  mustList.innerHTML += '<button class="add-q-btn" onclick="addQuestion(\'must\')">+ 添加问题</button>';
+
+  const deepList = document.getElementById('s2-deep-questions');
+  deepList.innerHTML = (q.deep_dive || []).map((item, i) => `
+    <div class="q-card sortable-item" draggable="true" data-idx="${i}" data-type="deep" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)">
+      <div class="q-card-main">
+        <div class="q-top"><span class="dim">${item.dimension || '深度挖掘'}</span></div>
+        <h3 class="q-title" contenteditable="false">${item.question}</h3>
+        ${item.note ? `<p class="q-purpose"><em class="q-note">${item.note}</em></p>` : ''}
+      </div>
+      <div class="q-actions">
+        <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
+        <span class="drag-handle" title="拖拽排序"></span>
+      </div>
+    </div>
+  `).join('');
+  deepList.innerHTML += '<button class="add-q-btn" onclick="addQuestion(\'deep\')">+ 添加问题</button>';
+
+  const industryNotes = document.getElementById('s2-industry-notes');
+  industryNotes.innerHTML = (q.industry_experience || []).map((item, i) => `
+    <div class="q-card sortable-item" draggable="true" data-idx="${i}" data-type="industry" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)">
+      <div class="q-card-main">
+        <div class="q-top"><span class="dim">${item.dimension || '行业经验'}</span></div>
+        <h3 class="q-title" contenteditable="false">${item.question}</h3>
+        ${item.note ? `<p class="q-purpose"><em class="q-note">${item.note}</em></p>` : ''}
+      </div>
+      <div class="q-actions">
+        <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
+        <span class="drag-handle" title="拖拽排序"></span>
+      </div>
+    </div>
+  `).join('');
+  industryNotes.innerHTML += '<button class="add-q-btn" onclick="addQuestion(\'industry\')">+ 添加问题</button>';
+
+  const mustCount = (q.must_ask || []).length;
+  const deepCount = (q.deep_dive || []).length;
+  const industryCount = (q.industry_experience || []).length;
+  document.getElementById('s2-must-count').textContent = mustCount;
+  document.getElementById('s2-deep-count').textContent = deepCount;
+  document.getElementById('s2-industry-count').textContent = industryCount;
+  document.getElementById('s2-deep-total').textContent = deepCount + industryCount;
+}
+
+function switchTab(btn) {
+  const target = btn.dataset.target;
+  btn.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('s2-must-questions').style.display = target === 'must' ? '' : 'none';
+  document.getElementById('s2-deep-questions').style.display = target === 'deep' ? '' : 'none';
+  document.getElementById('s2-industry-notes').style.display = target === 'industry' ? '' : 'none';
+  document.getElementById('s2-more-btn').style.display = target !== 'must' ? 'none' : '';
+}
+
+function toggleMoreQuestions() {
+  const btn = document.getElementById('s2-more-btn');
+  const deepList = document.getElementById('s2-deep-questions');
+  const industryNotes = document.getElementById('s2-industry-notes');
+  const isOpen = btn.classList.toggle('is-open');
+  deepList.style.display = isOpen ? '' : 'none';
+  industryNotes.style.display = isOpen ? '' : 'none';
+  btn.innerHTML = isOpen ? '收起问题' : `查看更多问题（<span id="s2-deep-total">${deepList.querySelectorAll('.q-card').length + industryNotes.querySelectorAll('.q-card').length}</span>）`;
+}
+
+function togglePartEdit(btn, part) {
+  const isEditing = btn.textContent === '完成';
+  const card = btn.closest('.prep-card');
+
+  if (part === 'part1') {
+    // 客户画像
+    const profile = card.querySelector('#s2-profile-text');
+    const pains = card.querySelectorAll('#s2-pains .pain');
+    if (isEditing) {
+      profile.contentEditable = 'false';
+      pains.forEach(p => p.contentEditable = 'false');
+      btn.textContent = '编辑';
+    } else {
+      profile.contentEditable = 'true';
+      pains.forEach(p => p.contentEditable = 'true');
+      profile.focus();
+      btn.textContent = '完成';
+    }
+  } else if (part === 'part2') {
+    // 待确认信息清单 - 切换所有 gap 内容的编辑状态
+    const gaps = card.querySelectorAll('.gap b');
+    if (isEditing) {
+      gaps.forEach(g => g.contentEditable = 'false');
+      btn.textContent = '编辑';
+    } else {
+      gaps.forEach(g => g.contentEditable = 'true');
+      btn.textContent = '完成';
+    }
+  }
+}
+
+function addGap() {
+  const container = document.getElementById('s2-gaps');
+  const total = container.querySelectorAll('.gap').length;
+  const newGap = document.createElement('div');
+  newGap.className = 'gap sortable-item';
+  newGap.draggable = true;
+  newGap.dataset.idx = total;
+  newGap.innerHTML = `
+    <span class="check"></span>
+    <span class="gap-text"><b contenteditable="true">请输入缺失的关键信息</b></span>
+    <select class="priority-select" onchange="updateGapPriority(this)">
+      <option value="高" selected>高</option>
+      <option value="中">中</option>
+      <option value="低">低</option>
+    </select>
+    <span class="drag-handle" title="拖拽排序"></span>
+  `;
+  container.appendChild(newGap);
+  newGap.querySelector('b').focus();
+  document.getElementById('s2-gaps-total').textContent = container.querySelectorAll('.gap').length;
+}
+
+function toggleEditStep2(btn) {
+  const card = btn.closest('.q-card');
+  const title = card.querySelector('.q-title');
+  const note = card.querySelector('.q-note');
+  const dim = card.querySelector('.dim');
+  const isEditing = btn.textContent === '完成';
+
+  if (isEditing) {
+    // Save - make non-editable
+    title.contentEditable = 'false';
+    if (note) note.contentEditable = 'false';
+    if (dim) dim.contentEditable = 'false';
+    btn.textContent = '编辑';
+    btn.style.background = '#f3f6fa';
+    btn.style.color = '#667085';
+  } else {
+    // Edit - make editable
+    title.contentEditable = 'true';
+    if (note) note.contentEditable = 'true';
+    if (dim) dim.contentEditable = 'true';
+    title.focus();
+    btn.textContent = '完成';
+    btn.style.background = '#1263e6';
+    btn.style.color = '#fff';
+  }
+}
+
+function addQuestion(type) {
+  const listMap = { must: 's2-must-questions', deep: 's2-deep-questions', industry: 's2-industry-notes' };
+  const container = document.getElementById(listMap[type]);
+  const newCard = document.createElement('div');
+  newCard.className = 'q-card sortable-item';
+  newCard.dataset.type = type;
+  newCard.draggable = true;
+  newCard.innerHTML = `
+    <div class="q-card-main">
+      <div class="q-top"><span class="dim">新增</span></div>
+      <h3 class="q-title" contenteditable="true">请输入问题</h3>
+      <p class="q-purpose"><em class="q-note">请输入备注说明</em></p>
+    </div>
+    <div class="q-actions">
+      <button class="edit-btn" onclick="toggleEditStep2(this)">完成</button>
+      <span class="drag-handle" title="拖拽排序"></span>
+    </div>
+  `;
+  container.insertBefore(newCard, container.querySelector('.add-q-btn'));
+  newCard.querySelector('.q-title').focus();
+}
+
+// ==================== DRAG AND DROP ====================
+let _dragSrcEl = null;
+function onDragStart(e) {
+  _dragSrcEl = e.currentTarget;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', e.currentTarget.dataset.idx || '');
+}
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const target = e.currentTarget;
+  if (target === _dragSrcEl) return;
+  target.style.opacity = '0.5';
+}
+function onDrop(e) {
+  e.preventDefault();
+  const target = e.currentTarget;
+  if (target === _dragSrcEl) return;
+  target.style.opacity = '';
+  const container = _dragSrcEl.parentElement;
+  if (container.contains(target)) {
+    const srcIdx = [...container.children].indexOf(_dragSrcEl);
+    const tgtIdx = [...container.children].indexOf(target);
+    if (srcIdx < tgtIdx) {
+      container.insertBefore(_dragSrcEl, target.nextSibling);
+    } else {
+      container.insertBefore(_dragSrcEl, target);
+    }
+  }
+}
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.sortable-item').forEach(el => el.style.opacity = '');
+}
+
+function saveStep2ToClient() {
+  const c = getClient(currentClientId);
+  const data = c.step1_result || {};
+  data.part1 = data.part1 || {};
+  data.part1.company_background = document.getElementById('s2-profile-text').textContent || '';
+  data.part1.pain_points = Array.from(document.querySelectorAll('#s2-pains .pain')).map(el => el.textContent);
+  data.part2 = Array.from(document.querySelectorAll('#s2-gaps .gap')).map(el => ({
+    gap: el.querySelector('b').textContent,
+    priority: el.querySelector('.priority').textContent.replace('优先级', '').trim()
+  }));
+  data.part3 = data.part3 || {};
+  data.part3.must_ask = Array.from(document.querySelectorAll('#s2-must-questions .q-card')).map(card => ({
+    dimension: card.querySelector('.dim')?.textContent || '',
+    question: card.querySelector('h3')?.textContent || '',
+    note: card.querySelector('.q-purpose')?.textContent.replace(/<[^>]+>/g, '').replace(/<\/?em>/g, '') || ''
+  }));
+  data.part3.deep_dive = Array.from(document.querySelectorAll('#s2-deep-questions .q-card')).map(card => ({
+    dimension: card.querySelector('.dim')?.textContent || '',
+    question: card.querySelector('h3')?.textContent || '',
+    note: card.querySelector('.q-purpose')?.textContent.replace(/<[^>]+>/g, '').replace(/<\/?em>/g, '') || ''
+  }));
+  data.part3.industry_experience = Array.from(document.querySelectorAll('#s2-industry-notes .q-card')).map(card => ({
+    dimension: card.querySelector('.dim')?.textContent || '',
+    question: card.querySelector('h3')?.textContent || '',
+    note: card.querySelector('.q-purpose')?.textContent.replace(/<[^>]+>/g, '').replace(/<\/?em>/g, '') || ''
+  }));
+  updateClient(currentClientId, { step1_result: data });
+}
+
+function regenerateStep2() {
+  const name = document.getElementById('s1-name').value.trim();
+  const industry = document.getElementById('s1-industry').value;
+  const demand = document.getElementById('s1-demand').value.trim();
+  if (!name || !industry) { alert('请先填写客户名称和行业'); return; }
+  showFullscreenLoading('正在重新生成…');
+  fetch(API_BASE + '/api/question_list', {
+    method: 'POST', headers: getAuthHeaders(),
+    body: JSON.stringify({ industry, initial_demand: demand, company_name: name, company_intro: getClient(currentClientId)?.company_intro || '' })
+  }).then(r => r.json()).then(data => {
+    if (data.result) {
+      updateClient(currentClientId, { step1_result: data.result });
+      loadStep2(getClient(currentClientId));
+    } else {
+      alert('生成失败');
+    }
+  }).catch(e => alert('失败: ' + e.message)).finally(() => {
+    hideFullscreenLoading();
+  });
+}
+
+// ==================== STEP 3 ====================
+function loadStep3(c) {
+  updateCtxBar(c);
+  renderNoteList(c);
+}
+
+function renderNoteList(c) {
+  const files = c.uploaded_files || [];
+  const list = document.getElementById('s3-note-list');
+  if (files.length === 0) { list.innerHTML = '<div style="color:#98a2b3;font-size:12px;text-align:center;padding:20px">暂无沟通记录</div>'; return; }
+  list.innerHTML = files.map((f, i) => `
+    <div class="saved-note">
+      <div class="saved-note-top">
+        <h4>${f.name || '沟通记录'+(i+1)}</h4>
+        <span class="note-pill">${f.source||'沟通记录'}</span>
+        ${f.stage ? `<span class="note-pill" style="background:#eef6ff;color:#1263e6">${f.stage}</span>` : ''}
+      </div>
+      <div class="note-meta"><span>${f.date||new Date().toLocaleDateString()}</span>${f.type==='file'?'<span class="note-pill">文件</span>':''}</div>
+      <p>${(f.text||'').substring(0,120)}${(f.text||'').length>120?'…':''}</p>
+      <div class="artifact-actions">
+        <button class="art-btn" onclick="editNote(${i})">编辑</button>
+        <button class="art-btn danger" onclick="deleteNote(${i})">删除</button>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('s3-saved-count').textContent = `已沉淀 ${files.length} 次沟通记录`;
+}
+
+// Dual-mode file upload handlers
+function handleFileUpload(file) {
+  if (!file) return;
+  showSelectedFile(file);
+}
+
+function handleFileDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) showSelectedFile(file);
+}
+
+function showSelectedFile(file) {
+  const zone = document.getElementById('s3-drop-zone');
+  const hint = document.getElementById('s3-dz-hint');
+  const nameDisplay = document.getElementById('s3-file-name-display');
+  const actions = document.getElementById('s3-dz-actions');
+  hint.style.display = 'none';
+  nameDisplay.style.display = 'block';
+  nameDisplay.textContent = file.name;
+  actions.style.display = 'flex';
+  zone.classList.add('has-file');
+  document.getElementById('s3-file-input').files = [file];
+}
+
+function clearFileUpload() {
+  const zone = document.getElementById('s3-drop-zone');
+  const hint = document.getElementById('s3-dz-hint');
+  const nameDisplay = document.getElementById('s3-file-name-display');
+  const actions = document.getElementById('s3-dz-actions');
+  hint.style.display = '';
+  nameDisplay.style.display = 'none';
+  actions.style.display = 'none';
+  zone.classList.remove('has-file');
+  document.getElementById('s3-file-input').value = '';
+}
+
+function uploadSelectedFile() {
+  const file = document.getElementById('s3-file-input').files[0];
+  if (!file) return;
+  handleFileUpload(file);
+}
+
+function doAddFileRecord() {
+  const file = document.getElementById('s3-file-input').files[0];
+  if (!file) { showToast('请先选择文件'); return; }
+  const c = getClient(currentClientId);
+  const files = c.uploaded_files || [];
+  showFullscreenLoading('正在上传并提取文件内容…');
+  fetch(API_BASE + '/api/upload', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + getToken() },
+    body: new FormData().append('file', file)
+  }).then(r => r.json()).then(data => {
+    const extracted = data.text || data.content || '';
+    files.push({
+      name: file.name,
+      text: extracted || '(文件内容提取失败，请手动粘贴)',
+      source: document.getElementById('s3-source').value,
+      stage: document.getElementById('s3-stage').value,
+      date: new Date().toLocaleDateString(),
+      type: 'file'
+    });
+    updateClient(currentClientId, { uploaded_files: files, transcript: files.map(f=>f.text).join('\n\n---\n\n') });
+    clearFileUpload();
+    renderNoteList(getClient(currentClientId));
+    hideFullscreenLoading();
+    showToast('文件已添加到沟通记录');
+  }).catch(() => {
+    hideFullscreenLoading();
+    showToast('上传失败，请重试');
+  });
+}
+
+function saveStep3() {
+  const noteText = document.getElementById('s3-note-text').value.trim();
+  const fileInput = document.getElementById('s3-file-input');
+  const file = fileInput?.files?.[0];
+  const c = getClient(currentClientId);
+  const files = c.uploaded_files || [];
+
+  if (!noteText && !file) { alert('请上传文件或粘贴文字'); return; }
+
+  if (editingNoteIndex >= 0) {
+    files[editingNoteIndex] = {
+      ...files[editingNoteIndex],
+      source: document.getElementById('s3-source').value,
+      stage: document.getElementById('s3-stage').value,
+      text: noteText || files[editingNoteIndex].text
+    };
+    finalizeSave(files);
+    return;
+  }
+
+  if (file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    showFullscreenLoading('正在上传并提取文件内容…');
+    fetch(API_BASE + '/api/upload', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + getToken() },
+      body: formData
+    }).then(r => r.json()).then(data => {
+      const extracted = data.text || data.content || '';
+      files.push({
+        name: file.name,
+        text: extracted || '(文件内容提取失败，请手动粘贴)',
+        source: document.getElementById('s3-source').value,
+        stage: document.getElementById('s3-stage').value,
+        date: new Date().toLocaleDateString(),
+        type: 'file'
+      });
+      finalizeSave(files);
+    }).catch(() => {
+      files.push({ name: file.name, text: '(上传失败)', source: document.getElementById('s3-source').value, date: new Date().toLocaleDateString(), type: 'file' });
+      finalizeSave(files);
+    });
+  } else {
+    files.push({ name: `粘贴文字 (${new Date().toLocaleTimeString()})`, text: noteText, source: document.getElementById('s3-source').value, stage: document.getElementById('s3-stage').value, date: new Date().toLocaleDateString(), type: 'text' });
+    finalizeSave(files);
+  }
+
+  function finalizeSave(files) {
+    updateClient(currentClientId, { uploaded_files: files, transcript: files.map(f=>f.text).join('\n\n---\n\n') });
+    document.getElementById('s3-note-text').value = '';
+    clearFileUpload();
+    editingNoteIndex = -1;
+    renderNoteList(getClient(currentClientId));
+    showToast('沟通记录已保存');
+    hideFullscreenLoading();
+  }
+}
+
+function clearNoteForm() {
+  document.getElementById('s3-note-text').value = '';
+  clearFileUpload();
+  editingNoteIndex = -1;
+}
+
+let editingNoteIndex = -1;
+function editNote(i) {
+  const c = getClient(currentClientId);
+  const files = c.uploaded_files || [];
+  const note = files[i];
+  if (!note) return;
+  editingNoteIndex = i;
+  document.getElementById('s3-source').value = note.source || '会议转写';
+  document.getElementById('s3-stage').value = note.stage || '首次需求沟通';
+  if (note.type === 'text') {
+    document.getElementById('s3-note-text').value = note.text || '';
+  }
+  showToast(`正在编辑: ${note.name}`);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function deleteNote(i) {
+  const c = getClient(currentClientId);
+  const files = c.uploaded_files || [];
+  files.splice(i, 1);
+  updateClient(currentClientId, { uploaded_files: files, transcript: files.map(f=>f.text).join('\n\n---\n\n') });
+  renderNoteList(getClient(currentClientId));
+}
+function loadAllNotes() {
+  const c = getClient(currentClientId);
+  const files = c.uploaded_files || [];
+  if (files.length === 0) { alert('暂无沟通记录'); return; }
+  let html = '<div style="max-height:60vh;overflow:auto;padding:4px">';
+  files.forEach((f, i) => {
+    html += `<div style="margin-bottom:16px;border:1px solid #e8edf5;border-radius:16px;padding:14px;background:#fff">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <b style="font-size:14px">${f.name || '记录'+(i+1)}</b>
+        <span style="font-size:12px;color:#98a2b3">${f.source||''} · ${f.date||''}</span>
+      </div>
+      <p style="font-size:12px;color:#344054;line-height:1.7;white-space:pre-wrap">${f.text||'(无内容)'}</p>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button class="art-btn" onclick="editNote(${i})">编辑</button>
+        <button class="art-btn danger" onclick="deleteNote(${i})">删除</button>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `<div style="background:#fff;border-radius:20px;padding:24px;width:100%;max-width:700px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <b style="font-size:16px">全部沟通记录（${files.length}条）</b>
+      <button onclick="this.closest('[style]').remove()" style="background:#eef2f7;border:0;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px">关闭</button>
+    </div>
+    ${html}
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+// ==================== STEP 4 ====================
+function loadStep4(c) {
+  updateCtxBar(c);
+  if (c.step4_report) {
+    renderStep4Report(c.step4_report);
+  }
+}
+
+function saveStep4ToClient() {
+  const c = getClient(currentClientId);
+  const report = c.step4_report || {};
+  report.customer_info = report.customer_info || {};
+  report.customer_info.initial_demand = document.getElementById('s4-current').textContent || '';
+  report.core_pain_points = report.core_pain_points || [];
+  updateClient(currentClientId, { step4_report: report });
+}
+
+function regenerateStep4() {
+  const c = getClient(currentClientId);
+  if (!c.transcript && (!c.uploaded_files || c.uploaded_files.length === 0)) {
+    alert('请先在 Step3 添加沟通记录'); return;
+  }
+  showFullscreenLoading('正在生成需求分析报告…');
+  fetch(API_BASE + '/api/reports/generate', {
+    method: 'POST', headers: getAuthHeaders(),
+    body: JSON.stringify({ client_id: currentClientId, transcript: c.transcript || c.uploaded_files?.map(f=>f.text).join('\n\n') || '', industry: c.industry || '' })
+  }).then(r => r.json()).then(data => {
+    if (data.report && !data.report.error) {
+      updateClient(currentClientId, { step4_report: data.report });
+      renderStep4Report(data.report);
+      go(4);
+    } else {
+      alert('生成失败: ' + (data.report?.error || '未知错误'));
+    }
+  }).catch(e => alert('失败: '+e.message)).finally(() => {
+    hideFullscreenLoading();
+  });
+}
+
+function renderStep4Report(report) {
+  if (!report) return;
+  const info = report.customer_info || {};
+  document.getElementById('s4-current').textContent = info.initial_demand || '-';
+  const pains = (report.core_pain_points || []).map(p => `[${p.priority}] ${p.point}`).join('\n');
+  document.getElementById('s4-pain').textContent = pains || '-';
+  const roles = (report.business_scenario?.roles || []).join('、');
+  document.getElementById('s4-roles').textContent = roles || '-';
+  document.getElementById('s4-goals').textContent = (report.business_scenario?.core_flow || '-').replace(/→/g, ' → ');
+
+  const sol = report.solution || {};
+  const subTables = sol.sub_tables || [];
+  document.getElementById('s4-summary').textContent = `基于 ${info.industry || '该行业'} 需求，建议搭建 ${subTables.length} 张子表`;
+  document.getElementById('s4-modules').textContent = subTables.map(t => t.name).join('、') || '-';
+  document.getElementById('s4-value').textContent = sol.automation_rules?.join('、') || '-';
+  const phases = sol.sub_tables?.map((t, i) => `阶段${i+1}: ${t.name}`) || [];
+  document.getElementById('s4-phases').innerHTML = phases.map(s => `<span>${s}</span>`).join('') || '-';
+
+  renderTechContent(report);
+}
+
+function renderTechContent(report) {
+  const container = document.getElementById('s4-tech-content');
+  const sol = report.solution || {};
+  const subs = sol.sub_tables || [];
+  container.innerHTML = subs.map(sub => `
+    <div class="solution-box">
+      <b>${sub.name}</b>
+      <p>用途: ${sub.purpose || '-'}</p>
+      <p>字段: ${(sub.fields || []).join('、')}</p>
+      <p>角色: ${sub.primary_role || '-'}</p>
+    </div>
+  `).join('') || '<div class="solution-box"><p>暂无技术方案</p></div>';
+}
+
+// ==================== STEP 5 ====================
+function loadStep5(c) {
+  updateCtxBar(c);
+  if (c.step5_schema) {
+    window._demoSchema = c.step5_schema;
+    renderSchemaPreview(c.step5_schema);
+    renderSheetDemo(c.step5_schema);
+  } else {
+    renderSheetCanvas();
+  }
+  renderAgentCanvas();
+}
+
+function saveStep5ToClient() {}
+
+function regenerateStep5() {
+  const c = getClient(currentClientId);
+  if (!c.step4_report && !c.transcript) {
+    alert('请先生成需求分析报告'); return;
+  }
+  showFullscreenLoading('正在生成智能表格 Demo…');
+  generateDemoSchema(c).then(schema => {
+    if (schema) {
+      window._demoSchema = schema;
+      renderSchemaPreview(schema);
+      renderSheetDemo(schema);
+      updateClient(currentClientId, { step5_schema: schema });
+    }
+  }).catch(e => alert('Demo生成失败: ' + e.message)).finally(() => {
+    hideFullscreenLoading();
+  });
+}
+
+async function generateDemoSchema(c) {
+  const schemaPrompt = `你是企业微信智能表格架构师。根据客户需求+知识库字段经验池设计Demo。
+
+## 设计原则
+1. 知识库字段经验池是参考而非约束——它代表同行业服务商的真实交付经验
+2. 每表控制在8-15个字段，2-3条示例数据
+3. 最终产出应该是知识库经验 + 客户个性化需求的结合体
+
+## 输出格式
+直接输出有效JSON，不要markdown代码块，不要用\`\`\`包裹。
+JSON结构：
+{"doc_name":"文档名称","sheets":[{"sheet_name":"子表名","fields":[{"field_title":"字段名","field_type":"类型"}],"sample_records":[{"字段名":"值"}]}]}
+类型只允许：FIELD_TYPE_TEXT / FIELD_TYPE_NUMBER / FIELD_TYPE_SINGLE_SELECT / FIELD_TYPE_DATE_TIME / FIELD_TYPE_CURRENCY / FIELD_TYPE_PERCENTAGE / FIELD_TYPE_PROGRESS / FIELD_TYPE_PHONE_NUMBER / FIELD_TYPE_EMAIL / FIELD_TYPE_CHECKBOX / FIELD_TYPE_URL / FIELD_TYPE_SELECT`;
+
+  const report = c.step4_report || {};
+  const sol = report.solution || {};
+  const subTables = sol.sub_tables || [];
+  const subList = subTables.map(t => `表「${t.name}」: ${(t.fields || []).join('、')}`).join('\n');
+  const schemaUserPrompt = `## 需求分析报告摘要
+行业: ${report.customer_info?.industry || c.industry || '未知'}
+客户现状: ${report.customer_info?.initial_demand || '-'}
+核心痛点: ${(report.core_pain_points || []).map(p => p.point).join('、')}
+业务场景: ${report.business_scenario?.core_flow || '-'}
+角色: ${(report.business_scenario?.roles || []).join('、')}
+
+## 建议子表（来自需求分析）
+${subList || '根据需求自行设计'}
+
+## 沟通记录
+${(c.transcript || '').substring(0, 1500)}
+
+请结合需求分析报告和沟通记录，设计企业微信智能表格Demo。`;
+
+  const schemaText = await callDeepSeek(schemaPrompt, schemaUserPrompt);
+  let schema = null;
+  if (schemaText) {
+    try { schema = JSON.parse(schemaText.trim()); } catch {
+      const m = schemaText.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (m) try { schema = JSON.parse(m[1].trim()); } catch {}
+      if (!schema) {
+        const start = schemaText.indexOf('{');
+        const end = schemaText.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+          try { schema = JSON.parse(schemaText.slice(start, end + 1)); } catch {}
+        }
+      }
+    }
+  }
+  if (!schema || !schema.sheets) throw new Error('AI返回格式异常');
+  return schema;
+}
+
+function renderSchemaPreview(schema) {
+  const previewCard = document.createElement('div');
+  previewCard.className = 'demo-card';
+  previewCard.style.marginBottom = '16px';
+  previewCard.innerHTML = `
+    <div class="demo-card-head">
+      <div><h3>生成的智能表格 Schema</h3><span>可直接创建或复制修改后再创建</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="edit-btn" onclick="copySchema()">复制 JSON</button>
+        <button class="edit-btn success" style="background:#ecfdf5;color:#047857;border-color:#bbf7d0" onclick="createSmartSheet()">创建企微智能表格</button>
+      </div>
+    </div>
+    <div id="schema-preview-content" style="max-height:200px;overflow:auto;background:#f8fafc;border-radius:12px;padding:14px;font-size:12px;font-family:monospace;white-space:pre-wrap;margin-top:10px"></div>
+  `;
+  const existing = document.querySelector('#page5 .demo-card');
+  if (existing) existing.remove();
+  document.querySelector('#page5 .demo-card').before(previewCard);
+  document.getElementById('schema-preview-content').textContent = JSON.stringify(schema, null, 2);
+  window._demoSchema = schema;
+}
+
+function renderSheetDemo(schema) {
+  const canvas = document.getElementById('sheet-canvas');
+  if (!schema?.sheets?.length) return;
+  const firstSheet = schema.sheets[0];
+  canvas.innerHTML = `
+    <div class="sheet-panel active" id="sheet-ledger">
+      <div class="sheet-demo refined">
+        <div class="sheet-top"><b>${firstSheet.sheet_name || 'Demo'}</b><span>企业微信智能表格</span></div>
+        <div class="fake-table compact-table">
+          <div class="fake-row head">
+            ${(firstSheet.fields || []).map(f => `<span>${f.field_title}</span>`).join('')}
+          </div>
+          ${(firstSheet.sample_records || []).map(rec => `
+            <div class="fake-row">
+              ${(firstSheet.fields || []).map(f => `<span>${rec[f.field_title] || ''}</span>`).join('')}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function copySchema() {
+  const schema = window._demoSchema;
+  if (!schema) return;
+  navigator.clipboard.writeText(JSON.stringify(schema, null, 2)).then(() => showToast('JSON 已复制'));
+}
+
+async function createSmartSheet() {
+  const schema = window._demoSchema;
+  if (!schema) { alert('请先生成 Demo'); return; }
+  const schemaObj = typeof schema === 'string' ? JSON.parse(schema) : schema;
+  const total = schemaObj.sheets ? schemaObj.sheets.length : 0;
+  const btn = document.querySelector('[onclick="createSmartSheet()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '创建中…'; }
+  showFullscreenLoading(`正在创建 ${total} 个子表…`);
+  try {
+    const resp = await fetch(API_BASE + '/api/create', {
+      method: 'POST', headers: getAuthHeaders(),
+      body: JSON.stringify(schemaObj)
+    });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error || '创建文档失败');
+    const docid = data.docid;
+    for (let i = 1; i < total; i++) {
+      await fetch(API_BASE + '/api/create', {
+        method: 'POST', headers: getAuthHeaders(),
+        body: JSON.stringify({ docid, sheet: schemaObj.sheets[i] })
+      });
+    }
+    showToast('创建成功！' + total + ' 个子表');
+    addArtifact({ type: 'doc', title: schemaObj.doc_name || 'Demo智能表格', url: data.url, docid });
+    window.open(data.url, '_blank');
+  } catch(e) {
+    alert('创建失败: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '创建企微智能表格'; }
+    hideFullscreenLoading();
+  }
+}
+
+function switchDemoType(el) {
+  document.querySelectorAll('.demo-type').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+  const demo = el.dataset.demo;
+  document.getElementById('customDemo').classList.toggle('active', demo === 'custom');
+  document.getElementById('agentDemo').classList.toggle('active', demo === 'agent');
+}
+
+function switchDemoScene(el, scope) {
+  const nav = el.closest('.demo-nav');
+  nav.querySelectorAll('.demo-nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  const target = el.dataset.target;
+  if (scope === 'sheet') {
+    document.querySelectorAll('#customDemo .sheet-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('sheet-'+target);
+    if (panel) panel.classList.add('active');
+  } else {
+    document.querySelectorAll('#agentDemo .agent-chat-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('agent-'+target);
+    if (panel) panel.classList.add('active');
+  }
+}
+
+// ==================== DEMO CANVAS TEMPLATES ====================
+function renderSheetCanvas() {
+  const canvas = document.getElementById('sheet-canvas');
+  canvas.innerHTML = `
+    <div class="sheet-panel active" id="sheet-ledger">
+      <div class="sheet-demo refined">
+        <div class="sheet-top"><b>客户台账</b><span>企业微信智能表格</span></div>
+        <div class="fake-table compact-table">
+          <div class="fake-row head"><span>客户名称</span><span>业务类型</span><span>审核状态</span><span>负责人</span><span>最近会话</span><span>下一步</span></div>
+          <div class="fake-row"><span>A银行</span><span>机构服务</span><span>待审批</span><span>李四</span><span>已检索</span><span>补充资料</span></div>
+          <div class="fake-row"><span>B证券</span><span>客户运营</span><span>已通过</span><span>王五</span><span>已归档</span><span>进入回访</span></div>
+          <div class="fake-row"><span>C保险</span><span>合规审核</span><span>需修正</span><span>赵六</span><span>待检索</span><span>重新提交</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-panel" id="sheet-approval">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px">
+          <h4 style="margin:0 0 12px;font-size:15px">合规审核表单</h4>
+          <p style="margin:10px 0;color:#667085;font-size:12px">客户名称：A银行</p>
+          <p style="margin:10px 0;color:#667085;font-size:12px">业务类型：机构服务</p>
+          <p style="margin:10px 0;color:#667085;font-size:12px">附件：授权证明、会话摘要、客户资料</p>
+        </div>
+        <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="padding:12px;border-radius:14px;background:#eef6ff;color:#1263e6;font-size:12px;font-weight:900;text-align:center">销售提交</div>
+          <div style="height:18px;width:2px;background:#d9e6f7;margin-left:18px"></div>
+          <div style="padding:12px;border-radius:14px;background:#eef6ff;color:#1263e6;font-size:12px;font-weight:900;text-align:center">风控审核</div>
+          <div style="height:18px;width:2px;background:#d9e6f7;margin-left:18px"></div>
+          <div style="padding:12px;border-radius:14px;background:#eef6ff;color:#1263e6;font-size:12px;font-weight:900;text-align:center">负责人审批</div>
+          <div style="height:18px;width:2px;background:#d9e6f7;margin-left:18px"></div>
+          <div style="padding:12px;border-radius:14px;background:#ecfdf5;color:#047857;font-size:12px;font-weight:900;text-align:center">归档完成</div>
+        </div>
+      </div>
+    </div>
+    <div class="sheet-panel" id="sheet-record">
+      <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px;display:grid;gap:12px">
+        <div style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start"><b style="color:#1263e6;font-size:12px">09:00</b><span style="font-size:13px;color:#344054">销售提交 A银行审核材料</span></div>
+        <div style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start"><b style="color:#1263e6;font-size:12px">10:20</b><span style="font-size:13px;color:#344054">风控要求补充客户授权证明</span></div>
+        <div style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start"><b style="color:#1263e6;font-size:12px">11:05</b><span style="font-size:13px;color:#344054">销售补充附件并重新提交</span></div>
+        <div style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start"><b style="color:#13b96f;font-size:12px">11:30</b><span style="font-size:13px;color:#344054">负责人审批通过，进入归档</span></div>
+      </div>
+    </div>
+    <div class="sheet-panel" id="sheet-dashboard">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+        <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:18px;text-align:center"><b style="font-size:24px;color:#1263e6;display:block">12</b><span style="font-size:12px;color:#667085">待审批</span></div>
+        <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:18px;text-align:center"><b style="font-size:24px;color:#13b96f;display:block">86</b><span style="font-size:12px;color:#667085">已归档客户</span></div>
+        <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:18px;text-align:center"><b style="font-size:24px;color:#ff8a00;display:block">5</b><span style="font-size:12px;color:#667085">超时处理</span></div>
+        <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:18px;text-align:center"><b style="font-size:24px;color:#1263e6;display:block">72%</b><span style="font-size:12px;color:#667085">回访完成率</span></div>
+      </div>
+      <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px;display:grid;gap:10px">
+        <div style="height:12px;border-radius:999px;background:linear-gradient(90deg,#1263e6,#13b96f);width:78%"></div>
+        <div style="height:12px;border-radius:999px;background:linear-gradient(90deg,#1263e6,#13b96f);width:54%"></div>
+        <div style="height:12px;border-radius:999px;background:linear-gradient(90deg,#1263e6,#13b96f);width:32%"></div>
+      </div>
+    </div>
+    <div class="sheet-panel" id="sheet-chatsearch">
+      <div style="border:1px solid #dbe7f6;background:#fff;border-radius:16px;padding:13px 15px;color:#667085;font-size:13px;margin-bottom:12px">搜索：A银行 授权证明</div>
+      <div style="border:1px solid #e8edf5;background:#fff;border-radius:16px;padding:14px;margin-bottom:10px"><b style="font-size:13px;color:#182235">客户会话</b><p style="margin:8px 0 0;color:#667085;font-size:12px">客户提到"资料周五补齐"，建议提醒销售补充附件后再提交审批。</p></div>
+      <div style="border:1px solid #e8edf5;background:#fff;border-radius:16px;padding:14px"><b style="font-size:13px;color:#182235">业务标签</b><p style="margin:8px 0 0;color:#667085;font-size:12px">合规审核 / 材料补齐 / 审批待处理</p></div>
+    </div>
+  `;
+}
+
+function renderAgentCanvas() {
+  const c = getClient(currentClientId);
+  const name = c?.name || '该客户';
+  const industry = c?.industry || '';
+  const report = c?.step4_report || {};
+  const pains = (report.core_pain_points || []).map(p => p.point).join('、') || '暂无';
+  const roles = (report.business_scenario?.roles || []).join('、') || '未知';
+  const transcript = (c?.transcript || '').substring(0, 500) || '暂无沟通记录';
+  const canvas = document.getElementById('agent-canvas');
+  canvas.innerHTML = `
+    <div class="agent-chat-panel active" id="agent-profile">
+      <div class="agent-head"><b>${name}</b><span>客户资料查询</span></div>
+      <div class="msg bot">你好，我是您的AI售前助手。可以帮您查询客户资料、检索沟通记录、分析需求。</div>
+      <div class="msg user">帮我查询 ${name} 的基本资料。</div>
+      <div class="msg bot">${name}｜${industry}｜标签：${(c?.tags||'').split(',').filter(Boolean).join('、')||'-'}｜核心需求：${pains.substring(0,30)}</div>
+      <div class="agent-input">输入问题… <span>发送</span></div>
+    </div>
+    <div class="agent-chat-panel" id="agent-material">
+      <div class="agent-head"><b>${name}</b><span>审核材料检查</span></div>
+      <div class="msg bot">我可以帮您分析客户材料完整性，识别缺失项。</div>
+      <div class="msg user">帮我检查 ${name} 的材料完整性。</div>
+      <div class="msg bot">根据需求分析报告，${name} 涉及的核心痛点为：${pains.substring(0,50)}。建议关注：${roles}相关材料是否齐全。</div>
+      <div class="agent-input">输入问题… <span>发送</span></div>
+    </div>
+    <div class="agent-chat-panel" id="agent-conversation">
+      <div class="agent-head"><b>${name}</b><span>会话记录检索</span></div>
+      <div class="msg bot">我可以帮您检索客户沟通记录中的关键信息。</div>
+      <div class="msg user">检索关于 ${name} 的沟通记录。</div>
+      <div class="msg bot">找到以下关键信息：\n客户痛点：${pains}\n涉及角色：${roles}\n\n${transcript !== '暂无沟通记录' ? '沟通记录摘要：' + transcript.substring(0, 100) + '…' : '暂无沟通记录'}</div>
+      <div class="agent-input">输入问题… <span>发送</span></div>
+    </div>
+    <div class="agent-chat-panel" id="agent-qa">
+      <div class="agent-head"><b>${name}</b><span>知识问答</span></div>
+      <div class="msg bot">我可以回答关于${industry || '本行业'}的常见问题。</div>
+      <div class="msg user">${industry || '本行业'}客户最关心什么？</div>
+      <div class="msg bot">${industry || '该行业'}客户常见关注点：${pains || '合规风控、审批协同、项目进度管理'}。典型角色：${roles}。</div>
+      <div class="agent-input">输入问题… <span>发送</span></div>
+    </div>
+    <div class="agent-chat-panel" id="agent-handoff">
+      <div class="agent-head"><b>${name}</b><span>人工转接</span></div>
+      <div class="msg bot">当遇到复杂问题时，我可以帮您生成转接摘要。</div>
+      <div class="msg user">这个客户需要接财务系统，怎么评估？</div>
+      <div class="msg bot">建议转给技术售前评估。需确认：①财务系统类型和接口权限 ②数据字段和同步频率 ③当前痛点：${pains.substring(0,30)}。我可以生成转接摘要文档。</div>
+      <div class="agent-input">输入问题… <span>发送</span></div>
+    </div>
+  `;
+}
+
+// ==================== CONTEXT BAR ====================
+function updateCtxBar(c) {
+  if (!c) return;
+  const name = c.name || '-';
+  const meta = `${c.industry||'未知行业'} · ${(c.tags||'').split(',').filter(Boolean).join('、')}`;
+  const summary = c.initial_demand ? `当前关注：${c.initial_demand.substring(0,20)}` : '-';
+  ['s2','s3','s4','s5'].forEach(s => {
+    const el = document.getElementById(s+'-ctx-name');
+    if (el) el.textContent = name;
+    const m = document.getElementById(s+'-ctx-meta');
+    if (m) m.textContent = meta;
+    const ss = document.getElementById(s+'-ctx-summary');
+    if (ss) ss.textContent = summary;
+  });
+}
+
+// ==================== ARTIFACTS (RIGHT PANEL) - v22 enhanced ====================
+function addArtifact(item) {
+  const c = getClient(currentClientId);
+  const artifacts = c._artifacts || [];
+  artifacts.push({ ...item, date: new Date().toLocaleDateString() });
+  updateClient(currentClientId, { _artifacts: artifacts });
+  renderArtifacts();
+  showToast('已添加到制品区');
+}
+
+function deleteArtifact(i) {
+  const c = getClient(currentClientId);
+  const artifacts = c._artifacts || [];
+  artifacts.splice(i, 1);
+  updateClient(currentClientId, { _artifacts: artifacts });
+  renderArtifacts();
+}
+
+function previewArtifact(item) {
+  const modal = document.getElementById('artifact-preview-modal');
+  const title = document.getElementById('preview-modal-title');
+  const content = document.getElementById('preview-modal-content');
+  title.textContent = item.name || '预览';
+  content.textContent = item.preview || '(无内容)';
+  modal.classList.add('visible');
+}
+
+function closePreviewModal() {
+  document.getElementById('artifact-preview-modal').classList.remove('visible');
+}
+
+// 计算Step1画像卡进度：按字段逐步递增，保存后100%
+function calcProfilePct(c) {
+  if (!c) return 0;
+  let pct = 0;
+  if (c.name) pct += 20;
+  if (c.industry) pct += 30;
+  if (c.scale) pct += 10;
+  if (c.tags) pct += 10;
+  if (c.initial_demand) pct += 20;
+  if (c._saved) pct = 100;
+  return pct;
+}
+
+function profilePreviewText(c) {
+  if (!c) return '';
+  const tags = (c.tags || '').split(',').filter(Boolean).join('、') || '-';
+  let text = '【客户画像卡】\n\n客户名称：' + (c.name || '-') + '\n行　　业：' + (c.industry || '-') + '\n公司规模：' + (c.scale || '-') + '\n需求标签：' + tags + '\n入线时间：' + (c.created_at ? new Date(c.created_at).toLocaleDateString() : '-') + '\n\n原始需求表达：\n' + (c.initial_demand || '(未填写)');
+  if (c.company_intro) text += '\n\n公司简介：\n' + c.company_intro;
+  if (c.company_type) text += '\n\n客户类型：' + c.company_type;
+  if (c.main_customers) text += '\n\n主要客户：' + c.main_customers;
+  if (c.possible_focus) text += '\n\n可能关注：' + c.possible_focus;
+  return text;
+}
+
+function renderArtifacts() {
+  const c = getClient(currentClientId);
+  const list = document.getElementById('art-list');
+  if (!c) { list.innerHTML = ''; return; }
+
+  const profilePct = calcProfilePct(c);
+  const isProfileSaved = !!(c._saved && c.name && c.industry);
+  const noteCount = (c.uploaded_files || []).length;
+
+  // 沟通记录库：每条记录40%，最多3条到100%
+  const notePct = Math.min(noteCount * 40, 100);
+
+  const items = [];
+
+  // 客户画像卡：始终显示，进度实时计算
+  const hasWecomDoc = !!(c._wecom_docid && c._wecom_url);
+  items.push({ name: '客户画像卡', tag: isProfileSaved ? '已完成' : '进行中', tagCls: isProfileSaved ? '' : 'todo', pct: profilePct, isProfile: true, hasWecomDoc, wecomUrl: c._wecom_url, wecomDocid: c._wecom_docid });
+
+  // 调研问题清单
+  const hasStep1WecomDoc = !!(c._step1_wecom_docid && c._step1_wecom_url);
+  items.push({ name: '调研问题清单', tag: c.step1_result ? '已生成' : '待生成', tagCls: c.step1_result ? '' : 'todo', pct: c.step1_result ? 100 : 0, dataKey: 'step1_result', hasWecomDoc: hasStep1WecomDoc, wecomUrl: c._step1_wecom_url, wecomDocid: c._step1_wecom_docid, isStep1Result: true });
+
+  // 沟通记录库：0/40/80/100
+  items.push({ name: '沟通记录库', tag: noteCount > 0 ? '已沉淀' : '待补充', tagCls: noteCount > 0 ? '' : 'todo', pct: notePct, dataKey: 'uploaded_files', desc: '已沉淀 ' + noteCount + ' 次沟通记录。' });
+
+  // 售前解决方案
+  items.push({ name: '售前解决方案', tag: c.step4_report ? '已生成' : '待生成', tagCls: c.step4_report ? '' : 'todo', pct: c.step4_report ? 100 : 0, dataKey: 'step4_report', desc: '客户现状、核心痛点、解决方案、建设模块与实施阶段。' });
+
+  // Demo Schema
+  items.push({ name: 'Demo Schema', tag: c.step5_schema ? '已生成' : '待生成', tagCls: c.step5_schema ? '' : 'todo', pct: c.step5_schema ? 100 : 0, dataKey: 'step5_schema', desc: '智能表格 Schema，可直接创建企微智能表格。' });
+
+  list.innerHTML = items.map((item, i) => {
+    let actions = '';
+    if (item.isProfile) {
+      actions += '<button class="art-btn" onclick="doPreviewProfile()">预览</button>';
+      if (item.hasWecomDoc) {
+        actions += '<a class="art-btn success" href="' + item.wecomUrl + '" target="_blank">查看企微文档</a>';
+      } else {
+        actions += '<button class="art-btn" id="wecom-create-btn" onclick="doCreateWecomDoc()">生成企微文档</button>';
+      }
+    } else if (item.isStep1Result) {
+      actions += '<button class="art-btn" onclick="doPreviewStep1()">预览</button>';
+      if (item.hasWecomDoc) {
+        actions += '<a class="art-btn success" href="' + item.wecomUrl + '" target="_blank">查看企微文档</a>';
+      } else {
+        actions += '<button class="art-btn" id="step1-wecom-create-btn" onclick="doCreateStep1WecomDoc()">生成企微文档</button>';
+      }
+    }
+    else if (item.dataKey && item.dataKey !== 'step1_result') actions += '<button class="art-btn" onclick="doPreview(' + i + ')">预览</button>';
+    if (item.dataKey) actions += '<button class="art-btn" onclick="copyArtifactData(\'' + item.dataKey + '\')">复制</button>';
+    if (item.dataKey === 'step5_schema' && c.step5_schema) actions += '<button class="art-btn success" onclick="createSmartSheet()">创建表格</button>';
+    return '<div class="artifact"><div class="artifact-top"><h4>' + item.name + '</h4><span class="tag ' + item.tagCls + '">' + item.tag + '</span></div><p>' + (item.desc || '') + '</p><div class="barbox"><div class="bar" style="width:' + item.pct + '%"></div></div><div class="artifact-actions">' + actions + '</div></div>';
+  }).join('');
+
+  // 企微已创建表格
+  const extra = (c._artifacts || []).map((a, i) => {
+    let actions = '';
+    if (a.url) actions += '<button class="art-btn" onclick="window.open(\'' + a.url + '\',\'_blank\')">打开</button>';
+    actions += '<button class="art-btn danger" onclick="deleteArtifact(' + i + ')">删除</button>';
+    return '<div class="artifact"><div class="artifact-top"><h4>' + (a.title || '企微智能表格') + '</h4><span class="tag">已创建</span></div><p>' + (a.type === 'doc' ? 'DocID: ' + (a.docid || '-') : '') + '</p>' + (a.url ? '<div style="margin-top:8px"><a href="' + a.url + '" target="_blank" style="font-size:12px;color:#1263e6">打开链接 →</a></div>' : '') + '<div class="barbox"><div class="bar" style="width:100%"></div></div><div class="artifact-actions">' + actions + '</div></div>';
+  }).join('');
+  list.innerHTML += extra;
+}
+
+function doPreviewProfile() {
+  const c = getClient(currentClientId);
+  if (!c || (!c.name && !c.industry && !c.initial_demand)) { showToast('暂无内容可预览'); return; }
+  const tags = (c.tags || '').split(',').filter(Boolean);
+  const tagsHTML = tags.length
+    ? tags.map(t => '<span style="display:inline-block;background:linear-gradient(135deg,#eef6ff 0%,#f0f7ff 100%);color:#1263e6;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:800;margin:3px;border:1px solid rgba(18,99,230,.15);box-shadow:0 2px 8px rgba(18,99,230,.06)">' + t + '</span>').join('')
+    : '<span style="color:#98a2b3;font-size:13px">暂无标签</span>';
+
+  const aiSection = (c.company_intro || c.main_customers || c.possible_focus) ? `
+    <div style="background:#fff;border-radius:22px;padding:24px;margin-bottom:16px;box-shadow:0 8px 32px rgba(20,34,64,.08),0 2px 8px rgba(20,34,64,.04)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #f0f2f7">
+        <div style="width:5px;height:24px;background:linear-gradient(180deg,#ff8a00 0%,#f97316 100%);border-radius:3px"></div>
+        <span style="font-size:16px;font-weight:900;color:#182235;letter-spacing:-0.3px">AI 智搜补充</span>
+        <span style="background:linear-gradient(135deg,#fff7ed 0%,#fef3c7 100%);color:#d97706;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;margin-left:auto;box-shadow:0 2px 6px rgba(255,138,0,.15)">公开信息</span>
+      </div>
+      <div style="display:grid;gap:14px">
+        <div style="background:linear-gradient(135deg,#fafbfc 0%,#f5f7fa 100%);border-radius:16px;padding:18px 20px;border:1px solid #eaecef">
+          <div style="color:#8a9bae;font-size:11px;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">主要客户</div>
+          <div style="font-size:14px;color:#344054;font-weight:700;line-height:1.5">${c.main_customers || '-'}</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#fafbfc 0%,#f5f7fa 100%);border-radius:16px;padding:18px 20px;border:1px solid #eaecef">
+          <div style="color:#8a9bae;font-size:11px;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">可能关注</div>
+          <div style="font-size:14px;color:#344054;font-weight:700;line-height:1.5">${c.possible_focus || '-'}</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#fafbfc 0%,#f5f7fa 100%);border-radius:16px;padding:18px 20px;border:1px solid #eaecef">
+          <div style="color:#8a9bae;font-size:11px;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">公司简介</div>
+          <div style="font-size:14px;color:#344054;line-height:1.75">${c.company_intro || '-'}</div>
+        </div>
+      </div>
+    </div>` : '';
+
+  const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;max-width:640px;background:linear-gradient(180deg,#f7f9fc 0%,#f0f2f7 100%);min-height:100%;padding:24px">
+    <div style="background:linear-gradient(135deg,#1263e6 0%,#0c55cf 50%,#0950a8 100%);border-radius:28px;padding:32px 36px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(18,99,230,.3),0 8px 24px rgba(18,99,230,.2)">
+      <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(255,255,255,.15) 0%,transparent 70%);border-radius:50%"></div>
+      <div style="position:absolute;bottom:-30px;left:60px;width:120px;height:120px;background:radial-gradient(circle,rgba(255,255,255,.1) 0%,transparent 70%);border-radius:50%"></div>
+      <div style="position:relative;z-index:1">
+        <div style="font-size:28px;font-weight:950;margin-bottom:8px;letter-spacing:-0.5px;text-shadow:0 2px 8px rgba(0,0,0,.15)">${c.name || '未命名客户'}</div>
+        <div style="font-size:14px;opacity:0.95;display:flex;align-items:center;gap:10px">
+          <span style="background:rgba(255,255,255,.2);backdrop-filter:blur(8px);border-radius:999px;padding:5px 14px;font-size:12px;font-weight:700;letter-spacing:.3px">${c.industry || '行业未分类'}</span>
+          <span style="opacity:0.85">${c.scale || '规模待定'}</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:22px;padding:24px;margin-bottom:16px;box-shadow:0 8px 32px rgba(20,34,64,.08),0 2px 8px rgba(20,34,64,.04)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #f0f2f7">
+        <div style="width:5px;height:24px;background:linear-gradient(180deg,#1263e6 0%,#13b96f 100%);border-radius:3px"></div>
+        <span style="font-size:16px;font-weight:900;color:#182235;letter-spacing:-0.3px">基本信息</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
+        <div style="background:linear-gradient(135deg,#fafbfc 0%,#f5f7fa 100%);border-radius:16px;padding:18px 20px;border:1px solid #eaecef">
+          <div style="color:#8a9bae;font-size:11px;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">入线时间</div>
+          <div style="font-size:15px;font-weight:900;color:#182235;letter-spacing:-0.3px">${c.created_at ? new Date(c.created_at).toLocaleDateString() : '-'}</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#fafbfc 0%,#f5f7fa 100%);border-radius:16px;padding:18px 20px;border:1px solid #eaecef">
+          <div style="color:#8a9bae;font-size:11px;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">客户类型</div>
+          <div style="font-size:15px;font-weight:800;color:#182235;letter-spacing:-0.3px">${c.company_type || '-'}</div>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:22px;padding:24px;margin-bottom:16px;box-shadow:0 8px 32px rgba(20,34,64,.08),0 2px 8px rgba(20,34,64,.04)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #f0f2f7">
+        <div style="width:5px;height:24px;background:linear-gradient(180deg,#1263e6 0%,#13b96f 100%);border-radius:3px"></div>
+        <span style="font-size:16px;font-weight:900;color:#182235;letter-spacing:-0.3px">需求标签</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${tagsHTML}</div>
+    </div>
+    <div style="background:#fff;border-radius:22px;padding:24px;margin-bottom:16px;box-shadow:0 8px 32px rgba(20,34,64,.08),0 2px 8px rgba(20,34,64,.04)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #f0f2f7">
+        <div style="width:5px;height:24px;background:linear-gradient(180deg,#1263e6 0%,#13b96f 100%);border-radius:3px"></div>
+        <span style="font-size:16px;font-weight:900;color:#182235;letter-spacing:-0.3px">原始需求表达</span>
+      </div>
+      <div style="background:linear-gradient(135deg,#fafbff 0%,#f5f8fc 100%);border-radius:16px;padding:18px 20px;font-size:14px;line-height:1.85;color:#344054;border:1px solid #e2e8f0">${c.initial_demand || '（未填写）'}</div>
+    </div>
+    ${aiSection}
+  </div>`;
+
+  const modal = document.getElementById('artifact-preview-modal');
+  document.getElementById('preview-modal-title').textContent = '客户画像卡预览';
+  document.getElementById('preview-modal-content').innerHTML = html;
+  modal.classList.add('visible');
+}
+
+function doExportProfile() {
+  const c = getClient(currentClientId);
+  const text = profilePreviewText(c);
+  if (!text || text.trim() === '') { showToast('暂无内容可导出'); return; }
+  navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板，可粘贴到企微文档'));
+}
+
+function doCreateWecomDoc() {
+  const c = getClient(currentClientId);
+  if (!c || !c._saved) { showToast('请先保存客户画像'); return; }
+
+  const btn = document.getElementById('wecom-create-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block"></span> 生成中…';
+    btn.style.opacity = '0.6';
+  }
+
+  // Build comprehensive content from step1_result
+  const step1 = c.step1_result || {};
+  const part1 = step1.part1 || {};
+  const part2 = step1.part2 || [];
+  const part3 = step1.part3 || {};
+
+  let content = `# ${c.name || '客户'} - 需求调研
+
+## 一、客户画像
+
+### 公司与需求背景
+${part1.company_background || c.company_intro || '-'}
+
+### 行业常见痛点
+${(part1.pain_points || []).map((p, i) => `${i + 1}. ${p.replace(/\*\*/g, '')}`).join('\n\n') || '-'}
+
+## 二、待确认信息清单
+
+${part2.map((g, i) => `${i + 1}. ${g.gap.replace(/\*\*/g, '')} [${g.priority}优先级]`).join('\n\n') || '-'}
+
+## 三、调研问题清单
+
+### 必问问题
+${(part3.must_ask || []).map((q, i) => `${i + 1}. ${q.question.replace(/\*\*/g, '')}${q.note ? `\n   说明：${q.note}` : ''}`).join('\n\n') || '-'}
+
+### 深挖问题
+${(part3.deep_dive || []).map((q, i) => `${i + 1}. ${q.question.replace(/\*\*/g, '')}${q.note ? `\n   说明：${q.note}` : ''}`).join('\n\n') || '-'}
+
+### 行业经验
+${(part3.industry_experience || []).map((q, i) => `${i + 1}. ${q.question.replace(/\*\*/g, '')}${q.note ? `\n   说明：${q.note}` : ''}`).join('\n\n') || '-'}
+
+## 四、原始需求
+
+${c.initial_demand || '-'}
+`;
+
+  const schema = {
+    doc_name: (c.name || '客户') + ' - 需求调研',
+    content: content,
+    sheets: [{
+      sheet_name: '客户画像',
+      fields: [
+        { field_title: '客户名称', field_type: 'TEXT' },
+        { field_title: '行业', field_type: 'TEXT' },
+        { field_title: '规模', field_type: 'TEXT' }
+      ],
+      sample_records: [{
+        '客户名称': c.name || '',
+        '行业': c.industry || '',
+        '规模': c.scale || ''
+      }]
+    }]
+  };
+
+  fetch(API_BASE + '/api/create', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(schema)
+  }).then(r => r.json()).then(data => {
+    if (data.success && data.docid) {
+      updateClient(currentClientId, {
+        _wecom_docid: data.docid,
+        _wecom_url: data.url || ('https://doc.weixin.qq.com/doc/' + data.docid)
+      });
+      showToast('企微文档已创建');
+      renderArtifacts();
+    } else {
+      showToast('创建失败: ' + (data.error || '未知错误'));
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '生成企微文档';
+        btn.style.opacity = '';
+      }
+    }
+  }).catch(e => {
+    showToast('创建失败: ' + e.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '生成企微文档';
+      btn.style.opacity = '';
+    }
+  });
+}
+
+function doPreviewStep1() {
+  const c = getClient(currentClientId);
+  if (!c || !c.step1_result) { showToast('暂无内容可预览'); return; }
+  const step1 = c.step1_result;
+  const part3 = step1.part3 || {};
+  const mustAsk = part3.must_ask || [];
+  const deepDive = part3.deep_dive || [];
+  const industryExp = part3.industry_experience || [];
+
+  let html = '<div style="padding:20px;max-height:70vh;overflow-y:auto">';
+  html += '<h2 style="margin:0 0 20px;font-size:18px">调研问题清单</h2>';
+
+  if (mustAsk.length > 0) {
+    html += '<h3 style="color:#1263e6;margin:16px 0 10px">必问问题</h3><ul style="margin:0;padding-left:20px">';
+    mustAsk.forEach(q => {
+      html += `<li style="margin-bottom:8px;line-height:1.6">${q.question}${q.note ? `<br><em style="color:#667085;font-size:13px">${q.note}</em>` : ''}</li>`;
+    });
+    html += '</ul>';
+  }
+
+  if (deepDive.length > 0) {
+    html += '<h3 style="color:#13b96f;margin:16px 0 10px">深挖问题</h3><ul style="margin:0;padding-left:20px">';
+    deepDive.forEach(q => {
+      html += `<li style="margin-bottom:8px;line-height:1.6">${q.question}${q.note ? `<br><em style="color:#667085;font-size:13px">${q.note}</em>` : ''}</li>`;
+    });
+    html += '</ul>';
+  }
+
+  if (industryExp.length > 0) {
+    html += '<h3 style="color:#ff8a00;margin:16px 0 10px">行业经验</h3><ul style="margin:0;padding-left:20px">';
+    industryExp.forEach(q => {
+      html += `<li style="margin-bottom:8px;line-height:1.6">${q.question}${q.note ? `<br><em style="color:#667085;font-size:13px">${q.note}</em>` : ''}</li>`;
+    });
+    html += '</ul>';
+  }
+
+  html += '</div>';
+  const modal = document.getElementById('artifact-preview-modal');
+  document.getElementById('preview-modal-title').textContent = '调研问题清单预览';
+  document.getElementById('preview-modal-content').innerHTML = html;
+  modal.classList.add('visible');
+}
+
+function doExportStep1() {
+  const c = getClient(currentClientId);
+  if (!c || !c.step1_result) { showToast('暂无内容可导出'); return; }
+  const step1 = c.step1_result;
+  const part3 = step1.part3 || {};
+  const mustAsk = part3.must_ask || [];
+  const deepDive = part3.deep_dive || [];
+  const industryExp = part3.industry_experience || [];
+
+  let md = `# ${c.name || '客户'} - 调研问题清单\n\n`;
+
+  if (mustAsk.length > 0) {
+    md += '## 必问问题\n\n';
+    mustAsk.forEach((q, i) => {
+      md += `${i + 1}. ${q.question.replace(/\*\*/g, '')}`;
+      if (q.note) md += `\n   ${q.note}`;
+      md += '\n\n';
+    });
+  }
+
+  if (deepDive.length > 0) {
+    md += '## 深挖问题\n\n';
+    deepDive.forEach((q, i) => {
+      md += `${i + 1}. ${q.question.replace(/\*\*/g, '')}`;
+      if (q.note) md += `\n   ${q.note}`;
+      md += '\n\n';
+    });
+  }
+
+  if (industryExp.length > 0) {
+    md += '## 行业经验\n\n';
+    industryExp.forEach((q, i) => {
+      md += `${i + 1}. ${q.question.replace(/\*\*/g, '')}`;
+      if (q.note) md += `\n   ${q.note}`;
+      md += '\n\n';
+    });
+  }
+
+  navigator.clipboard.writeText(md).then(() => showToast('已复制到剪贴板'));
+}
+
+function doCreateStep1WecomDoc() {
+  const c = getClient(currentClientId);
+  if (!c || !c.step1_result) { showToast('请先生成调研问题清单'); return; }
+
+  const btn = document.getElementById('step1-wecom-create-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block"></span> 生成中…';
+    btn.style.opacity = '0.6';
+  }
+
+  const step1 = c.step1_result;
+  const part3 = step1.part3 || {};
+  const mustAsk = part3.must_ask || [];
+  const deepDive = part3.deep_dive || [];
+  const industryExp = part3.industry_experience || [];
+
+  let content = `# ${c.name || '客户'} - 调研问题清单\n\n`;
+
+  if (mustAsk.length > 0) {
+    content += '## 必问问题\n\n';
+    mustAsk.forEach((q, i) => {
+      content += `${i + 1}. ${q.question.replace(/\*\*/g, '')}`;
+      if (q.note) content += `\n   ${q.note}`;
+      content += '\n\n';
+    });
+  }
+
+  if (deepDive.length > 0) {
+    content += '## 深挖问题\n\n';
+    deepDive.forEach((q, i) => {
+      content += `${i + 1}. ${q.question.replace(/\*\*/g, '')}`;
+      if (q.note) content += `\n   ${q.note}`;
+      content += '\n\n';
+    });
+  }
+
+  if (industryExp.length > 0) {
+    content += '## 行业经验\n\n';
+    industryExp.forEach((q, i) => {
+      content += `${i + 1}. ${q.question.replace(/\*\*/g, '')}`;
+      if (q.note) content += `\n   ${q.note}`;
+      content += '\n\n';
+    });
+  }
+
+  const schema = {
+    doc_name: (c.name || '客户') + ' - 调研问题清单',
+    content: content,
+    sheets: [{
+      sheet_name: '调研问题',
+      fields: [
+        { field_title: '类型', field_type: 'TEXT' },
+        { field_title: '问题', field_type: 'TEXT' },
+        { field_title: '说明', field_type: 'TEXT' }
+      ],
+      sample_records: mustAsk.slice(0, 3).map(q => ({
+        '类型': '必问问题',
+        '问题': q.question.replace(/\*\*/g, ''),
+        '说明': q.note || ''
+      }))
+    }]
+  };
+
+  fetch(API_BASE + '/api/create', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(schema)
+  }).then(r => r.json()).then(data => {
+    if (data.success && data.docid) {
+      updateClient(currentClientId, {
+        _step1_wecom_docid: data.docid,
+        _step1_wecom_url: data.url || ('https://doc.weixin.qq.com/doc/' + data.docid)
+      });
+      showToast('企微文档已创建');
+      renderArtifacts();
+    } else {
+      showToast('创建失败: ' + (data.error || '未知错误'));
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '生成企微文档';
+        btn.style.opacity = '';
+      }
+    }
+  }).catch(e => {
+    showToast('创建失败: ' + e.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '生成企微文档';
+      btn.style.opacity = '';
+    }
+  });
+}
+
+function reportToMarkdown(report) {
+  if (!report) return '';
+  const info = report.customer_info || {};
+  let md = '# 需求分析报告\n\n';
+  md += '## 客户信息\n';
+  md += `- **行业**: ${info.industry || '-'}\n`;
+  md += `- **初始需求**: ${info.initial_demand || '-'}\n\n`;
+
+  const pains = report.core_pain_points || [];
+  if (pains.length > 0) {
+    md += '## 核心痛点\n';
+    pains.forEach(p => { md += `- [${p.priority}] ${p.point}\n`; });
+    md += '\n';
+  }
+
+  const bs = report.business_scenario || {};
+  if (bs.core_flow || (bs.roles && bs.roles.length > 0)) {
+    md += '## 业务场景\n';
+    if (bs.core_flow) md += `- **核心流程**: ${bs.core_flow}\n`;
+    if (bs.roles && bs.roles.length > 0) md += `- **角色**: ${bs.roles.join('、')}\n`;
+    if (bs.data_flow) md += `- **数据流向**: ${bs.data_flow}\n`;
+    md += '\n';
+  }
+
+  const sol = report.solution || {};
+  const subs = sol.sub_tables || [];
+  if (subs.length > 0) {
+    md += '## 解决方案\n';
+    md += `建议搭建 **${subs.length}** 张子表：\n\n`;
+    subs.forEach((sub, i) => {
+      md += `### ${i+1}. ${sub.name}\n`;
+      md += `- **用途**: ${sub.purpose || '-'}\n`;
+      md += `- **主要角色**: ${sub.primary_role || '-'}\n`;
+      if (sub.fields && sub.fields.length > 0) {
+        md += `- **字段**: ${sub.fields.join('、')}\n`;
+      }
+      md += '\n';
+    });
+  }
+
+  const rules = sol.automation_rules || [];
+  if (rules.length > 0) {
+    md += '## 自动化规则\n';
+    rules.forEach(r => { md += `- ${r}\n`; });
+    md += '\n';
+  }
+
+  const views = sol.views || [];
+  if (views.length > 0) {
+    md += '## 视图\n';
+    views.forEach(v => { md += `- ${v}\n`; });
+    md += '\n';
+  }
+
+  const perms = sol.permissions || [];
+  if (perms.length > 0) {
+    md += '## 权限设计\n';
+    perms.forEach(p => { md += `- ${p}\n`; });
+    md += '\n';
+  }
+
+  return md;
+}
+
+function doPreview(idx) {
+  const c = getClient(currentClientId);
+  if (!c) return;
+  const map = {
+    1: { name: '调研问题清单', data: c.step1_result },
+    2: { name: '沟通记录库', data: (c.uploaded_files || []).map(f => '[' + (f.date||'') + '] ' + (f.source||'') + '\n' + (f.text||'')).join('\n\n---\n\n') },
+    3: { name: '售前解决方案', data: c.step4_report, isReport: true },
+    4: { name: 'Demo Schema', data: c.step5_schema }
+  };
+  const item = map[idx];
+  if (!item || !item.data) { showToast('暂无内容可预览'); return; }
+  let text;
+  if (item.isReport && typeof item.data === 'object') {
+    text = reportToMarkdown(item.data);
+  } else {
+    text = typeof item.data === 'object' ? JSON.stringify(item.data, null, 2) : item.data;
+  }
+  const modal = document.getElementById('artifact-preview-modal');
+  document.getElementById('preview-modal-title').textContent = item.name;
+  document.getElementById('preview-modal-content').textContent = text;
+  modal.classList.add('visible');
+}
+
+function copyArtifactData(key) {
+  const c = getClient(currentClientId);
+  let text = '';
+  if (key === 'step1_result') { text = JSON.stringify(c.step1_result, null, 2); }
+  else if (key === 'step4_report') { text = JSON.stringify(c.step4_report, null, 2); }
+  else if (key === 'step5_schema') { text = JSON.stringify(c.step5_schema, null, 2); }
+  else if (key === 'uploaded_files') { text = (c.uploaded_files || []).map(f => '[' + (f.date||'') + '] ' + (f.source||'') + '\n' + (f.text||'')).join('\n\n---\n\n'); }
+  if (!text) { showToast('无内容可复制'); return; }
+  navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板'));
+}
+
+// ==================== HELPERS ====================
+async function callDeepSeek(systemPrompt, userPrompt, maxTokens = 4500) {
+  const resp = await fetch(API_BASE + '/api/deepseek', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ system_prompt: systemPrompt, user_prompt: userPrompt, max_tokens: maxTokens })
+  });
+  if (!resp.ok) throw new Error('AI 服务错误(' + resp.status + ')');
+  const d = await resp.json();
+  if (!d.result) throw new Error('AI 返回异常');
+  return d.result;
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:6px;font-size:13px;z-index:9999;opacity:0;transition:opacity .2s';
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.style.opacity = '1');
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 200); }, 2000);
+}
+
+function logout() {
+  if (confirm('确定退出登录？')) {
+    localStorage.removeItem(TOKEN_KEY);
+    location.href = 'login.html';
+  }
+}
+
+// ==================== INIT ====================
+(async function init() {
+  // Dev mode: ?dev=1 skips login, auto-login as test user
+  if (new URLSearchParams(location.search).get('dev') === '1') {
+    try {
+      const r = await fetch(API_BASE + '/api/auth/dev-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: 'devuser', password: 'DevTest123', provider_name: '测试服务商A' })
+      });
+      const d = await r.json();
+      if (d.access_token) {
+        localStorage.setItem(TOKEN_KEY, d.access_token);
+        await finishInit(d.access_token);
+        return;
+      }
+    } catch(e) {}
+    // Fallback: try existing token
+    const existingToken = localStorage.getItem(TOKEN_KEY);
+    if (existingToken) {
+      localStorage.setItem(TOKEN_KEY, existingToken);
+      await finishInit(existingToken);
+      return;
+    }
+  }
+
+  const token = localStorage.getItem(TOKEN_KEY) || '';
+  if (!token) {
+    location.href = 'login.html';
+    return;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const resp = await fetch(API_BASE + '/api/auth/auto-login', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: '{}',
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if (!resp.ok) throw new Error('bad status');
+  } catch(e) {
+    localStorage.removeItem(TOKEN_KEY);
+    location.href = 'login.html';
+    return;
+  }
+
+  await finishInit(token);
+
+  async function finishInit(token) {
+
+  const params = new URLSearchParams(location.search);
+  const clientId = params.get('client_id');
+  const isNew = params.get('new') === '1';
+
+  if (isNew) {
+    try {
+      const r = await fetch(API_BASE + '/api/clients', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ name: '', industry: '' })
+      });
+      const d = await r.json();
+      if (d.success && d.id) {
+        currentClientId = d.id;
+        go(1);
+        return;
+      }
+    } catch(e) {}
+    const clients = getClients();
+    const newId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const newClient = {
+      id: newId, name: '', industry: '', tags: '', status: 'pending',
+      created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      step1_result: '', step4_report: '', step5_schema: null,
+      initial_demand: '', company_intro: '', uploaded_files: [], transcript: ''
+    };
+    clients.push(newClient);
+    saveClients(clients);
+    currentClientId = newId;
+    go(1);
+  } else if (clientId) {
+    const c = getClient(clientId);
+    if (!c) {
+      try {
+        const r = await fetch(API_BASE + '/api/clients/' + clientId, { headers: getAuthHeaders() });
+        if (r.ok) {
+          const bc = await r.json();
+          if (bc.id) {
+            _backendClientCache[clientId] = bc;
+            currentClientId = clientId;
+            go(1);
+            return;
+          }
+        }
+      } catch(e) {}
+      alert('客户不存在');
+      location.href = 'client_list.html';
+      return;
+    }
+    currentClientId = clientId;
+    go(1);
+  } else {
+    // Dev mode: auto-create a client if none exists
+    if (new URLSearchParams(location.search).get('dev') === '1') {
+      try {
+        const r = await fetch(API_BASE + '/api/clients', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ name: '', industry: '' })
+        });
+        const d = await r.json();
+        if (d.success && d.id) {
+          // Save to localStorage so getClient() finds it
+          const clients = getClients();
+          const newClient = {
+            id: d.id, name: '', industry: '', tags: '', status: 'pending',
+            created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+            step1_result: '', step4_report: '', step5_schema: null,
+            initial_demand: '', company_intro: '', uploaded_files: [], transcript: ''
+          };
+          clients.push(newClient);
+          saveClients(clients);
+          currentClientId = d.id;
+          go(1);
+          return;
+        }
+      } catch(e) {}
+    }
+    location.href = 'client_list.html';
+  }
+  } // end finishInit
+})();
+
+// Chip toggle
+document.querySelectorAll('#s1-chips .chip').forEach(c => {
+  c.addEventListener('click', () => c.classList.toggle('active'));
+});
+
+// Auto-save on edit (debounced 2s)
+function enableAutoSave() {
+  document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+    el.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (currentStep === 1) saveStep1();
+        else if (currentStep === 2) saveStep2ToClient();
+        else if (currentStep === 3) saveStep3();
+        else if (currentStep === 4) saveStep4ToClient();
+      }, 2000);
+    });
+  });
+}
+</script>
+</body>
+</html>

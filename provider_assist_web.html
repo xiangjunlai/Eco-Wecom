@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>服务商需求调研助手</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; background: #f4f6f9; color: #111; line-height: 1.6; min-height: 100vh; }
+.container { max-width: 1100px; margin: 0 auto; padding: 24px 32px; }
+@media (max-width: 768px) { .container { padding: 16px; } }
+
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
+h1 { font-size: 18px; font-weight: 700; color: #1a56db; }
+h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+h3 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 14px; border: 1px solid #e5e7eb; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+.btn-primary { background: #1a56db; color: #fff; }
+.btn-primary:hover { background: #0f3a8a; }
+.btn-secondary { background: #f3f4f6; color: #333; border: 1px solid #e5e7eb; }
+.btn-secondary:hover { background: #e5e7eb; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+input, textarea, select { width: 100%; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; background: #f9fafb; margin-bottom: 12px; font-family: inherit; }
+input:focus, textarea:focus { outline: none; border-color: #1a56db; background: #fff; }
+label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 6px; text-transform: uppercase; }
+.section-label { font-size: 11px; font-weight: 600; color: #999; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr); gap: 14px; }
+.item-card { background: #fff; border-radius: 10px; padding: 14px; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; }
+.item-card:hover { border-color: #1a56db; box-shadow: 0 4px 12px rgba(26,86,219,0.1); }
+.badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 4px; background: #e8f0fe; color: #1a56db; margin-right: 4px; }
+.badge-success { background: #ecfdf5; color: #059669; }
+.badge-warning { background: #fffbeb; color: #d97706; }
+.status-pill { font-size: 11px; padding: 3px 10px; border-radius: 6px; font-weight: 500; display: inline-block; }
+.pill-draft { background: #f3f4f6; color: #6b7280; }
+.pill-pending { background: #fef3c7; color: #92400e; }
+.pill-progress { background: #dbeafe; color: #1e40af; }
+.pill-done { background: #dcfce7; color: #166534; }
+.tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; background: #f3f4f6; color: #666; border: none; transition: all 0.2s; }
+.tab.active { background: #1a56db; color: #fff; }
+.tab:hover:not(.active) { background: #e5e7eb; }
+.page { display: none; }
+.page.active { display: block; }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+.modal { background: #fff; border-radius: 16px; padding: 28px; width: 440px; max-width: 90vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.modal-wide { width: 700px; }
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 24px; border-radius: 8px; font-size: 13px; z-index: 99999; white-space: nowrap; }
+.loading { text-align: center; padding: 40px; color: #999; }
+.spinner { width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: #1a56db; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 10px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.back-link { font-size: 13px; color: #1a56db; cursor: pointer; margin-bottom: 16px; display: inline-flex; align-items: center; gap: 4px; }
+.back-link:hover { color: #0f3a8a; }
+.timeline { display: flex; align-items: flex-start; position: relative; padding: 0 10px; margin-bottom: 20px; }
+.timeline-line { position: absolute; top: 14px; left: 36px; right: 36px; height: 2px; background: #e5e7eb; z-index: 0; }
+.timeline-progress { position: absolute; top: 14px; left: 36px; height: 2px; background: #1a56db; z-index: 1; transition: width 0.4s; border-radius: 1px; }
+.timeline-node { flex: 1; text-align: center; z-index: 2; }
+.timeline-dot { width: 28px; height: 28px; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.timeline-dot:hover { transform: scale(1.1); }
+.timeline-dot.done { background: #059669; color: #fff; }
+.timeline-dot.active { background: #1a56db; color: #fff; }
+.timeline-dot.pending { background: #e5e7eb; color: #999; }
+.timeline-label { font-size: 10px; color: #999; margin-top: 6px; font-weight: 500; }
+.output-area { background: #f8faf8; border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px; margin-top: 12px; }
+.output-list { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+.output-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #f3f4f6; transition: background 0.2s; }
+.output-item:hover { background: #f9fafb; }
+.output-item:last-child { border-bottom: none; }
+.output-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; background: #e8f0fe; }
+.output-name { font-weight: 600; font-size: 13px; }
+.output-meta { font-size: 11px; color: #999; }
+.rendered-content { background: #f8faf8; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; font-size: 13px; line-height: 1.8; max-height: 60vh; overflow-y: auto; margin-top: 12px; }
+.rendered-content h1,.rendered-content h2,.rendered-content h3 { color: #1a56db; margin-top: 16px; margin-bottom: 8px; }
+.rendered-content p { margin-bottom: 8px; }
+.rendered-content ul,.rendered-content ol { padding-left: 20px; margin-bottom: 10px; }
+.rendered-content li { margin-bottom: 6px; }
+.rendered-content strong { color: #0f3a8a; }
+.rendered-content table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+.rendered-content th,.rendered-content td { border: 1px solid #e5e7eb; padding: 8px 12px; text-align: left; }
+.rendered-content th { background: #f8fafc; font-weight: 600; color: #666; }
+.upload-area { border: 2px dashed #d1d5db; border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 14px; }
+.upload-area:hover { border-color: #1a56db; background: #f0f4ff; }
+.upload-area p { color: #666; font-size: 13px; font-weight: 500; }
+.upload-area .hint { color: #999; font-size: 11px; margin-top: 4px; }
+.kb-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; margin-bottom: 10px; transition: all 0.2s; }
+.kb-card:hover { border-color: #1a56db; box-shadow: 0 4px 12px rgba(26,86,219,0.1); }
+.stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 16px; }
+.stat-item { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; text-align: center; }
+.stat-num { font-size: 24px; font-weight: 700; color: #1a56db; }
+.stat-label { font-size: 11px; color: #999; margin-top: 4px; }
+.progress-bar { height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; margin: 6px 0; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #1a56db, #3b82f6); border-radius: 3px; transition: width 0.3s; }
+.empty { text-align: center; padding: 40px 20px; color: #999; }
+.empty p { margin-bottom: 12px; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.admin-table th,.admin-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+.admin-table th { background: #f8faf8; font-weight: 600; color: #666; }
+.admin-table tr:hover td { background: #f9fafb; }
+.section-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; margin: 2px; cursor: pointer; }
+.section-badge.active { background: #1a56db; color: #fff; }
+.section-badge.inactive { background: #f3f4f6; color: #666; }
+@media (max-width: 768px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <h2 id="auth-title">登录</h2>
+            <p id="auth-desc" style="font-size: 13px; color: #666; margin-bottom: 16px;">登录您的账号</p>
+            <input type="text" id="auth-username" placeholder="用户名" style="margin-bottom: 10px;">
+            <input type="password" id="auth-password" placeholder="密码" style="margin-bottom: 10px;">
+            <input type="text" id="auth-providername" placeholder="服务商名称（注册时填写）" style="margin-bottom: 10px; display: none;">
+            <div id="auth-error" style="color: #dc2626; font-size: 12px; margin-bottom: 10px; display: none;"></div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" style="flex:1" onclick="hideAuth()">取消</button>
+                <button class="btn btn-primary" style="flex:1" id="auth-submit" onclick="doAuth()">登录</button>
+            </div>
+            <p style="text-align: center; margin-top: 16px; font-size: 12px; color: #666;">
+                <a href="#" onclick="toggleAuthMode(); return false;" style="color: #1a56db;">注册新账号</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Page: Login -->
+    <div id="page-login" class="page active">
+        <div class="card" style="max-width: 400px; margin: 80px auto; padding: 32px;">
+            <h2 style="text-align: center; margin-bottom: 8px;">服务商需求调研助手</h2>
+            <p style="text-align: center; color: #999; font-size: 13px; margin-bottom: 24px;">智能提问清单 · 需求结构化 · 多客户管理</p>
+            <div id="login-error" style="color: #dc2626; font-size: 12px; margin-bottom: 12px; display: none;"></div>
+            <label>用户名</label>
+            <input type="text" id="login-user" placeholder="用户名">
+            <label>密码</label>
+            <input type="password" id="login-pass" placeholder="密码" onkeypress="if(event.key==='Enter') doLogin()">
+            <button class="btn btn-primary" style="width: 100%; margin-top: 8px;" onclick="doLogin()">登录</button>
+            <p style="text-align: center; margin-top: 16px; font-size: 12px; color: #666;">
+                没有账号？<a href="#" onclick="showRegister(); return false;" style="color: #1a56db;">注册</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Page: Register -->
+    <div id="page-register" class="page" style="display: none;">
+        <div class="card" style="max-width: 400px; margin: 60px auto; padding: 32px;">
+            <h2 style="text-align: center; margin-bottom: 8px;">注册账号</h2>
+            <p style="text-align: center; color: #999; font-size: 13px; margin-bottom: 24px;">创建新账号开始使用</p>
+            <label>用户名</label>
+            <input type="text" id="reg-user" placeholder="设置用户名">
+            <label>密码</label>
+            <input type="password" id="reg-pass" placeholder="设置密码">
+            <label>服务商名称</label>
+            <input type="text" id="reg-name" placeholder="您的姓名或公司名称">
+            <button class="btn btn-primary" style="width: 100%; margin-top: 8px;" onclick="doRegister()">注册</button>
+            <p style="text-align: center; margin-top: 16px; font-size: 12px; color: #666;">
+                已有账号？<a href="#" onclick="showLogin(); return false;" style="color: #1a56db;">登录</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Page: Home (Provider Knowledge + Client List) -->
+    <div id="page-home" class="page" style="display: none;">
+        <div class="header">
+            <div>
+                <h1>Provider Assist</h1>
+                <p style="font-size: 12px; color: #999; margin-top: 2px;">服务商需求调研助手</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span id="user-display" style="font-size: 13px; color: #666;"></span>
+                <button class="btn btn-secondary btn-sm" onclick="logout()">退出</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-item"><div class="stat-num" id="stat-cases">0</div><div class="stat-label">案例</div></div>
+            <div class="stat-item"><div class="stat-num" id="stat-templates">0</div><div class="stat-label">模板</div></div>
+            <div class="stat-item"><div class="stat-num" id="stat-qa">0</div><div class="stat-label">QA</div></div>
+            <div class="stat-item"><div class="stat-num" id="stat-sales">0</div><div class="stat-label">销售工具</div></div>
+            <div class="stat-item"><div class="stat-num" id="stat-knowledge">0</div><div class="stat-label">行业知识</div></div>
+        </div>
+
+        <!-- Provider Knowledge Hint -->
+        <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: #fff; margin-bottom: 16px;">
+            <h3 style="color: #fff; margin-bottom: 6px;">💡 完善您的服务商知识库</h3>
+            <p style="opacity: 0.9; font-size: 13px;">上传越多案例/模板/QA，后续生成报告时越优先使用您的自定义知识，精准匹配您的业务场景</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('clients')" id="tab-clients-btn">客户</button>
+            <button class="tab" onclick="switchTab('knowledge')" id="tab-knowledge-btn">知识库</button>
+            <button class="tab" onclick="switchTab('admin')" id="tab-admin-btn">管理后台</button>
+        </div>
+
+        <!-- Tab: Clients -->
+        <div id="tab-clients" class="tab-content">
+            <div class="card" style="margin-bottom: 16px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;">
+                    <div>
+                        <label>客户名称</label>
+                        <input type="text" id="new-client-name" placeholder="输入客户名称">
+                    </div>
+                    <div>
+                        <label>客户行业</label>
+                        <input type="text" id="new-client-industry" placeholder="如：金融、制造">
+                    </div>
+                    <button class="btn btn-primary" onclick="doCreateClient()">新建客户</button>
+                </div>
+            </div>
+            <div id="clients-list"></div>
+        </div>
+
+        <!-- Tab: Knowledge -->
+        <div id="tab-knowledge" class="tab-content" style="display: none;">
+            <div class="card" style="margin-bottom: 16px;">
+                <h3>添加知识库条目</h3>
+                <div style="display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: end;">
+                    <div>
+                        <label>类别</label>
+                        <select id="kb-category">
+                            <option value="case">案例</option>
+                            <option value="template">需求报告模板</option>
+                            <option value="qa">售前/售后QA</option>
+                            <option value="sales_tool">销售工具</option>
+                            <option value="industry_knowledge">行业知识</option>
+                        </select>
+                    </div>
+                    <div style="grid-column: 2;">
+                        <label>标题</label>
+                        <input type="text" id="kb-title" placeholder="输入标题">
+                    </div>
+                </div>
+                <div style="margin-top: 12px;">
+                    <label>内容</label>
+                    <textarea id="kb-content" rows="4" placeholder="输入内容..."></textarea>
+                </div>
+                <button class="btn btn-primary" style="margin-top: 12px;" onclick="doAddKnowledge()">添加</button>
+            </div>
+            <div id="knowledge-list"></div>
+        </div>
+
+        <!-- Tab: Admin -->
+        <div id="tab-admin" class="tab-content" style="display: none;">
+            <div class="card" style="margin-bottom: 16px;">
+                <h3>数据概览</h3>
+                <table class="admin-table">
+                    <thead><tr><th>指标</th><th>数值</th></tr></thead>
+                    <tbody>
+                        <tr><td>服务商总数</td><td id="admin-providers">-</td></tr>
+                        <tr><td>客户总数</td><td id="admin-clients">-</td></tr>
+                        <tr><td>已生成报告数</td><td id="admin-reports">-</td></tr>
+                        <tr><td>已创建Demo数</td><td id="admin-demos">-</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card">
+                <h3>所有客户列表</h3>
+                <div id="admin-client-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page: Client Detail -->
+    <div id="page-detail" class="page" style="display: none;">
+        <span class="back-link" onclick="showHome()">← 返回客户列表</span>
+
+        <div class="card" style="margin-top: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div id="detail-avatar" style="width: 40px; height: 40px; border-radius: 10px; background: #e8f0fe; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #1a56db; font-size: 16px;"></div>
+                    <div>
+                        <h2 id="detail-name" style="margin: 0; cursor: pointer;" onclick="editClientName()"></h2>
+                        <p style="font-size: 12px; color: #999; margin: 0;" id="detail-industry"></p>
+                    </div>
+                </div>
+                <span class="status-pill" id="detail-status"></span>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline">
+            <div class="timeline-line"></div>
+            <div class="timeline-progress" id="progress-line"></div>
+            <div class="timeline-node">
+                <div class="timeline-dot pending" id="step-dot-0" onclick="showStep(0)">0</div>
+                <p class="timeline-label">档案</p>
+            </div>
+            <div class="timeline-node">
+                <div class="timeline-dot pending" id="step-dot-1" onclick="showStep(1)">1</div>
+                <p class="timeline-label">调研</p>
+            </div>
+            <div class="timeline-node">
+                <div class="timeline-dot pending" id="step-dot-2" onclick="showStep(2)">2</div>
+                <p class="timeline-label">沟通</p>
+            </div>
+            <div class="timeline-node">
+                <div class="timeline-dot pending" id="step-dot-3" onclick="showStep(3)">3</div>
+                <p class="timeline-label">报告</p>
+            </div>
+            <div class="timeline-node">
+                <div class="timeline-dot pending" id="step-dot-4" onclick="showStep(4)">4</div>
+                <p class="timeline-label">Demo</p>
+            </div>
+        </div>
+
+        <!-- Step Content -->
+        <div id="step-content"></div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast" style="display: none;"></div>
+
+<script>
+const API = "http://localhost:8000";
+let token = localStorage.getItem("pa_token");
+let username = localStorage.getItem("pa_user");
+let currentClient = null;
+let currentStep = 0;
+
+// ==================== Auth ====================
+function showAuth() {
+    document.getElementById("auth-modal").style.display = "flex";
+}
+function hideAuth() {
+    document.getElementById("auth-modal").style.display = "none";
+}
+function toggleAuthMode() {
+    const isLogin = document.getElementById("auth-submit").textContent === "登录";
+    document.getElementById("auth-title").textContent = isLogin ? "注册" : "登录";
+    document.getElementById("auth-desc").textContent = isLogin ? "创建新账号" : "登录您的账号";
+    document.getElementById("auth-submit").textContent = isLogin ? "注册" : "登录";
+    document.getElementById("auth-providername").style.display = isLogin ? "block" : "none";
+}
+function doAuth() {
+    const isRegister = document.getElementById("auth-submit").textContent === "注册";
+    const user = document.getElementById("auth-username").value.trim();
+    const pass = document.getElementById("auth-password").value;
+    const name = document.getElementById("auth-providername").value.trim();
+    if (!user || !pass) { alert("请填写用户名和密码"); return; }
+    const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
+    const body = isRegister ? {username: user, password: pass, provider_name: name} : {username: user, password: pass};
+    fetch(API + endpoint, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(body)
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            localStorage.setItem("pa_token", d.access_token);
+            localStorage.setItem("pa_user", d.user.username);
+            token = d.access_token;
+            username = d.user.username;
+            hideAuth();
+            showHome();
+            loadStats();
+        } else {
+            document.getElementById("auth-error").textContent = d.detail || "失败";
+            document.getElementById("auth-error").style.display = "block";
+        }
+    }).catch(e => {
+        document.getElementById("auth-error").textContent = "网络错误";
+        document.getElementById("auth-error").style.display = "block";
+    });
+}
+function doLogin() {
+    const u = document.getElementById("login-user").value.trim();
+    const p = document.getElementById("login-pass").value;
+    if (!u || !p) return;
+    fetch(API + "/api/auth/login", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({username: u, password: p})
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            localStorage.setItem("pa_token", d.access_token);
+            localStorage.setItem("pa_user", d.user.username);
+            token = d.access_token;
+            username = d.user.username;
+            showHome();
+            loadStats();
+        } else {
+            document.getElementById("login-error").textContent = d.detail || "登录失败";
+            document.getElementById("login-error").style.display = "block";
+        }
+    });
+}
+function doRegister() {
+    const u = document.getElementById("reg-user").value.trim();
+    const p = document.getElementById("reg-pass").value;
+    const n = document.getElementById("reg-name").value.trim();
+    if (!u || !p) { alert("请填写用户名和密码"); return; }
+    fetch(API + "/api/auth/register", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({username: u, password: p, provider_name: n})
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            localStorage.setItem("pa_token", d.access_token);
+            localStorage.setItem("pa_user", d.user.username);
+            token = d.access_token;
+            username = d.user.username;
+            showHome();
+            loadStats();
+        } else {
+            alert(d.detail || "注册失败");
+        }
+    });
+}
+function logout() {
+    localStorage.removeItem("pa_token");
+    localStorage.removeItem("pa_user");
+    token = null;
+    username = null;
+    showLogin();
+}
+function showLogin() {
+    document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+    document.getElementById("page-login").style.display = "block";
+}
+function showRegister() {
+    document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+    document.getElementById("page-register").style.display = "block";
+}
+
+// ==================== Toast ====================
+function toast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.style.display = "block";
+    setTimeout(() => t.style.display = "none", 2000);
+}
+
+// ==================== Pages ====================
+function showHome() {
+    if (!token) { showLogin(); return; }
+    document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+    document.getElementById("page-home").style.display = "block";
+    document.getElementById("user-display").textContent = username || "";
+    loadClients();
+    loadStats();
+    loadKnowledge();
+}
+function showClientDetail(client) {
+    currentClient = client;
+    document.querySelectorAll(".page").forEach(p => p.style.display = "none");
+    document.getElementById("page-detail").style.display = "block";
+    document.getElementById("detail-avatar").textContent = (client.name || "?")[0];
+    document.getElementById("detail-name").textContent = client.name;
+    document.getElementById("detail-industry").textContent = client.industry || "";
+    document.getElementById("detail-status").textContent = client.status || "待完善";
+    document.getElementById("detail-status").className = "status-pill " + (client.status === "已完成" ? "pill-done" : "pill-draft");
+    updateTimeline();
+    showStep(0);
+}
+function showStep(step) {
+    currentStep = step;
+    const c = currentClient;
+    const content = document.getElementById("step-content");
+    // Update timeline dots
+    for (let i = 0; i < 5; i++) {
+        const dot = document.getElementById("step-dot-" + i);
+        if (i < step) dot.className = "timeline-dot done";
+        else if (i === step) dot.className = "timeline-dot active";
+        else dot.className = "timeline-dot pending";
+    }
+
+    let html = "";
+    switch(step) {
+        case 0: html = renderStep0(c); break;
+        case 1: html = renderStep1(c); break;
+        case 2: html = renderStep2(c); break;
+        case 3: html = renderStep3(c); break;
+        case 4: html = renderStep4(c); break;
+    }
+    content.innerHTML = html;
+}
+
+// ==================== Step 0: 档案 ====================
+function renderStep0(c) {
+    return `
+        <div class="card">
+            <h3>客户档案</h3>
+            <div id="step0-view">
+                <div style="display: grid; gap: 8px; font-size: 13px; color: #666;">
+                    <div><span style="color: #999;">行业:</span> ${c.industry || "-"}</div>
+                    <div><span style="color: #999;">需求:</span> ${c.initial_demand || "-"}</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" style="margin-top: 12px;" onclick="editStep0()">编辑档案</button>
+            </div>
+            <div id="step0-edit" style="display: none;">
+                <label>行业</label>
+                <input type="text" id="s0-industry" value="${c.industry || ""}" placeholder="如：金融、制造">
+                <label>初始需求</label>
+                <textarea id="s0-demand" rows="3" placeholder="描述客户需求">${c.initial_demand || ""}</textarea>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button class="btn btn-primary btn-sm" onclick="saveStep0()">保存</button>
+                    <button class="btn btn-secondary btn-sm" onclick="showStep(0)">取消</button>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <h3>操作</h3>
+            <div class="grid">
+                <div class="item-card" onclick="showStep(1)">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📋</div>
+                    <div style="font-weight: 600;">调研准备</div>
+                    <div style="font-size: 11px; color: #999;">生成提问清单</div>
+                </div>
+                <div class="item-card" onclick="showStep(2)">
+                    <div style="font-size: 24px; margin-bottom: 8px;">💬</div>
+                    <div style="font-weight: 600;">沟通记录</div>
+                    <div style="font-size: 11px; color: #999;">上传会议记录</div>
+                </div>
+                <div class="item-card" onclick="showStep(3)">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📄</div>
+                    <div style="font-weight: 600;">需求报告</div>
+                    <div style="font-size: 11px; color: #999;">生成/编辑报告</div>
+                </div>
+                <div class="item-card" onclick="showStep(4)">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                    <div style="font-weight: 600;">智能表格Demo</div>
+                    <div style="font-size: 11px; color: #999;">创建企微表格</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+function editStep0() {
+    document.getElementById("step0-view").style.display = "none";
+    document.getElementById("step0-edit").style.display = "block";
+}
+async function saveStep0() {
+    const industry = document.getElementById("s0-industry").value.trim();
+    const demand = document.getElementById("s0-demand").value.trim();
+    const updates = {industry, initial_demand: demand, status: industry || demand ? "待调研" : currentClient.status};
+    Object.assign(currentClient, updates);
+    await syncClientUpdate(currentClient);
+    showClientDetail(currentClient);
+    toast("已保存");
+}
+async function syncClientUpdate(c) {
+    if (!token || !c.serverId) return;
+    try {
+        await fetch(API + "/api/clients/" + c.serverId, {
+            method: "PUT",
+            headers: {"Content-Type": "application/json", Authorization: "Bearer " + token},
+            body: JSON.stringify(c)
+        });
+    } catch(e) {}
+}
+
+// ==================== Step 1: 调研准备 ====================
+function renderStep1(c) {
+    const hasResult = c.step1_result;
+    return `
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="margin: 0;">Step 1: 调研准备</h3>
+                ${hasResult ? '<span class="badge badge-success">✓ 已生成</span>' : ""}
+            </div>
+            <p style="font-size: 13px; color: #666; margin-bottom: 16px;">基于客户档案 + 知识库，生成提问清单和分析材料</p>
+            ${hasResult ? `
+                <div class="output-area">
+                    <div class="rendered-content" id="s1-result-content">${renderMarkdown(hasResult)}</div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button class="btn btn-secondary btn-sm" onclick="copyText('s1-result-content")">复制</button>
+                    <button class="btn btn-secondary btn-sm" onclick="downloadPDF('s1-result-content', '调研准备材料')">导出PDF</button>
+                    <button class="btn btn-secondary btn-sm" onclick="regenerateStep1()">重新生成</button>
+                    <button class="btn btn-primary" onclick="showStep(2)">继续 →</button>
+                </div>
+            ` : `
+                <button class="btn btn-primary" onclick="generateStep1()">生成调研准备材料</button>
+            `}
+            <div id="s1-loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p style="font-size: 12px; color: #999;">正在生成...</p>
+            </div>
+        </div>
+    `;
+}
+async function generateStep1() {
+    const loading = document.getElementById("s1-loading");
+    const btn = loading.previousElementSibling;
+    if (btn) btn.style.display = "none";
+    loading.style.display = "block";
+    try {
+        const kb = await searchKB(currentClient.industry);
+        const prompt = `客户行业: ${currentClient.industry}\n需求: ${currentClient.initial_demand}\n\n知识库参考:\n${kb}`;
+        const result = await callAI("你是一位资深智能表格售前顾问。根据客户信息生成调研准备材料。", prompt);
+        currentClient.step1_result = result;
+        currentClient.status = "待沟通";
+        await syncClientUpdate(currentClient);
+        document.getElementById("s1-result-content").innerHTML = renderMarkdown(result);
+        loading.style.display = "none";
+        if (btn) {
+            btn.outerHTML = `<div class="output-area"><div class="rendered-content" id="s1-result-content">${renderMarkdown(result)}</div></div>`;
+        }
+        updateTimeline();
+    } catch(e) {
+        loading.style.display = "none";
+        if (btn) btn.style.display = "inline-flex";
+        toast("生成失败: " + e.message);
+    }
+}
+async function regenerateStep1() {
+    await generateStep1();
+}
+
+// ==================== Step 2: 沟通记录 ====================
+function renderStep2(c) {
+    const hasTranscript = c.transcript || (c.uploaded_files && c.uploaded_files.length > 0);
+    return `
+        <div class="card">
+            <h3>Step 2: 沟通记录</h3>
+            <p style="font-size: 13px; color: #666; margin-bottom: 16px;">上传或粘贴沟通记录，作为生成报告的输入</p>
+            <div class="upload-area" onclick="document.getElementById("file-input").click()">
+                <p>点击上传文件</p>
+                <p class="hint">支持 .txt / .docx</p>
+            </div>
+            <input type="file" id="file-input" accept=".txt,.docx" multiple style="display:none" onchange="handleFileUpload(event)">
+            <div id="uploaded-files" style="margin: 12px 0;"></div>
+            <div class="or-divider" style="text-align: center; color: #999; font-size: 11px; margin: 12px 0;">或粘贴文字</div>
+            <textarea id="s2-transcript" rows="4" placeholder="粘贴沟通记录...">${c.transcript || ""}</textarea>
+            <button class="btn btn-secondary" onclick="saveTranscript()">保存记录</button>
+            ${hasTranscript ? '<button class="btn btn-primary" style="margin-left: 8px;" onclick="showStep(3)">生成报告 →</button>' : ""}
+        </div>
+    `;
+}
+function handleFileUpload(event) {
+    const files = event.target.files;
+    if (!files.length) return;
+    const container = document.getElementById("uploaded-files");
+    let html = "";
+    for (let i = 0; i < files.length; i++) {
+        html += `<div class="badge">${files[i].name}</div>`;
+    }
+    container.innerHTML = html;
+    toast("已上传 " + files.length + " 个文件");
+}
+async function saveTranscript() {
+    const text = document.getElementById("s2-transcript").value.trim();
+    currentClient.transcript = text;
+    currentClient.status = "待报告";
+    await syncClientUpdate(currentClient);
+    toast("已保存");
+}
+
+// ==================== Step 3: 报告 ====================
+function renderStep3(c) {
+    const hasReport = c.step2_report;
+    return `
+        <div class="card">
+            <h3>Step 3: 需求分析报告</h3>
+            ${hasReport ? `
+                <div class="rendered-content" id="s3-report">${renderMarkdown(hasReport)}</div>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button class="btn btn-secondary btn-sm" onclick="editReport()">编辑报告</button>
+                    <button class="btn btn-secondary btn-sm" onclick="copyText('s3-report")">复制</button>
+                    <button class="btn btn-secondary btn-sm" onclick="downloadPDF('s3-report', '需求报告')">导出PDF</button>
+                </div>
+                <div style="margin-top: 16px;">
+                    <button class="btn btn-primary" onclick="showStep(4)">生成Demo →</button>
+                </div>
+            ` : `
+                <p style="font-size: 13px; color: #666; margin-bottom: 16px;">点击按钮基于沟通记录生成需求报告</p>
+                <button class="btn btn-primary" onclick="generateReport()">生成需求报告</button>
+            `}
+        </div>
+        <div id="s3-loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p style="font-size: 12px; color: #999;">正在生成...</p>
+        </div>
+    `;
+}
+async function generateReport() {
+    const loading = document.getElementById("s3-loading");
+    loading.style.display = "block";
+    try {
+        const kb = await searchKB(currentClient.industry);
+        const prompt = `客户: ${currentClient.name}\n行业: ${currentClient.industry}\n沟通记录: ${currentClient.transcript || "无"}\n\n知识库: ${kb}`;
+        const result = await callAI("你是专业顾问。根据客户信息生成需求分析报告，包含：客户背景、痛点、业务场景、方案建议。", prompt);
+        currentClient.step2_report = result;
+        currentClient.status = "待Demo";
+        await syncClientUpdate(currentClient);
+        loading.style.display = "none";
+        showStep(3);
+        updateTimeline();
+    } catch(e) {
+        loading.style.display = "none";
+        toast("生成失败: " + e.message);
+    }
+}
+function editReport() {
+    const html = `
+        <div class="card">
+            <h3>编辑报告</h3>
+            <textarea id="report-edit" rows="15" style="font-family: inherit;">${currentClient.step2_report || ""}</textarea>
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button class="btn btn-primary" onclick="saveReportEdit()">保存</button>
+                <button class="btn btn-secondary" onclick="showStep(3)">取消</button>
+            </div>
+        </div>
+    `;
+    document.getElementById("step-content").innerHTML = html;
+}
+async function saveReportEdit() {
+    const text = document.getElementById("report-edit").value;
+    currentClient.step2_report = text;
+    await syncClientUpdate(currentClient);
+    toast("已保存");
+    showStep(3);
+}
+
+// ==================== Step 4: Demo ====================
+function renderStep4(c) {
+    const hasDemo = c.demo_url || c.step2_schema;
+    return `
+        <div class="card">
+            <h3>Step 4: 智能表格Demo</h3>
+            ${hasDemo ? `
+                ${c.demo_url ? `<p>✅ Demo已创建: <a href="${c.demo_url}" target="_blank" style="color: #1a56db;">打开链接 →</a></p>` : ""}
+                <div style="margin-top: 12px;">
+                    <button class="btn btn-secondary btn-sm" onclick="regenerateDemo()">重新生成</button>
+                </div>
+            ` : `
+                <p style="font-size: 13px; color: #666; margin-bottom: 16px;">基于报告生成智能表格Demo</p>
+                <button class="btn btn-primary" onclick="createDemo()">创建智能表格</button>
+            `}
+        </div>
+        <div id="s4-loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p style="font-size: 12px; color: #999;">正在创建...</p>
+        </div>
+    `;
+}
+async function createDemo() {
+    const loading = document.getElementById("s4-loading");
+    loading.style.display = "block";
+    try {
+        // 构建表格结构
+        const sheets = [{
+            name: "需求跟踪",
+            fields: [
+                {title: "需求描述", type: "TEXT"},
+                {title: "优先级", type: "SINGLE_SELECT", options: ["高", "中", "低"]},
+                {title: "负责人", type: "TEXT"},
+                {title: "状态", type: "SINGLE_SELECT", options: ["待处理", "进行中", "已完成"]}
+            ],
+            records: [{需求描述: "示例需求", 优先级: "中", 负责人: "-", 状态: "待处理"}]
+        }];
+        const schema = {doc_name: currentClient.name + "-Demo", sheets, need_dashboard: true};
+        const resp = await fetch(API + "/api/wecom/create_smarttable", {
+            method: "POST",
+            headers: {"Content-Type": "application/json", Authorization: "Bearer " + token},
+            body: JSON.stringify(schema)
+        });
+        const data = await resp.json();
+        if (data.success) {
+            currentClient.demo_url = data.url;
+            currentClient.step2_schema = JSON.stringify(schema);
+            currentClient.status = "已完成";
+            await syncClientUpdate(currentClient);
+            loading.style.display = "none";
+            toast("创建成功！");
+            showStep(4);
+            updateTimeline();
+        } else {
+            throw new Error(data.error);
+        }
+    } catch(e) {
+        loading.style.display = "none";
+        toast("创建失败: " + e.message);
+    }
+}
+async function regenerateDemo() {
+    await createDemo();
+}
+
+// ==================== Knowledge Base ====================
+async function searchKB(industry) {
+    if (!token) return "";
+    try {
+        const resp = await fetch(API + "/api/knowledge/search", {
+            method: "POST",
+            headers: {"Content-Type": "application/json", Authorization: "Bearer " + token},
+            body: JSON.stringify({industry: industry || "", keywords: []})
+        });
+        const data = await resp.json();
+        let kb = "";
+        if (data.industry_knowledge) kb += "【行业知识】" + data.industry_knowledge.substring(0, 1000) + "\n\n";
+        if (data.matched_cases?.length) kb += "【相关案例】\n" + data.matched_cases.map(c => "- " + (c.meta?.industry || "") + ": " + (c.demand_summary || "").substring(0, 100)).join("\n");
+        return kb;
+    } catch(e) { return ""; }
+}
+async function loadKnowledge() {
+    if (!token) return;
+    try {
+        const resp = await fetch(API + "/api/provider-knowledge", {
+            headers: {Authorization: "Bearer " + token}
+        });
+        const items = await resp.json();
+        const container = document.getElementById("knowledge-list");
+        if (!items.length) {
+            container.innerHTML = '<div class="empty"><p>暂无知识库条目</p></div>';
+            return;
+        }
+        const cats = {case: "案例", template: "模板", qa: "QA", sales_tool: "销售工具", industry_knowledge: "行业知识"};
+        let html = "";
+        Object.entries(cats).forEach(([k, v]) => {
+            const filtered = items.filter(i => i.category === k);
+            if (filtered.length) html += `<div class="section-label">${v} (${filtered.length})</div>` + filtered.map(i => `<div class="kb-card"><div style="font-weight: 600; margin-bottom: 4px;">${i.title}</div><div style="font-size: 12px; color: #666;">${(i.content || "").substring(0, 100)}...</div></div>`).join("");
+        });
+        container.innerHTML = html || '<div class="empty"><p>暂无知识库</p></div>';
+    } catch(e) {}
+}
+async function doAddKnowledge() {
+    const cat = document.getElementById("kb-category").value;
+    const title = document.getElementById("kb-title").value.trim();
+    const content = document.getElementById("kb-content").value.trim();
+    if (!title) { alert("请填写标题"); return; }
+    try {
+        await fetch(API + "/api/provider-knowledge", {
+            method: "POST",
+            headers: {"Content-Type": "application/json", Authorization: "Bearer " + token},
+            body: JSON.stringify({category: cat, title, content, industry: currentClient?.industry || ""})
+        });
+        document.getElementById("kb-title").value = "";
+        document.getElementById("kb-content").value = "";
+        loadKnowledge();
+        loadStats();
+        toast("已添加");
+    } catch(e) { toast("添加失败"); }
+}
+
+// ==================== Clients ====================
+async function loadClients() {
+    const container = document.getElementById("clients-list");
+    if (!token) { container.innerHTML = '<div class="empty"><p>请先登录</p></div>'; return; }
+    container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    try {
+        const resp = await fetch(API + "/api/clients", {
+            headers: {Authorization: "Bearer " + token}
+        });
+        const clients = await resp.json();
+        if (!clients.length) {
+            container.innerHTML = '<div class="empty"><p>暂无客户</p></div>';
+            return;
+        }
+        const statusMap = {"待完善": "pill-draft", "待调研": "pill-progress", "待沟通": "pill-progress", "待报告": "pill-pending", "待Demo": "pill-pending", "已完成": "pill-done"};
+        container.innerHTML = clients.map(c => `
+            <div class="item-card" onclick="viewClient('${c.id}')">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600;">${c.name}</div>
+                        <div style="font-size: 11px; color: #999;">${c.industry || ""} · ${new Date(c.created_at).toLocaleDateString()}</div>
+                    </div>
+                    <span class="status-pill ${statusMap[c.status] || "pill-draft"}>${c.status || "待完善"}</span>
+                </div>
+            </div>
+        `).join("");
+    } catch(e) {
+        container.innerHTML = '<div class="empty"><p>加载失败</p></div>';
+    }
+}
+function viewClient(id) {
+    fetch(API + "/api/clients/" + id, {
+        headers: {Authorization: "Bearer " + token}
+    }).then(r => r.json()).then(c => {
+        showClientDetail(c);
+    });
+}
+async function doCreateClient() {
+    const name = document.getElementById("new-client-name").value.trim();
+    const industry = document.getElementById("new-client-industry").value.trim();
+    if (!name) { alert("请输入客户名称"); return; }
+    try {
+        const resp = await fetch(API + "/api/clients", {
+            method: "POST",
+            headers: {"Content-Type": "application/json", Authorization: "Bearer " + token},
+            body: JSON.stringify({name, industry})
+        });
+        const data = await resp.json();
+        if (data.success) {
+            document.getElementById("new-client-name").value = "";
+            document.getElementById("new-client-industry").value = "";
+            loadClients();
+            toast("创建成功");
+            if (data.id) viewClient(data.id);
+        } else {
+            alert(data.detail || "创建失败");
+        }
+    } catch(e) {
+        alert("网络错误");
+    }
+}
+function updateTimeline() {
+    const c = currentClient;
+    let level = 0;
+    if (c.industry || c.initial_demand) level = 1;
+    if (c.step1_result) level = 2;
+    if (c.transcript) level = 3;
+    if (c.step2_report) level = 4;
+    if (c.demo_url) level = 5;
+    document.getElementById("progress-line").style.width = (level * 20) + "%";
+    for (let i = 0; i < 5; i++) {
+        const dot = document.getElementById("step-dot-" + i);
+        dot.className = "timeline-dot " + (i < level ? "done" : i === level ? "active" : "pending");
+    }
+}
+
+// ==================== Stats ====================
+async function loadStats() {
+    if (!token) return;
+    try {
+        const resp = await fetch(API + "/api/provider-knowledge/stats", {
+            headers: {Authorization: "Bearer " + token}
+        });
+        const s = await resp.json();
+        document.getElementById("stat-cases").textContent = s.case || 0;
+        document.getElementById("stat-templates").textContent = s.template || 0;
+        document.getElementById("stat-qa").textContent = s.qa || 0;
+        document.getElementById("stat-sales").textContent = s.sales_tool || 0;
+        document.getElementById("stat-knowledge").textContent = s.industry_knowledge || 0;
+    } catch(e) {}
+}
+
+// ==================== Admin ====================
+async function loadAdmin() {
+    if (!token) return;
+    try {
+        const resp = await fetch(API + "/api/clients", {
+            headers: {Authorization: "Bearer " + token}
+        });
+        const clients = await resp.json();
+        document.getElementById("admin-providers").textContent = "1";
+        document.getElementById("admin-clients").textContent = clients.length;
+        document.getElementById("admin-reports").textContent = clients.filter(c => c.step2_report).length;
+        document.getElementById("admin-demos").textContent = clients.filter(c => c.demo_url).length;
+        const list = document.getElementById("admin-client-list");
+        list.innerHTML = clients.length ? `<table class="admin-table"><thead><tr><th>客户</th><th>行业</th><th>状态</th><th>操作</th></tr></thead><tbody>` +
+            clients.map(c => `<tr><td>${c.name}</td><td>${c.industry || "-"}</td><td>${c.status || "-"}</td><td><a href="#" onclick="viewClient(${c.id}); return false;">查看</a></td></tr>`).join("") + "</tbody></table>" : "<p>暂无数据</p>";
+    } catch(e) {}
+}
+
+// ==================== Tabs ====================
+function switchTab(tab) {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.getElementById("tab-" + tab + "-btn").classList.add("active");
+    document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+    document.getElementById("tab-" + tab).style.display = "block";
+    if (tab === "admin") loadAdmin();
+}
+
+// ==================== Utils ====================
+function callAI(system, user) {
+    return fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: {"Content-Type": "application/json", Authorization: "Bearer sk-63d4e005ecb646b08538368c5172ed82"},
+        body: JSON.stringify({model: "deepseek-chat", messages: [{role: "system", content: system}, {role: "user", content: user}], max_tokens: 4000})
+    }).then(r => r.json()).then(d => d.choices?.[0]?.message?.content || "");
+}
+function renderMarkdown(t) { return marked.parse(t || ""); }
+function copyText(id) {
+    const el = document.getElementById(id);
+    if (el) navigator.clipboard.writeText(el.innerText).then(() => toast("已复制"));
+}
+function downloadPDF(id, title) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    html2pdf().set({margin: 15, filename: title + ".pdf", image: {type: "jpeg", quality: 0.95}, html2canvas: {scale: 2}, jsPDF: {unit: "mm", format: "a4"}})
+        .from(el).save();
+}
+
+// ==================== Init ====================
+if (token) {
+    showHome();
+} else {
+    showLogin();
+}
+</script>
+</body>
+</html>

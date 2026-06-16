@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Provider Assist - 服务商知识库</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; background: #f4f6f9; color: #111; line-height: 1.6; min-height: 100vh; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(0,0,0,0.08); }
+        h1 { font-size: 20px; font-weight: 700; color: #1a56db; }
+        .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .card h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #333; }
+        .card p { font-size: 13px; color: #666; margin-bottom: 12px; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: #1a56db; color: #fff; }
+        .btn-primary:hover { background: #0f3a8a; }
+        .btn-secondary { background: #f3f4f6; color: #333; border: 1px solid #e5e7eb; }
+        .btn-secondary:hover { background: #e5e7eb; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        input, textarea, select { width: 100%; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; margin-bottom: 12px; background: #f9fafb; }
+        input:focus, textarea:focus { outline: none; border-color: #1a56db; background: #fff; }
+        label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .item-card { background: #fff; border-radius: 10px; padding: 14px; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s; }
+        .item-card:hover { border-color: #1a56db; box-shadow: 0 4px 12px rgba(26,86,219,0.1); }
+        .item-card .title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .item-card .meta { font-size: 11px; color: #999; }
+        .item-card .category { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 4px; background: #e8f0fe; color: #1a56db; margin-right: 6px; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; background: #f3f4f6; color: #666; border: none; transition: all 0.2s; }
+        .tab.active { background: #1a56db; color: #fff; }
+        .tab:hover:not(.active) { background: #e5e7eb; }
+        .progress-bar { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; margin: 8px 0; }
+        .progress-bar .fill { height: 100%; background: linear-gradient(90deg, #1a56db, #3b82f6); border-radius: 4px; transition: width 0.3s; }
+        .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+        .stat { text-align: center; padding: 16px; background: #fff; border-radius: 10px; border: 1px solid #e5e7eb; }
+        .stat .num { font-size: 24px; font-weight: 700; color: #1a56db; }
+        .stat .label { font-size: 11px; color: #999; margin-top: 4px; }
+        .empty { text-align: center; padding: 40px; color: #999; }
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 24px; border-radius: 8px; font-size: 13px; z-index: 9999; }
+        .loading { text-align: center; padding: 40px; color: #999; }
+        .loading .spinner { width: 24px; height: 24px; border: 3px solid #e5e7eb; border-top-color: #1a56db; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .page { display: none; }
+        .page.active { display: block; }
+        .auth-form { max-width: 400px; margin: 60px auto; }
+        .section-label { font-size: 11px; font-weight: 600; color: #999; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+        .kb-hint { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 16px 20px; border-radius: 12px; margin-bottom: 20px; }
+        .kb-hint h4 { font-size: 14px; margin-bottom: 6px; }
+        .kb-hint p { font-size: 12px; opacity: 0.9; margin: 0; }
+        .search-result { background: #f8faf8; border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+        .search-result h5 { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #333; }
+        .search-result p { font-size: 12px; color: #666; margin: 0; }
+        .search-result .badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #e8f0fe; color: #1a56db; margin-right: 4px; }
+        @media (max-width: 768px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Auth Page -->
+    <div id="page-auth" class="page active">
+        <div class="auth-form">
+            <div class="card">
+                <h3>服务商助手 - 登录</h3>
+                <div id="auth-error" style="color: #dc2626; font-size: 12px; margin-bottom: 12px; display: none;"></div>
+                <label>用户名</label>
+                <input type="text" id="auth-username" placeholder="请输入用户名">
+                <label>密码</label>
+                <input type="password" id="auth-password" placeholder="请输入密码">
+                <div style="display: flex; gap: 10px; margin-top: 16px;">
+                    <button class="btn btn-primary" onclick="doLogin()" style="flex: 1;">登录</button>
+                    <button class="btn btn-secondary" onclick="showRegister()" style="flex: 1;">注册</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Page -->
+    <div id="page-main" class="page">
+        <div class="header">
+            <div>
+                <h1>Provider Assist</h1>
+                <p style="font-size: 12px; color: #999; margin-top: 2px;">服务商需求调研助手</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span id="user-display" style="font-size: 13px; color: #666;"></span>
+                <button class="btn btn-secondary" onclick="logout()">退出</button>
+            </div>
+        </div>
+
+        <!-- Knowledge Stats -->
+        <div class="kb-hint">
+            <h4>💡 完善您的服务商知识库</h4>
+            <p>上传越多，后续生成报告时越优先使用您的自定义模板和案例</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="num" id="stat-case">0</div>
+                <div class="label">案例</div>
+            </div>
+            <div class="stat">
+                <div class="num" id="stat-template">0</div>
+                <div class="label">模板</div>
+            </div>
+            <div class="stat">
+                <div class="num" id="stat-qa">0</div>
+                <div class="label">QA</div>
+            </div>
+            <div class="stat">
+                <div class="num" id="stat-sales">0</div>
+                <div class="label">销售工具</div>
+            </div>
+            <div class="stat">
+                <div class="num" id="stat-knowledge">0</div>
+                <div class="label">行业知识</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('knowledge')">知识库</button>
+            <button class="tab" onclick="switchTab('clients')">客户</button>
+            <button class="tab" onclick="switchTab('search')">搜索</button>
+        </div>
+
+        <!-- Tab: Knowledge -->
+        <div id="tab-knowledge" class="tab-content">
+            <div class="card">
+                <h3>添加知识库条目</h3>
+                <label>类别</label>
+                <select id="kb-category">
+                    <option value="case">案例</option>
+                    <option value="template">需求报告模板框架</option>
+                    <option value="qa">售前/售后QA</option>
+                    <option value="sales_tool">销售手册/一指禅/话术</option>
+                    <option value="industry_knowledge">行业知识/knowhow</option>
+                </select>
+                <label>标题</label>
+                <input type="text" id="kb-title" placeholder="输入标题">
+                <label>行业（可选）</label>
+                <input type="text" id="kb-industry" placeholder="如：服装生产、制造业">
+                <label>内容</label>
+                <textarea id="kb-content" rows="5" placeholder="输入内容..."></textarea>
+                <button class="btn btn-primary" onclick="addKnowledge()">添加</button>
+            </div>
+
+            <div class="section-label">已上传的知识库</div>
+            <div id="knowledge-list" class="grid"></div>
+        </div>
+
+        <!-- Tab: Clients -->
+        <div id="tab-clients" class="tab-content" style="display: none;">
+            <div class="card">
+                <h3>新建客户</h3>
+                <label>客户名称</label>
+                <input type="text" id="client-name" placeholder="输入客户名称">
+                <label>客户行业</label>
+                <input type="text" id="client-industry" placeholder="如：金融、制造业">
+                <button class="btn btn-primary" onclick="createClient()">创建</button>
+            </div>
+            <div class="section-label">客户列表</div>
+            <div id="clients-list" class="grid"></div>
+        </div>
+
+        <!-- Tab: Search -->
+        <div id="tab-search" class="tab-content" style="display: none;">
+            <div class="card">
+                <h3>搜索全局知识库</h3>
+                <label>行业</label>
+                <input type="text" id="search-industry" placeholder="输入行业">
+                <label>关键词（逗号分隔）</label>
+                <input type="text" id="search-keywords" placeholder="如：CRM,销售,客户管理">
+                <button class="btn btn-primary" onclick="searchKnowledge()">搜索</button>
+            </div>
+            <div id="search-results"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:8000';
+let token = localStorage.getItem('provider_token');
+let username = localStorage.getItem('provider_username');
+
+// Auth
+function showRegister() {
+    const username = prompt('设置用户名:');
+    const password = prompt('设置密码:');
+    const providerName = prompt('服务商名称:');
+    if (username && password) {
+        fetch(API_BASE + '/api/auth/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username, password, provider_name: providerName})
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                localStorage.setItem('provider_token', data.access_token);
+                localStorage.setItem('provider_username', data.user.username);
+                location.reload();
+            } else {
+                alert(data.detail || '注册失败');
+            }
+        });
+    }
+}
+
+async function doLogin() {
+    const username = document.getElementById('auth-username').value.trim();
+    const password = document.getElementById('auth-password').value;
+    if (!username || !password) {
+        document.getElementById('auth-error').textContent = '请输入用户名和密码';
+        document.getElementById('auth-error').style.display = 'block';
+        return;
+    }
+    try {
+        const resp = await fetch(API_BASE + '/api/auth/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username, password})
+        });
+        const data = await resp.json();
+        if (data.success) {
+            localStorage.setItem('provider_token', data.access_token);
+            localStorage.setItem('provider_username', data.user.username);
+            location.reload();
+        } else {
+            document.getElementById('auth-error').textContent = data.detail || '登录失败';
+            document.getElementById('auth-error').style.display = 'block';
+        }
+    } catch(e) {
+        document.getElementById('auth-error').textContent = '无法连接到服务器，请先启动后端: cd backend && python main.py';
+        document.getElementById('auth-error').style.display = 'block';
+    }
+}
+
+function logout() {
+    localStorage.removeItem('provider_token');
+    localStorage.removeItem('provider_username');
+    location.reload();
+}
+
+// Pages
+function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+}
+
+// Tabs
+function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    event.target.classList.add('active');
+    document.getElementById('tab-' + name).style.display = 'block';
+    if (name === 'knowledge') loadKnowledge();
+    if (name === 'clients') loadClients();
+}
+
+// Auth check
+if (token) {
+    showPage('main');
+    document.getElementById('user-display').textContent = username || '';
+    loadStats();
+} else {
+    showPage('auth');
+}
+
+// Knowledge
+async function addKnowledge() {
+    const category = document.getElementById('kb-category').value;
+    const title = document.getElementById('kb-title').value.trim();
+    const industry = document.getElementById('kb-industry').value.trim();
+    const content = document.getElementById('kb-content').value.trim();
+
+    if (!title) { alert('请输入标题'); return; }
+
+    const resp = await fetch(API_BASE + '/api/provider-knowledge', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+        body: JSON.stringify({category, title, content, industry, tags: ''})
+    });
+    const data = await resp.json();
+    if (data.success) {
+        showToast('添加成功');
+        document.getElementById('kb-title').value = '';
+        document.getElementById('kb-content').value = '';
+        loadKnowledge();
+        loadStats();
+    }
+}
+
+async function loadKnowledge() {
+    const resp = await fetch(API_BASE + '/api/provider-knowledge', {
+        headers: {'Authorization': 'Bearer ' + token}
+    });
+    const items = await resp.json();
+    const container = document.getElementById('knowledge-list');
+    if (!items.length) {
+        container.innerHTML = '<div class="empty">暂无知识库条目，添加后可在生成报告时优先使用</div>';
+        return;
+    }
+    const categoryLabels = {case: '案例', template: '模板', qa: 'QA', sales_tool: '销售工具', industry_knowledge: '行业知识'};
+    container.innerHTML = items.map(item => `
+        <div class="item-card">
+            <div style="margin-bottom: 6px;">
+                <span class="category">${categoryLabels[item.category] || item.category}</span>
+            </div>
+            <div class="title">${item.title}</div>
+            <div class="meta">${item.industry || '通用'} · ${new Date(item.created_at).toLocaleDateString()}</div>
+        </div>
+    `).join('');
+}
+
+async function loadStats() {
+    const resp = await fetch(API_BASE + '/api/provider-knowledge/stats', {
+        headers: {'Authorization': 'Bearer ' + token}
+    });
+    const stats = await resp.json();
+    document.getElementById('stat-case').textContent = stats.case || 0;
+    document.getElementById('stat-template').textContent = stats.template || 0;
+    document.getElementById('stat-qa').textContent = stats.qa || 0;
+    document.getElementById('stat-sales').textContent = stats.sales_tool || 0;
+    document.getElementById('stat-knowledge').textContent = stats.industry_knowledge || 0;
+}
+
+// Clients
+async function createClient() {
+    const name = document.getElementById('client-name').value.trim();
+    const industry = document.getElementById('client-industry').value.trim();
+    if (!name) { alert('请输入客户名称'); return; }
+
+    const resp = await fetch(API_BASE + '/api/clients', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+        body: JSON.stringify({name, industry})
+    });
+    const data = await resp.json();
+    if (data.success) {
+        showToast('客户创建成功');
+        document.getElementById('client-name').value = '';
+        loadClients();
+    }
+}
+
+async function loadClients() {
+    const resp = await fetch(API_BASE + '/api/clients', {
+        headers: {'Authorization': 'Bearer ' + token}
+    });
+    const clients = await resp.json();
+    const container = document.getElementById('clients-list');
+    if (!clients.length) {
+        container.innerHTML = '<div class="empty">暂无客户</div>';
+        return;
+    }
+    const statusLabels = {'待完善': '待完善', '待沟通': '待沟通', '待出报告': '待出报告', '已完成': '已完成'};
+    container.innerHTML = clients.map(c => `
+        <div class="item-card">
+            <div class="title">${c.name}</div>
+            <div class="meta">${c.industry || '未分类'} · ${new Date(c.created_at).toLocaleDateString()}</div>
+            <div style="margin-top: 8px;">
+                <span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #f3f4f6; color: #666;">${statusLabels[c.status] || c.status}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Search
+async function searchKnowledge() {
+    const industry = document.getElementById('search-industry').value.trim();
+    const keywords = document.getElementById('search-keywords').value.split(',').map(k => k.trim()).filter(k => k);
+
+    const container = document.getElementById('search-results');
+    container.innerHTML = '<div class="loading"><div class="spinner"></div>搜索中...</div>';
+
+    const resp = await fetch(API_BASE + '/api/knowledge/search', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+        body: JSON.stringify({industry, keywords})
+    });
+    const data = await resp.json();
+
+    let html = '';
+    if (data.matched_cases && data.matched_cases.length) {
+        html += '<h4 style="margin: 16px 0 8px; font-size: 14px;">相关案例</h4>';
+        data.matched_cases.forEach(c => {
+            const meta = c.meta || {};
+            html += `
+            <div class="search-result">
+                <h5>${meta.industry || ''} - ${meta.scene || ''}</h5>
+                <p>${(c.demand_summary || '').substring(0, 100)}...</p>
+                ${(c.pain_points || []).slice(0, 3).map(p => `<span class="badge">${p}</span>`).join('')}
+            </div>`;
+        });
+    }
+    if (data.matched_templates && data.matched_templates.length) {
+        html += '<h4 style="margin: 16px 0 8px; font-size: 14px;">字段模板</h4>';
+        data.matched_templates.forEach(t => {
+            const meta = t.meta || {};
+            html += `
+            <div class="search-result">
+                <h5>${meta.industry || ''} - ${meta.scene || ''}</h5>
+                <p>${meta.design_principle || ''}</p>
+            </div>`;
+        });
+    }
+    if (data.user_knowledge && data.user_knowledge.length) {
+        html += '<h4 style="margin: 16px 0 8px; font-size: 14px;">您的知识库</h4>';
+        data.user_knowledge.forEach(k => {
+            html += `
+            <div class="search-result">
+                <h5>${k.title}</h5>
+                <p>${(k.content || '').substring(0, 100)}...</p>
+            </div>`;
+        });
+    }
+    if (!html) {
+        html = '<div class="empty">未找到相关内容</div>';
+    }
+    container.innerHTML = html;
+}
+
+function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>售前方案工作台 · 优化版</title>
+<style>
+:root{
+  --bg:#f5f7fb;--card:#fff;--text:#162033;--sub:#667085;--muted:#98a2b3;--line:#e6ebf2;
+  --blue:#1263e6;--blue2:#eaf3ff;--green:#13b96f;--orange:#ff8a00;--red:#ef4444;
+  --shadow:0 20px 50px rgba(20,34,64,.08);--soft:0 8px 24px rgba(20,34,64,.06);
+}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:linear-gradient(180deg,#f7faff 0%,#f3f6fb 100%)}
+.app{height:100vh;display:grid;grid-template-columns:236px minmax(620px,1fr) 356px;gap:18px;padding:18px;overflow:hidden}
+.panel{background:rgba(255,255,255,.92);border:1px solid rgba(229,235,245,.9);border-radius:26px;box-shadow:var(--shadow);backdrop-filter:blur(18px);overflow:hidden}
+.sidebar{padding:18px;display:flex;flex-direction:column;gap:16px}.brand{height:64px;display:flex;align-items:center;gap:12px}.logo{width:42px;height:42px;border-radius:15px;background:linear-gradient(135deg,#1263e6,#19c58a);display:grid;place-items:center;color:#fff;font-weight:900;letter-spacing:.5px;box-shadow:0 10px 24px rgba(18,99,230,.22)}.brand-title{font-weight:900;font-size:17px}.brand-sub{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;max-width:150px}
+.flow{position:relative;margin-top:6px;padding-left:3px}.flow:before{content:"";position:absolute;left:25px;top:24px;bottom:24px;width:2px;background:linear-gradient(#1263e6 0 28%,#dfe6ef 28% 100%)}
+.step{position:relative;display:grid;grid-template-columns:50px 1fr;gap:10px;align-items:start;padding:12px 8px;border-radius:18px;cursor:pointer;transition:.18s;margin:4px 0}.step:hover{background:#f7faff}.num{position:relative;z-index:2;width:34px;height:34px;margin-left:5px;border-radius:50%;display:grid;place-items:center;background:#eef2f7;color:#98a2b3;font-weight:900;border:4px solid #fff;box-shadow:0 3px 10px rgba(16,24,40,.08)}.step.done .num{background:var(--green);color:#fff}.step.active{background:linear-gradient(135deg,#eef6ff,#f8fbff);box-shadow:inset 0 0 0 1px #d7eaff}.step.active .num{background:var(--blue);color:#fff;box-shadow:0 0 0 6px #e8f2ff}.step h3{margin:2px 0 4px;font-size:14px}.step p{margin:0;color:var(--muted);font-size:12px;line-height:1.45}.side-stat{margin-top:auto;border-radius:20px;padding:15px;background:linear-gradient(135deg,#f6fbff,#ffffff);border:1px solid #e5eefb}.side-stat b{font-size:13px}.side-stat .meter{height:7px;background:#edf2f7;border-radius:99px;overflow:hidden;margin:12px 0 8px}.side-stat .meter i{display:block;width:48%;height:100%;background:linear-gradient(90deg,#1263e6,#13b96f)}.side-stat span{color:var(--muted);font-size:12px}
+.main{display:flex;flex-direction:column;min-width:0}.header{display:none}.content{padding:34px 38px 110px;overflow:auto;height:100%}.page{display:none;animation:fade .2s ease}.page.active{display:block}@keyframes fade{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+.hero{position:relative;border-radius:24px;padding:20px 22px;background:linear-gradient(135deg,#ffffff 0%,#f6fbff 58%,#eff7ff 100%);border:1px solid #deebfb;box-shadow:var(--soft);overflow:hidden;margin-bottom:18px}.hero:after{content:"";position:absolute;right:-50px;top:-65px;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,#b8d8ff 0,#eaf4ff 46%,transparent 70%)}.hero h2{margin:0 0 6px;font-size:18px}.hero p{margin:0;color:var(--sub);font-size:13px;line-height:1.6;max-width:760px}.section{border:1px solid var(--line);border-radius:24px;background:#fff;padding:22px;box-shadow:var(--soft);margin-bottom:16px}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{margin-bottom:20px}.label{display:flex;justify-content:space-between;align-items:center;font-weight:850;font-size:13px;margin-bottom:8px}.hint{font-size:12px;color:var(--muted);font-weight:500}.input,.select,.textarea{width:100%;border:1px solid #d9e0ea;background:#fbfcfe;border-radius:15px;padding:12px 14px;font-size:13px;outline:none;transition:.15s;color:#182235}.input:focus,.select:focus,.textarea:focus{background:#fff;border-color:#88b8ff;box-shadow:0 0 0 4px rgba(18,99,230,.08)}.textarea{min-height:140px;line-height:1.78;resize:vertical}.search{display:flex;gap:10px}.search .input{flex:1}.btn{border:0;border-radius:14px;padding:11px 16px;font-size:13px;font-weight:900;cursor:pointer;transition:.15s;white-space:nowrap}.btn:hover{transform:translateY(-1px)}.primary{background:linear-gradient(135deg,#1263e6,#0c55cf);color:#fff;box-shadow:0 12px 24px rgba(18,99,230,.22)}.ghost{background:#eef2f7;color:#344054}.light{background:#fff;border:1px solid #d7e0ec;color:#344054}.chips{display:flex;gap:10px;flex-wrap:wrap}.chip{border:1px solid #d8dee8;border-radius:999px;padding:8px 12px;background:#fff;color:#475467;font-size:12px;font-weight:750;cursor:pointer}.chip.active{border-color:#b9d8ff;background:#edf6ff;color:#1263e6}.ai-card{border:1px solid #deebfb;background:#f8fbff;border-radius:20px;padding:16px}.ai-card h3{margin:0 0 10px;font-size:15px}.ai-card p{margin:0;color:#4d5a6d;font-size:13px;line-height:1.75}.verify{display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid #e6ebf2;border-radius:16px;background:#f7f9fc;padding:10px 12px}.verify b{font-size:13px;color:#667085}.verify span{display:block;color:var(--muted);font-size:12px;margin-top:3px}.seg{display:flex;padding:4px;background:#eef3fa;border-radius:14px}.seg button{border:0;background:transparent;padding:7px 11px;border-radius:10px;color:#667085;font-weight:800;cursor:pointer;font-size:12px}.seg button.on{background:#fff;color:#1263e6;box-shadow:0 5px 14px rgba(16,24,40,.08)}.insights{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}.insight{border:1px solid var(--line);border-radius:19px;background:#fff;padding:15px}.insight b{font-size:14px}.insight span{display:block;margin-top:8px;color:#667085;font-size:12px;line-height:1.55}.actions{display:flex;gap:12px;margin-top:24px}.empty{height:320px;border:1px dashed #cfd8e6;background:#fbfdff;border-radius:22px;display:grid;place-items:center;text-align:center;color:#8b95a5;line-height:1.8}.empty b{color:#344054}
+.art{display:flex;flex-direction:column}.art-head{padding:21px 20px 15px;border-bottom:1px solid var(--line)}.art-head h2{margin:0;font-size:18px}.art-head p{margin:6px 0 0;color:var(--muted);font-size:12px}.art-list{padding:16px;overflow:auto;display:flex;flex-direction:column;gap:12px}.artifact{border:1px solid var(--line);border-radius:20px;background:#fff;padding:15px;box-shadow:0 8px 18px rgba(20,34,64,.04)}.artifact-top{display:flex;justify-content:space-between;align-items:center;gap:8px}.artifact h4{margin:0;font-size:14px}.tag{border-radius:999px;padding:5px 9px;background:#ecfdf5;color:#047857;font-size:12px;font-weight:900}.tag.todo{background:#fff7ed;color:#c2410c}.artifact p{margin:9px 0 0;color:#667085;font-size:12px;line-height:1.62}.barbox{height:6px;background:#eef2f7;border-radius:99px;overflow:hidden;margin-top:12px}.bar{height:100%;background:linear-gradient(90deg,#1263e6,#13b96f)}.preview{margin-top:auto;padding:16px;background:#f8fbff;border-top:1px solid var(--line)}.preview-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:15px}.preview-card h3{margin:0 0 9px;font-size:14px}.preview-card p{margin:0;color:#667085;font-size:12px;line-height:1.7}
+
+.page-title{margin:0 0 26px;padding:8px 0 0}.page-title h2{margin:0;font-size:26px;letter-spacing:-.4px;line-height:1.15}.page-title p{margin:8px 0 0;color:#667085;font-size:13px}.mini-grid{display:grid;grid-template-columns:1.3fr .8fr .8fr;gap:14px}.soft-note{margin-top:14px;border-radius:16px;background:#f7f9fc;border:1px solid #e8edf5;padding:12px 14px;color:#667085;font-size:13px;line-height:1.6}.result-card{border:1px solid #e1ebf8;background:linear-gradient(180deg,#fbfdff,#f8fbff);border-radius:22px;padding:20px;margin-top:22px}.result-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.result-title b{font-size:14px}.result-title span{font-size:12px;color:#1263e6;background:#eaf3ff;border-radius:999px;padding:5px 8px;font-weight:800}.profile-lines{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.profile-lines div{background:#fff;border:1px solid #edf1f7;border-radius:16px;padding:14px}.profile-lines small{display:block;color:#98a2b3;font-size:11px;margin-bottom:5px}.profile-lines strong{font-size:13px;color:#344054}.feedback-line{margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:14px;background:#f3f5f8;color:#667085;padding:9px 10px;font-size:12px}.feedback-line .seg{background:#e9edf3}.need-text{min-height:108px}.section-slim{padding:24px 26px}
+.web-summary{margin-top:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid #e8edf5;background:#fff;border-radius:16px;padding:12px 12px 12px 14px}.web-summary b{font-size:13px}.web-summary p{margin:5px 0 0;color:#667085;font-size:12px;line-height:1.55}.adopt{border:1px solid #b9d8ff;background:#eef6ff;color:#1263e6;border-radius:12px;padding:9px 13px;font-weight:900;cursor:pointer;white-space:nowrap}.compact-note{font-size:12px;padding:10px 12px;margin-top:10px}.thumb-line{padding:8px 10px;margin-top:10px}.thumbs{display:flex;gap:6px}.thumbs button{width:34px;height:30px;border:0;border-radius:10px;background:#fff;box-shadow:0 4px 12px rgba(16,24,40,.06);cursor:pointer;font-size:15px}.guide{border:1px solid #e8edf5;background:#f8fafc;border-radius:16px;color:#667085;font-size:12px;line-height:1.8;padding:12px 14px;margin-bottom:10px}
+
+.is-hidden{display:none}
+.web-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.ghost-adopt{background:#fff;color:#475467;border-color:#d8dee8}
+.result-card{padding:18px;margin-top:4px}
+.result-title{margin-bottom:12px}
+.profile-lines div{padding:12px}
+.web-summary{margin-top:12px}
+.guide{font-size:12px}
+.actions{margin-top:18px}
+
+
+.floating-actions{position:fixed;right:392px;bottom:26px;z-index:20;display:flex;gap:10px;align-items:center;padding:10px;background:rgba(255,255,255,.86);border:1px solid rgba(217,226,240,.9);border-radius:22px;box-shadow:0 18px 42px rgba(20,34,64,.16);backdrop-filter:blur(16px)}
+.floating-actions .btn{height:42px;padding:0 18px;border-radius:14px;font-size:13px}.floating-actions .primary{padding:0 22px}
+@media(max-width:1200px){.floating-actions{right:28px}}
+@media(max-width:820px){.floating-actions{left:18px;right:18px;bottom:18px;justify-content:flex-end}}
+
+
+/* Step 2 refined */
+.prep-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start}
+.context-card{border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,#fff,#f9fbff);padding:18px;box-shadow:var(--soft);position:sticky;top:0}
+.context-card h3{margin:0 0 12px;font-size:15px}.context-item{padding:12px 0;border-top:1px solid #eef2f7}.context-item:first-of-type{border-top:0}.context-item small{display:block;color:#98a2b3;font-size:11px;margin-bottom:5px}.context-item b{font-size:13px;color:#344054;line-height:1.45}.prep-panel{border:1px solid var(--line);border-radius:24px;background:#fff;box-shadow:var(--soft);overflow:hidden}
+.prep-top{padding:20px 22px;border-bottom:1px solid #eef2f7;display:flex;justify-content:space-between;gap:16px;align-items:center}.prep-top h3{margin:0;font-size:16px}.prep-top p{margin:6px 0 0;color:#667085;font-size:12px;line-height:1.6}.prep-top .btn{height:38px;padding:0 16px}
+.prep-body{padding:20px 22px}.prep-options{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.option-card{border:1px solid #e6ebf2;border-radius:18px;background:#fbfcff;padding:14px;min-height:86px}.option-card b{font-size:13px}.option-card p{margin:8px 0 0;color:#667085;font-size:12px;line-height:1.55}.option-card.active{border-color:#b9d8ff;background:#f0f7ff}.prep-loading{display:none;height:220px;border:1px dashed #d7e0ec;border-radius:20px;background:#fbfdff;place-items:center;text-align:center;color:#667085}.spinner{width:34px;height:34px;border-radius:50%;border:4px solid #e8edf5;border-top-color:#1263e6;margin:0 auto 12px;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.prep-result{display:grid;gap:14px}.prep-block{border:1px solid #e8edf5;border-radius:20px;background:#fbfcff;padding:16px}.prep-block-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.prep-block-title b{font-size:14px}.prep-block-title span{font-size:12px;color:#98a2b3}.prep-list{display:grid;gap:10px}.q-item{display:grid;grid-template-columns:34px 96px 1fr;gap:10px;align-items:start;background:#fff;border:1px solid #edf1f7;border-radius:14px;padding:12px}.q-no{width:26px;height:26px;border-radius:9px;background:#eef6ff;color:#1263e6;display:grid;place-items:center;font-weight:900;font-size:12px}.q-dim{color:#667085;font-size:12px;font-weight:800;padding-top:5px}.q-text b{font-size:13px}.q-text p{margin:6px 0 0;color:#98a2b3;font-size:12px;line-height:1.55}.gap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.gap-card{background:#fff;border:1px solid #edf1f7;border-radius:16px;padding:13px}.gap-card b{font-size:13px}.gap-card p{margin:7px 0 0;color:#667085;font-size:12px;line-height:1.55}.prep-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #eef2f7;background:#fafcff;padding:14px 22px;color:#98a2b3;font-size:12px}.mini-actions{display:flex;gap:8px}.mini-actions button{border:1px solid #d8dee8;background:#fff;border-radius:11px;padding:8px 12px;color:#475467;font-size:12px;font-weight:800;cursor:pointer}
+@media(max-width:1200px){.prep-layout{grid-template-columns:1fr}.context-card{position:relative}.prep-options,.gap-grid{grid-template-columns:1fr}.q-item{grid-template-columns:28px 82px 1fr}}
+
+@media(max-width:1200px){.app{grid-template-columns:226px 1fr}.art{display:none}.row,.insights,.mini-grid,.profile-lines{grid-template-columns:1fr}}@media(max-width:820px){.app{grid-template-columns:1fr;height:auto;overflow:auto}.sidebar{display:none}.panel{border-radius:20px}}
+
+/* Step2 redesigned: sales research workspace */
+#page2{padding-bottom:80px}
+#page2 .step2-title{display:flex;align-items:flex-end;justify-content:space-between;margin:2px 0 14px}
+#page2 .step2-title h2{margin:0;font-size:24px;letter-spacing:-.4px;color:#182235}
+#page2 .step2-title p{margin:7px 0 0;color:#667085;font-size:13px}
+#page2 .step2-context{border:1px solid #dce8f8;background:linear-gradient(135deg,#fff,#f8fbff);border-radius:16px;padding:11px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 22px rgba(20,34,64,.04);margin:0 0 16px;color:#667085;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#page2 .ctx-name{font-size:13px;font-weight:900;color:#182235;flex:0 0 auto}
+#page2 .ctx-meta{color:#667085;font-size:12px;flex:0 0 auto}
+#page2 .ctx-summary{color:#667085;font-size:12px;line-height:1.4;min-width:0;overflow:hidden;text-overflow:ellipsis}
+#page2 .ctx-dot{color:#c3ccd9;flex:0 0 auto}
+#page2 .small-btn{border:1px solid #d9e2ef;background:#fff;color:#344054;border-radius:12px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer}
+#page2 .prep-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--soft);padding:20px;margin-bottom:16px}
+#page2 .prep-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+#page2 .prep-card-head h3{margin:0;font-size:17px;color:#182235}
+#page2 .prep-card-head span{display:block;color:#98a2b3;font-size:12px;margin-top:4px}
+#page2 .edit-btn{border:0;background:#eef6ff;color:#1263e6;border-radius:10px;padding:7px 10px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap}
+#page2 .subhead{font-size:13px;color:#344054;font-weight:900;margin:16px 0 9px}
+#page2 .editable{border:1px solid #e5ebf3;background:#fbfcfe;border-radius:16px;padding:14px 15px;color:#344054;font-size:13px;line-height:1.85;outline:none}
+#page2 .editable:focus{background:#fff;border-color:#8abaff;box-shadow:0 0 0 4px rgba(18,99,230,.08)}
+#page2 .pain-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+#page2 .pain{border:1px solid #e8edf5;background:#fbfcff;border-radius:15px;padding:12px 13px;font-size:13px;font-weight:800;color:#344054}
+#page2 .gap-list{display:grid;gap:9px}
+#page2 .gap{display:grid;grid-template-columns:22px 1fr 72px;gap:9px;align-items:center;border:1px solid #e8edf5;background:#fbfcff;border-radius:14px;padding:10px 12px}
+#page2 .check{width:16px;height:16px;border:1px solid #cfd8e6;border-radius:5px;background:#fff}
+#page2 .gap b{font-size:13px;color:#344054}
+#page2 .priority{justify-self:end;font-size:12px;border-radius:999px;padding:5px 8px;background:#fff7ed;color:#c2410c;font-weight:800}
+#page2 .priority.mid{background:#f2f4f7;color:#667085}
+#page2 .tabs{display:flex;gap:8px;background:#f3f6fa;border-radius:14px;padding:4px;width:max-content;margin-bottom:14px}
+#page2 .tab{border:0;background:transparent;border-radius:11px;padding:8px 13px;font-size:12px;color:#667085;font-weight:900;cursor:pointer}
+#page2 .tab.on{background:#fff;color:#1263e6;box-shadow:0 5px 14px rgba(16,24,40,.07)}
+#page2 .q-list{display:grid;gap:10px}
+#page2 .q-card{border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:14px 15px}
+#page2 .q-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#page2 .dim{font-size:12px;color:#1263e6;font-weight:900;background:#eef6ff;border-radius:999px;padding:5px 9px}
+#page2 .q-card h3{margin:10px 0 8px;font-size:15px;color:#182235;outline:none}
+#page2 .q-card p{margin:0;color:#667085;font-size:12px;line-height:1.7;outline:none}
+#page2 .more{display:block;width:100%;margin-top:12px;border:1px dashed #cfd8e6;background:#fbfdff;color:#667085;border-radius:14px;padding:11px;font-weight:800;cursor:pointer}
+@media(max-width:1200px){#page2 .pain-grid{grid-template-columns:1fr}#page2 .step2-context{white-space:normal;align-items:flex-start;flex-wrap:wrap}}
+
+/* Step5 Demo Design */
+#page5{padding-bottom:90px}
+#page5 .demo-title{display:flex;align-items:flex-end;justify-content:space-between;margin:2px 0 14px}
+#page5 .demo-title h2{margin:0;font-size:24px;letter-spacing:-.4px;color:#182235}
+#page5 .demo-title p{margin:7px 0 0;color:#667085;font-size:13px}
+#page5 .demo-context{border:1px solid #dce8f8;background:linear-gradient(135deg,#fff,#f8fbff);border-radius:16px;padding:11px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 22px rgba(20,34,64,.04);margin:0 0 16px;color:#667085;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#page5 .demo-context .ctx-name{font-size:13px;font-weight:900;color:#182235;flex:0 0 auto}
+#page5 .demo-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--soft);padding:20px;margin-bottom:16px}
+#page5 .demo-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+#page5 .demo-card-head h3{margin:0;font-size:17px;color:#182235}
+#page5 .demo-card-head span{display:block;color:#98a2b3;font-size:12px;margin-top:4px}
+#page5 .match-card{border:1px solid #dce8f8;background:linear-gradient(135deg,#f8fbff,#fff);border-radius:18px;padding:16px;display:grid;grid-template-columns:1fr 112px;gap:16px;align-items:center}
+#page5 .match-card h3{margin:0;font-size:18px;color:#182235}
+#page5 .match-card p{margin:8px 0 0;color:#667085;font-size:13px;line-height:1.7}
+#page5 .score{width:94px;height:94px;border-radius:24px;background:#eef6ff;color:#1263e6;display:grid;place-items:center;text-align:center;font-weight:900;justify-self:end}
+#page5 .score strong{font-size:24px;display:block}
+#page5 .demo-points{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+#page5 .demo-point{border:1px solid #e8edf5;background:#fbfcff;border-radius:15px;padding:11px 12px;font-size:12px;font-weight:800;color:#344054;line-height:1.45}
+#page5 .path-list{display:grid;gap:10px}
+#page5 .path-card{display:grid;grid-template-columns:36px 1fr;gap:12px;border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:14px}
+#page5 .path-no{width:30px;height:30px;border-radius:10px;background:#eef6ff;color:#1263e6;display:grid;place-items:center;font-weight:900;font-size:12px}
+#page5 .path-card h4{margin:0 0 7px;font-size:14px;color:#182235}
+#page5 .path-card p{margin:0;color:#667085;font-size:12px;line-height:1.65}
+#page5 .talk{margin-top:9px;border-left:3px solid #b9d8ff;background:#f8fbff;border-radius:0 12px 12px 0;padding:9px 11px;color:#344054;font-size:12px;line-height:1.65}
+#page5 .template-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+#page5 .template-card{border:1px solid #e8edf5;background:#fbfcff;border-radius:18px;padding:14px}
+#page5 .template-card.active{border-color:#b9d8ff;background:#f0f7ff}
+#page5 .template-card b{font-size:14px;color:#182235}
+#page5 .template-card p{margin:7px 0 12px;color:#667085;font-size:12px;line-height:1.55}
+#page5 .template-actions{display:flex;gap:8px}
+#page5 .template-actions button{border:1px solid #d8dee8;background:#fff;border-radius:10px;padding:7px 10px;color:#475467;font-size:12px;font-weight:800;cursor:pointer}
+#page5 .template-actions button.primary-mini{border-color:#b9d8ff;background:#eef6ff;color:#1263e6}
+#page5 .mini-preview{border:1px solid #edf1f7;background:#fff;border-radius:14px;padding:10px;margin-top:12px;display:grid;gap:6px}
+#page5 .preview-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:11px;color:#667085}
+#page5 .preview-row span{background:#f8fafc;border:1px solid #edf1f7;border-radius:8px;padding:6px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:1200px){#page5 .demo-points,#page5 .template-grid{grid-template-columns:1fr 1fr}#page5 .match-card{grid-template-columns:1fr}#page5 .score{justify-self:start}}
+@media(max-width:820px){#page5 .demo-points,#page5 .template-grid{grid-template-columns:1fr}#page5 .demo-context{white-space:normal;flex-wrap:wrap}}
+
+
+/* v15: Step2 interactive sorting and tabs */
+.side-stat .stat-num{font-size:22px;font-weight:950;color:#182235;margin-top:8px;letter-spacing:-.4px}
+#page2 .gap{grid-template-columns:22px 1fr 72px 28px}
+.drag-handle{justify-self:end;align-self:center;width:24px;height:34px;border-radius:10px;display:grid;place-items:center;color:#98a2b3;cursor:grab;font-weight:900;user-select:none}
+.drag-handle:active{cursor:grabbing}
+.drag-handle:before{content:'⋮⋮';letter-spacing:-3px;font-size:14px;line-height:1;color:#a5afbf}
+.sortable-item.dragging{opacity:.45;transform:scale(.995)}
+#page2 .q-card{display:grid;grid-template-columns:1fr 28px;gap:8px;align-items:start}
+#page2 .q-card-main{min-width:0}
+#page2 .hidden-q{display:none}
+#page2 .question-panel{display:none}
+#page2 .question-panel.active{display:grid;gap:10px}
+#page2 .tab-panel-wrap{min-height:360px}
+#page2 .more.is-open{border-style:solid;background:#eef6ff;color:#1263e6}
+#page2 .industry-box{border:1px solid #e8edf5;background:#fbfcff;border-radius:18px;padding:14px 15px;color:#344054;font-size:13px;line-height:1.75}
+#page2 .industry-box b{display:block;margin-bottom:6px;color:#182235}
+#page2 .drop-indicator{height:2px;background:#1263e6;border-radius:2px;margin:2px 0}
+
+
+/* v18 Step3 aligned with Step1/Step2 */
+#page3{padding-bottom:90px}
+#page3 .step3-title{display:flex;align-items:flex-end;justify-content:space-between;margin:2px 0 14px}
+#page3 .step3-title h2{margin:0;font-size:24px;letter-spacing:-.4px;color:#182235}
+#page3 .step3-title p{margin:7px 0 0;color:#667085;font-size:13px;line-height:1.65;max-width:900px}
+#page3 .step3-context{border:1px solid #dce8f8;background:linear-gradient(135deg,#fff,#f8fbff);border-radius:16px;padding:11px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 22px rgba(20,34,64,.04);margin:0 0 16px;color:#667085;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#page3 .step3-context .ctx-name{font-size:13px;font-weight:900;color:#182235;flex:0 0 auto}
+#page3 .step3-context .ctx-meta{color:#667085;font-size:12px;flex:0 0 auto}
+#page3 .step3-context .ctx-summary{color:#667085;font-size:12px;line-height:1.4;min-width:0;overflow:hidden;text-overflow:ellipsis}
+#page3 .note-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--soft);padding:20px;margin-bottom:16px}
+#page3 .note-card-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:15px}
+#page3 .note-card-head h3{margin:0;font-size:17px;color:#182235}
+#page3 .note-card-head span{display:block;color:#98a2b3;font-size:12px;margin-top:4px}
+#page3 .note-card-head.compact{margin-bottom:12px}
+#page3 .record-tools{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+#page3 .record-tools label{display:block}
+#page3 .record-tools label>span{display:block;color:#344054;font-size:12px;font-weight:900;margin-bottom:7px}
+#page3 .compact-select{height:42px;padding:0 13px;background:#fbfcfe;font-size:13px}
+#page3 .record-field{margin-bottom:0}
+#page3 .note-textarea{min-height:230px;background:#fbfcfe;border-radius:18px;font-size:13px;line-height:1.85;padding:15px 16px}
+#page3 .extract-hint{margin-top:12px;border:1px solid #e8edf5;background:#f8fafc;border-radius:15px;padding:11px 13px;color:#667085;font-size:12px;line-height:1.7}
+#page3 .extract-hint.small{margin-top:12px;padding:9px 12px}
+#page3 .compact-output-card{padding:18px 20px}
+#page3 .output-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+#page3 .output-preview div{border:1px solid #e8edf5;background:#fbfcff;border-radius:16px;padding:13px 14px;min-height:82px}
+#page3 .output-preview b{display:block;font-size:13px;color:#182235;margin-bottom:7px}
+#page3 .output-preview span{display:block;color:#667085;font-size:12px;line-height:1.6}
+@media(max-width:1200px){#page3 .record-tools,#page3 .output-preview{grid-template-columns:1fr}#page3 .step3-context{white-space:normal;align-items:flex-start;flex-wrap:wrap}}
+
+
+
+/* v19 Step3: structured requirement draft */
+#page3 .requirement-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#page3 .req-box{border:1px solid #e8edf5;background:#fbfcff;border-radius:16px;padding:13px 14px;min-height:96px}
+#page3 .req-box.wide{grid-column:1/-1}
+#page3 .req-box b{display:block;font-size:13px;color:#182235;margin-bottom:7px}
+#page3 .req-box p,#page3 .req-box div{margin:0;color:#667085;font-size:12px;line-height:1.75;outline:none}
+#page3 .flow-line{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:#667085;font-size:12px;line-height:1.8}
+#page3 .flow-line span{background:#fff;border:1px solid #edf1f7;border-radius:999px;padding:5px 9px;font-weight:750;color:#344054}
+#page3 .module-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+#page3 .module-card{border:1px solid #e8edf5;background:#fff;border-radius:16px;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+#page3 .module-card .left b{display:block;font-size:13px;color:#182235;margin-bottom:5px}
+#page3 .module-card .left span{font-size:12px;color:#667085;line-height:1.5}
+#page3 .module-score{flex:0 0 auto;background:#eef6ff;color:#1263e6;border-radius:999px;padding:6px 9px;font-size:12px;font-weight:900}
+#page3 .module-actions{display:flex;gap:6px;margin-top:8px}
+#page3 .mini-link{border:0;background:#f3f6fa;color:#667085;border-radius:9px;padding:5px 8px;font-size:12px;font-weight:800;cursor:pointer}
+#page3 .mini-link.primary{background:#eef6ff;color:#1263e6}
+@media(max-width:1200px){#page3 .requirement-grid,#page3 .module-grid{grid-template-columns:1fr}}
+
+
+
+/* v20: Step3 multi-note capture + Step4 structured demand */
+#page3 .note-list{display:grid;gap:12px;margin-bottom:16px}
+#page3 .saved-note{border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:14px 15px;box-shadow:0 6px 16px rgba(20,34,64,.035)}
+#page3 .saved-note-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+#page3 .saved-note h4{margin:0;font-size:14px;color:#182235}
+#page3 .saved-note p{margin:0;color:#667085;font-size:12px;line-height:1.7}
+#page3 .note-meta{display:flex;gap:8px;flex-wrap:wrap;color:#98a2b3;font-size:12px}
+#page3 .note-pill{border-radius:999px;background:#f2f4f7;color:#667085;padding:4px 8px;font-size:11px;font-weight:800}
+#page3 .add-note-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--soft);padding:20px;margin-bottom:16px}
+#page3 .add-note-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+#page3 .add-note-head h3{margin:0;font-size:17px;color:#182235}
+#page3 .add-note-head span{display:block;color:#98a2b3;font-size:12px;margin-top:4px}
+#page3 .record-actions{display:flex;gap:8px;align-items:center}
+#page3 .note-foot-hint{border:1px solid #e8edf5;background:#f8fafc;border-radius:14px;color:#667085;font-size:12px;line-height:1.7;padding:11px 12px;margin-top:12px}
+#page3 .note-textarea{min-height:220px}
+#page4{padding-bottom:90px}
+#page4 .step4-title{display:flex;align-items:flex-end;justify-content:space-between;margin:2px 0 14px}
+#page4 .step4-title h2{margin:0;font-size:24px;letter-spacing:-.4px;color:#182235}
+#page4 .step4-title p{margin:7px 0 0;color:#667085;font-size:13px}
+#page4 .step4-context{border:1px solid #dce8f8;background:linear-gradient(135deg,#fff,#f8fbff);border-radius:16px;padding:11px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 22px rgba(20,34,64,.04);margin:0 0 16px;color:#667085;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#page4 .step4-context .ctx-name{font-size:13px;font-weight:900;color:#182235;flex:0 0 auto}
+#page4 .analysis-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--soft);padding:20px;margin-bottom:16px}
+#page4 .analysis-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+#page4 .analysis-card-head h3{margin:0;font-size:17px;color:#182235}
+#page4 .analysis-card-head span{display:block;color:#98a2b3;font-size:12px;margin-top:4px}
+#page4 .source-list{display:grid;gap:10px}
+#page4 .source-item{display:grid;grid-template-columns:76px 1fr 68px;gap:12px;align-items:center;border:1px solid #e8edf5;background:#fbfcff;border-radius:15px;padding:11px 12px}
+#page4 .source-item b{font-size:13px;color:#344054}
+#page4 .source-item p{margin:0;color:#667085;font-size:12px;line-height:1.55}
+#page4 .source-tag{justify-self:end;border-radius:999px;background:#ecfdf5;color:#047857;padding:5px 8px;font-size:11px;font-weight:900}
+#page4 .requirement-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+#page4 .req-box{border:1px solid #e8edf5;background:#fbfcff;border-radius:16px;padding:13px 14px}
+#page4 .req-box.wide{grid-column:1/-1}
+#page4 .req-box b{display:block;font-size:13px;color:#182235;margin-bottom:7px}
+#page4 .req-box p{margin:0;color:#667085;font-size:12px;line-height:1.7;outline:none}
+#page4 .flow-line{color:#344054;font-size:12px;line-height:1.8;outline:none}
+#page4 .flow-line span{display:inline-block;border:1px solid #dce8f8;background:#f8fbff;border-radius:999px;padding:5px 8px;margin:3px 2px}
+#page4 .module-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+#page4 .module-card{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border:1px solid #e8edf5;background:#fbfcff;border-radius:16px;padding:13px 14px}
+#page4 .module-card b{display:block;font-size:13px;color:#182235;margin-bottom:5px}
+#page4 .module-card span{display:block;color:#667085;font-size:12px;line-height:1.55}
+#page4 .module-score{flex:0 0 auto;border-radius:14px;background:#eef6ff;color:#1263e6;font-weight:950;padding:8px 9px;font-size:13px}
+#page4 .module-actions{margin-top:9px;display:flex;gap:7px}
+#page4 .mini-link{border:1px solid #d8dee8;background:#fff;border-radius:9px;padding:6px 9px;color:#475467;font-size:11px;font-weight:800;cursor:pointer}
+#page4 .mini-link.primary{border-color:#b9d8ff;background:#eef6ff;color:#1263e6}
+#page4 .extract-hint{border:1px solid #e8edf5;background:#f8fafc;border-radius:14px;color:#667085;font-size:12px;line-height:1.7;padding:11px 12px;margin-top:12px}
+@media(max-width:1200px){#page4 .requirement-grid,#page4 .module-grid{grid-template-columns:1fr}#page4 .step4-context{white-space:normal;flex-wrap:wrap}#page4 .source-item{grid-template-columns:1fr}}
+
+
+/* v21 Step4/5 output redesign */
+.solution-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.solution-box{border:1px solid #e8edf5;background:#fbfcff;border-radius:16px;padding:13px 14px}.solution-box.wide{grid-column:1/-1}.solution-box b{display:block;font-size:13px;color:#182235;margin-bottom:7px}.solution-box p{margin:0;color:#667085;font-size:12px;line-height:1.7;outline:none}.tech-layout{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tech-card{border:1px solid #e8edf5;background:#fbfcff;border-radius:16px;padding:13px 14px}.tech-card b{display:block;font-size:13px;color:#182235;margin-bottom:7px}.tech-card p{margin:0;color:#667085;font-size:12px;line-height:1.7}.quote-table{grid-column:1/-1;border:1px solid #e8edf5;border-radius:16px;overflow:hidden;background:#fff}.quote-row{display:grid;grid-template-columns:1.2fr .7fr 1.3fr}.quote-row span{padding:10px 12px;border-top:1px solid #edf1f7;color:#667085;font-size:12px}.quote-row.head span{border-top:0;background:#f8fafc;color:#344054;font-weight:900}.primary-output{border-color:#dce8f8;background:linear-gradient(180deg,#fff,#fbfdff)}.quote-output{border-color:#e5ebf3}.demo-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.demo-type{border:1px solid #e8edf5;background:#fbfcff;border-radius:18px;padding:15px;cursor:pointer}.demo-type.active{border-color:#b9d8ff;background:#f0f7ff}.demo-type b{font-size:14px;color:#182235}.demo-type p{margin:8px 0 0;color:#667085;font-size:12px;line-height:1.6}.demo-output{display:none}.demo-output.active{display:block}.sheet-demo{border:1px solid #dce8f8;background:#fff;border-radius:18px;overflow:hidden}.sheet-top{display:flex;justify-content:space-between;padding:14px 16px;background:#f8fbff;border-bottom:1px solid #edf1f7}.sheet-top b{font-size:14px}.sheet-top span{font-size:12px;color:#1263e6;font-weight:900}.sheet-tabs{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid #edf1f7;background:#fff}.sheet-tabs span{border-radius:10px;padding:7px 10px;color:#667085;font-size:12px;font-weight:800}.sheet-tabs .on{background:#eef6ff;color:#1263e6}.fake-table{padding:12px}.fake-row{display:grid;grid-template-columns:1fr 1fr 1fr .8fr 1fr 1fr}.fake-row span{border:1px solid #edf1f7;border-left:0;border-top:0;padding:10px 9px;font-size:12px;color:#667085;background:#fff}.fake-row span:first-child{border-left:1px solid #edf1f7}.fake-row.head span{background:#f8fafc;color:#344054;font-weight:900}.agent-demo{display:grid;grid-template-columns:210px 1fr;border:1px solid #dce8f8;border-radius:18px;overflow:hidden;background:#fff}.agent-side{background:#f8fbff;border-right:1px solid #edf1f7;padding:16px;display:flex;flex-direction:column;gap:10px}.agent-side b{font-size:15px}.agent-side span{font-size:12px;color:#667085;margin-bottom:8px}.agent-side button{border:1px solid #d8dee8;background:#fff;border-radius:12px;padding:10px;color:#344054;font-size:12px;font-weight:800;text-align:left}.agent-chat{padding:16px;display:flex;flex-direction:column;gap:10px;background:#fbfcff}.msg{max-width:78%;border-radius:14px;padding:10px 12px;font-size:12px;line-height:1.6}.msg.bot{background:#fff;border:1px solid #e8edf5;color:#344054}.msg.user{align-self:flex-end;background:#1263e6;color:#fff}.agent-input{margin-top:8px;border:1px solid #d8dee8;border-radius:14px;background:#fff;padding:12px;color:#98a2b3;font-size:12px}.agent-input span{float:right;color:#1263e6;font-weight:900}@media(max-width:1200px){.solution-grid,.tech-layout,.demo-type-grid,.agent-demo{grid-template-columns:1fr}.fake-row{grid-template-columns:repeat(3,1fr)}}
+
+
+
+/* v22 polish: softer actions + clickable Demo canvases */
+.small-btn,.edit-btn,.more,.template-actions button,.agent-side button{
+  border:1px solid #dbe7f6!important;
+  background:linear-gradient(180deg,#ffffff,#f7fbff)!important;
+  color:#1263e6!important;
+  border-radius:999px!important;
+  box-shadow:0 8px 18px rgba(18,99,230,.08)!important;
+}
+.small-btn:hover,.edit-btn:hover,.more:hover,.template-actions button:hover,.agent-side button:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(18,99,230,.12)!important}
+#page5 .demo-workspace,#page5 .agent-workspace{display:grid;grid-template-columns:260px 1fr;border:1px solid #dce8f8;border-radius:20px;overflow:hidden;background:#fff;min-height:420px}
+#page5 .demo-nav{background:#f8fbff;border-right:1px solid #edf1f7;padding:14px;display:flex;flex-direction:column;gap:10px}
+#page5 .demo-nav-item{border:1px solid #e3ebf6;background:#fff;border-radius:16px;padding:12px 13px;text-align:left;cursor:pointer;color:#344054;transition:.16s;box-shadow:0 4px 10px rgba(20,34,64,.03)}
+#page5 .demo-nav-item b{display:block;font-size:13px;color:#182235;margin-bottom:5px}
+#page5 .demo-nav-item span{display:block;font-size:11px;color:#667085;line-height:1.45}
+#page5 .demo-nav-item.active{border-color:#b9d8ff;background:linear-gradient(135deg,#eef6ff,#ffffff);box-shadow:0 10px 24px rgba(18,99,230,.10)}
+#page5 .demo-nav-item.active b{color:#1263e6}
+#page5 .demo-canvas,#page5 .agent-canvas{padding:18px;background:#fbfcff;min-width:0}
+#page5 .sheet-panel,#page5 .agent-chat-panel{display:none;animation:fade .18s ease}
+#page5 .sheet-panel.active,#page5 .agent-chat-panel.active{display:block}
+#page5 .sheet-demo.refined{height:100%}.compact-table .fake-row{grid-template-columns:1fr 1fr .9fr .8fr 1fr 1fr}.compact-table .fake-row span{padding:12px 10px}
+#page5 .approval-layout{display:grid;grid-template-columns:1fr 1fr;gap:14px}.form-preview{border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px}.form-preview h4{margin:0 0 12px;font-size:15px}.form-preview p{margin:10px 0;color:#667085;font-size:12px}.approval-flow{border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}.approval-flow div{padding:12px;border-radius:14px;background:#eef6ff;color:#1263e6;font-size:12px;font-weight:900}.approval-flow i{height:18px;width:2px;background:#d9e6f7;margin-left:18px}
+#page5 .timeline{border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px;display:grid;gap:12px}.timeline div{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start}.timeline b{color:#1263e6;font-size:12px}.timeline span{font-size:13px;color:#344054;line-height:1.55}
+#page5 .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:18px;text-align:center}.metric b{display:block;font-size:24px;color:#1263e6}.metric span{font-size:12px;color:#667085}.bar-demo{margin-top:14px;border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px;display:grid;gap:10px}.bar-demo span{display:block;height:12px;border-radius:999px;background:linear-gradient(90deg,#1263e6,#13b96f)}
+#page5 .search-preview{display:grid;gap:12px}.search-box{border:1px solid #dbe7f6;background:#fff;border-radius:16px;padding:13px 15px;color:#667085;font-size:13px}.result-line{border:1px solid #e8edf5;background:#fff;border-radius:16px;padding:14px}.result-line b{font-size:13px;color:#182235}.result-line p{margin:8px 0 0;color:#667085;font-size:12px;line-height:1.6}
+#page5 .agent-chat-panel{border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px;min-height:384px}.agent-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #edf1f7;padding-bottom:12px;margin-bottom:14px}.agent-head b{font-size:15px}.agent-head span{font-size:12px;color:#1263e6;background:#eef6ff;border-radius:999px;padding:5px 9px;font-weight:900}
+#page5 .demo-type{position:relative}.demo-type:after{content:'切换';position:absolute;right:14px;top:14px;font-size:11px;color:#98a2b3;background:#fff;border:1px solid #edf1f7;border-radius:999px;padding:4px 8px}.demo-type.active:after{content:'当前';color:#1263e6;background:#eef6ff;border-color:#b9d8ff}
+@media(max-width:1200px){#page5 .demo-workspace,#page5 .agent-workspace{grid-template-columns:1fr}#page5 .demo-nav{border-right:0;border-bottom:1px solid #edf1f7}.approval-layout,.metric-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:820px){.approval-layout,.metric-grid{grid-template-columns:1fr}}
+
+
+
+/* v24 visual hierarchy refresh: clear primary / secondary / utility levels */
+:root{
+  --surface:#ffffff;
+  --surface-soft:#f8fafc;
+  --surface-blue:#f7fbff;
+  --ink-strong:#101828;
+  --ink:#344054;
+  --ink-soft:#667085;
+  --accent:#1263e6;
+  --accent-soft:#eef6ff;
+  --warn-soft:#fff7ed;
+}
+.content{padding:32px 36px 112px;background:linear-gradient(180deg,#ffffff 0%,#f7f9fc 100%)}
+.page-title,.step2-title,.step3-title,.demo-title{margin-bottom:18px!important;padding-bottom:0;border-bottom:0}
+.page-title h2,.step2-title h2,.step3-title h2,.demo-title h2{font-size:25px!important;font-weight:950!important;color:var(--ink-strong)!important;letter-spacing:-.5px!important}
+.page-title p,.step2-title p,.step3-title p,.demo-title p{font-size:13px!important;color:var(--ink-soft)!important;line-height:1.7!important;max-width:820px}
+
+/* Context is a slim secondary bar, not a main card */
+#page2 .step2-context,#page3 .step3-context,#page5 .demo-context{
+  border:0!important;
+  border-radius:12px!important;
+  background:#f3f6fb!important;
+  box-shadow:none!important;
+  padding:9px 12px!important;
+  margin:0 0 18px!important;
+  min-height:42px;
+}
+#page2 .ctx-name,#page3 .ctx-name,#page5 .ctx-name{font-size:12px!important;color:#344054!important}
+#page2 .ctx-meta,#page2 .ctx-summary,#page3 .ctx-meta,#page3 .ctx-summary,#page5 .ctx-meta,#page5 .ctx-summary{font-size:12px!important;color:#667085!important}
+
+/* Primary work cards: stronger left rail + clearer header */
+.section,.prep-card,.note-card,.demo-card{
+  border:1px solid #e3eaf5!important;
+  border-radius:20px!important;
+  box-shadow:0 10px 28px rgba(20,34,64,.055)!important;
+  background:var(--surface)!important;
+  position:relative;
+  overflow:hidden;
+}
+.section:before,.prep-card:before,.note-card:before,.demo-card:before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#1263e6,#8bc4ff);opacity:.9
+}
+.section-slim,.prep-card,.note-card,.demo-card{padding:22px 24px!important}
+.prep-card-head,.note-card-head,.demo-card-head{
+  margin:-22px -24px 18px!important;
+  padding:16px 20px 15px 24px!important;
+  border-bottom:1px solid #edf2f7;
+  background:linear-gradient(180deg,#fbfdff,#fff);
+}
+.prep-card-head h3,.note-card-head h3,.demo-card-head h3{font-size:16px!important;font-weight:950!important;letter-spacing:-.15px}
+.prep-card-head span,.note-card-head span,.demo-card-head span{font-size:12px!important;color:#8a94a6!important;margin-top:4px!important}
+
+/* Make Step2 inner hierarchy: PART1 content = narrative, PART2 checklist, PART3 questions */
+#page2 .prep-card:nth-of-type(1){background:linear-gradient(180deg,#fff,#fbfdff)!important}
+#page2 .prep-card:nth-of-type(2):before{background:linear-gradient(180deg,#ff8a00,#ffd39a)}
+#page2 .prep-card:nth-of-type(3):before{background:linear-gradient(180deg,#1263e6,#19c58a)}
+.subhead{font-size:12px!important;color:#1263e6!important;text-transform:none;background:#eef6ff;display:inline-flex;padding:5px 9px;border-radius:999px;margin:12px 0 10px!important}
+.editable,.note-textarea,.textarea{background:#fbfcfe!important;border-color:#dfe7f1!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+
+/* Secondary cards: flatter, no competing shadows */
+.pain,.gap,.q-card,.solution-box,.tech-card,.demo-type,.template-card,.path-card,.module-card,.req-box,.mini-note,.meeting-item,.sheet-demo,.agent-chat-panel,.metric-card,.approval-card{
+  box-shadow:none!important;
+  border-color:#e8edf5!important;
+  background:#fbfcff!important;
+}
+.pain,.gap,.q-card,.solution-box,.tech-card,.template-card,.path-card,.module-card,.req-box{border-radius:14px!important}
+
+/* Important actionable cards */
+#page2 .q-card{border-left:3px solid #b9d8ff!important;background:#fff!important}
+#page2 .q-card:first-child{border-left-color:#1263e6!important;background:linear-gradient(180deg,#fff,#f8fbff)!important}
+#page2 .gap{background:#fff!important;border-left:3px solid #ffd39a!important}
+#page2 .priority{background:#fff1e6!important;color:#c2410c!important;border:1px solid #ffdfbd}
+#page2 .priority.mid{background:#f2f4f7!important;color:#667085!important;border-color:#e5e7eb}
+
+/* Step3: input is primary, meeting library is auxiliary */
+#page3 .note-card:first-of-type{background:linear-gradient(180deg,#fff,#fbfdff)!important}
+#page3 .note-card:first-of-type:before{background:linear-gradient(180deg,#1263e6,#7db7ff)}
+#page3 .note-card:nth-of-type(n+2){background:#fbfcff!important;box-shadow:0 6px 18px rgba(20,34,64,.035)!important}
+#page3 .note-card:nth-of-type(n+2):before{background:#d0d8e5;opacity:1;width:3px}
+#page3 .note-foot-hint,#page3 .extract-hint{background:#f4f6f9!important;border:0!important;color:#667085!important;border-radius:12px!important}
+#page3 .meeting-item{border-left:3px solid #d0d8e5!important}
+#page3 .meeting-item:first-child{border-left-color:#1263e6!important;background:#fff!important}
+
+/* Step4: two deliverables are the focus */
+#page4 .tabs,#page5 .tabs{background:#eef2f7!important;border-radius:12px!important;padding:3px!important}
+#page4 .tab,#page5 .tab{font-size:12px!important;border-radius:10px!important;padding:8px 12px!important}
+#page4 .tab.on,#page5 .tab.on{background:#fff!important;color:#1263e6!important;box-shadow:0 6px 16px rgba(16,24,40,.08)!important}
+.primary-output{border-left:4px solid #1263e6!important;background:linear-gradient(180deg,#fff,#fbfdff)!important}
+.quote-output{border-left:4px solid #13b96f!important;background:linear-gradient(180deg,#fff,#fbfffd)!important}
+.quote-table{border-radius:12px!important;box-shadow:none!important}
+
+/* Step5: selector is auxiliary; active demo canvas is primary */
+#page5 .demo-type-grid{margin-bottom:14px}
+#page5 .demo-type{background:#fff!important;border-radius:16px!important}
+#page5 .demo-type.active{border-color:#1263e6!important;background:linear-gradient(180deg,#f7fbff,#fff)!important;box-shadow:0 8px 22px rgba(18,99,230,.08)!important}
+#page5 .demo-output.active{border-left:4px solid #1263e6!important;background:#fff!important}
+#page5 .demo-workspace,#page5 .agent-workspace{border-color:#dce8f8!important;border-radius:18px!important;background:#fff!important;box-shadow:0 8px 24px rgba(20,34,64,.045)}
+#page5 .demo-nav{background:#f8fafc!important}
+#page5 .demo-nav button{border:0!important;background:transparent!important;border-radius:11px!important;color:#667085!important}
+#page5 .demo-nav button.active{background:#fff!important;color:#1263e6!important;box-shadow:0 6px 16px rgba(16,24,40,.08)!important}
+#page5 .demo-canvas,#page5 .agent-canvas{background:#fff!important}
+#page5 .fake-row.head span{background:#f3f6fb!important;color:#344054!important}
+
+/* Buttons: no thick outlined native-looking buttons */
+.small-btn,.edit-btn,.more,.template-actions button,.agent-side button,.demo-nav button{
+  border:0!important;
+  background:#eef6ff!important;
+  color:#1263e6!important;
+  border-radius:11px!important;
+  font-weight:850!important;
+  box-shadow:none!important;
+}
+.more{background:#f8fafc!important;color:#667085!important;border:1px dashed #cfd8e6!important}
+.small-btn:hover,.edit-btn:hover,.more:hover,.template-actions button:hover,.demo-nav button:hover{transform:translateY(-1px);box-shadow:0 10px 20px rgba(18,99,230,.10)!important}
+
+/* Right artifacts: completed / todo hierarchy */
+.artifact{box-shadow:none!important;border-radius:16px!important;background:#fbfcff!important}
+.artifact:has(.tag:not(.todo)){background:#fff!important;border-color:#dce8f8!important}
+.artifact h4{font-size:13px!important}.artifact p{font-size:12px!important;color:#7a8597!important}.tag{font-size:11px!important}
+
+/* Left flow: reduce competition */
+.sidebar{background:rgba(255,255,255,.94)}
+.step:not(.active){opacity:.72}.step.done:not(.active){opacity:.88}.step.active{background:#eef6ff!important}
+.side-stat{box-shadow:none!important;background:#fbfcff!important}.side-stat span{display:block;margin-top:8px;color:#8a94a6!important}
+
+@media(max-width:1200px){.content{padding:26px 24px 100px}.prep-card-head,.note-card-head,.demo-card-head{margin:-22px -24px 16px!important}}
+
+
+
+/* v25: lighter hierarchy + Step3 focused workspace */
+.content{padding:30px 34px 112px!important;background:linear-gradient(180deg,#fff 0%,#f8fafc 100%)!important}
+.page-title h2,.step2-title h2,.step3-title h2,.step4-title h2,.demo-title h2{font-size:23px!important;line-height:1.18!important}
+.page-title p,.step2-title p,.step3-title p,.step4-title p,.demo-title p{font-size:12px!important;line-height:1.55!important;color:#667085!important;max-width:720px!important}
+.prep-card,.demo-card,.analysis-card{padding:18px!important;border-radius:18px!important}
+.prep-card-head,.demo-card-head,.analysis-card-head{margin-bottom:12px!important}
+.prep-card-head h3,.demo-card-head h3,.analysis-card-head h3{font-size:15px!important}
+.prep-card-head span,.demo-card-head span,.analysis-card-head span{font-size:11px!important;color:#98a2b3!important}
+.editable,.industry-box,.req-box p,.solution-box p,.tech-card p{font-size:12px!important;line-height:1.65!important}
+.q-card h3{font-size:14px!important;margin:8px 0 6px!important}.q-card p{font-size:11.5px!important;line-height:1.55!important}.q-card{padding:12px!important}.dim{font-size:11px!important}.pain{font-size:12px!important;padding:10px 12px!important}.gap b{font-size:12px!important}.priority{font-size:11px!important}.small-btn,.edit-btn,.more,.soft-action,.quiet-button,.inline-primary{font-size:12px!important}
+
+/* Step3 new hierarchy */
+#page3 .clean-title{margin-bottom:12px!important}
+#page3 .slim-context{margin-bottom:16px!important;background:#f3f6fb!important;border:0!important;box-shadow:none!important;border-radius:12px!important;padding:9px 12px!important;min-height:40px!important}
+#page3 .note-workbench{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+#page3 .note-main-card{position:relative;background:#fff;border:1px solid #dfe8f4;border-radius:20px;box-shadow:0 14px 34px rgba(20,34,64,.07);padding:20px 20px 16px;overflow:hidden}
+#page3 .note-main-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#1263e6,#78b8ff)}
+#page3 .note-side-card{background:#f8fafc;border:1px solid #e8edf5;border-radius:18px;padding:16px;box-shadow:none}
+#page3 .card-kicker{display:inline-flex;align-items:center;margin-bottom:9px;padding:4px 8px;border-radius:999px;background:#eef6ff;color:#1263e6;font-size:11px;font-weight:900}
+#page3 .note-side-card .card-kicker{background:#eef2f7;color:#667085}
+#page3 .note-main-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}
+#page3 .note-main-head h3,#page3 .note-side-card h3{margin:0;font-size:16px;color:#101828}
+#page3 .note-main-head p,#page3 .side-muted{margin:6px 0 0;color:#667085;font-size:12px;line-height:1.55}
+#page3 .soft-action{border:1px solid #dbe7f6;background:#fff;color:#1263e6;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer;box-shadow:0 6px 14px rgba(18,99,230,.06)}
+#page3 .compact-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+#page3 .compact-form-row label>span{display:block;font-size:12px;color:#344054;font-weight:900;margin-bottom:6px}
+#page3 .compact-select{height:40px;border-radius:12px;background:#fbfcfe;font-size:12px;padding:0 12px}
+#page3 .clean-note-textarea{min-height:310px!important;border-radius:16px!important;background:#fbfcfe!important;border-color:#dfe7f1!important;font-size:13px!important;line-height:1.78!important;padding:15px 16px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+#page3 .note-bottom-line{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;padding:11px 12px;border-radius:14px;background:#f4f6f9;color:#667085;font-size:12px;line-height:1.5}
+#page3 .inline-primary{border:0;background:#1263e6;color:#fff;border-radius:999px;padding:9px 14px;font-weight:900;white-space:nowrap;cursor:pointer;box-shadow:0 10px 22px rgba(18,99,230,.18)}
+#page3 .meeting-timeline{display:grid;gap:12px;margin:14px 0}
+#page3 .meeting-row{display:grid;grid-template-columns:18px 1fr;gap:10px;position:relative}
+#page3 .meeting-row i{width:10px;height:10px;border-radius:50%;background:#cfd8e6;margin-top:4px;box-shadow:0 0 0 4px #eef2f7}
+#page3 .meeting-row.active i{background:#1263e6;box-shadow:0 0 0 4px #e8f2ff}
+#page3 .meeting-row b{display:block;font-size:12px;color:#344054;margin-bottom:3px}
+#page3 .meeting-row span{display:block;font-size:11px;color:#98a2b3;margin-bottom:5px}
+#page3 .meeting-row p{margin:0;font-size:12px;line-height:1.55;color:#667085}
+#page3 .quiet-button{width:100%;border:1px solid #e1e8f2;background:#fff;color:#667085;border-radius:12px;padding:10px 12px;font-weight:900;cursor:pointer}
+#page3 .note-card,#page3 .add-note-card{box-shadow:none!important}
+#page3 .note-card:before,#page3 .add-note-card:before{display:none!important}
+
+/* make utility buttons less visually noisy */
+.small-btn,.edit-btn,.more{box-shadow:none!important;background:#f7fbff!important;border-color:#dbe7f6!important;border-radius:999px!important;color:#1263e6!important}
+@media(max-width:1200px){#page3 .note-workbench{grid-template-columns:1fr}#page3 .note-side-card{order:2}#page3 .compact-form-row{grid-template-columns:1fr}}
+
+
+/* v26 Step3/4 clarity and upload entrance */
+.eyebrow-v26{font-size:11px;font-weight:950;color:#1263e6;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+.note-layout-v26{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+.note-editor-v26,.note-history-v26,.solution-input-v26,.deliverables-v26{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--soft)}
+.note-editor-v26{padding:22px}.note-history-v26{padding:18px;position:sticky;top:0}.editor-top-v26{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}.editor-top-v26 h3,.history-head-v26 h3,.input-left-v26 h3,.deliverable-head-v26 h3{margin:0;font-size:17px;color:#101828}.editor-top-v26 p,.history-head-v26 p,.input-left-v26 p{margin:6px 0 0;color:#667085;font-size:12px;line-height:1.6}.input-choice-v26{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}.upload-card-v26,.paste-card-v26{border:1px dashed #cfd8e6;background:#fbfcff;border-radius:18px;padding:14px;cursor:pointer;display:grid;grid-template-columns:38px 1fr;column-gap:10px;align-items:center;transition:.16s}.paste-card-v26.active{border-style:solid;border-color:#b9d8ff;background:#f0f7ff}.upload-icon-v26{grid-row:1/3;width:34px;height:34px;border-radius:12px;background:#eef2f7;color:#667085;display:grid;place-items:center;font-weight:950;font-size:18px}.upload-icon-v26.blue{background:#eaf3ff;color:#1263e6}.upload-card-v26 b,.paste-card-v26 b{font-size:13px;color:#182235}.upload-card-v26 em,.paste-card-v26 em{font-style:normal;font-size:11px;color:#98a2b3;margin-top:3px}.compact-history-v26{margin:14px 0}.meeting-row.muted{opacity:.55}.v26-note-foot{margin-top:12px}.source-mini-v26{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.source-mini-v26 span{color:#98a2b3;font-size:12px;width:100%}.source-mini-v26 b{border:1px solid #e8edf5;background:#f8fafc;border-radius:999px;padding:6px 9px;color:#344054;font-size:12px}.solution-input-v26{display:grid;grid-template-columns:285px 1fr;gap:18px;padding:20px;margin-bottom:16px}.input-left-v26{border-right:1px solid #edf1f7;padding-right:18px}.input-right-v26{display:grid;gap:10px}.summary-row-v26{display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:start;border:1px solid #e8edf5;background:#fbfcff;border-radius:16px;padding:12px 14px}.summary-row-v26.primary{border-color:#b9d8ff;background:#f6fbff}.summary-row-v26 b{font-size:13px;color:#182235}.summary-row-v26 p{margin:0;color:#667085;font-size:12px;line-height:1.65;outline:none}.deliverables-v26{padding:20px}.deliverable-head-v26{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:16px}.output-tabs-v26{margin:0!important}.deliverable-grid-v26{display:grid;grid-template-columns:1fr 1fr;gap:14px}.deliverable-card-v26{border:1px solid #e8edf5;background:#fbfcff;border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:12px}.deliverable-card-v26.highlight{border-color:#b9d8ff;background:linear-gradient(180deg,#f7fbff,#fff)}.deliverable-top-v26{display:flex;justify-content:space-between;gap:10px;align-items:center}.deliverable-top-v26 b{font-size:16px;color:#101828}.deliverable-top-v26 span{font-size:11px;color:#1263e6;background:#eef6ff;border-radius:999px;padding:5px 8px;font-weight:900}.deliverable-card-v26 p{margin:0;color:#667085;font-size:12px;line-height:1.7}.mini-outline-v26{display:flex;gap:7px;flex-wrap:wrap}.mini-outline-v26 span{font-size:11px;color:#667085;background:#fff;border:1px solid #edf1f7;border-radius:999px;padding:6px 8px}.deliverable-card-v26 button{align-self:flex-start;margin-top:auto}
+@media(max-width:1200px){.note-layout-v26,.solution-input-v26,.deliverable-grid-v26{grid-template-columns:1fr}.note-history-v26{position:relative}.input-left-v26{border-right:0;border-bottom:1px solid #edf1f7;padding-right:0;padding-bottom:16px}.input-choice-v26{grid-template-columns:1fr}.summary-row-v26{grid-template-columns:1fr}.deliverable-head-v26{align-items:flex-start;flex-direction:column}}
+
+
+/* v27: Step3 / Step4 hierarchy cleanup */
+.clean-title h2,.step4-title h2{font-size:24px!important;letter-spacing:-.3px!important;margin:0 0 7px!important}.clean-title p,.step4-title p{font-size:13px!important;color:#667085!important;margin:0!important;max-width:760px;line-height:1.6}
+#page3 .note-layout-v27{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+#page3 .note-main-v27{background:#fff;border:1px solid #e6ebf2;border-radius:22px;box-shadow:var(--soft);padding:20px}
+#page3 .note-head-v27{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}.note-head-v27 h3{margin:0;font-size:17px}.note-head-v27 p{margin:6px 0 0;color:#98a2b3;font-size:12px;line-height:1.55}.mini-upload-v27{display:inline-flex;align-items:center;gap:8px;border:1px solid #d9e5f4;background:#f8fbff;color:#1263e6;border-radius:999px;padding:9px 12px;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap}.mini-upload-v27 input{display:none}.mini-upload-v27 i{font-style:normal;font-size:14px}.note-meta-v27{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}.note-meta-v27 label span{display:block;font-size:12px;color:#667085;font-weight:800;margin:0 0 7px}.note-textarea-v27{min-height:330px!important;font-size:13px!important;line-height:1.78!important}.note-helper-v27{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;border-radius:16px;background:#f7f9fc;border:1px solid #e8edf5;padding:10px 12px;color:#667085;font-size:12px}.note-helper-v27 b{color:#344054}.note-side-v27{display:grid;gap:12px}.side-card-v27{background:#fff;border:1px solid #e6ebf2;border-radius:20px;box-shadow:var(--soft);padding:16px}.side-card-v27 h3{margin:0 0 10px;font-size:15px}.side-card-v27 p{margin:0;color:#667085;font-size:12px;line-height:1.6}.record-list-v27{display:grid;gap:10px}.record-v27{border:1px solid #edf1f7;background:#fbfcff;border-radius:15px;padding:11px}.record-v27 b{font-size:13px}.record-v27 span{display:block;margin-top:5px;color:#98a2b3;font-size:11px}.record-v27 p{margin:8px 0 0;color:#667085;font-size:12px;line-height:1.5}.source-tags-v27{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}.source-tags-v27 span{background:#f3f6fa;border:1px solid #e6ebf2;border-radius:999px;padding:6px 9px;color:#667085;font-size:12px;font-weight:800}
+#page4 .step4-shell-v27{display:grid;gap:16px}.input-review-v27{background:#fff;border:1px solid #e6ebf2;border-radius:22px;box-shadow:var(--soft);padding:20px}.review-head-v27{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px}.review-head-v27 h3{margin:0;font-size:17px}.review-head-v27 p{margin:6px 0 0;color:#98a2b3;font-size:12px;line-height:1.55}.review-grid-v27{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.review-item-v27{border:1px solid #edf1f7;background:#fbfcff;border-radius:16px;padding:13px;min-height:118px}.review-item-v27.primary{border-color:#cfe2ff;background:#f8fbff}.review-item-v27 b{display:block;font-size:13px;color:#182235;margin-bottom:8px}.review-item-v27 p{margin:0;color:#667085;font-size:12px;line-height:1.62;outline:none}.generate-panel-v27{background:#fff;border:1px solid #e6ebf2;border-radius:22px;box-shadow:var(--soft);padding:20px}.generate-head-v27{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px}.generate-head-v27 h3{margin:0;font-size:17px}.generate-head-v27 p{margin:6px 0 0;color:#98a2b3;font-size:12px}.output-switch-v27{display:flex;background:#f3f6fa;border:1px solid #e8edf5;border-radius:999px;padding:4px;gap:4px}.output-switch-v27 button{border:0;background:transparent;color:#667085;border-radius:999px;padding:8px 13px;font-size:12px;font-weight:900;cursor:pointer}.output-switch-v27 button.on{background:#fff;color:#1263e6;box-shadow:0 6px 16px rgba(16,24,40,.08)}.output-cards-v27{display:grid;grid-template-columns:1fr 1fr;gap:14px}.output-card-v27{border:1px solid #e6ebf2;background:#fbfcff;border-radius:18px;padding:16px}.output-card-v27.focus{border-color:#b9d8ff;background:linear-gradient(180deg,#f8fbff,#fff)}.output-card-v27 .top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.output-card-v27 b{font-size:15px;color:#182235}.output-card-v27 small{background:#eef6ff;color:#1263e6;border-radius:999px;padding:5px 8px;font-weight:900}.output-card-v27 p{margin:0 0 13px;color:#667085;font-size:12px;line-height:1.6}.outline-v27{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.outline-v27 span{border:1px solid #e6ebf2;background:#fff;border-radius:999px;padding:6px 9px;color:#667085;font-size:12px}.nice-btn-v27{border:0;border-radius:13px;background:#1263e6;color:#fff;padding:10px 13px;font-weight:900;font-size:12px;cursor:pointer}.nice-btn-v27.secondary{background:#eef2f7;color:#344054}.soft-action,.inline-primary,.small-btn{border:0!important;box-shadow:none!important}.inline-primary{background:#1263e6!important;color:#fff!important;border-radius:12px!important;padding:9px 12px!important;font-weight:900!important}.soft-action,.small-btn{background:#eef6ff!important;color:#1263e6!important;border-radius:12px!important;padding:9px 12px!important;font-weight:900!important}
+@media(max-width:1200px){#page3 .note-layout-v27{grid-template-columns:1fr}.review-grid-v27,.output-cards-v27{grid-template-columns:1fr}.generate-head-v27{align-items:flex-start;flex-direction:column}.note-meta-v27{grid-template-columns:1fr}}
+
+
+
+/* v28 polish: restore Step4 compact input layout + better hover hierarchy + clean buttons */
+*{transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease,color .16s ease}
+/* All cards react subtly on hover so users know they are editable/selectable */
+.section:hover,.prep-card:hover,.note-card:hover,.demo-card:hover,.input-review-v27:hover,.generate-panel-v27:hover,.side-card-v27:hover,.artifact:hover{
+  border-color:#cfe2ff!important;box-shadow:0 16px 36px rgba(20,34,64,.08)!important;
+}
+.review-item-v27:hover,.output-card-v27:hover,.record-v27:hover,.source-tags-v27 span:hover,.demo-type:hover,.demo-nav-item:hover,.q-card:hover,.gap:hover,.pain:hover,.summary-row-v26:hover,.deliverable-card-v26:hover{
+  transform:translateY(-1px);border-color:#b9d8ff!important;box-shadow:0 12px 26px rgba(18,99,230,.08)!important;background:#fff!important;
+}
+/* Make Step4 match the compact two-column input summary the user prefers */
+.step4-shell-v27{display:grid;gap:16px!important}
+.input-review-v27{display:grid!important;grid-template-columns:285px 1fr!important;gap:18px!important;padding:20px!important;background:#fff!important;border:1px solid #e3eaf5!important;border-radius:22px!important;box-shadow:0 10px 28px rgba(20,34,64,.055)!important;align-items:start}
+.review-head-v27{display:block!important;border-right:1px solid #edf1f7!important;padding-right:18px!important;margin:0!important}
+.review-head-v27 h3{font-size:18px!important;line-height:1.35!important;margin:0 0 10px!important;color:#101828!important}
+.review-head-v27 p{font-size:12px!important;line-height:1.7!important;margin:0 0 18px!important;color:#667085!important}
+.review-grid-v27{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}
+.review-item-v27{display:grid!important;grid-template-columns:92px 1fr!important;gap:12px!important;align-items:start;border:1px solid #e8edf5!important;background:#fbfcff!important;border-radius:16px!important;padding:12px 14px!important;min-height:auto!important}
+.review-item-v27.primary{border-color:#b9d8ff!important;background:#f6fbff!important}
+.review-item-v27 b{font-size:13px!important;color:#182235!important;white-space:nowrap!important}
+.review-item-v27 p{margin:0!important;color:#667085!important;font-size:12px!important;line-height:1.65!important}
+.review-head-v27 .soft-action{margin-top:14px!important}
+/* Clean modern buttons; remove square/ugly outlines */
+button,.soft-action,.nice-btn-v27,.small-btn,.edit-btn,.adopt,.mini-upload-v27,.source-mini-v26 b,.source-tags-v27 span{font-family:inherit}
+.soft-action,.nice-btn-v27,.small-btn,.edit-btn,.adopt,.mini-upload-v27{
+  border:1px solid #d9e7fb!important;background:linear-gradient(180deg,#ffffff,#f7fbff)!important;color:#1263e6!important;border-radius:999px!important;font-weight:900!important;box-shadow:0 8px 18px rgba(18,99,230,.08)!important;
+}
+.nice-btn-v27{padding:10px 14px!important;font-size:12px!important;align-self:flex-start!important}
+.nice-btn-v27.secondary{color:#344054!important;background:linear-gradient(180deg,#fff,#f8fafc)!important;border-color:#dfe7f1!important;box-shadow:none!important}
+.soft-action:hover,.nice-btn-v27:hover,.small-btn:hover,.edit-btn:hover,.adopt:hover,.mini-upload-v27:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(18,99,230,.13)!important}
+.output-switch-v27{background:#eef2f7!important;border-radius:999px!important;padding:4px!important;border:1px solid #e5ebf3!important;box-shadow:none!important}
+.output-switch-v27 button{border:0!important;border-radius:999px!important;background:transparent!important;color:#667085!important;padding:9px 13px!important;font-size:12px!important;font-weight:900!important;box-shadow:none!important;cursor:pointer!important}
+.output-switch-v27 button.on{background:#fff!important;color:#1263e6!important;box-shadow:0 6px 16px rgba(16,24,40,.08)!important}
+.output-switch-v27 button:hover{color:#1263e6!important}
+.output-card-v27{cursor:pointer!important}
+.output-card-v27.focus{border-color:#b9d8ff!important;background:linear-gradient(180deg,#f7fbff,#fff)!important}
+/* Step3 helper/source chips and lower-left pills */
+.source-tags-v27 span,.source-mini-v26 b{
+  background:#f8fafc!important;border:1px solid #e5ebf3!important;color:#475467!important;border-radius:999px!important;padding:7px 10px!important;font-size:12px!important;font-weight:850!important;box-shadow:none!important;cursor:default!important;
+}
+.source-tags-v27 span:hover,.source-mini-v26 b:hover{background:#eef6ff!important;color:#1263e6!important;border-color:#b9d8ff!important}
+.record-v27{cursor:pointer!important}
+.record-v27:hover b{color:#1263e6!important}
+/* Step5 interaction: selected nav/canvas is primary, selector is auxiliary */
+#page5 .demo-type-grid{margin-bottom:14px!important}
+#page5 .demo-type{border-radius:18px!important;background:#fff!important;cursor:pointer!important}
+#page5 .demo-type.active{background:linear-gradient(180deg,#f7fbff,#fff)!important;border-color:#b9d8ff!important;box-shadow:0 12px 28px rgba(18,99,230,.08)!important}
+#page5 .demo-type b{font-size:14px!important}
+#page5 .demo-type p{font-size:12px!important}
+#page5 .demo-workspace,#page5 .agent-workspace{box-shadow:0 10px 28px rgba(20,34,64,.055)!important}
+#page5 .demo-nav-item.active{transform:none!important}
+#page5 .demo-nav-item:hover b{color:#1263e6!important}
+#page5 .agent-head b::after{content:' · 可点击切换';font-size:11px;color:#98a2b3;font-weight:700;margin-left:6px}
+@media(max-width:1200px){.input-review-v27{grid-template-columns:1fr!important}.review-head-v27{border-right:0!important;border-bottom:1px solid #edf1f7!important;padding-right:0!important;padding-bottom:14px!important}.review-item-v27{grid-template-columns:1fr!important}}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel sidebar">
+    <div class="brand"><div class="logo">客</div><div><div class="brand-title">当前客户</div><div class="brand-sub">深圳市天天向上技术有限公司｜金融｜合规风控、客户运营</div></div></div>
+    <div class="flow">
+      <div class="step active done" data-page="1"><div class="num">1</div><div><h3>客户录入</h3><p>搜索客户 · 确认画像</p></div></div>
+      <div class="step" data-page="2"><div class="num">2</div><div><h3>调研准备</h3><p>生成问题 · 明确边界</p></div></div>
+      <div class="step" data-page="3"><div class="num">3</div><div><h3>沟通纪要</h3><p>粘贴转写 · 提取需求</p></div></div>
+      <div class="step" data-page="4"><div class="num">4</div><div><h3>需求整理</h3><p>结构化需求 · 推荐模块</p></div></div>
+      <div class="step" data-page="5"><div class="num">5</div><div><h3>Demo生成</h3><p>智能表格 · Agent小样</p></div></div>
+    </div>
+    <div class="side-stat"><b>完成度</b><div class="stat-num">48%</div><div class="meter"><i></i></div><span>Step 2 / 5 · 调研准备</span></div>
+  </aside>
+
+  <main class="panel main">
+    <div class="content">
+      <section class="page active" id="page1">
+        <div class="page-title"><h2>客户录入</h2><p>销售先确认客户基础信息；AI 智搜只用于辅助补全公开资料。</p></div>
+        <div class="section section-slim">
+          <div class="field">
+            <div class="label">客户名称 <span class="hint">公司名 / 简称 / 信用代码</span></div>
+            <div class="search">
+              <input class="input" value="深圳市天天向上技术有限公司">
+              <button class="btn primary" id="aiSearchBtn" type="button">AI 智搜</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <div class="label">客户行业</div>
+              <select class="select">
+                <option>金融</option><option>制造业</option><option>教育</option><option>IT / 科技</option><option>其他</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="label">公司规模</div>
+              <select class="select">
+                <option>50-200 人</option><option>200-1000 人</option><option>1000 人以上</option><option>暂不明确</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="label">需求标签 <span class="hint">可多选</span></div>
+            <div class="chips">
+              <span class="chip active">合规风控</span><span class="chip active">客户运营</span><span class="chip">审批流程</span><span class="chip">销售管理</span><span class="chip">系统集成</span>
+            </div>
+          </div>
+
+          <div class="result-card is-hidden" id="aiResult">
+            <div class="result-title">
+              <b>AI 智搜结果</b>
+              <span>公开信息辅助</span>
+            </div>
+            <div class="profile-lines">
+              <div><small>客户类型</small><strong>金融通讯技术服务商</strong></div>
+              <div><small>主要客户</small><strong>银行 / 证券 / 保险</strong></div>
+              <div><small>可能关注</small><strong>合规留痕、审批协同</strong></div>
+            </div>
+            <div class="web-summary">
+              <div>
+                <b>公司简介</b>
+                <p>专注金融行业通讯技术解决方案，服务银行、证券、保险等机构，具备一定系统集成与技术支持经验。</p>
+              </div>
+              <div class="web-actions">
+                <button class="adopt ghost-adopt" type="button">编辑</button>
+                <button class="adopt" type="button">采用</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:18px">
+            <div class="label">客户进线的初始需求表达 <span class="hint">原文粘贴</span></div>
+            <div class="guide">💡 建议在群内引导客户描述：<br>· 他们目前的业务是什么？遇到了什么问题？<br>· 希望用定制开发解决什么具体场景？<br>· 把客户的原始表达粘贴到这里即可，不需要整理</div>
+            <textarea class="textarea need-text" placeholder="粘贴客户的原始表达…"></textarea>
+          </div>
+
+        </div>
+      </section>
+
+
+      <section class="page" id="page2">
+        <div class="step2-title">
+          <div><h2>售前准备材料</h2><p>服务商售前、产品、商务可直接带着这份材料约客户会议。</p></div>
+          <button class="small-btn" type="button">重新生成</button>
+        </div>
+
+        <div class="step2-context" title="深圳市天天向上技术有限公司｜金融 · 50-200 人 · 合规风控 / 客户运营 / 审批流程｜客户希望解决会话留痕、线下审核表单、审批上下文不完整等问题。">
+          <span class="ctx-name">深圳市天天向上技术有限公司</span>
+          <span class="ctx-dot">·</span>
+          <span class="ctx-meta">金融 · 50-200 人 · 合规风控 / 客户运营 / 审批流程</span>
+          <span class="ctx-dot">·</span>
+          <span class="ctx-summary">当前关注：会话留痕、线下审核表单、审批上下文</span>
+        </div>
+
+        <section class="prep-card">
+          <div class="prep-card-head">
+            <div><h3>PART 1 · 客户画像</h3><span>会前快速理解客户与业务背景</span></div>
+            <button class="edit-btn" type="button">编辑</button>
+          </div>
+          <div class="subhead">公司与需求背景</div>
+          <div class="editable" contenteditable="true">深圳市天天向上技术有限公司是一家专注于金融行业通讯技术解决方案的中小企业，主要给银行、证券、保险公司提供交易系统的网络架构设计、数据通信设备集成和技术支持。团队规模不大，但在细分领域有技术积累。目前客户说想做“智能表格”，但结合行业背景看，金融行业对数据安全和合规要求极高，客户这次的需求很可能不是简单的通讯设备管理，而是想用智能表格来管理其服务交付过程中的订单、项目进度、客户关系或资金结算。因为他们的客户都是金融机构，项目周期长、涉及多方协作、对交付时效和资金回款非常敏感，所以“项目管理 + 客户信息 + 回款跟踪”会是核心场景。</div>
+          <div class="subhead">行业常见痛点</div>
+          <div class="pain-grid">
+            <div class="pain" contenteditable="true">🔥 项目进度靠微信群和 Excel 同步</div>
+            <div class="pain" contenteditable="true">🔥 管理层无法实时掌握项目状态</div>
+            <div class="pain" contenteditable="true">🔥 回款节点靠人工记忆，容易逾期</div>
+            <div class="pain" contenteditable="true">🔥 客户信息和项目文档分散，交接易丢失</div>
+          </div>
+        </section>
+
+        <section class="prep-card">
+          <div class="prep-card-head">
+            <div><h3>PART 2 · 信息缺口</h3><span>会议中必须补齐的信息，可拖拽右侧排序</span></div>
+            <button class="edit-btn" type="button">编辑</button>
+          </div>
+          <div class="gap-list sortable" data-sortable="gap">
+            <div class="gap sortable-item" draggable="true"><span class="check"></span><b contenteditable="true">目前管理项目和客户用什么工具</b><span class="priority">高优先级</span><span class="drag-handle" title="拖拽排序"></span></div>
+            <div class="gap sortable-item" draggable="true"><span class="check"></span><b contenteditable="true">团队规模和分工：销售、项目经理、实施、财务各多少人</b><span class="priority">高优先级</span><span class="drag-handle" title="拖拽排序"></span></div>
+            <div class="gap sortable-item" draggable="true"><span class="check"></span><b contenteditable="true">项目典型周期和回款模式</b><span class="priority">高优先级</span><span class="drag-handle" title="拖拽排序"></span></div>
+            <div class="gap sortable-item" draggable="true"><span class="check"></span><b contenteditable="true">是否有外部客户需要查看项目进度</b><span class="priority mid">中优先级</span><span class="drag-handle" title="拖拽排序"></span></div>
+          </div>
+        </section>
+
+        <section class="prep-card">
+          <div class="prep-card-head">
+            <div><h3>PART 3 · 提问清单</h3><span>销售可直接照着问，也可以按客户情况调整；卡片右侧可拖拽排序</span></div>
+            <button class="edit-btn" type="button">编辑</button>
+          </div>
+          <div class="tabs" data-tabs="questions"><button class="tab on" type="button" data-target="must">必问问题 11</button><button class="tab" type="button" data-target="deep">深挖问题 5</button><button class="tab" type="button" data-target="industry">行业经验</button></div>
+          <div class="tab-panel-wrap">
+            <div class="question-panel active q-list sortable" id="panel-must" data-sortable="must">
+              <div class="q-card sortable-item" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">痛点收敛</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">目前管理项目和客户哪个环节最让你头疼？</h3><p contenteditable="true">金融科技服务行业常见痛点：项目进度不可视、回款节点遗忘、客户信息分散、项目文档丢失。可追问：是项目进度跟踪难，还是回款老是逾期，还是客户信息管理混乱？</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">业务流转 + 角色</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">一个项目从获客到交付到回款，中间经过哪些环节和人？</h3><p contenteditable="true">典型流程：商机 → 方案 → 签约 → 实施 → 验收 → 回款。重点确认每个环节谁负责、信息如何传递、哪里最容易卡住。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">现状工具链</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">现在用什么工具管项目和客户，为什么觉得不够用？</h3><p contenteditable="true">常见工具：Excel、企业微信、自建 CRM、用友 / 金蝶。重点判断是功能太少、太复杂没人用，还是数据打不通。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">数据现状</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">相关数据现在存在哪里？大概多少条项目？多久更新一次？</h3><p contenteditable="true">确认数据是否分散在业务员电脑、Excel 或微信聊天中；判断是否需要统一数据底座和迁移方案。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item hidden-q" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">自动化诉求</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">有没有希望系统自动帮你做的事？在什么场景下触发？</h3><p contenteditable="true">如项目状态变更通知、回款日到期提醒、合同到期续签提醒。确认触发条件、通知对象和通知方式。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item hidden-q" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">数据接入方式</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">数据怎么进到新表格里？</h3><p contenteditable="true">确认是手动录入、表单填报、Excel 导入，还是需要和现有系统自动同步。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item hidden-q" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">使用者清单</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">谁来用这个表格？有没有外部人也要用？</h3><p contenteditable="true">确认内部销售、项目经理、实施、财务是否都要用；银行/证券客户是否需要查看项目进度。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item hidden-q" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">权限隔离</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">数据需要按什么维度隔离？</h3><p contenteditable="true">确认按人、按部门、按角色隔离；例如销售是否能看到回款金额、实施是否只能看自己的任务。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item hidden-q" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">仪表盘</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">最想看到什么业务指标？希望以什么维度展示？</h3><p contenteditable="true">常见指标包括项目完成率、回款率、各销售业绩、项目毛利；确认老板最关心哪个数字。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item hidden-q" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">交付预期</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">希望多久能用上？先上哪部分？预算大概多少？</h3><p contenteditable="true">确认是否需要 1-2 周初版、是否分阶段上线，以及有没有硬性时间节点。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item hidden-q" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">开放补充</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">还有什么想补充的吗？</h3><p contenteditable="true">开放性问题，让客户补充前面没有覆盖到的需求或顾虑。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+            </div>
+            <div class="question-panel q-list sortable" id="panel-deep" data-sortable="deep">
+              <div class="q-card sortable-item" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">字段细节</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">每个项目阶段需要记录哪些关键信息？</h3><p contenteditable="true">例如客户名、合同金额、项目阶段、负责人、预计回款日、实际回款日、附件。可以追问：现在 Excel 表里有哪些列？</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">表间关联</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">项目需不需要关联客户信息、合同信息？</h3><p contenteditable="true">确认项目、客户、合同、回款是分表管理，还是希望在一张表里完成。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">流转规则</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">项目从一个阶段到下一个阶段，需要什么条件？</h3><p contenteditable="true">例如客户验收后才能进入回款阶段；确认是否需要审批、谁来审批。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">通知规则</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">什么情况下需要自动通知谁？</h3><p contenteditable="true">例如回款日临近提醒销售、项目状态变更通知项目经理、异常告警通知老板；确认通过企微消息还是其他方式。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+              <div class="q-card sortable-item" draggable="true"><div class="q-card-main"><div class="q-top"><span class="dim">数据迁移</span><button class="edit-btn" type="button">编辑</button></div><h3 contenteditable="true">现有历史数据是否需要导入新系统？</h3><p contenteditable="true">确认大概有多少条历史项目数据、格式是否统一，以及是否需要清洗。</p></div><span class="drag-handle" title="拖拽排序"></span></div>
+            </div>
+            <div class="question-panel" id="panel-industry">
+              <div class="industry-box" contenteditable="true"><b>金融科技服务行业经验</b>这类客户通常不是单纯要一张表，而是要把项目交付、客户关系、合同回款和内部协作串起来。建议会中重点判断：客户当前是否已有 CRM / 财务系统、智能表格是作为轻量管理台账，还是要作为跨部门协同入口。</div>
+              <div class="industry-box" contenteditable="true"><b>常见成交切入点</b>先从“项目进度可视化 + 回款提醒 + 客户资料沉淀”做 MVP，再逐步扩展到合同附件、权限隔离、仪表盘和系统集成。</div>
+              <div class="industry-box" contenteditable="true"><b>风险提醒</b>金融客户对数据安全、权限、审计和留痕要求较高，不要一开始承诺复杂系统打通。先确认数据边界、部署方式、接口可用性和合规要求。</div>
+            </div>
+          </div>
+          <button class="more" id="moreQuestions" type="button">查看更多问题（7）</button>
+        </section>
+      </section>
+
+      <section class="page" id="page3">
+        <div class="step3-title clean-title">
+          <div>
+            <h2>粘贴沟通记录</h2>
+            <p>默认粘贴会议纪要、销售笔记或客户原话；有补充材料时再上传 PDF / Word / 图片。</p>
+          </div>
+        </div>
+
+        <div class="step3-context slim-context" title="深圳市天天向上技术有限公司｜金融 · 50-200 人 · 合规风控 / 客户运营 / 审批流程｜已保存 2 次沟通记录">
+          <span class="ctx-name">深圳市天天向上技术有限公司</span>
+          <span class="ctx-dot">·</span>
+          <span class="ctx-meta">金融 · 50-200 人 · 合规风控 / 客户运营 / 审批流程</span>
+          <span class="ctx-dot">·</span>
+          <span class="ctx-summary">已保存 2 次沟通记录</span>
+        </div>
+
+        <section class="note-layout-v27">
+          <div class="note-main-v27">
+            <div class="note-head-v27">
+              <div>
+                <h3>新增一条沟通记录</h3>
+                <p>本页只负责沉淀沟通材料，可反复保存；Step4 再统一汇总生成方案。</p>
+              </div>
+              <label class="mini-upload-v27" for="noteFile"><input id="noteFile" type="file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"><i>＋</i> 上传附件</label>
+            </div>
+
+            <div class="note-meta-v27">
+              <label><span>来源</span><select class="select compact-select"><option>会议转写</option><option>销售手工纪要</option><option>客户邮件 / 文档</option><option>微信群沟通</option></select></label>
+              <label><span>阶段</span><select class="select compact-select"><option>首次需求沟通</option><option>需求澄清</option><option>方案沟通</option><option>报价沟通</option><option>Demo 后反馈</option></select></label>
+            </div>
+
+            <textarea class="textarea note-textarea-v27" placeholder="粘贴会议纪要、录音转写或销售笔记…">A（客户方）：我们是金融行业，监管查得严，但是现在销售跟客户聊天，一会用企微一会用个人微信，我们也管不住。企微会话存档开了，但是真要查的时候，根本找不到哪条记录。还有合规审核，线下填表再录系统，经常填错，审批人也看不到完整上下文。</textarea>
+
+            <div class="note-helper-v27">
+              <span><b>保存后</b> 追加到右侧记录库，可继续新增下一次沟通。</span>
+              <button class="inline-primary" type="button">保存本次记录</button>
+            </div>
+          </div>
+
+          <aside class="note-side-v27">
+            <div class="side-card-v27">
+              <h3>已保存记录</h3>
+              <div class="record-list-v27">
+                <div class="record-v27"><b>首次需求沟通</b><span>2026-06-14 · 会议转写</span><p>会话检索困难、线下审核表单、审批上下文缺失。</p></div>
+                <div class="record-v27"><b>补充沟通笔记</b><span>2026-06-15 · 销售纪要</span><p>先做轻量版本，验证检索、审核、状态跟踪。</p></div>
+              </div>
+            </div>
+            <div class="side-card-v27">
+              <h3>本步用途</h3>
+              <p>只存材料，不生成方案。多次沟通、客户附件、销售笔记都会作为 Step4 的输入来源。</p>
+              <div class="source-tags-v27"><span>会议纪要</span><span>销售笔记</span><span>客户附件</span><span>聊天记录</span></div>
+            </div>
+          </aside>
+        </section>
+      </section>
+
+      <section class="page" id="page4">
+        <div class="step4-title">
+          <div><h2>生成方案报告</h2><p>先确认 Step3 沉淀的信息是否可用，再生成客户汇报版方案或内部报价版方案。</p></div>
+          <button class="small-btn" type="button">重新汇总</button>
+        </div>
+
+        <div class="step4-context" title="深圳市天天向上技术有限公司｜已汇总 2 次沟通记录｜准备生成方案与报价">
+          <span class="ctx-name">深圳市天天向上技术有限公司</span><span class="ctx-dot">·</span>
+          <span class="ctx-meta">已汇总 2 次沟通记录</span><span class="ctx-dot">·</span>
+          <span class="ctx-summary">确认输入后生成两个方案产物</span>
+        </div>
+
+        <div class="step4-shell-v27">
+          <section class="input-review-v27">
+            <div class="review-head-v27">
+              <div>
+                <h3>方案输入确认</h3>
+                <p>AI 从多次沟通记录中汇总出的输入摘要。这里不是最终方案，只是生成方案前的“原料”。</p>
+              </div>
+              <button class="soft-action" type="button">编辑摘要</button>
+            </div>
+            <div class="review-grid-v27">
+              <div class="review-item-v27 primary"><b>客户现状</b><p contenteditable="true">企微与个人微信混用；会话存档已开通，但检索效率低；合规审核仍依赖线下表单。</p></div>
+              <div class="review-item-v27"><b>核心问题</b><p contenteditable="true">会话难检索、审核易填错、审批缺少上下文、客户运营数据难沉淀。</p></div>
+              <div class="review-item-v27"><b>涉及角色</b><p contenteditable="true">销售、客服、风控、审批人、客户经理、客户侧联系人。</p></div>
+              <div class="review-item-v27"><b>建设目标</b><p contenteditable="true">合规留痕、审核线上化、审批可追溯、运营数据沉淀。</p></div>
+            </div>
+          </section>
+
+          <section class="generate-panel-v27">
+            <div class="generate-head-v27">
+              <div><h3>选择输出方案</h3><p>客户汇报用和内部评估用分开生成，避免混在一个文档里。</p></div>
+              <div class="output-switch-v27"><button class="on" type="button">售前解决方案</button><button type="button">技术路线与报价</button></div>
+            </div>
+
+            <div class="output-cards-v27">
+              <article class="output-card-v27 focus">
+                <div class="top"><b>售前解决方案</b><small>客户汇报用</small></div>
+                <p>说明客户为什么要做、建议做什么、分几步做，以及业务价值。</p>
+                <div class="outline-v27"><span>痛点诊断</span><span>解决思路</span><span>建设模块</span><span>实施阶段</span></div>
+                <button class="nice-btn-v27" type="button">生成售前方案</button>
+              </article>
+
+              <article class="output-card-v27">
+                <div class="top"><b>技术路线及报价方案</b><small>内部评估用</small></div>
+                <p>拆解技术路径、接口范围、交付工作量、复杂度和报价口径。</p>
+                <div class="outline-v27"><span>技术路线</span><span>交付范围</span><span>复杂度</span><span>报价口径</span></div>
+                <button class="nice-btn-v27 secondary" type="button">生成技术报价</button>
+              </article>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page" id="page5">
+        <div class="demo-title">
+          <div><h2>Demo生成</h2><p>根据项目类型生成可点击演示界面：定制开发输出智能表格 Demo，AI 服务输出 Agent Demo。</p></div>
+          <button class="small-btn" type="button">重新生成</button>
+        </div>
+
+        <div class="demo-context">
+          <span class="ctx-name">深圳市天天向上技术有限公司</span><span class="ctx-dot">·</span>
+          <span class="ctx-meta">合规风控 / 客户运营 / 审批流程</span><span class="ctx-dot">·</span>
+          <span class="ctx-summary">Demo 用于售前演示，不是最终交付系统</span>
+        </div>
+
+        <section class="demo-card">
+          <div class="demo-card-head">
+            <div><h3>选择项目类型</h3><span>点击切换不同 Demo 产物</span></div>
+          </div>
+          <div class="demo-type-grid">
+            <div class="demo-type active" data-demo="custom"><b>定制开发项目</b><p>企业微信智能表格 Demo：字段、流程、权限、审批和看板。</p></div>
+            <div class="demo-type" data-demo="agent"><b>AI 服务项目</b><p>Agent Demo：对话入口、知识问答、任务处理和人工转接。</p></div>
+          </div>
+        </section>
+
+        <section class="demo-card demo-output active" id="customDemo">
+          <div class="demo-card-head">
+            <div><h3>企业微信智能表格 Demo</h3><span>左侧选择演示场景，右侧实时切换演示内容</span></div>
+            <button class="edit-btn" type="button">编辑</button>
+          </div>
+          <div class="demo-workspace">
+            <div class="demo-nav" data-demo-tabs="sheet">
+              <button class="demo-nav-item active" data-target="ledger"><b>客户台账</b><span>客户资料、审核状态、下一步动作</span></button>
+              <button class="demo-nav-item" data-target="approval"><b>合规审批</b><span>表单提交、审批流转、上下文联动</span></button>
+              <button class="demo-nav-item" data-target="record"><b>审批记录</b><span>时间线、操作人、审批意见</span></button>
+              <button class="demo-nav-item" data-target="dashboard"><b>数据看板</b><span>待审批、已归档、超时与运营进展</span></button>
+              <button class="demo-nav-item" data-target="chatsearch"><b>会话检索</b><span>按客户、关键词和业务标签查询</span></button>
+            </div>
+            <div class="demo-canvas">
+              <div class="sheet-panel active" id="sheet-ledger">
+                <div class="sheet-demo refined">
+                  <div class="sheet-top"><b>合规审核与客户运营台账</b><span>企业微信智能表格</span></div>
+                  <div class="fake-table compact-table">
+                    <div class="fake-row head"><span>客户名称</span><span>业务类型</span><span>审核状态</span><span>负责人</span><span>最近会话</span><span>下一步</span></div>
+                    <div class="fake-row"><span>A银行</span><span>机构服务</span><span>待审批</span><span>李四</span><span>已检索</span><span>补充资料</span></div>
+                    <div class="fake-row"><span>B证券</span><span>客户运营</span><span>已通过</span><span>王五</span><span>已归档</span><span>进入回访</span></div>
+                    <div class="fake-row"><span>C保险</span><span>合规审核</span><span>需修正</span><span>赵六</span><span>待检索</span><span>重新提交</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="sheet-panel" id="sheet-approval">
+                <div class="approval-layout">
+                  <div class="form-preview"><h4>合规审核表单</h4><p>客户名称：A银行</p><p>业务类型：机构服务</p><p>附件：授权证明、会话摘要、客户资料</p></div>
+                  <div class="approval-flow"><div>销售提交</div><i></i><div>风控审核</div><i></i><div>负责人审批</div><i></i><div>归档完成</div></div>
+                </div>
+              </div>
+              <div class="sheet-panel" id="sheet-record">
+                <div class="timeline">
+                  <div><b>09:00</b><span>销售提交 A银行审核材料</span></div>
+                  <div><b>10:20</b><span>风控要求补充客户授权证明</span></div>
+                  <div><b>11:05</b><span>销售补充附件并重新提交</span></div>
+                  <div><b>11:30</b><span>负责人审批通过，进入归档</span></div>
+                </div>
+              </div>
+              <div class="sheet-panel" id="sheet-dashboard">
+                <div class="metric-grid">
+                  <div class="metric"><b>12</b><span>待审批</span></div><div class="metric"><b>86</b><span>已归档客户</span></div><div class="metric"><b>5</b><span>超时处理</span></div><div class="metric"><b>72%</b><span>回访完成率</span></div>
+                </div>
+                <div class="bar-demo"><span style="width:78%"></span><span style="width:54%"></span><span style="width:32%"></span></div>
+              </div>
+              <div class="sheet-panel" id="sheet-chatsearch">
+                <div class="search-preview"><div class="search-box">搜索：A银行 授权证明</div><div class="result-line"><b>客户会话</b><p>客户提到“资料周五补齐”，建议提醒销售补充附件后再提交审批。</p></div><div class="result-line"><b>业务标签</b><p>合规审核 / 材料补齐 / 审批待处理</p></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="demo-card demo-output" id="agentDemo">
+          <div class="demo-card-head">
+            <div><h3>Agent Demo</h3><span>左侧选择 Agent 能力，右侧自动切换对话演示</span></div>
+            <button class="edit-btn" type="button">编辑</button>
+          </div>
+          <div class="agent-workspace">
+            <div class="demo-nav" data-demo-tabs="agent">
+              <button class="demo-nav-item active" data-target="profile"><b>客户资料查询</b><span>查询客户画像、负责人和历史记录</span></button>
+              <button class="demo-nav-item" data-target="material"><b>审核材料检查</b><span>自动判断缺失附件和补充动作</span></button>
+              <button class="demo-nav-item" data-target="conversation"><b>会话记录检索</b><span>检索客户原话和关键证据</span></button>
+              <button class="demo-nav-item" data-target="qa"><b>知识问答</b><span>回答流程、权限、合规规则</span></button>
+              <button class="demo-nav-item" data-target="handoff"><b>人工转接</b><span>复杂问题转交对应服务商人员</span></button>
+            </div>
+            <div class="agent-canvas">
+              <div class="agent-chat-panel active" id="agent-profile">
+                <div class="agent-head"><b>合规运营 Agent</b><span>客户资料查询</span></div>
+                <div class="msg bot">你好，我可以帮你查询客户资料、检查审核材料、检索会话记录。</div>
+                <div class="msg user">帮我查询 A 银行这个客户的基本资料。</div>
+                <div class="msg bot">A银行｜机构服务客户｜负责人李四｜当前审核状态：待审批｜最近一次会话已检索，下一步建议补充授权证明。</div>
+                <div class="agent-input">输入问题或选择任务… <span>发送</span></div>
+              </div>
+              <div class="agent-chat-panel" id="agent-material">
+                <div class="agent-head"><b>合规运营 Agent</b><span>审核材料检查</span></div>
+                <div class="msg user">帮我看 A 银行审核材料缺什么。</div>
+                <div class="msg bot">已检查：缺少客户授权证明；最近会话中客户提到“资料周五补齐”。建议提醒销售补充附件后再提交审批。</div>
+                <div class="agent-input">输入问题或选择任务… <span>发送</span></div>
+              </div>
+              <div class="agent-chat-panel" id="agent-conversation">
+                <div class="agent-head"><b>合规运营 Agent</b><span>会话记录检索</span></div>
+                <div class="msg user">检索最近 7 天关于 A 银行授权证明的会话。</div>
+                <div class="msg bot">找到 3 条相关记录：客户在 6月13日提到“授权证明周五补齐”；销售在 6月14日提醒需补充材料；当前仍未归档。</div>
+                <div class="agent-input">输入问题或选择任务… <span>发送</span></div>
+              </div>
+              <div class="agent-chat-panel" id="agent-qa">
+                <div class="agent-head"><b>合规运营 Agent</b><span>知识问答</span></div>
+                <div class="msg user">审批人为什么需要看到会话上下文？</div>
+                <div class="msg bot">因为金融服务场景需要判断客户承诺、材料补齐时间、风险提示是否已充分告知。会话上下文可作为审核依据，减少反复沟通。</div>
+                <div class="agent-input">输入问题或选择任务… <span>发送</span></div>
+              </div>
+              <div class="agent-chat-panel" id="agent-handoff">
+                <div class="agent-head"><b>合规运营 Agent</b><span>人工转接</span></div>
+                <div class="msg user">这个客户要接财务系统，怎么评估？</div>
+                <div class="msg bot">该问题涉及接口和报价评估。我已生成转接摘要，可转给技术售前：客户需确认财务系统类型、接口权限、数据字段和同步频率。</div>
+                <div class="agent-input">输入问题或选择任务… <span>发送</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <aside class="panel art">
+    <div class="art-head"><h2>完成制品</h2><p>右侧只展示可交付结果，不打断中间编辑</p></div>
+    <div class="art-list">
+      <div class="artifact"><div class="artifact-top"><h4>客户画像卡</h4><span class="tag">已生成</span></div><p><b>深圳市天天向上技术有限公司</b><br>行业：金融｜规模：50-200 人<br>需求标签：合规风控、客户运营<br>补全来源：网络简介已采用，待销售确认。</p><div class="barbox"><div class="bar" style="width:100%"></div></div></div>
+      <div class="artifact"><div class="artifact-top"><h4>调研问题清单</h4><span class="tag">已生成</span></div><p>必问问题 11 个、深挖问题 5 个、信息缺口 4 项，可复制给售前开会使用。</p><div class="barbox"><div class="bar" style="width:100%"></div></div></div>
+      <div class="artifact"><div class="artifact-top"><h4>沟通记录库</h4><span class="tag">已保存</span></div><p>已沉淀 2 次沟通记录，后续用于统一需求整理。</p><div class="barbox"><div class="bar" style="width:100%"></div></div></div>
+      <div class="artifact"><div class="artifact-top"><h4>售前解决方案</h4><span class="tag todo">待生成</span></div><p>客户现状、解决方案、建设模块与实施阶段。</p><div class="barbox"><div class="bar" style="width:74%"></div></div></div>
+      <div class="artifact"><div class="artifact-top"><h4>技术路线及报价方案</h4><span class="tag todo">待生成</span></div><p>技术路径、交付范围、报价模块与工期评估。</p><div class="barbox"><div class="bar" style="width:32%"></div></div></div><div class="artifact"><div class="artifact-top"><h4>Demo 制品</h4><span class="tag todo">待生成</span></div><p>定制开发输出智能表格；AI服务输出Agent小Demo。</p><div class="barbox"><div class="bar" style="width:24%"></div></div></div>
+    </div>
+  </aside>
+  <div class="floating-actions">
+    <button class="btn ghost" type="button">保存</button>
+    <button class="btn primary" id="floatingPrimary" type="button">生成客户画像卡</button>
+  </div>
+</div>
+<script>
+const meta={1:'客户录入',2:'调研准备',3:'沟通纪要',4:'需求整理',5:'Demo设计'};
+function go(n){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page'+n).classList.add('active');document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));document.querySelector('.step[data-page="'+n+'"]').classList.add('active');const fp=document.getElementById('floatingPrimary'); if(fp){fp.textContent = n==1 ? '生成客户画像卡' : (n==2 ? '生成调研问题清单' : (n==3 ? '保存沟通记录' : (n==4 ? '生成需求分析报告' : (n==5 ? '生成Demo方案' : '生成制品'))));}}
+document.querySelectorAll('.step').forEach(s=>s.onclick=()=>go(s.dataset.page));
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>c.classList.toggle('active'));
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')});
+const aiBtn=document.getElementById('aiSearchBtn');
+if(aiBtn){aiBtn.onclick=()=>{document.getElementById('aiResult').classList.remove('is-hidden'); aiBtn.textContent='重新智搜';};}
+
+const prepBtn=document.getElementById('prepGenerate');
+if(prepBtn){prepBtn.onclick=()=>{const loading=document.getElementById('prepLoading');const result=document.getElementById('prepResult'); if(loading&&result){result.style.display='none';loading.style.display='grid';prepBtn.textContent='生成中…';setTimeout(()=>{loading.style.display='none';result.style.display='grid';prepBtn.textContent='重新生成';},900);}};}
+
+
+// v15 tabs: 必问 / 深挖 / 行业经验
+document.querySelectorAll('[data-tabs="questions"] .tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('[data-tabs="questions"] .tab').forEach(t=>t.classList.remove('on'));
+    tab.classList.add('on');
+    const key=tab.dataset.target;
+    document.querySelectorAll('#page2 .question-panel').forEach(p=>p.classList.remove('active'));
+    const panel=document.getElementById('panel-'+key); if(panel) panel.classList.add('active');
+    const more=document.getElementById('moreQuestions');
+    if(more){ more.style.display = key==='must' ? 'block' : 'none'; }
+  });
+});
+
+// v15 查看更多问题
+const moreQuestions=document.getElementById('moreQuestions');
+if(moreQuestions){
+  moreQuestions.addEventListener('click',()=>{
+    const hidden=document.querySelectorAll('#panel-must .hidden-q');
+    const isOpen=moreQuestions.classList.toggle('is-open');
+    hidden.forEach(item=>{ item.style.display = isOpen ? 'grid' : 'none'; });
+    moreQuestions.textContent = isOpen ? '收起更多问题' : '查看更多问题（7）';
+  });
+}
+
+// v15 drag sorting: right-side handle reorder
+let dragEl=null;
+document.querySelectorAll('.sortable').forEach(list=>{
+  list.addEventListener('dragstart',e=>{
+    const item=e.target.closest('.sortable-item');
+    if(!item) return;
+    dragEl=item;
+    item.classList.add('dragging');
+    e.dataTransfer.effectAllowed='move';
+    e.dataTransfer.setData('text/plain','');
+  });
+  list.addEventListener('dragend',()=>{
+    if(dragEl) dragEl.classList.remove('dragging');
+    dragEl=null;
+  });
+  list.addEventListener('dragover',e=>{
+    e.preventDefault();
+    if(!dragEl) return;
+    const after=getDragAfterElement(list,e.clientY);
+    if(after==null){ list.appendChild(dragEl); } else { list.insertBefore(dragEl,after); }
+  });
+});
+function getDragAfterElement(container,y){
+  const items=[...container.querySelectorAll('.sortable-item:not(.dragging)')].filter(el=>getComputedStyle(el).display!=='none');
+  return items.reduce((closest,child)=>{
+    const box=child.getBoundingClientRect();
+    const offset=y-box.top-box.height/2;
+    if(offset<0 && offset>closest.offset){ return {offset,element:child}; }
+    return closest;
+  },{offset:Number.NEGATIVE_INFINITY}).element;
+}
+
+// v21 demo type switch
+const demoTypes=document.querySelectorAll('.demo-type');
+demoTypes.forEach(t=>t.addEventListener('click',()=>{
+  demoTypes.forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.querySelectorAll('.demo-output').forEach(x=>x.classList.remove('active'));
+  const id=t.dataset.demo==='agent'?'agentDemo':'customDemo';
+  const target=document.getElementById(id); if(target) target.classList.add('active');
+}));
+
+
+// v22 Demo scene switching
+function bindDemoTabs(scope){
+  document.querySelectorAll('[data-demo-tabs="'+scope+'"]').forEach(nav=>{
+    nav.querySelectorAll('.demo-nav-item').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        nav.querySelectorAll('.demo-nav-item').forEach(x=>x.classList.remove('active'));
+        btn.classList.add('active');
+        const target=btn.dataset.target;
+        const prefix=scope==='sheet'?'sheet':'agent';
+        document.querySelectorAll('#'+(scope==='sheet'?'customDemo':'agentDemo')+' .'+(scope==='sheet'?'sheet-panel':'agent-chat-panel')).forEach(p=>p.classList.remove('active'));
+        const panel=document.getElementById(prefix+'-'+target);
+        if(panel) panel.classList.add('active');
+      });
+    });
+  });
+}
+bindDemoTabs('sheet');
+bindDemoTabs('agent');
+
+</script>
+</body>
+</html>

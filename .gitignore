@@ -1,5 +1,29 @@
+# Python
 __pycache__/
 *.pyc
-.vercel/
-.env
+*.pyo
+venv/
+.venv/
+*.db
+
+# Node
 node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+test-results/
+*.log
+
+# Temp
+*.tmp
+*.bak

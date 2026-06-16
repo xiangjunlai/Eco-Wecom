@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./knowledge:/app/knowledge
+    environment:
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-sk-63d4e005ecb646b08538368c5172ed82}
+    restart: unless-stopped
+
+  # 可选: PostgreSQL 支持未来扩展
+  # db:
+  #   image: postgres:16-alpine
+  #   environment:
+  #     POSTGRES_USER: provider_assist
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-change_me}
+  #     POSTGRES_DB: provider_assist
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+# volumes:
+#   postgres_data:

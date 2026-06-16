@@ -1,0 +1,1934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务商助手 - 智能需求调研工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        :root {
+            --brand: #1a56db;
+            --brand-light: #e8f0fe;
+            --brand-dark: #0f3a8a;
+            --surface: #ffffff;
+            --surface-elevated: #ffffff;
+            --bg: #f4f6f9;
+            --bg-subtle: #f9fafb;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --text-muted: #9ca3af;
+            --border: rgba(0,0,0,0.06);
+            --border-hover: rgba(26,86,219,0.3);
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.08);
+            --radius: 14px;
+            --radius-sm: 10px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --success: #059669;
+            --success-bg: #ecfdf5;
+            --warning: #d97706;
+            --warning-bg: #fffbeb;
+            --danger: #dc2626;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; background: var(--bg); color: var(--text-primary); line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 32px 48px; }
+        @media (max-width: 768px) { .container { padding: 20px 16px; max-width: 100%; } }
+
+        .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+        .app-header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); }
+        .app-header p { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+        .card { background: var(--surface); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 14px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); transition: box-shadow var(--transition), border-color var(--transition); }
+        .card:hover { box-shadow: var(--shadow-md); }
+        .card h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: var(--text-primary); letter-spacing: -0.01em; }
+        .card label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+        .card input, .card textarea, .card select { width: 100%; padding: 10px 14px; border: 1px solid #e5e7eb; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 14px; transition: all var(--transition); background: var(--bg-subtle); font-family: inherit; }
+        .card input:focus, .card textarea:focus { outline: none; border-color: var(--brand); background: #fff; box-shadow: 0 0 0 3px rgba(26,86,219,0.08); }
+        .card textarea { min-height: 80px; resize: vertical; }
+
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; transition: all var(--transition); font-family: inherit; letter-spacing: -0.01em; }
+        .btn-primary { background: var(--brand); color: #fff; box-shadow: 0 1px 3px rgba(26,86,219,0.2); }
+        .btn-primary:hover { background: var(--brand-dark); box-shadow: 0 4px 12px rgba(26,86,219,0.25); transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled { background: #93b4e8; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-secondary { background: #f3f4f6; color: var(--text-secondary); border: 1px solid #e5e7eb; }
+        .btn-secondary:hover { background: #e5e7eb; color: var(--text-primary); }
+        .btn-sm { padding: 7px 14px; font-size: 12px; }
+        .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+        .section-label { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+        /* Client cards */
+        .client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+        @media (max-width: 768px) { .client-grid { grid-template-columns: 1fr; } }
+        .client-card { background: var(--surface); border-radius: var(--radius); padding: 18px 20px; cursor: pointer; border: 1px solid var(--border); transition: all var(--transition); box-shadow: var(--shadow-sm); }
+        .client-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .client-card .name { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+        .client-card .meta { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .client-card .progress-dots { display: flex; gap: 5px; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f3f4f6; }
+        .client-card .progress-dots .dot { width: 8px; height: 8px; border-radius: 50%; transition: transform var(--transition); }
+        .add-card { background: transparent; border: 2px dashed #d1d5db; display: flex; align-items: center; justify-content: center; min-height: 90px; border-radius: var(--radius); cursor: pointer; font-size: 13px; color: var(--text-muted); font-weight: 500; transition: all var(--transition); }
+        .add-card:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+
+        .status-pill { font-size: 11px; padding: 3px 10px; border-radius: 6px; display: inline-block; font-weight: 500; }
+        .pill-draft { background: #f3f4f6; color: #6b7280; }
+        .pill-listed { background: var(--brand-light); color: var(--brand); }
+        .pill-waiting { background: var(--warning-bg); color: var(--warning); }
+        .pill-done { background: var(--success-bg); color: var(--success); }
+
+        .output-pill { font-size: 11px; padding: 4px 10px; border-radius: 6px; text-decoration: none; display: inline-block; margin-right: 4px; margin-top: 5px; font-weight: 500; transition: opacity var(--transition); }
+        .output-pill:hover { opacity: 0.8; }
+
+        /* Detail page */
+        .back-btn { font-size: 12px; color: var(--brand); cursor: pointer; margin-bottom: 16px; display: inline-flex; align-items: center; gap: 4px; font-weight: 500; }
+        .back-btn:hover { color: var(--brand-dark); }
+        .client-header { display: flex; align-items: center; gap: 14px; }
+        .client-avatar { width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--brand-light); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--brand); }
+
+        .timeline { display: flex; align-items: flex-start; position: relative; padding: 0 10px; }
+        .timeline-line { position: absolute; top: 14px; left: 36px; right: 36px; height: 2px; background: #e5e7eb; z-index: 0; border-radius: 1px; }
+        .timeline-progress { position: absolute; top: 14px; left: 36px; height: 2px; background: var(--brand); z-index: 1; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 1px; }
+        .timeline-node { flex: 1; text-align: center; z-index: 2; }
+        .timeline-dot { width: 28px; height: 28px; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; font-weight: 600; transition: transform var(--transition); }
+        .timeline-dot:hover { transform: scale(1.1); }
+        .timeline-label { font-size: 10px; color: var(--text-muted); margin-top: 6px; font-weight: 500; }
+        .timeline-outputs { margin-top: 5px; }
+
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (min-width: 768px) { .action-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); } }
+        .action-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 24px 20px; text-align: center; cursor: pointer; transition: all var(--transition); box-shadow: var(--shadow-sm); }
+        .action-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .action-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .action-card .title { font-size: 13px; font-weight: 600; }
+        .action-card .desc { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+        .output-list { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        .output-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #f3f4f6; transition: background var(--transition); }
+        .output-item:hover { background: var(--bg-subtle); }
+        .output-item:last-child { border-bottom: none; }
+        .output-item-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--brand-light); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .output-item-info p { margin: 0; }
+        .output-item-info .name { font-size: 13px; font-weight: 600; }
+        .output-item-info .time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .output-item-link { font-size: 12px; color: var(--brand); text-decoration: none; font-weight: 500; }
+        .output-item-link:hover { color: var(--brand-dark); }
+
+        .rendered-content { background: var(--bg-subtle); border: 1px solid #e5e7eb; border-radius: var(--radius); padding: 24px; font-size: 13.5px; line-height: 1.85; max-height: 70vh; overflow-y: auto; overflow-x: hidden; }
+        @media (min-width: 1024px) { .rendered-content { padding: 32px 36px; font-size: 14px; } }
+        .rendered-content h1,.rendered-content h2,.rendered-content h3 { color: var(--brand-dark); margin-top: 20px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: none; letter-spacing: -0.01em; }
+        .rendered-content h1 { font-size: 18px; font-weight: 700; } .rendered-content h2 { font-size: 15px; font-weight: 600; } .rendered-content h3 { font-size: 14px; border-bottom: none; color: var(--text-primary); font-weight: 600; }
+        .rendered-content p { margin-bottom: 8px; } .rendered-content ul,.rendered-content ol { padding-left: 20px; margin-bottom: 10px; }
+        .rendered-content li { margin-bottom: 6px; } .rendered-content strong { color: var(--brand-dark); }
+        .rendered-content em { color: #888; font-style: italic; font-size: 12px; }
+        .rendered-content hr { display: none; }
+        .rendered-content blockquote { border-left: 3px solid var(--brand); padding: 8px 16px; margin: 10px 0; background: var(--brand-light); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: var(--text-secondary); font-size: 13px; }
+        .rendered-content table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12.5px; table-layout: auto; }
+        @media (max-width: 768px) { .rendered-content table { font-size: 12px; } .rendered-content th,.rendered-content td { padding: 6px 8px; word-break: break-word; } }
+        @media (min-width: 1024px) { .rendered-content table { font-size: 13px; } }
+        .rendered-content th,.rendered-content td { border: 1px solid #e5e7eb; padding: 8px 12px; text-align: left; vertical-align: top; }
+        .rendered-content th { background: #f8fafc; font-weight: 600; color: var(--text-secondary); }
+        .rendered-content td em { display: block; margin-top: 4px; color: #999; font-style: italic; font-size: 11.5px; line-height: 1.6; }
+
+        .loading { display: none; text-align: center; padding: 40px; }
+        .loading.visible { display: block; }
+        .loading .spinner { width: 28px; height: 28px; border: 3px solid #e5e7eb; border-top-color: var(--brand); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .upload-area { border: 2px dashed #d1d5db; border-radius: var(--radius); padding: 24px; text-align: center; cursor: pointer; transition: all var(--transition); margin-bottom: 14px; }
+        .upload-area:hover { border-color: var(--brand); background: var(--brand-light); }
+        .upload-area p { color: var(--text-secondary); font-size: 13px; font-weight: 500; }
+        .upload-area .hint { color: var(--text-muted); font-size: 11px; margin-top: 4px; }
+        .upload-area .file-name { color: var(--brand); font-weight: 600; margin-top: 6px; font-size: 12px; }
+        .or-divider { text-align: center; color: var(--text-muted); font-size: 11px; margin: 8px 0; position: relative; font-weight: 500; }
+        .or-divider::before,.or-divider::after { content:''; position:absolute; top:50%; width:40%; height:1px; background:#e5e7eb; }
+        .or-divider::before { left:0; } .or-divider::after { right:0; }
+
+        .export-group { position: relative; display: inline-block; }
+        .export-dropdown { display: none; position: absolute; top: 100%; left: 0; margin-top: 6px; background: var(--surface); border: 1px solid #e5e7eb; border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); z-index: 100; min-width: 150px; overflow: hidden; }
+        .export-dropdown.visible { display: block; }
+        .export-dropdown .export-item { padding: 10px 16px; cursor: pointer; font-size: 13px; transition: background var(--transition); font-weight: 500; }
+        .export-dropdown .export-item:hover { background: var(--bg-subtle); color: var(--brand); }
+        @media (max-width: 768px) {
+            .export-group { position: static; }
+            .export-dropdown { position: fixed; bottom: 0; left: 0; right: 0; top: auto; margin-top: 0; border-radius: var(--radius) var(--radius) 0 0; min-width: 100%; padding: 8px 0 env(safe-area-inset-bottom, 8px); }
+            .export-dropdown .export-item { padding: 14px 20px; font-size: 15px; text-align: center; border-bottom: 1px solid #f3f4f6; }
+            .export-dropdown .export-item:last-child { border-bottom: none; }
+        }
+
+        .page { display: none; } .page.active { display: block; }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-state p { font-size: 14px; margin-bottom: 16px; }
+
+        .step-panel { display: none; }
+        @media (min-width: 1024px) { .step-panel { max-width: 900px; } }
+    </style>
+</head>
+<body>
+
+<!-- 加载遮罩（token验证完成前显示） -->
+<div id="page-loading" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#f4f6f9;display:flex;align-items:center;justify-content:center;z-index:99999">
+    <div style="text-align:center">
+        <div style="width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#1a56db;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 12px"></div>
+        <p style="font-size:13px;color:#666">加载中...</p>
+    </div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<!-- 登录/注册弹窗 -->
+<div id="auth-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:28px;width:400px;max-width:90vw;">
+        <h2 id="auth-title" style="font-size:16px;font-weight:600;margin-bottom:8px">登录</h2>
+        <p id="auth-desc" style="font-size:13px;color:#666;margin-bottom:16px">登录您的账号</p>
+        <input type="text" id="auth-username" placeholder="用户名" style="margin-bottom:10px">
+        <input type="password" id="auth-password" placeholder="密码" style="margin-bottom:10px">
+        <input type="text" id="auth-provider" placeholder="服务商名称" style="margin-bottom:10px;display:none">
+        <div id="auth-error" style="color:#dc2626;font-size:12px;margin-bottom:10px;display:none;"></div>
+        <div style="display:flex;gap:10px;">
+            <button class="btn btn-secondary" style="flex:1" onclick="hideAuthModal()">取消</button>
+            <button class="btn btn-primary" style="flex:1" id="auth-submit-btn" onclick="doAuth()">登录</button>
+        </div>
+        <p style="text-align:center;margin-top:16px;font-size:12px;color:#666;">
+            <a href="#" onclick="toggleAuthMode();return false;" style="color:#1a56db;" id="auth-toggle-link">没有账号？注册</a>
+        </p>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- PAGE: Client List -->
+    <div id="page-list" class="page active">
+        <div class="app-header">
+            <div>
+                <h1>服务商需求调研助手</h1>
+                <p>智能提问清单 · 需求结构化 · 多客户管理</p>
+            </div>
+            <button class="btn btn-primary" onclick="createClient()">+ 新建客户</button>
+        </div>
+
+        <!-- 服务商身份条 -->
+        <div id="provider-bar" class="card" style="padding:12px 18px;margin-bottom:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:30px;height:30px;border-radius:6px;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:12px;color:#185FA5;font-weight:500" id="provider-avatar"></div>
+                    <div>
+                        <p style="font-size:13px;font-weight:500;margin:0" id="provider-display-name"></p>
+                        <p style="font-size:11px;color:#999;margin:0" id="provider-display-username"></p>
+                    </div>
+                </div>
+                <span style="font-size:11px;color:#185FA5;cursor:pointer" onclick="editProviderName()">修改</span>
+            </div>
+        </div>
+
+        <!-- 首次注册 -->
+        <div id="provider-setup" class="card" style="padding:20px;margin-bottom:14px">
+            <h3 style="font-size:14px;margin-bottom:4px">欢迎使用服务商需求调研助手</h3>
+            <p style="font-size:12px;color:#888;margin-bottom:14px">请先填写您的信息,方便平台进行服务商管理</p>
+            <label style="font-size:12px;font-weight:500;display:block;margin-bottom:4px">服务商名称</label>
+            <input type="text" id="setup-provider-name" placeholder="您的姓名或公司名称" style="width:100%;padding:9px 12px;border:0.5px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:12px">
+            <button class="btn btn-primary btn-sm" onclick="saveProviderSetup()">确认并开始使用</button>
+        </div>
+
+        <div id="list-inprogress"></div>
+        <div id="list-done"></div>
+        <div id="empty-state" class="empty-state" style="display:none">
+            <p>还没有客户项目</p>
+            <button class="btn btn-primary" onclick="createClient()">+ 新建第一个客户</button>
+        </div>
+        <div style="margin-top:2rem;text-align:center;padding:10px 0;border-top:0.5px solid #eee">
+            <button class="btn btn-secondary btn-sm" onclick="exportAllData()" style="font-size:11px">导出备份</button>
+            <button class="btn btn-secondary btn-sm" onclick="importData()" style="font-size:11px">导入备份</button>
+            <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+        </div>
+    </div>
+
+    <!-- PAGE: Client Detail -->
+    <div id="page-detail" class="page">
+        <span class="back-btn" onclick="goBack()">← 返回客户列表</span>
+
+        <!-- Client header -->
+        <div class="card" style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div class="client-header">
+                    <div class="client-avatar" id="detail-avatar"></div>
+                    <div>
+                        <p style="font-weight:500;font-size:14px;margin:0;cursor:pointer" id="detail-name" onclick="editClientName()"></p>
+                        <p style="font-size:11px;color:#999;margin:2px 0 0" id="detail-industry"></p>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <span class="status-pill" id="detail-status"></span>
+                    <span onclick="deleteCurrentClient()" style="cursor:pointer;font-size:14px;color:#ccc;padding:4px" title="删除">&times;</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="card" style="padding:14px 20px;margin-bottom:10px">
+            <div class="timeline">
+                <div class="timeline-line"></div>
+                <div class="timeline-progress" id="progress-line"></div>
+                <div class="timeline-node"><div class="timeline-dot" id="node-0">1</div><p class="timeline-label">录入</p><div class="timeline-outputs" id="node-0-outputs"></div></div>
+                <div class="timeline-node"><div class="timeline-dot" id="node-1">2</div><p class="timeline-label">调研准备</p><div class="timeline-outputs" id="node-1-outputs"></div></div>
+                <div class="timeline-node"><div class="timeline-dot" id="node-2">3</div><p class="timeline-label">沟通</p><div class="timeline-outputs" id="node-2-outputs"></div></div>
+                <div class="timeline-node"><div class="timeline-dot" id="node-3">4</div><p class="timeline-label">报告</p><div class="timeline-outputs" id="node-3-outputs"></div></div>
+                <div class="timeline-node"><div class="timeline-dot" id="node-4">5</div><p class="timeline-label">Demo</p><div class="timeline-outputs" id="node-4-outputs"></div></div>
+            </div>
+        </div>
+
+        <!-- Profile card (editable) -->
+        <div class="card" id="profile-card" style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <p class="section-label" style="margin:0">客户档案</p>
+                <button class="btn btn-secondary btn-sm" onclick="toggleProfile()">编辑</button>
+            </div>
+            <div id="profile-view">
+                <div style="display:grid;grid-template-columns:1fr;gap:8px;font-size:12px;color:#666">
+                    <div><span style="color:#aaa">行业:</span><span id="pv-industry">-</span></div>
+                    <div><span style="color:#aaa">初始需求:</span><span id="pv-initial-demand">-</span></div>
+                    <div id="pv-company-intro" style="display:none;margin-top:4px;padding:8px;background:#f9fafb;border-radius:6px;font-size:11px;color:#555;line-height:1.6">
+                        <span style="color:#999">公司简介:</span><span id="pv-company-intro-text"></span>
+                    </div>
+                </div>
+            </div>
+            <div id="profile-edit" style="display:none">
+                <label>客户行业</label>
+                <input type="text" id="s1-industry" placeholder="如:金融、制造业、服装外贸">
+                <label>客户进线的初始需求表达</label>
+                <p style="font-size:11px;color:#999;margin-bottom:8px;line-height:1.6">
+💡 建议在群内引导客户描述:<br>
+· 他们目前的业务是什么?遇到了什么问题?<br>
+· 希望用定制开发解决什么具体场景?<br>
+· 把客户的原始表达粘贴到这里即可,不需要整理
+                </p>
+                <textarea id="s1-initial-demand" style="min-height:80px" placeholder="粘贴客户的原始表达..."></textarea>
+                <div class="actions">
+                    <button class="btn btn-primary btn-sm" onclick="saveProfile()">保存</button>
+                    <button class="btn btn-secondary btn-sm" onclick="toggleProfile()">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action cards (平级) -->
+        <p class="section-label">操作</p>
+        <div class="action-grid" id="actions-grid" style="margin-bottom:14px">
+            <div class="action-card" onclick="showPanel('step1')">
+                <div class="action-icon" style="background:#E6F1FB">📋</div>
+                <p class="title">调研准备</p>
+                <p class="desc">生成提问清单 + 分析缺失信息</p>
+                <div id="action-step1-status" style="margin-top:8px"></div>
+            </div>
+            <div class="action-card" onclick="showPanel('step2')">
+                <div class="action-icon" style="background:#FAEEDA">📊</div>
+                <p class="title">需求交付</p>
+                <p class="desc">上传沟通记录 → 报告 + Demo</p>
+                <div id="action-step2-status" style="margin-top:8px"></div>
+            </div>
+        </div>
+
+        <!-- Outputs -->
+        <div id="outputs-card" style="display:none;margin-top:14px">
+            <p class="section-label">交付清单</p>
+            <div id="outputs-list"></div>
+        </div>
+
+        <!-- Step1 Panel -->
+        <div id="step1" class="step-panel">
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                    <h3 style="margin:0">调研准备</h3>
+                    <span style="font-size:12px;color:#185FA5;cursor:pointer" onclick="hidePanel()">← 返回</span>
+                </div>
+                <p style="font-size:12px;color:#888;margin-bottom:14px">基于客户信息 + 知识库,生成提问清单和分析材料</p>
+                <div class="actions"><button class="btn btn-primary" onclick="generateStep1()">生成调研准备材料</button></div>
+            </div>
+            <div id="s1-loading" class="loading"><div class="spinner"></div><p style="font-size:12px;color:#888">正在匹配知识库...</p></div>
+            <div id="s1-result" style="display:none">
+                <div class="card">
+                    <h3>调研准备材料</h3>
+                    <div id="s1-content" class="rendered-content"></div>
+                    <div class="actions">
+                        <button class="btn btn-secondary btn-sm" onclick="copyRendered('s1-content')">复制</button>
+                        <div class="export-group">
+                            <button class="btn btn-secondary btn-sm" onclick="toggleExport('s1-export')">导出</button>
+                            <div id="s1-export" class="export-dropdown">
+                                <div class="export-item" onclick="exportWord('s1-content','调研准备材料')">Word</div>
+                                <div class="export-item" onclick="exportPDF('s1-content','调研准备材料')">PDF</div>
+                                <div class="export-item" onclick="exportWecomDoc('s1-content','调研准备材料')">企微文档</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step2 Panel -->
+        <div id="step2" class="step-panel">
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                    <h3 style="margin:0">需求交付</h3>
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <button class="btn btn-secondary btn-sm" onclick="saveTranscripts()">保存</button>
+                        <span style="font-size:12px;color:#185FA5;cursor:pointer" onclick="hidePanel()">← 返回</span>
+                    </div>
+                </div>
+                <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+                    <p>点击上传沟通记录文件(支持多个)</p>
+                    <p class="hint">支持 .txt / .docx,可多次上传</p>
+                </div>
+                <input type="file" id="file-input" accept=".txt,.docx" multiple style="display:none" onchange="handleFileUpload(event)">
+                <div id="uploaded-files-list" style="margin-top:8px"></div>
+                <div class="or-divider">或直接粘贴补充</div>
+                <textarea id="s2-transcript" style="min-height:120px" placeholder="粘贴补充的会议转写或沟通记录(可选)..."></textarea>
+                <div class="actions" style="gap:8px;display:flex;flex-wrap:wrap">
+                    <button class="btn btn-secondary" onclick="saveTranscripts()">保存沟通记录</button>
+                    <button class="btn btn-primary" onclick="generateReport()">生成需求分析报告</button>
+                </div>
+            </div>
+            <div id="s2-loading" class="loading"><div class="spinner"></div><p style="font-size:12px;color:#888">正在分析...</p></div>
+            <!-- 阶段1:需求分析报告 -->
+            <div id="s2-report-section" style="display:none">
+                <div class="card">
+                    <h3>需求分析报告</h3>
+                    <div id="s2-report" class="rendered-content"></div>
+                    <div class="actions">
+                        <button class="btn btn-secondary btn-sm" onclick="copyRendered('s2-report')">复制</button>
+                        <div class="export-group">
+                            <button class="btn btn-secondary btn-sm" onclick="toggleExport('s2-export')">导出</button>
+                            <div id="s2-export" class="export-dropdown">
+                                <div class="export-item" onclick="exportWord('s2-report','需求分析报告')">Word</div>
+                                <div class="export-item" onclick="exportPDF('s2-report','需求分析报告')">PDF</div>
+                                <div class="export-item" onclick="exportWecomDoc('s2-report','需求分析报告')">企微文档</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 待确认事项 -->
+                <div id="s2-todo-card" class="card" style="border-left:3px solid #ff9800;display:none">
+                    <h3 style="color:#e65100">待确认事项</h3>
+                    <div id="s2-todo" class="rendered-content"></div>
+                </div>
+                <!-- 确认区域 -->
+                <div class="card" style="background:#f8faff;border:1px solid #d4e5f7">
+                    <div style="display:flex;align-items:flex-start;gap:10px">
+                        <span style="font-size:20px">📤</span>
+                        <div style="flex:1">
+                            <p style="font-size:13px;font-weight:500;margin:0 0 4px">发给客户确认</p>
+                            <p style="font-size:12px;color:#666;margin:0 0 10px">导出报告发给客户查看,待客户确认无误后,点击下方按钮生成智能表格 Demo</p>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                <button class="btn btn-primary" onclick="generateDemo()">客户已确认,生成智能表格 Demo</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 阶段2:智能表格 Demo -->
+            <div id="s2-demo-section" style="display:none">
+                <div id="s2-demo-loading" class="loading"><div class="spinner"></div><p style="font-size:12px;color:#888">正在生成智能表格设计...</p></div>
+                <div id="s2-schema-card" class="card" style="display:none">
+                    <h3>智能表格 Demo</h3>
+                    <div id="s2-schema" class="rendered-content"></div>
+                    <div class="actions">
+                        <button class="btn btn-primary btn-sm" id="btn-create" onclick="createSmartsheet()">创建企微智能表格</button>
+                        <button class="btn btn-secondary btn-sm" onclick="copyRendered('s2-schema')">复制</button>
+                    </div>
+                    <div id="s2-create-result" style="margin-top:10px;display:none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+marked.setOptions({ breaks: true, gfm: true });
+
+// API 基础地址：EdgeOne Pages 部署时用空字符串（边缘函数代理转发到 Vercel）
+// 如果直接在 Vercel 上访问也使用空字符串（相对路径直接命中 Vercel Functions）
+const API_BASE = 'http://localhost:8000';
+
+const STORAGE_KEY = 'provider-assist-clients';
+const PROVIDER_KEY = 'provider-assist-name';
+const TOKEN_KEY = 'provider-token';
+let currentClientId = null;
+let demoSchema = null;
+
+// ==================== JWT 认证 ====================
+function getToken() {
+    return localStorage.getItem(TOKEN_KEY) || '';
+}
+
+function getAuthHeaders() {
+    const token = getToken();
+    return token ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } : { 'Content-Type': 'application/json' };
+}
+
+function isLoggedIn() {
+    return !!getToken();
+}
+
+// 显示登录/注册弹窗
+let showingRegister = false;
+function showAuthModal(forceLogin = false) {
+    showingRegister = forceLogin;
+    const modal = document.getElementById('auth-modal');
+    modal.style.display = 'flex';
+    document.getElementById('auth-title').textContent = forceLogin ? '注册账号' : '登录';
+    document.getElementById('auth-desc').textContent = forceLogin ? '创建新账号' : '登录您的账号';
+    document.getElementById('auth-provider').style.display = forceLogin ? 'block' : 'none';
+    document.getElementById('auth-submit-btn').textContent = forceLogin ? '注册' : '登录';
+    document.getElementById('auth-toggle-link').textContent = forceLogin ? '已有账号？登录' : '没有账号？注册';
+    document.getElementById('auth-error').style.display = 'none';
+    document.getElementById('auth-username').value = '';
+    document.getElementById('auth-password').value = '';
+    document.getElementById('auth-provider').value = '';
+    modal.style.display = 'flex';
+}
+
+function hideAuthModal() {
+    document.getElementById('auth-modal').style.display = 'none';
+}
+
+function toggleAuthMode() {
+    showAuthModal(!showingRegister);
+}
+
+async function doAuth() {
+    const username = document.getElementById('auth-username').value.trim();
+    const password = document.getElementById('auth-password').value.trim();
+    const provider = document.getElementById('auth-provider').value.trim();
+
+    if (!username || !password) {
+        showAuthError('请填写用户名和密码');
+        return;
+    }
+    if (showingRegister && !provider) {
+        showAuthError('请填写服务商名称');
+        return;
+    }
+
+    const endpoint = showingRegister ? '/api/auth/register' : '/api/auth/login';
+    const body = showingRegister ? { username, password, provider_name: provider } : { username, password };
+
+    try {
+        const resp = await fetch(API_BASE + endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await resp.json();
+
+        if (data.success && data.access_token) {
+            localStorage.setItem(TOKEN_KEY, data.access_token);
+            localStorage.setItem(PROVIDER_KEY, data.user?.provider_name || data.user?.username || '');
+            hideAuthModal();
+
+            // 登录成功后迁移本地数据
+            if (showingRegister) {
+                await migrateLocalData();
+            }
+
+            // 重新初始化
+            initProviderUI();
+            showToast(showingRegister ? '注册成功' : '登录成功');
+        } else {
+            showAuthError(data.detail || '操作失败');
+        }
+    } catch (e) {
+        showAuthError('网络错误，请检查后端服务');
+    }
+}
+
+function showAuthError(msg) {
+    const el = document.getElementById('auth-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+}
+
+function logout() {
+    if (confirm('确定退出登录？')) {
+        localStorage.removeItem(TOKEN_KEY);
+        location.reload();
+    }
+}
+
+// 迁移本地数据到后端
+async function migrateLocalData() {
+    const clients = getClients();
+    if (clients.length === 0) return;
+
+    let migrated = 0;
+    for (const client of clients) {
+        try {
+            const resp = await fetch(API_BASE + '/api/clients', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ name: client.name, industry: client.industry || '' })
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.success && data.id) {
+                    // 更新本地数据（可选：记录新的ID）
+                    migrated++;
+                }
+            }
+        } catch (e) {
+            console.error('迁移客户失败:', client.name, e);
+        }
+    }
+    if (migrated > 0) {
+        showToast(`已迁移 ${migrated} 个客户到云端`);
+    }
+}
+
+// 检查是否需要登录
+function checkAuthRequired() {
+    if (!isLoggedIn()) {
+        showAuthModal(false);
+    }
+}
+
+// 服务商身份
+function getProviderName() {
+    return localStorage.getItem(PROVIDER_KEY) || '';
+}
+
+function initProviderUI() {
+    const name = getProviderName();
+    const username = localStorage.getItem('provider-username') || '';
+    const bar = document.getElementById('provider-bar');
+    const setup = document.getElementById('provider-setup');
+    if (name) {
+        bar.style.display = 'block';
+        setup.style.display = 'none';
+        document.getElementById('provider-display-name').textContent = name;
+        document.getElementById('provider-display-username').textContent = username ? '用户名: ' + username : '';
+        document.getElementById('provider-avatar').textContent = name[0];
+    } else {
+        bar.style.display = 'none';
+        setup.style.display = 'block';
+    }
+}
+
+function saveProviderSetup() {
+    const name = document.getElementById('setup-provider-name').value.trim();
+    if (!name) { alert('请输入您的名称'); return; }
+    localStorage.setItem(PROVIDER_KEY, name);
+    initProviderUI();
+    showToast('注册成功');
+}
+
+function editProviderName() {
+    const current = getProviderName();
+    const newName = prompt('修改服务商名称', current);
+    if (newName && newName.trim()) {
+        localStorage.setItem(PROVIDER_KEY, newName.trim());
+        initProviderUI();
+    }
+}
+
+// 搜索公司信息
+async function searchCompanyInfo(clientId, companyName, industry) {
+    try {
+        // 显示加载指示器
+        const c = getClient(clientId);
+        if (!c) return;
+
+        const profileCard = document.getElementById('profile-card');
+        if (profileCard) {
+            let loadingDiv = document.getElementById('company-search-loading');
+            if (!loadingDiv) {
+                loadingDiv = document.createElement('div');
+                loadingDiv.id = 'company-search-loading';
+                loadingDiv.style.cssText = 'margin-top:10px;font-size:11px;color:#999;display:flex;align-items:center;gap:6px';
+                loadingDiv.innerHTML = '<span>🔍</span><span>正在搜索公司信息...</span>';
+                profileCard.appendChild(loadingDiv);
+            }
+        }
+
+        const resp = await fetch(API_BASE + '/api/company_search', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ company_name: companyName, industry: industry || '' })
+        });
+
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data.company_intro) {
+                updateClient(clientId, { company_intro: data.company_intro });
+                // 如果当前打开的就是这个客户,刷新显示
+                if (currentClientId === clientId) {
+                    const introDiv = document.getElementById('pv-company-intro');
+                    const introText = document.getElementById('pv-company-intro-text');
+                    if (introDiv && introText) {
+                        introText.textContent = data.company_intro;
+                        introDiv.style.display = 'block';
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.error('搜索公司信息失败:', e);
+    } finally {
+        // 移除加载指示器
+        const loadingDiv = document.getElementById('company-search-loading');
+        if (loadingDiv) loadingDiv.remove();
+    }
+}
+
+// 上报到平台管理表(异步,不阻塞主流程)
+// targetClientId: 可选,指定要保存 record_id 的客户ID(用于自动同步场景)
+async function reportToAdmin(action, data, targetClientId) {
+    const providerName = localStorage.getItem(PROVIDER_KEY) || '未知';
+    try {
+        const payload = { action, provider_name: providerName, ...data };
+        console.log('[reportToAdmin] 发送:', action, JSON.stringify({step1_doc_url: data.step1_doc_url, report_doc_url: data.report_doc_url, demo_url: data.demo_url, record_id: data.record_id}));
+        const resp = await fetch(API_BASE + '/api/report', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(payload)
+        });
+        const result = await resp.json();
+        console.log('[reportToAdmin] 返回:', JSON.stringify(result));
+        // 保存record_id到客户数据(用于后续更新同一行)
+        const cid = targetClientId || currentClientId;
+        if (result.record_id && cid) {
+            updateClient(cid, { admin_record_id: result.record_id });
+        }
+        return result;
+    } catch(e) { console.error('[reportToAdmin] 错误:', e); return null; }
+}
+
+// === Storage ===
+function getClients() {
+    let data = localStorage.getItem(STORAGE_KEY);
+    // 如果localStorage为空,尝试从sessionStorage恢复
+    if (!data || data === '[]') {
+        const backup = sessionStorage.getItem(STORAGE_KEY + '_backup');
+        if (backup && backup !== '[]') {
+            localStorage.setItem(STORAGE_KEY, backup);
+            data = backup;
+            console.log('[provider-assist] 从sessionStorage恢复数据');
+        }
+    }
+    return JSON.parse(data || '[]');
+}
+function saveClients(clients) {
+    try {
+        const data = JSON.stringify(clients);
+        if (data.length > 4 * 1024 * 1024) {
+            showToast('存储空间即将用满,建议导出并删除已完成客户');
+        }
+        localStorage.setItem(STORAGE_KEY, data);
+        // 同时备份到sessionStorage
+        sessionStorage.setItem(STORAGE_KEY + '_backup', data);
+    } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+            showToast('存储空间已满,请删除部分已完成客户');
+        }
+    }
+}
+function getClient(id) { return getClients().find(c => c.id === id); }
+function updateClient(id, updates) {
+    const clients = getClients();
+    const idx = clients.findIndex(c => c.id === id);
+    if (idx >= 0) { Object.assign(clients[idx], updates, { updated_at: new Date().toISOString() }); saveClients(clients); }
+}
+
+// === Pages ===
+function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+}
+
+function renderClientList() {
+    const clients = getClients();
+    const empty = document.getElementById('empty-state');
+    if (!clients.length) { document.getElementById('list-inprogress').innerHTML = ''; document.getElementById('list-done').innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+
+    // 根据数据自动判断阶段
+    const groups = { pending: [], prepared: [], uploaded: [], done: [] };
+    clients.forEach(c => {
+        if (c.step2_report || c.status === 'done') { groups.done.push(c); }
+        else if (c.transcript) { groups.uploaded.push(c); }
+        else if (c.step1_result) { groups.prepared.push(c); }
+        else { groups.pending.push(c); }
+    });
+
+    const stageInfo = {
+        pending: { label: '待完善档案', pillCls: 'pill-draft', pillText: '待完善' },
+        prepared: { label: '已生成清单 · 待需求沟通会议', pillCls: 'pill-listed', pillText: '待沟通' },
+        uploaded: { label: '待生成报告', pillCls: 'pill-waiting', pillText: '待出报告' },
+        done: { label: '已完成', pillCls: 'pill-done', pillText: '已完成' }
+    };
+
+    function renderCard(c, stage) {
+        const info = stageInfo[stage];
+        // Progress dots
+        let level = 0;
+        if (c.industry) level = 1;
+        if (c.step1_result) level = 2;
+        if (c.transcript) level = 3;
+        if (c.step2_report) level = 4;
+        if (c.demo_url) level = 5;
+        let dots = '';
+        for (let i = 0; i < 5; i++) {
+            const color = i < level ? (stage === 'done' ? '#3B6D11' : '#185FA5') : (i === level ? '#B5D4F4' : '#e0e0e0');
+            dots += `<div class="dot" style="background:${color}"></div>`;
+        }
+        // Output pills
+        let outputs = '';
+        if (c.step1_doc_url) outputs += `<a href="${c.step1_doc_url}" target="_blank" onclick="event.stopPropagation()" class="output-pill" style="background:#E6F1FB;color:#185FA5">提问清单</a>`;
+        if (c.report_doc_url) outputs += `<a href="${c.report_doc_url}" target="_blank" onclick="event.stopPropagation()" class="output-pill" style="background:#E6F1FB;color:#185FA5">调研报告</a>`;
+        if (c.demo_url) outputs += `<a href="${c.demo_url}" target="_blank" onclick="event.stopPropagation()" class="output-pill" style="background:#EAF3DE;color:#3B6D11">Demo表格</a>`;
+        const outputsHtml = outputs ? `<div style="margin-top:8px">${outputs}</div>` : '';
+        return `<div class="client-card" onclick="openClient('${c.id}')">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div><div class="name">${c.name || '未命名'}</div><div class="meta">${c.industry || ''} · ${new Date(c.created_at).toLocaleDateString()}</div></div>
+                <div style="display:flex;align-items:center;gap:6px">
+                    <span class="status-pill ${info.pillCls}">${info.pillText}</span>
+                    <span onclick="event.stopPropagation();deleteClient('${c.id}')" style="cursor:pointer;font-size:16px;color:#ccc;line-height:1" title="删除">&times;</span>
+                </div>
+            </div>
+            ${outputsHtml}
+            <div class="progress-dots">${dots}<span style="font-size:10px;color:#999;margin-left:6px">${level}/5</span></div>
+        </div>`;
+    }
+
+    function renderGroup(key, items) {
+        if (!items.length) return '';
+        const info = stageInfo[key];
+        return `<div style="margin-bottom:18px">
+            <p class="section-label">${info.label} (${items.length})</p>
+            <div class="client-grid">${items.map(c => renderCard(c, key)).join('')}${key === 'pending' ? '<div class="add-card" onclick="createClient()">+ 新建客户</div>' : ''}</div>
+        </div>`;
+    }
+
+    let html1 = '';
+    html1 += renderGroup('pending', groups.pending);
+    html1 += renderGroup('prepared', groups.prepared);
+    html1 += renderGroup('uploaded', groups.uploaded);
+    if (!groups.pending.length && !groups.prepared.length && !groups.uploaded.length) {
+        html1 = '<div class="client-grid"><div class="add-card" onclick="createClient()">+ 新建客户</div></div>';
+    }
+    document.getElementById('list-inprogress').innerHTML = html1;
+
+    let html2 = renderGroup('done', groups.done);
+    document.getElementById('list-done').innerHTML = html2;
+}
+
+function deleteClient(id) {
+    if (!confirm('确定删除这个客户吗?')) return;
+    const clients = getClients().filter(c => c.id !== id);
+    saveClients(clients);
+    renderClientList();
+}
+
+function createClient() {
+    // 显示自定义弹窗
+    const modal = document.createElement('div');
+    modal.id = 'create-modal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center';
+    modal.innerHTML = `<div style="background:#fff;border-radius:12px;padding:28px;width:380px;box-shadow:0 8px 30px rgba(0,0,0,0.15)">
+        <h3 style="font-size:16px;margin-bottom:18px">新建客户</h3>
+        <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">客户名称</label>
+        <p style="font-size:11px;color:#999;margin-bottom:6px">填写公司全称,系统会自动搜索公司信息</p>
+        <input id="new-client-name" type="text" placeholder="如:深圳市XX科技有限公司" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:14px">
+        <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">客户行业</label>
+        <p style="font-size:11px;color:#999;margin-bottom:6px">大致行业方向即可,后续可修改</p>
+        <input id="new-client-industry" type="text" placeholder="如:金融、制造业、服装外贸" style="width:100%;padding:10px 12px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;margin-bottom:18px">
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button onclick="document.getElementById('create-modal').remove()" style="padding:8px 18px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px">取消</button>
+            <button onclick="confirmCreateClient()" style="padding:8px 18px;border:none;border-radius:8px;background:#0052d9;color:#fff;cursor:pointer;font-size:14px;font-weight:500">创建</button>
+        </div>
+    </div>`;
+    document.body.appendChild(modal);
+    document.getElementById('new-client-name').focus();
+}
+
+function confirmCreateClient() {
+    const name = document.getElementById('new-client-name').value.trim();
+    const industry = document.getElementById('new-client-industry').value.trim();
+    if (!name) { alert('请输入客户名称'); return; }
+    document.getElementById('create-modal').remove();
+    const clients = getClients();
+    const newClient = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), name, industry: industry || '', status: 'draft', created_at: new Date().toISOString(), step1_result: '', step2_report: '', step2_schema: null, company_intro: '', initial_demand: '' };
+    clients.unshift(newClient);
+    saveClients(clients);
+    renderClientList();
+    openClient(newClient.id);
+    // 创建时上报到后台(新增一行,拿到record_id保存)
+    (async () => { await reportToAdmin('report_client', { client_name: name, industry: industry, status: '新建', initial_demand: '' }, newClient.id); })();
+    // 创建后自动搜索公司信息
+    if (name) {
+        searchCompanyInfo(newClient.id, name, industry);
+    }
+}
+
+function openClient(id) {
+    currentClientId = id;
+    const c = getClient(id);
+    if (!c) return;
+    showPage('detail');
+    document.getElementById('detail-name').textContent = c.name;
+    // 兼容处理:如果没有 initial_demand 但有旧字段,合并显示
+    let displayDemand = c.initial_demand || '';
+    if (!displayDemand && (c.business_desc || c.pain_points)) {
+        displayDemand = [c.business_desc, c.pain_points].filter(Boolean).join(' ');
+    }
+    document.getElementById('detail-industry').textContent = c.industry ? c.industry + (displayDemand ? ' · ' + displayDemand.substring(0,15) : '') : '';
+    document.getElementById('detail-avatar').textContent = (c.name || '?')[0];
+    const statusMap = { draft: ['待填写','pill-draft'], listed: ['已生成清单','pill-listed'], waiting: ['待上传转写','pill-waiting'], done: ['已完成','pill-done'] };
+    const [label, cls] = statusMap[c.status] || ['',''];
+    const el = document.getElementById('detail-status');
+    el.textContent = label; el.className = 'status-pill ' + cls;
+
+    // Profile view - 显示新字段
+    const pvInd = document.getElementById('pv-industry');
+    const pvDemand = document.getElementById('pv-initial-demand');
+    const pvCompanyIntro = document.getElementById('pv-company-intro');
+    const pvCompanyIntroText = document.getElementById('pv-company-intro-text');
+
+    if (pvInd) pvInd.textContent = c.industry || '-';
+    if (pvDemand) pvDemand.textContent = displayDemand ? displayDemand.substring(0, 60) + (displayDemand.length > 60 ? '...' : '') : '-';
+
+    // 显示公司简介(如果有)
+    if (c.company_intro && pvCompanyIntro && pvCompanyIntroText) {
+        pvCompanyIntroText.textContent = c.company_intro;
+        pvCompanyIntro.style.display = 'block';
+    } else if (pvCompanyIntro) {
+        pvCompanyIntro.style.display = 'none';
+    }
+
+    document.getElementById('profile-edit').style.display = 'none';
+    document.getElementById('profile-view').style.display = 'block';
+
+    // Restore inputs
+    document.getElementById('s1-industry').value = c.industry || '';
+    document.getElementById('s1-initial-demand').value = displayDemand;
+
+    // Restore Step1 result - 不自动显示旧结果,进入面板时默认隐藏
+    // 旧结果保留在存储中,进入面板后点击按钮才显示/重新生成
+    document.getElementById('s1-result').style.display = 'none';
+
+    // Restore Step2
+    _uploadedFiles = c.uploaded_files || [];
+    renderUploadedFiles();
+    // 恢复已保存的粘贴文字到 textarea(如果没有 uploaded_files 但有 transcript)
+    if (c.transcript && (!c.uploaded_files || c.uploaded_files.length === 0)) {
+        document.getElementById('s2-transcript').value = c.transcript;
+    } else {
+        document.getElementById('s2-transcript').value = '';
+    }
+    if (c.step2_report) {
+        document.getElementById('s2-report').innerHTML = renderMarkdown(c.step2_report);
+        document.getElementById('s2-report-section').style.display = 'block';
+        if (c.step2_todo) {
+            document.getElementById('s2-todo').innerHTML = renderMarkdown(c.step2_todo);
+            document.getElementById('s2-todo-card').style.display = 'block';
+        }
+    } else {
+        document.getElementById('s2-report-section').style.display = 'none';
+    }
+    if (c.step2_schema) {
+        demoSchema = c.step2_schema;
+        renderSchema(demoSchema);
+        document.getElementById('s2-demo-section').style.display = 'block';
+        // 清除旧的创建结果
+        document.getElementById('s2-create-result').style.display = 'none';
+        document.getElementById('s2-create-result').innerHTML = '';
+    } else {
+        demoSchema = null;
+        document.getElementById('s2-demo-section').style.display = 'none';
+        document.getElementById('s2-schema-card').style.display = 'none';
+        document.getElementById('s2-create-result').style.display = 'none';
+        document.getElementById('s2-create-result').innerHTML = '';
+    }
+
+    // Show default view (action cards, hide panels)
+    hidePanel();
+    renderOutputs(c);
+    updateTimeline(c);
+}
+
+function goBack() { showPage('list'); renderClientList(); currentClientId = null; }
+
+function editClientName() {
+    const c = getClient(currentClientId);
+    if (!c) return;
+    const newName = prompt('修改客户名称', c.name);
+    if (newName && newName !== c.name) {
+        updateClient(currentClientId, { name: newName });
+        document.getElementById('detail-name').textContent = newName;
+    }
+}
+
+function deleteCurrentClient() {
+    if (!confirm('确定删除这个客户吗?')) return;
+    const clients = getClients().filter(c => c.id !== currentClientId);
+    saveClients(clients);
+    goBack();
+}
+
+function switchStep(step) {
+    // Legacy compat - now uses showPanel/hidePanel
+    showPanel(step);
+}
+
+function showPanel(panel) {
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById(panel).style.display = 'block';
+    document.getElementById('actions-grid').style.display = 'none';
+    document.getElementById('outputs-card').style.display = 'none';
+
+    // 进入 step1 时：如果已有历史结果，显示出来并把按钮改为“重新生成”
+    if (panel === 'step1') {
+        const c = getClient(currentClientId);
+        const btn = document.querySelector('#step1 .btn-primary');
+        if (c && c.step1_result) {
+            document.getElementById('s1-content').innerHTML = renderWithTags(c.step1_result);
+            document.getElementById('s1-result').style.display = 'block';
+            if (btn) btn.textContent = '重新生成调研准备材料';
+        } else {
+            document.getElementById('s1-result').style.display = 'none';
+            if (btn) btn.textContent = '生成调研准备材料';
+        }
+    }
+}
+
+function hidePanel() {
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('actions-grid').style.display = 'grid';
+    // Refresh outputs
+    const c = getClient(currentClientId);
+    if (c) renderOutputs(c);
+}
+
+function toggleProfile() {
+    const view = document.getElementById('profile-view');
+    const edit = document.getElementById('profile-edit');
+    if (edit.style.display === 'none') {
+        edit.style.display = 'block'; view.style.display = 'none';
+    } else {
+        edit.style.display = 'none'; view.style.display = 'block';
+    }
+}
+
+function saveProfile() {
+    const industry = document.getElementById('s1-industry').value.trim();
+    const initialDemand = document.getElementById('s1-initial-demand').value.trim();
+    updateClient(currentClientId, { industry, initial_demand: initialDemand });
+    // Update view
+    const pvDemand = document.getElementById('pv-initial-demand');
+    if (pvDemand) pvDemand.textContent = initialDemand ? initialDemand.substring(0, 60) + (initialDemand.length > 60 ? '...' : '') : '-';
+    document.getElementById('detail-industry').textContent = industry + (initialDemand ? ' · ' + initialDemand.substring(0,15) : '');
+    toggleProfile();
+    updateTimeline(getClient(currentClientId));
+    showToast('已保存');
+    // 更新后台同一行
+    const cc = getClient(currentClientId);
+    reportToAdmin('report_client', { record_id: cc.admin_record_id || '', client_name: cc.name, industry, initial_demand: initialDemand, status: '已完善档案' });
+}
+
+function renderOutputs(c) {
+    const card = document.getElementById('outputs-card');
+    const list = document.getElementById('outputs-list');
+
+    // 检查是否有任何产出物
+    const hasAny = c.industry || c.initial_demand || c.business_desc || c.pain_points || c.step1_result || c.step2_report || c.step2_todo || c.step2_schema || c.transcript || c.step1_doc_url || c.report_doc_url || c.demo_url || c.company_intro;
+    if (!hasAny) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+
+    let html = '';
+
+    // 客户背景信息
+    if (c.industry || c.initial_demand || c.business_desc || c.pain_points || c.company_intro) {
+        html += `<div style="border-bottom:0.5px solid #f0f0f0;padding:12px 0">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <span style="font-size:15px">📌</span>
+                <p style="font-size:13px;font-weight:500;margin:0">客户背景</p>
+            </div>
+            <div style="padding-left:25px;font-size:12px;line-height:1.8;color:#555">`;
+        if (c.industry) html += `<div><span style="color:#999">行业:</span>${c.industry}</div>`;
+        if (c.company_intro) html += `<div><span style="color:#999">公司简介:</span>${c.company_intro}</div>`;
+        // 兼容显示:优先显示 initial_demand
+        const displayDemand = c.initial_demand || [c.business_desc, c.pain_points].filter(Boolean).join(' · ');
+        if (displayDemand) html += `<div><span style="color:#999">初始需求:</span>${displayDemand}</div>`;
+    }
+
+    // 服务商上传材料
+    if (c.transcript) {
+        html += renderOutputItem('📎', '会议转写记录', c.transcript.length + '字', 'transcript', c.transcript);
+    }
+
+    // AI生成的交付物
+    if (c.step1_result) {
+        html += renderOutputItem('📋', '调研准备材料', '', 'step1', c.step1_result, c.step1_doc_url);
+    }
+    if (c.step2_report) {
+        html += renderOutputItem('📄', '需求分析报告', '', 'report', c.step2_report, c.report_doc_url);
+    }
+    if (c.step2_todo) {
+        html += renderOutputItem('❓', '待确认事项', '', 'todo', c.step2_todo);
+    }
+    if (c.step2_schema) {
+        const sheetCount = c.step2_schema.sheets ? c.step2_schema.sheets.length + '个子表' : '';
+        html += renderOutputItem('📊', '智能表格 Demo', sheetCount, 'schema', null, c.demo_url);
+    }
+
+    list.innerHTML = '<div class="output-list">' + html + '</div>';
+
+    // Update action card statuses
+    document.getElementById('action-step1-status').innerHTML = c.step1_result ?
+        '<span class="status-pill pill-done">已完成</span>' : '';
+    document.getElementById('action-step2-status').innerHTML = c.step2_report ?
+        '<span class="status-pill pill-done">已完成</span>' : '';
+}
+
+function renderOutputItem(icon, name, meta, key, content, docUrl) {
+    const id = 'output-' + key + '-' + Date.now();
+    let html = `<div style="border-bottom:0.5px solid #f5f5f5;padding:10px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleOutput('${id}')">
+            <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:15px">${icon}</span>
+                <div>
+                    <p style="font-size:13px;font-weight:500;margin:0">${name}</p>
+                    ${meta ? '<p style="font-size:10px;color:#999;margin:2px 0 0">' + meta + '</p>' : ''}
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">`;
+
+    if (docUrl) {
+        html += `<a href="${docUrl}" target="_blank" onclick="event.stopPropagation()" style="font-size:10px;color:#185FA5;background:#E6F1FB;padding:3px 8px;border-radius:4px;text-decoration:none">企微文档</a>`;
+    }
+    html += `<span style="font-size:11px;color:#999" id="${id}-arrow">展开</span>`;
+    html += `</div></div>`;
+
+    if (content) {
+        const renderedPreview = renderWithTags(content.substring(0, 500));
+        const hasMore = content.length > 500;
+        html += `<div id="${id}" style="display:none;margin-top:8px;padding:12px 14px;background:#fafbfc;border-radius:8px;font-size:12px;line-height:1.8;color:#444" data-full-content="${escapeAttr(content)}">
+            <div class="rendered-content" style="max-height:none;padding:0;border:none;background:transparent">${renderedPreview}</div>
+            ${hasMore ? '<div style="margin-top:8px;text-align:center"><span style="font-size:11px;color:#185FA5;cursor:pointer" onclick="expandFull(this)">展开全部内容</span></div>' : ''}
+        </div>`;
+    }
+
+    html += '</div>';
+    return html;
+}
+
+function toggleOutput(id) {
+    const el = document.getElementById(id);
+    const arrow = document.getElementById(id + '-arrow');
+    if (!el) return;
+    if (el.style.display === 'none') {
+        el.style.display = 'block';
+        if (arrow) arrow.textContent = '收起';
+    } else {
+        el.style.display = 'none';
+        if (arrow) arrow.textContent = '展开';
+    }
+}
+
+function escapeHtml(text) {
+    return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escapeAttr(text) {
+    return text.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function expandFull(el) {
+    const container = el.closest('[data-full-content]');
+    if (!container) return;
+    const full = container.getAttribute('data-full-content');
+    if (full) {
+        container.innerHTML = '<div class="rendered-content" style="max-height:none;padding:0;border:none;background:transparent">' + renderWithTags(full) + '</div>';
+    }
+}
+
+function updateTimeline(c) {
+    if (!c) return;
+    // 确定当前进度级别:0=录入 1=已生成清单 2=待沟通 3=已生成报告 4=已交付Demo
+    let level = 0;
+    if (c.industry) level = 1;
+    if (c.step1_result) level = 2;
+    if (c.transcript) level = 3;
+    if (c.step2_report) level = 4;
+    if (c.demo_url) level = 5;
+
+    // 更新节点颜色
+    for (let i = 0; i < 5; i++) {
+        const node = document.getElementById('node-' + i);
+        if (i < level) { node.style.background = '#185FA5'; }
+        else if (i === level) { node.style.background = '#B5D4F4'; node.style.color = '#185FA5'; }
+        else { node.style.background = '#e8e8e8'; node.style.color = '#999'; }
+    }
+
+    // 更新进度线宽度
+    const lineWidths = ['0%', '12%', '37%', '62%', '87%', '100%'];
+    document.getElementById('progress-line').style.width = lineWidths[Math.min(level, 5)];
+
+    // 产出物链接
+    const outputStyle = 'display:inline-block;font-size:10px;padding:2px 6px;border-radius:3px;text-decoration:none;margin:1px;';
+
+    // 节点0: 录入信息
+    document.getElementById('node-0-outputs').innerHTML = c.industry ? `<span style="${outputStyle}background:#e8f5e9;color:#2e7d32">已录入</span>` : '';
+
+    // 节点1: 调研准备产出
+    let n1 = '';
+    if (c.step1_result) n1 += `<span style="${outputStyle}background:#e3f2fd;color:#1565c0;cursor:pointer" onclick="switchStep('step1')">清单</span>`;
+    if (c.step1_doc_url) n1 += `<a href="${c.step1_doc_url}" target="_blank" style="${outputStyle}background:#eef4ff;color:#0052d9">企微文档</a>`;
+    document.getElementById('node-1-outputs').innerHTML = n1;
+
+    // 节点2: 客户沟通
+    document.getElementById('node-2-outputs').innerHTML = c.transcript ? `<span style="${outputStyle}background:#e8f5e9;color:#2e7d32">已上传</span>` : `<span style="${outputStyle}background:#fff3e0;color:#e65100">待沟通</span>`;
+
+    // 节点3: 需求报告
+    let n3 = '';
+    if (c.step2_report) n3 += `<span style="${outputStyle}background:#e3f2fd;color:#1565c0;cursor:pointer" onclick="switchStep('step2')">报告</span>`;
+    if (c.report_doc_url) n3 += `<a href="${c.report_doc_url}" target="_blank" style="${outputStyle}background:#eef4ff;color:#0052d9">企微文档</a>`;
+    if (c.step2_todo) n3 += `<span style="${outputStyle}background:#fff3e0;color:#e65100;cursor:pointer" onclick="switchStep('step2')">待确认</span>`;
+    document.getElementById('node-3-outputs').innerHTML = n3;
+
+    // 节点4: Demo交付
+    let n4 = '';
+    if (c.demo_url) n4 += `<a href="${c.demo_url}" target="_blank" style="${outputStyle}background:#e8f5e9;color:#2e7d32">Demo表格</a>`;
+    else if (c.step2_schema) n4 += `<span style="${outputStyle}background:#e3f2fd;color:#1565c0;cursor:pointer" onclick="switchStep('step2')">待创建</span>`;
+    document.getElementById('node-4-outputs').innerHTML = n4;
+}
+
+// === DeepSeek API (前端直调,无超时限制) ===
+async function callDeepSeek(systemPrompt, userPrompt) {
+    const resp = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sk-63d4e005ecb646b08538368c5172ed82' },
+        body: JSON.stringify({ model: 'deepseek-chat', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }], max_tokens: 4500, temperature: 0.7 })
+    });
+    if (!resp.ok) {
+        const errText = await resp.text().catch(() => '');
+        if (resp.status === 402 || errText.includes('Insufficient Balance')) {
+            throw new Error('AI 服务余额不足,请联系管理员充值 DeepSeek API。');
+        }
+        throw new Error('AI 服务错误(' + resp.status + '): ' + errText.substring(0, 100));
+    }
+    const d = await resp.json();
+    if (!d.choices || !d.choices[0]) throw new Error('AI 返回异常');
+    return d.choices[0].message.content;
+}
+
+// === Step 1 ===
+async function generateStep1() {
+    const industry = document.getElementById('s1-industry').value.trim();
+    const initialDemand = document.getElementById('s1-initial-demand').value.trim();
+    if (!industry) { alert('请填写客户行业'); return; }
+
+    // Save inputs
+    const c = getClient(currentClientId);
+    updateClient(currentClientId, { industry, initial_demand: initialDemand });
+    const companyIntro = (c && c.company_intro) || '';
+
+    document.getElementById('s1-loading').classList.add('visible');
+    document.querySelector('#s1-loading p').textContent = '正在匹配知识库...';
+    document.getElementById('s1-result').style.display = 'none';
+
+    try {
+        // Step1: 后端匹配知识库,返回prompt
+        let matchData = null;
+        let knowledgeMatched = false;
+        try {
+            const matchResp = await fetch(API_BASE + '/api/question_list', { method: 'POST', headers: getAuthHeaders(),
+                body: JSON.stringify({ industry, initial_demand: initialDemand, company_name: c ? c.name : '', company_intro: companyIntro }) });
+            if (matchResp.ok) {
+                matchData = await matchResp.json();
+                if (!matchData.error) {
+                    knowledgeMatched = true;
+                }
+            }
+        } catch(e) {
+            console.warn('知识库匹配失败，继续使用通用prompt:', e);
+        }
+
+        // 前端直接调DeepSeek(无超时限制)
+        document.querySelector('#s1-loading p').textContent = '正在生成调研准备材料...';
+
+        let result;
+        if (matchData && knowledgeMatched) {
+            result = await callDeepSeek(matchData.system_prompt, matchData.user_prompt);
+        } else {
+            // 知识库匹配失败，使用内置简化prompt
+            const systemPrompt = `你是一个资深的企业微信智能表格定制开发售前顾问。根据客户行业和需求，生成调研准备材料。输出3部分：1)客户画像（公司背景+行业痛点）2)信息缺口 3)提问清单（11个必问+3个深挖）`;
+            const userPrompt = `客户行业:${industry}\n客户需求:${initialDemand || '未说明'}\n请按要求生成调研准备材料。`;
+            result = await callDeepSeek(systemPrompt, userPrompt);
+        }
+
+        document.getElementById('s1-content').innerHTML = renderWithTags(result);
+        document.getElementById('s1-result').style.display = 'block';
+
+        // Persist
+        updateClient(currentClientId, { step1_result: result, status: 'waiting' });
+        updateTimeline(getClient(currentClientId));
+        document.getElementById('detail-industry').textContent = industry;
+        // 自动创建企微文档(后台备份,不在界面展示)
+        let step1DocUrl = '';
+        try {
+            const cc0 = getClient(currentClientId);
+            const docTitle = (cc0.name || '') + ' - 调研准备材料';
+            const docResp = await fetch(API_BASE + '/api/export_doc', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ title: docTitle, content: result }) });
+            const docData = await docResp.json();
+            if (docData.success && docData.url) {
+                step1DocUrl = docData.url;
+                updateClient(currentClientId, { step1_doc_url: step1DocUrl });
+            }
+        } catch(e) { console.warn('自动创建企微文档失败:', e); }
+        // 上报到平台(更新同一行,带上链接)
+        const cc = getClient(currentClientId);
+        reportToAdmin('report_client', { record_id: cc.admin_record_id || '', client_name: cc.name, industry: cc.industry, initial_demand: cc.initial_demand || cc.business_desc || '', status: step1DocUrl ? '已生成清单链接' : '已生成清单', step1_doc_url: step1DocUrl });
+    } catch (e) { alert('请求失败: ' + e.message); }
+    finally { document.getElementById('s1-loading').classList.remove('visible'); }
+}
+
+// === Step 2 ===
+// 多文件上传暂存
+let _uploadedFiles = []; // [{name, text, base64?}]
+
+function renderUploadedFiles() {
+    const c = getClient(currentClientId);
+    const files = (c && c.uploaded_files) || _uploadedFiles;
+    const container = document.getElementById('uploaded-files-list');
+    if (!files || files.length === 0) { container.innerHTML = ''; return; }
+    let html = '<div style="font-size:12px;color:#555;margin-bottom:6px">已上传 ' + files.length + ' 份沟通记录:</div>';
+    files.forEach((f, i) => {
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f8faf8;border:0.5px solid #e0e0e0;border-radius:6px;margin-bottom:4px;font-size:12px">';
+        html += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + f.name + (f.text ? ' (' + f.text.length + '字)' : '') + '</span>';
+        html += '<span style="color:#185FA5;cursor:pointer;font-size:11px;margin-right:4px" onclick="editUploadedFile(' + i + ')">编辑</span>';
+        html += '<span style="color:#e53935;cursor:pointer;font-size:11px" onclick="removeUploadedFile(' + i + ')">删除</span>';
+        html += '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function editUploadedFile(index) {
+    const c = getClient(currentClientId);
+    const files = (c && c.uploaded_files) || [];
+    if (!files[index]) return;
+    const f = files[index];
+    // 弹出编辑框
+    const modal = document.createElement('div');
+    modal.id = 'edit-file-modal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:9999;display:flex;align-items:center;justify-content:center';
+    modal.innerHTML = `<div style="background:#fff;border-radius:12px;padding:24px;width:90%;max-width:600px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(0,0,0,0.15)">
+        <h3 style="font-size:15px;margin-bottom:4px">编辑沟通记录</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px">${f.name}</p>
+        <textarea id="edit-file-content" style="flex:1;min-height:300px;width:100%;padding:12px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;line-height:1.7;resize:vertical">${(f.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+            <button onclick="document.getElementById('edit-file-modal').remove()" style="padding:8px 18px;border:1px solid #e0e0e0;border-radius:8px;background:#fff;cursor:pointer;font-size:13px">取消</button>
+            <button onclick="confirmEditFile(${index})" style="padding:8px 18px;border:none;border-radius:8px;background:#185FA5;color:#fff;cursor:pointer;font-size:13px;font-weight:500">保存</button>
+        </div>
+    </div>`;
+    document.body.appendChild(modal);
+}
+
+function confirmEditFile(index) {
+    const newText = document.getElementById('edit-file-content').value;
+    const c = getClient(currentClientId);
+    const files = (c && c.uploaded_files) || [];
+    if (files[index]) {
+        files[index].text = newText;
+        updateClient(currentClientId, { uploaded_files: files });
+        _uploadedFiles = files;
+        renderUploadedFiles();
+        showToast('已保存修改');
+    }
+    document.getElementById('edit-file-modal').remove();
+}
+
+function removeUploadedFile(index) {
+    const c = getClient(currentClientId);
+    const files = (c && c.uploaded_files) || [];
+    files.splice(index, 1);
+    updateClient(currentClientId, { uploaded_files: files });
+    _uploadedFiles = files;
+    renderUploadedFiles();
+}
+
+async function handleFileUpload(event) {
+    const fileList = event.target.files;
+    if (!fileList || fileList.length === 0) return;
+    const c = getClient(currentClientId);
+    const existing = (c && c.uploaded_files) || [];
+
+    for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        if (file.name.endsWith('.txt')) {
+            const text = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsText(file);
+            });
+            existing.push({ name: file.name, text: text });
+        } else {
+            const arrayBuf = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsArrayBuffer(file);
+            });
+            const b64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuf)));
+            try {
+                const resp = await fetch(API_BASE + '/api/upload', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ filename: file.name, file_data: b64 }) });
+                const data = await resp.json();
+                existing.push({ name: file.name, text: data.text || '', base64: b64 });
+            } catch(e) {
+                existing.push({ name: file.name + ' (解析失败)', text: '', base64: b64 });
+            }
+        }
+    }
+    updateClient(currentClientId, { uploaded_files: existing });
+    _uploadedFiles = existing;
+    renderUploadedFiles();
+    document.getElementById('file-input').value = '';
+    showToast('已添加 ' + fileList.length + ' 个文件');
+}
+
+function saveTranscripts() {
+    const c = getClient(currentClientId);
+    const pastedText = document.getElementById('s2-transcript').value.trim();
+    // 如果有粘贴文字,也存进 uploaded_files
+    if (pastedText) {
+        const files = (c && c.uploaded_files) || [];
+        files.push({ name: '粘贴文字 (' + new Date().toLocaleTimeString() + ')', text: pastedText });
+        updateClient(currentClientId, { uploaded_files: files, transcript: pastedText });
+        document.getElementById('s2-transcript').value = '';
+        _uploadedFiles = files;
+        renderUploadedFiles();
+    }
+    // 上报状态
+    const cc = getClient(currentClientId);
+    if (cc && cc.admin_record_id) {
+        reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, initial_demand: cc.initial_demand || '', business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已上传沟通记录', step1_doc_url: cc.step1_doc_url || '' });
+    }
+    showToast('沟通记录已保存');
+}
+
+async function generateReport() {
+    // 阶段1:只生成需求分析报告 + 待确认事项
+    const c = getClient(currentClientId);
+    const uploadedFiles = (c && c.uploaded_files) || [];
+    const pastedText = document.getElementById('s2-transcript').value.trim();
+
+    let allTexts = uploadedFiles.map(f => f.text || '').filter(t => t.length > 0);
+    if (pastedText) allTexts.push(pastedText);
+    if (allTexts.length === 0 && c && c.transcript) {
+        allTexts.push(c.transcript);
+    }
+    const transcript = allTexts.join('\n\n---\n\n');
+
+    if (!transcript) { alert('请先上传沟通记录文件或粘贴文字'); return; }
+    const industry = c ? c.industry : '';
+
+    updateClient(currentClientId, { transcript });
+    document.getElementById('s2-loading').classList.add('visible');
+    document.querySelector('#s2-loading p').textContent = '正在匹配知识库...';
+    document.getElementById('s2-report-section').style.display = 'none';
+
+    try {
+        // 1. 后端匹配知识库获取上下文
+        const matchResp = await fetch(API_BASE + '/api/match', { method: 'POST', headers: getAuthHeaders(),
+            body: JSON.stringify({ industry, direction: transcript.substring(0, 300) }) });
+        let kbContext = '';
+        if (matchResp.ok) {
+            const matchData = await matchResp.json();
+            if (matchData.industry_knowledge) kbContext += '## 行业知识\n' + matchData.industry_knowledge + '\n\n';
+            if (matchData.matched_cases && matchData.matched_cases.length) {
+                kbContext += '## 同行业真实交付案例(参考方案设计和字段)\n';
+                matchData.matched_cases.forEach(cs => {
+                    const meta = cs.meta || {};
+                    const sol = cs.solution || {};
+                    kbContext += `### ${meta.industry||''}-${meta.scene||''}\n`;
+                    if (cs.pain_points) kbContext += '痛点:' + cs.pain_points.join('; ') + '\n';
+                    if (sol.architecture) kbContext += '方案:' + sol.architecture + '\n';
+                    if (sol.tables) { sol.tables.forEach(t => {
+                        const fields = (t.fields||[]).map(f => typeof f==='string'?f:(f.field_title||f.title||'')).slice(0,12);
+                        kbContext += `  表「${t.table_name||''}」: ${fields.join(', ')}\n`;
+                    }); }
+                    if (sol.automation_rules) kbContext += '自动化:' + sol.automation_rules.slice(0,3).join('; ') + '\n';
+                    kbContext += '\n';
+                });
+            }
+            if (matchData.matched_templates && matchData.matched_templates.length) {
+                kbContext += '## 字段经验池(该行业真实交付的完整表结构,必须参考)\n';
+                matchData.matched_templates.forEach(tpl => {
+                    const meta = tpl.meta || {};
+                    kbContext += `### ${meta.industry||''}-${meta.scene||''} (${meta.total_tables||'?'}表${meta.total_fields||'?'}字段)\n`;
+                    if (meta.design_principle) kbContext += `设计原则:${meta.design_principle}\n`;
+                    if (tpl.tables) { tpl.tables.forEach(t => {
+                        kbContext += `  表「${t.table_name||''}」`;
+                        if (t.description) kbContext += `(${t.description})`;
+                        kbContext += ':\n';
+                        // 处理 field_groups 格式(带分组+类型)
+                        if (t.field_groups && t.field_groups.length) {
+                            t.field_groups.forEach(g => {
+                                const fieldDescs = (g.fields||[]).map(f => {
+                                    let desc = f.title || '';
+                                    if (f.type) desc += `(${f.type})`;
+                                    return desc;
+                                });
+                                kbContext += `    [${g.group_name||''}] ${fieldDescs.join(', ')}\n`;
+                            });
+                        }
+                        // 处理 fields 纯字符串数组格式
+                        else if (t.fields && t.fields.length) {
+                            const fieldList = t.fields.map(f => typeof f === 'string' ? f : (f.field_title || f.title || ''));
+                            kbContext += `    字段:${fieldList.join(', ')}\n`;
+                        }
+                    }); }
+                });
+                kbContext += '\n';
+            }
+        }
+
+        // 2. 客户一致性检测上下文
+        const step1Info = c ? `\n## Step1录入的客户信息(用于一致性检查)\n行业:${c.industry||'未填'}\n初始需求表达:${c.initial_demand || c.business_desc || '未填'}\n如果沟通记录中的客户行业/业务与上述信息明显不一致,请在报告开头用⚠️提醒。\n` : '';
+
+        // 3. 并行调用生成报告 + 待确认事项
+        document.querySelector('#s2-loading p').textContent = '正在生成需求分析报告...';
+
+        const reportPrompt = `你是专业的企业微信智能表格售前方案顾问。根据沟通记录+知识库,生成详细需求洞察报告。
+
+## 输出结构(直接输出,不要开场白/总结语)
+
+## 客户信息
+## 核心痛点
+逐条列出,每条引用客户原话并标优先级P0/P1/P2
+## 业务场景
+核心流程(用→表示)、角色清单、数据流向
+## 智能表格搭建方案
+### 子表结构(参考知识库字段经验池设计)
+| 子表名 | 用途 | 核心字段(8-12个) | 使用角色 |
+### 自动化规则(触发→动作)
+### 视图设计
+### 权限设计(按角色)
+## 预估交付周期
+
+原则:1.字段设计必须参考知识库中同行业的真实案例 2.痛点引用原话 3.方案要细致到字段名级别`;
+
+        const todoPrompt = `分析沟通记录,找出客户没讲清楚的地方,输出待确认事项清单。直接输出,不要开场白。
+每条格式:
+❓ **事项名称**:具体问题
+- 为什么重要:xxx
+- 建议怎么问:xxx
+
+重点检测:流程是否完整、数据接入方式、权限设计、自动化需求、外部系统对接、历史数据迁移、预算时间。`;
+
+        const reportUserPrompt = step1Info + kbContext + '## 客户沟通记录\n\n' + transcript + '\n\n请生成报告(不含待确认事项)。';
+        const todoUserPrompt = '## 沟通记录\n\n' + transcript.substring(0, 3000) + '\n\n请列出待确认事项。';
+
+        const results = await Promise.allSettled([
+            callDeepSeek(reportPrompt, reportUserPrompt),
+            callDeepSeek(todoPrompt, todoUserPrompt)
+        ]);
+        const report = results[0].status === 'fulfilled' ? results[0].value : '';
+        const todoResult = results[1].status === 'fulfilled' ? results[1].value : '';
+
+        // 渲染报告
+        if (report) {
+            document.getElementById('s2-report').innerHTML = renderMarkdown(report);
+        } else {
+            document.getElementById('s2-report').innerHTML = '<p style="color:#e53935">报告生成失败,请重试</p>';
+        }
+
+        // 渲染待确认事项
+        if (todoResult) {
+            document.getElementById('s2-todo').innerHTML = renderMarkdown(todoResult);
+            document.getElementById('s2-todo-card').style.display = 'block';
+        }
+
+        document.getElementById('s2-report-section').style.display = 'block';
+        // 保存报告和知识库上下文(供后续生成Demo用)
+        // 保存报告,同时清除旧的Demo数据(报告变了,旧Demo无效)
+        updateClient(currentClientId, { step2_report: report || '', step2_todo: todoResult || '', _kb_context: kbContext, step2_schema: null, demo_url: '' });
+        updateTimeline(getClient(currentClientId));
+
+        // 自动创建需求报告企微文档
+        let reportDocUrl = '';
+        let transcriptDocUrl = '';
+        try {
+            const cc2a = getClient(currentClientId);
+            const rptTitle = (cc2a.name || '') + ' - 需求分析报告';
+            const rptResp = await fetch(API_BASE + '/api/export_doc', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ title: rptTitle, content: report }) });
+            const rptData = await rptResp.json();
+            if (rptData.success && rptData.url) {
+                reportDocUrl = rptData.url;
+                updateClient(currentClientId, { report_doc_url: reportDocUrl });
+            }
+        } catch(e) { console.warn('自动创建报告文档失败:', e); }
+        // 上传沟通记录并获取链接
+        if (transcript) {
+            const cc2b = getClient(currentClientId);
+            const uploadData = { client_name: cc2b.name, industry: cc2b.industry, transcript: transcript };
+            if (window._lastUploadedFile) { uploadData.file_base64 = window._lastUploadedFile.base64; uploadData.file_name = window._lastUploadedFile.name; }
+            try {
+                const transResult = await reportToAdmin('report_transcript', uploadData);
+                if (transResult && transResult.doc_url) {
+                    transcriptDocUrl = transResult.doc_url;
+                    updateClient(currentClientId, { transcript_doc_url: transcriptDocUrl });
+                }
+            } catch(e) { console.warn('上传沟通记录失败:', e); }
+        }
+        // 上报到平台
+        const cc2 = getClient(currentClientId);
+        reportToAdmin('report_client', { record_id: cc2.admin_record_id || '', client_name: cc2.name, industry: cc2.industry, initial_demand: cc2.initial_demand || '', business_desc: cc2.business_desc, pain_points: cc2.pain_points, status: '已生成需求报告', step1_doc_url: cc2.step1_doc_url || '', report_doc_url: reportDocUrl, demo_url: '', transcript_doc_url: transcriptDocUrl });
+    } catch (e) { alert('请求失败: ' + e.message); }
+    finally { document.getElementById('s2-loading').classList.remove('visible'); }
+}
+
+async function generateDemo() {
+    // 阶段2:客户确认后,生成智能表格 Demo
+    const c = getClient(currentClientId);
+    if (!c || !c.step2_report) { alert('请先生成需求分析报告'); return; }
+
+    const transcript = c.transcript || '';
+    const kbContext = c._kb_context || '';
+
+    document.getElementById('s2-demo-section').style.display = 'block';
+    document.getElementById('s2-demo-loading').classList.add('visible');
+    document.getElementById('s2-schema-card').style.display = 'none';
+    document.getElementById('s2-create-result').style.display = 'none';
+    document.getElementById('s2-create-result').innerHTML = '';
+
+    try {
+        const schemaPrompt = `你是企业微信智能表格架构师。根据客户需求+知识库字段经验池设计Demo。
+
+## 设计原则
+1. 知识库字段经验池是参考而非约束--它代表同行业服务商的真实交付经验,能大幅提高设计准确性
+2. 当知识库有相关行业/场景的模板时,以它为基础进行设计,根据客户实际需求增减字段
+3. 当客户有知识库未覆盖的需求时,发挥你的专业判断力自行设计
+4. 最终产出应该是知识库经验 + 客户个性化需求的结合体
+5. 每表控制在8-15个字段,2-3条示例数据
+
+## 输出格式
+直接输出JSON,不要markdown代码块。
+{"doc_name":"名称","sheets":[{"sheet_name":"子表名","fields":[{"field_title":"字段名","field_type":"类型"}],"sample_records":[{"字段名":"值"}]}]}
+类型:FIELD_TYPE_TEXT/NUMBER/SINGLE_SELECT/DATE_TIME/CURRENCY/PERCENTAGE/PROGRESS/PHONE_NUMBER/EMAIL/CHECKBOX/URL/SELECT`;
+
+        const schemaUserPrompt = kbContext + '\n## 需求分析报告\n\n' + c.step2_report.substring(0, 2500) + '\n\n## 沟通记录\n\n' + transcript.substring(0, 1500) + '\n\n请结合上面「字段经验池」和客户的实际需求,设计智能表格Demo。知识库是参考基础,客户特有的需求用你的专业判断来补充。';
+
+        const schemaText = await callDeepSeek(schemaPrompt, schemaUserPrompt);
+
+        // 解析 schema JSON
+        let schema = null;
+        if (schemaText) {
+            try { schema = JSON.parse(schemaText); } catch {
+                const m = schemaText.match(/```(?:json)?\s*([\s\S]*?)```/);
+                if (m) try { schema = JSON.parse(m[1]); } catch {}
+                if (!schema) { const j = schemaText.match(/\{[\s\S]*\}/); if (j) try { schema = JSON.parse(j[0]); } catch {} }
+            }
+        }
+        if (schema && schema.sheets) {
+            demoSchema = schema;
+            renderSchema(schema);
+            updateClient(currentClientId, { step2_schema: demoSchema, status: 'done' });
+            updateTimeline(getClient(currentClientId));
+        } else {
+            document.getElementById('s2-schema-card').style.display = 'block';
+            document.getElementById('s2-schema').innerHTML = '<p style="color:#e53935">Demo生成失败,请重试</p>';
+        }
+    } catch (e) { alert('请求失败: ' + e.message); }
+    finally { document.getElementById('s2-demo-loading').classList.remove('visible'); }
+}
+
+function renderSchema(schema) {
+    let html = '<h4 style="color:#0052d9;margin-bottom:12px">' + (schema.doc_name||'Demo') + '</h4>';
+    schema.sheets.forEach((s, i) => {
+        html += '<div style="margin-bottom:14px;border:1px solid #eee;border-radius:8px;overflow:hidden">';
+        html += '<div style="background:#f8faf8;padding:8px 12px;font-size:13px;font-weight:600;color:#155724;border-bottom:1px solid #eee">子表'+(i+1)+':'+s.sheet_name+'</div>';
+        html += '<table style="width:100%;border-collapse:collapse;font-size:12px"><tr>';
+        s.fields.forEach(f => { html += '<th style="background:#fafafa;padding:5px 8px;border-bottom:1px solid #eee;font-weight:500;text-align:left">'+f.field_title+'</th>'; });
+        html += '</tr>';
+        if (s.sample_records) { s.sample_records.forEach(rec => { html += '<tr>'; s.fields.forEach(f => { html += '<td style="padding:5px 8px;border-bottom:1px solid #f5f5f5">'+(rec[f.field_title]||'')+'</td>'; }); html += '</tr>'; }); }
+        html += '</table></div>';
+    });
+    document.getElementById('s2-schema').innerHTML = html;
+    document.getElementById('s2-schema-card').style.display = 'block';
+    document.getElementById('btn-create').style.display = 'inline-flex';
+}
+
+async function createSmartsheet() {
+    if (!demoSchema) return;
+    const schemaObj = typeof demoSchema === 'string' ? JSON.parse(demoSchema) : demoSchema;
+    const btn = document.getElementById('btn-create');
+    const div = document.getElementById('s2-create-result');
+    const total = schemaObj.sheets ? schemaObj.sheets.length : 0;
+    btn.disabled = true; btn.textContent = '创建中(1/' + total + ')...';
+    try {
+        // 第一步：创建文档+第一个子表
+        const resp = await fetch(API_BASE + '/api/create', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(schemaObj) });
+        const respText = await resp.text();
+        let data;
+        try { data = JSON.parse(respText); } catch(pe) { throw new Error('服务器返回异常: ' + respText.substring(0, 100)); }
+        if (!data.success) throw new Error(data.error || '创建文档失败');
+        const docid = data.docid;
+        const allSteps = data.steps || [];
+        // 后续子表逐个追加
+        for (let i = 1; i < total; i++) {
+            btn.textContent = '创建中(' + (i+1) + '/' + total + ')...';
+            try {
+                const addResp = await fetch(API_BASE + '/api/create', { method: 'POST', headers: getAuthHeaders(),
+                    body: JSON.stringify({ docid: docid, sheet: schemaObj.sheets[i] }) });
+                const addText = await addResp.text();
+                const addData = JSON.parse(addText);
+                if (addData.steps) allSteps.push(...addData.steps);
+            } catch(ex) { allSteps.push('子表' + (i+1) + '创建异常: ' + ex.message); }
+        }
+        // 显示结果
+        let stepsHtml = '<div style="font-size:11px;color:#666;margin-top:6px">' + allSteps.join('<br>') + '</div>';
+        div.innerHTML = '<div style="background:#e8f5e9;border-radius:8px;padding:12px;font-size:14px"><strong>✅ 智能表格创建成功(' + total + '个子表)</strong><br><a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;margin-top:8px;display:inline-block;font-size:15px;">打开企微智能表格 →</a>'+stepsHtml+'</div>';
+        div.style.display = 'block';
+        window.open(data.url, '_blank');
+        updateClient(currentClientId, { demo_url: data.url });
+        const cc = getClient(currentClientId);
+        if (cc && cc.admin_record_id) { reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, initial_demand: cc.initial_demand || '', business_desc: cc.business_desc, pain_points: cc.pain_points, status: '已生成表格Demo', step1_doc_url: cc.step1_doc_url||'', report_doc_url: cc.report_doc_url||'', demo_url: data.url, transcript_doc_url: cc.transcript_doc_url||'' }); }
+    } catch (e) { alert('创建失败: ' + e.message); }
+    finally { btn.disabled = false; btn.textContent = '创建企微智能表格'; }
+}
+
+// === Helpers ===
+function renderMarkdown(text) { text = text.replace(/^(好的|作为|我已经|根据您|以下是).*?(\n---|\n##|\n###)/s, '$2'); return marked.parse(text); }
+function renderWithTags(text) {
+    // 修正问题编号:对带[维度]标签的行重新编号,用"数字. "格式但阻止marked解析为<ol>
+    let qNum = 0;
+    text = text.replace(/^\d+[\.\))]\s*[\[【]/gm, (match) => { qNum++; return qNum + '. ['; });
+    // 在每个编号行前加一个零宽空格,阻止marked把它当作有序列表
+    text = text.replace(/^(\d+)\. \[/gm, '\u200B$1. [');
+    let html = renderMarkdown(text);
+    // 移除零宽空格
+    html = html.replace(/\u200B/g, '');
+    html = html.replace(/[\[【]([^\]】]+)[\]】]/g, '<span style="display:inline-block;background:#eef4ff;color:#185FA5;font-size:11px;padding:2px 8px;border-radius:4px;margin-right:6px;font-weight:500">$1</span>');
+    return html;
+}
+function renderBadges(ctx, tplKey) { return `<span class="status-badge ${ctx.industry_matched?'matched':'unmatched'}">${ctx.industry_matched?'行业':'无行业'}</span><span class="status-badge ${ctx.cases_matched?'matched':'unmatched'}">${ctx.cases_matched?'案例':'无案例'}</span><span class="status-badge ${ctx[tplKey]?'matched':'unmatched'}">${ctx[tplKey]?'模板':'无模板'}</span>`; }
+
+function copyRendered(id) { navigator.clipboard.writeText(document.getElementById(id).innerText).then(() => showToast('已复制')); }
+function toggleExport(id) {
+    closeAllExports();
+    const dd = document.getElementById(id);
+    dd.classList.toggle('visible');
+    // 移动端显示遮罩
+    if (dd.classList.contains('visible') && window.innerWidth <= 768) {
+        let overlay = document.getElementById('export-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'export-overlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);z-index:99';
+            overlay.onclick = closeAllExports;
+            document.body.appendChild(overlay);
+        } else { overlay.style.display = 'block'; }
+    }
+}
+function closeAllExports() {
+    document.querySelectorAll('.export-dropdown').forEach(d => d.classList.remove('visible'));
+    const overlay = document.getElementById('export-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+document.addEventListener('click', e => { if (!e.target.closest('.export-group') && !e.target.closest('#export-overlay')) closeAllExports(); });
+
+function exportWord(elId, title) { const html = `<html><head><meta charset="utf-8"><style>body{font-family:"Microsoft YaHei";font-size:12pt;line-height:1.8}h1,h2,h3{color:#0052d9}strong{color:#0052d9}</style></head><body>${document.getElementById(elId).innerHTML}</body></html>`; const blob = new Blob([html],{type:'application/msword'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=title+'.doc'; a.click(); closeAllExports(); }
+function exportPDF(elId, title) {
+    const el = document.getElementById(elId);
+    // 临时移除高度限制，确保完整截取内容
+    const origMaxH = el.style.maxHeight;
+    const origOverflow = el.style.overflowY;
+    el.style.maxHeight = 'none';
+    el.style.overflowY = 'visible';
+    html2pdf().set({
+        margin: [15, 15, 15, 15],
+        filename: title + '.pdf',
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    }).from(el).save().then(() => {
+        // 恢复原始样式
+        el.style.maxHeight = origMaxH;
+        el.style.overflowY = origOverflow;
+    }).catch(() => {
+        el.style.maxHeight = origMaxH;
+        el.style.overflowY = origOverflow;
+    });
+    closeAllExports();
+}
+async function exportWecomDoc(elId, title) {
+    closeAllExports();
+    showToast('正在创建企微文档...');
+    try {
+        const c = getClient(currentClientId);
+        const docTitle = (c ? c.name + ' - ' : '') + title;
+        // 优先使用原始markdown内容(保留序号),否则用innerText
+        let content = '';
+        if (elId === 's1-content' && c && c.step1_result) {
+            content = c.step1_result;
+        } else if (elId === 's2-report' && c && c.step2_report) {
+            content = c.step2_report;
+        } else {
+            content = document.getElementById(elId).innerText;
+        }
+        const resp = await fetch(API_BASE + '/api/export_doc', { method: 'POST', headers: getAuthHeaders(),
+            body: JSON.stringify({ title: docTitle, content: content }) });
+        const data = await resp.json();
+        if (data.success && data.url) {
+            showToast('企微文档已创建');
+            // 在内容区下方显示链接
+            const linkDiv = document.createElement('div');
+            linkDiv.style.cssText = 'margin-top:12px;padding:10px 14px;background:#e8f5e9;border-radius:8px;font-size:13px;';
+            linkDiv.innerHTML = '✅ 企微文档已创建：<a href="'+data.url+'" target="_blank" style="color:#0052d9;font-weight:500;">'+docTitle+' →</a>';
+            document.getElementById(elId).parentNode.insertBefore(linkDiv, document.getElementById(elId).nextSibling);
+            if (elId === 's1-content') { updateClient(currentClientId, { step1_doc_url: data.url }); }
+            else if (elId === 's2-report') { updateClient(currentClientId, { report_doc_url: data.url }); }
+            // 同步更新后台表格的链接
+            const cc = getClient(currentClientId);
+            if (cc && cc.admin_record_id) {
+                reportToAdmin('report_client', { record_id: cc.admin_record_id, client_name: cc.name, industry: cc.industry, initial_demand: cc.initial_demand || '', business_desc: cc.business_desc, pain_points: cc.pain_points, status: cc.demo_url ? '已生成表格Demo' : cc.step2_report ? '已生成需求报告' : '已生成清单链接', step1_doc_url: cc.step1_doc_url || '', report_doc_url: cc.report_doc_url || '', demo_url: cc.demo_url || '', transcript_doc_url: cc.transcript_doc_url || '' });
+            }
+            // 在新窗口打开文档
+            window.open(data.url, '_blank');
+        } else { showToast('失败: ' + (data.error || '')); }
+    } catch (e) { showToast('请求失败'); }
+}
+function showToast(msg) { const t=document.createElement('div'); t.textContent=msg; t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 20px;border-radius:6px;font-size:13px;z-index:9999'; document.body.appendChild(t); setTimeout(()=>t.remove(),2000); }
+
+// Init - 立即执行，不等待 DOMContentLoaded
+(function init() {
+    var token = localStorage.getItem('provider-token') || '';
+
+    if (!token) {
+        document.getElementById('page-loading').style.display = 'none';
+        location.href = 'login.html';
+        return;
+    }
+
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function() { controller.abort(); }, 5000);
+
+    fetch('http://localhost:8000/api/auth/auto-login', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: '{}',
+        signal: controller.signal
+    }).then(function(resp) {
+        clearTimeout(timeoutId);
+        if (!resp.ok) throw new Error('bad status');
+        return resp.json();
+    }).then(function(data) {
+        document.getElementById('page-loading').style.display = 'none';
+        initProviderUI();
+        renderClientList();
+    }).catch(function(e) {
+        clearTimeout(timeoutId);
+        localStorage.removeItem('provider-token');
+        localStorage.removeItem('provider-auto-login');
+        document.getElementById('page-loading').style.display = 'none';
+        location.href = 'login.html';
+    });
+})();
+
+// 数据导出/导入
+function exportAllData() {
+    const data = localStorage.getItem(STORAGE_KEY) || '[]';
+    const blob = new Blob([data], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'provider-assist-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('已导出备份文件');
+}
+function importData() { document.getElementById('import-file').click(); }
+function handleImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const clients = JSON.parse(e.target.result);
+            if (Array.isArray(clients)) {
+                saveClients(clients);
+                renderClientList();
+                showToast('已导入 ' + clients.length + ' 个客户');
+            } else { showToast('文件格式不正确'); }
+        } catch { showToast('文件解析失败'); }
+    };
+    reader.readAsText(file);
+}
+
+// 页面加载时检查storage状态
+(function checkStorage() {
+    const data = localStorage.getItem(STORAGE_KEY);
+    console.log('[provider-assist] localStorage状态:', data ? data.length + '字节, ' + JSON.parse(data).length + '个客户' : '空');
+})();
+
+// === 自动回补:页面加载时检测未同步的客户数据并自动写入后台 ===
+(async function autoSyncToAdmin() {
+    const providerName = localStorage.getItem(PROVIDER_KEY);
+    if (!providerName) return; // 未注册服务商,跳过
+    const clients = getClients();
+    if (!clients.length) return;
+
+    let syncCount = 0;
+    for (const c of clients) {
+        // 判断当前真实状态
+        let status = '新建';
+        if (c.demo_url) status = '已生成表格Demo';
+        else if (c.step2_report) status = '已生成需求报告';
+        else if (c.transcript) status = '已上传沟通记录';
+        else if (c.step1_result) status = c.step1_doc_url ? '已生成清单链接' : '已生成清单';
+        else if (c.industry && (c.business_desc || c.pain_points)) status = '已完善档案';
+
+        // 判断是否需要同步:
+        // 1. 没有 admin_record_id(后台从没成功写入过)
+        // 2. 有链接但后台可能没更新过(通过 last_synced_status 标记判断)
+        const needsSync = !c.admin_record_id || (c._last_synced_status !== status) ||
+            (c.step1_doc_url && !c._synced_step1_url) ||
+            (c.report_doc_url && !c._synced_report_url) ||
+            (c.demo_url && !c._synced_demo_url);
+
+        if (!needsSync) continue;
+
+        try {
+            const result = await reportToAdmin('report_client', {
+                record_id: c.admin_record_id || '',
+                client_name: c.name,
+                industry: c.industry || '',
+                initial_demand: c.initial_demand || '',
+                business_desc: c.business_desc || '',
+                pain_points: c.pain_points || '',
+                status: status,
+                step1_doc_url: c.step1_doc_url || '',
+                report_doc_url: c.report_doc_url || '',
+                demo_url: c.demo_url || '',
+                transcript_doc_url: c.transcript_doc_url || ''
+            }, c.id);
+
+            if (result && result.success !== false) {
+                // 标记已同步状态,避免下次重复
+                updateClient(c.id, {
+                    _last_synced_status: status,
+                    _synced_step1_url: c.step1_doc_url || '',
+                    _synced_report_url: c.report_doc_url || '',
+                    _synced_demo_url: c.demo_url || ''
+                });
+                syncCount++;
+            }
+        } catch(e) {
+            console.warn('[autoSync] 同步失败:', c.name, e);
+        }
+    }
+    if (syncCount > 0) {
+        console.log('[autoSync] 自动同步完成,更新了', syncCount, '个客户');
+    }
+})();
+</script>
+</body>
+</html>
