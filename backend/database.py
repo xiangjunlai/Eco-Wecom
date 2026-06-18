@@ -229,6 +229,52 @@ def init_db_legacy():
     print(f"数据库初始化完成（Legacy SQLite）")
 
 
+# ==================== 知识库文件管理 ====================
+
+def init_kb_db():
+    """初始化知识库文件表"""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS kb_files (
+            id TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            original_filename TEXT NOT NULL,
+            display_name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            industry TEXT DEFAULT '',
+            filepath TEXT NOT NULL,
+            status TEXT DEFAULT 'uploading',
+            progress INTEGER DEFAULT 0,
+            char_count INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS kb_enhancement_cache (
+            id TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            question TEXT NOT NULL,
+            default_answer TEXT NOT NULL,
+            enhanced_answer TEXT NOT NULL,
+            source_file_ids TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    """)
+
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_kb_files_user_id ON kb_files(user_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_kb_files_category ON kb_files(category)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_kb_cache_user ON kb_enhancement_cache(user_id)")
+
+    conn.commit()
+    print("知识库文件表初始化完成")
+
+
 # 为保持向后兼容，默认使用 legacy 初始化
 if __name__ == "__main__":
     init_db()
+    init_kb_db()

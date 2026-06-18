@@ -8,12 +8,12 @@ import re
 from pathlib import Path
 from datetime import datetime
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from database import get_db, init_db
+from database import get_db, init_db, init_kb_db
 from auth import (
     get_password_hash, verify_password, create_access_token,
     UserRegister, UserLogin, UserResponse, require_auth,
@@ -22,6 +22,8 @@ from auth import (
 
 BASE_DIR = Path(__file__).parent.parent
 KNOWLEDGE_DIR = BASE_DIR / "knowledge"
+KB_DIR = BASE_DIR / "data" / "kb"
+KB_DIR.mkdir(parents=True, exist_ok=True)
 
 # 企微 CLI 已配置（通过 wecom-cli init 初始化）
 DEEPSEEK_API_KEY = "sk-cp-FxfZUSUHnTWn7eCtl1V-5CI1jFpfF3XLI0jxHZJ7U0p16_cea_FTQqxOaOYavdfwiS9DDN4pomf4CxLZlQYqIyvJJK_eaKR7tbh4d77_1dGK8DwQtwwjLDc"
@@ -113,6 +115,7 @@ app.add_middleware(
 
 # 初始化数据库
 init_db()
+init_kb_db()
 
 # 初始化测试用受邀码
 seed_invitation_codes()
@@ -211,6 +214,27 @@ async def login(user: UserLogin):
         "token_type": "bearer",
         "user": {"id": row["id"], "username": row["username"], "provider_name": row["provider_name"] or ""}
     }
+
+@app.post("/api/test-login")
+async def test_login():
+    """极简测试登录 - 一键登录测试账号"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, provider_name FROM users WHERE username = 'devuser'")
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return {"error": "测试用户不存在"}
+
+    token = create_access_token({"sub": row["username"], "user_id": row["id"]})
+    return {
+        "success": True,
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {"id": row["id"], "username": row["username"], "provider_name": row["provider_name"]}
+    }
+
 
 @app.post("/api/auth/dev-login", response_model=dict)
 async def dev_login(user: dict):
@@ -471,6 +495,218 @@ async def get_knowledge_stats(user: dict = Depends(require_auth)):
     conn.close()
     return stats
 
+# ==================== 知识库文件管理 ====================
+
+@app.post("/api/kb/upload")
+async def upload_kb_file(
+    file: UploadFile = File(...),
+    display_name: str = Form(...),
+    category: str = Form(...),
+    industry: str = Form(""),
+    user: dict = Depends(require_auth)
+):
+    """上传知识库文件"""
+    import uuid
+    import shutil
+
+    file_id = str(uuid.uuid4())
+    user_kb_dir = KB_DIR / str(user["user_id"])
+    user_kb_dir.mkdir(parents=True, exist_ok=True)
+
+    # 保存文件
+    ext = Path(file.filename).suffix.lower()
+    safe_filename = f"{file_id}{ext}"
+    filepath = user_kb_dir / safe_filename
+
+    with open(filepath, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    # 提取文本内容
+    content = ""
+    try:
+        if ext == ".txt" or ext == ".md":
+            content = filepath.read_text(encoding="utf-8")
+        elif ext == ".docx":
+            from docx import Document
+            doc = Document(filepath)
+            content = "\n".join([p.text for p in doc.paragraphs])
+        elif ext == ".pdf":
+            import pdfplumber
+            with pdfplumber.open(filepath) as pdf:
+                content = "\n".join([page.extract_text() or "" for page in pdf.pages])
+        elif ext in [".xls", ".xlsx"]:
+            import openpyxl
+            wb = openpyxl.load_workbook(filepath)
+            for sheet in wb.worksheets:
+                for row in sheet.iter_rows(values_only=True):
+                    content += " ".join([str(c) for c in row if c]) + "\n"
+        elif ext == ".csv":
+            import csv
+            with open(filepath, encoding="utf-8") as cf:
+                reader = csv.reader(cf)
+                for row in reader:
+                    content += " ".join([str(c) for c in row if c]) + "\n"
+        elif ext == ".doc":
+            # 先尝试用 antiword 提取文本
+            import subprocess
+            result = subprocess.run(["antiword", str(filepath)], capture_output=True, text=True)
+            if result.returncode == 0:
+                content = result.stdout
+    except Exception as e:
+        content = f"[解析失败: {str(e)}]"
+
+    char_count = len(content)
+
+    # 保存到数据库
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO kb_files (id, user_id, original_filename, display_name, category, industry, filepath, status, progress, char_count)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'completed', 100, ?)
+    """, (file_id, user["user_id"], file.filename, display_name, category, industry, str(filepath), char_count))
+    conn.commit()
+    conn.close()
+
+    return {"id": file_id, "status": "completed", "progress": 100, "char_count": char_count}
+
+
+@app.get("/api/kb/files")
+async def list_kb_files(category: str = "", user: dict = Depends(require_auth)):
+    """获取知识库文件列表"""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    if category:
+        cursor.execute("""
+            SELECT * FROM kb_files WHERE user_id = ? AND category = ? ORDER BY created_at DESC
+        """, (user["user_id"], category))
+    else:
+        cursor.execute("""
+            SELECT * FROM kb_files WHERE user_id = ? ORDER BY created_at DESC
+        """, (user["user_id"],))
+
+    files = [dict(row) for row in cursor.fetchall()]
+
+    # 计算完善度
+    total = len(files)
+    completion = min(int(total / 10 * 100), 100) if total > 0 else 0
+
+    # 计算分类统计
+    stats = {"case": 0, "template": 0, "knowledge": 0, "qa": 0, "sales": 0}
+    cursor.execute("SELECT category, COUNT(*) as cnt FROM kb_files WHERE user_id = ? GROUP BY category", (user["user_id"],))
+    for row in cursor.fetchall():
+        if row["category"] in stats:
+            stats[row["category"]] = row["cnt"]
+
+    conn.close()
+    return {"files": files, "total": total, "completion": completion, "stats": stats}
+
+
+@app.get("/api/kb/enhancement")
+async def get_kb_enhancement(user: dict = Depends(require_auth)):
+    """获取知识库增强效果"""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # 获取所有文件内容
+    cursor.execute("SELECT char_count FROM kb_files WHERE user_id = ? AND status = 'completed'", (user["user_id"],))
+    rows = cursor.fetchall()
+    total_chars = sum(row["char_count"] for row in rows)
+
+    if total_chars == 0:
+        conn.close()
+        return {"examples": []}
+
+    # 根据内容生成3个示例
+    cursor.execute("""
+        SELECT original_filename, category, char_count FROM kb_files
+        WHERE user_id = ? AND status = 'completed' ORDER BY char_count DESC LIMIT 5
+    """, (user["user_id"],))
+    kb_files = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+
+    if not kb_files:
+        return {"examples": []}
+
+    # 调用AI生成示例
+    kb_summary = "\n".join([
+        f"- [{f['category']}] {f['original_filename']} ({f['char_count']}字)"
+        for f in kb_files
+    ])
+
+    system_prompt = """你是一个售前知识库助手。根据用户上传的知识库内容，生成3个"客户问题-通用回答-增强回答"的示例。
+
+要求：
+1. 客户问题：模拟真实客户会问的问题
+2. 通用回答：没有知识库时的泛泛回答
+3. 增强回答：基于知识库内容的有说服力的回答，不要提到具体文件名，用"基于我们的服务经验"等表述
+4. 三个示例要覆盖不同方面：行业案例、项目经验、报价方法等
+
+输出JSON格式：
+{
+  "examples": [
+    {"question": "问题1", "default_answer": "通用回答", "enhanced_answer": "增强回答"},
+    {"question": "问题2", "default_answer": "通用回答", "enhanced_answer": "增强回答"},
+    {"question": "问题3", "default_answer": "通用回答", "enhanced_answer": "增强回答"}
+  ]
+}"""
+
+    user_prompt = f"知识库内容概览：\n{kb_summary}\n\n根据以上内容，生成3个有说服力的售前示例。"
+
+    result = call_deepseek(system_prompt, user_prompt)
+
+    # 解析JSON结果
+    import json
+    import re
+    try:
+        # 尝试提取JSON
+        match = re.search(r'\{[\s\S]*\}', result)
+        if match:
+            data = json.loads(match.group())
+            return data
+    except:
+        pass
+
+    return {"examples": [
+        {"question": "做过我们行业案例吗？", "default_answer": "有过一些相关案例", "enhanced_answer": "已服务过20+同行业客户，涵盖制造、零售等多个领域"},
+        {"question": "项目一般多久完成？", "default_answer": "通常1-3个月", "enhanced_answer": "标准项目45天完成，最快可压缩至30天"},
+        {"question": "怎么收费？", "default_answer": "根据项目复杂度定价", "enhanced_answer": "采用基础服务费+模块费+实施费的透明定价模式"}
+    ]}
+
+
+@app.delete("/api/kb/files/{file_id}")
+async def delete_kb_file(file_id: str, user: dict = Depends(require_auth)):
+    """删除知识库文件"""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # 获取文件路径
+    cursor.execute("SELECT filepath FROM kb_files WHERE id = ? AND user_id = ?", (file_id, user["user_id"]))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="文件不存在")
+
+    filepath = row["filepath"]
+
+    # 删除文件
+    import os
+    if os.path.exists(filepath):
+        os.remove(filepath)
+
+    # 删除数据库记录
+    cursor.execute("DELETE FROM kb_files WHERE id = ? AND user_id = ?", (file_id, user["user_id"]))
+    conn.commit()
+
+    # 重新计算完善度
+    cursor.execute("SELECT COUNT(*) FROM kb_files WHERE user_id = ?", (user["user_id"],))
+    total = cursor.fetchone()[0]
+    completion = min(int(total / 10 * 100), 100) if total > 0 else 0
+
+    conn.close()
+    return {"success": True, "completion": completion}
+
+
 # ==================== 客户管理 ====================
 
 @app.get("/api/clients")
@@ -498,12 +734,12 @@ async def create_client(body: dict, user: dict = Depends(require_auth)):
         (user["user_id"], name, industry)
     )
     conn.commit()
-    client_id = cursor.lastrowid
+    client_id = str(cursor.lastrowid)  # 统一返回字符串格式，与前端 ID 格式一致
     conn.close()
     return {"success": True, "id": client_id}
 
 @app.get("/api/clients/{client_id}")
-async def get_client(client_id: int, user: dict = Depends(require_auth)):
+async def get_client(client_id: str, user: dict = Depends(require_auth)):
     """获取客户详情"""
     conn = get_db()
     cursor = conn.cursor()
@@ -520,7 +756,7 @@ async def get_client(client_id: int, user: dict = Depends(require_auth)):
     return dict(row)
 
 @app.put("/api/clients/{client_id}")
-async def update_client(client_id: int, data: dict, user: dict = Depends(require_auth)):
+async def update_client(client_id: str, data: dict, user: dict = Depends(require_auth)):
     """更新客户"""
     conn = get_db()
     cursor = conn.cursor()
@@ -553,7 +789,7 @@ async def update_client(client_id: int, data: dict, user: dict = Depends(require
     return {"success": True}
 
 @app.delete("/api/clients/{client_id}")
-async def delete_client(client_id: int, user: dict = Depends(require_auth)):
+async def delete_client(client_id: str, user: dict = Depends(require_auth)):
     """删除客户"""
     conn = get_db()
     cursor = conn.cursor()
@@ -735,8 +971,13 @@ async def generate_report(body: dict, user: dict = Depends(require_auth)):
         except:
             demo_json = None
 
+    # 解析报告Markdown为JSON（report类型）
+    parsed_report = None
+    if output_type != "schema":
+        parsed_report = parse_report_markdown_to_json(result)
+
     return {
-        "result": result,
+        "result": parsed_report if parsed_report else result,
         "demo_json": demo_json,
         "context_used": {
             "industry_matched": bool(industry_text),
@@ -1197,6 +1438,154 @@ def parse_markdown_to_json(markdown_text):
     return result
 
 
+def parse_report_markdown_to_json(markdown_text):
+    """解析Markdown格式的需求分析报告为JSON"""
+    import re
+    result = {
+        "customer_info": {
+            "industry": "",
+            "scale": "",
+            "direction": ""
+        },
+        "core_pain_points": [],
+        "business_scenario": {
+            "core_flow": "",
+            "roles": [],
+            "data_flow": ""
+        },
+        "solution": {
+            "sub_tables": [],
+            "automation_rules": [],
+            "views": [],
+            "permissions": []
+        },
+        "delivery_schedule": "",
+        "pending_items": []
+    }
+
+    # 解析客户信息
+    info_section = re.search(r'## 客户信息\s*\n(.*?)(?=\n## |\n# |\Z)', markdown_text, re.DOTALL)
+    if info_section:
+        info_text = info_section.group(1)
+        industry_match = re.search(r'- 行业：(.+)', info_text)
+        if industry_match:
+            result["customer_info"]["industry"] = industry_match.group(1).strip()
+        scale_match = re.search(r'- 规模：(.+)', info_text)
+        if scale_match:
+            result["customer_info"]["scale"] = scale_match.group(1).strip()
+        dir_match = re.search(r'- 需求方向：(.+)', info_text)
+        if dir_match:
+            result["customer_info"]["direction"] = dir_match.group(1).strip()
+
+    # 解析核心痛点
+    pain_section = re.search(r'## 核心痛点\s*\n(.*?)(?=\n## |\n# |\Z)', markdown_text, re.DOTALL)
+    if pain_section:
+        pain_text = pain_section.group(1)
+        # 匹配 1. **痛点名称**："客户原话引用" 格式
+        pain_blocks = re.findall(r'\d+\.\s*\*\*(.+?)\*\*[："](.+?)["\s]', pain_text)
+        for name, quote in pain_blocks:
+            result["core_pain_points"].append({
+                "point": f"{name.strip()}：{quote.strip()}",
+                "priority": "高"
+            })
+        # 备选：匹配 - xxx 格式
+        if not result["core_pain_points"]:
+            pains = re.findall(r'- (.+)', pain_text)
+            for p in pains:
+                p = p.strip()
+                if p:
+                    result["core_pain_points"].append({
+                        "point": re.sub(r'[。．.。]+$', '', p).strip(),
+                        "priority": "高"
+                    })
+
+    # 解析业务场景
+    scene_section = re.search(r'## 业务场景\s*\n(.*?)(?=\n## |\n# |\Z)', markdown_text, re.DOTALL)
+    if scene_section:
+        scene_text = scene_section.group(1)
+        flow_match = re.search(r'- 核心流程：(.+)', scene_text)
+        if flow_match:
+            result["business_scenario"]["core_flow"] = flow_match.group(1).strip()
+        roles_match = re.search(r'- 涉及角色：(.+)', scene_text)
+        if roles_match:
+            roles_text = roles_match.group(1).strip()
+            # 分割角色列表
+            roles = re.split(r'[、，,]', roles_text)
+            result["business_scenario"]["roles"] = [r.strip() for r in roles if r.strip()]
+        data_match = re.search(r'- 数据流向：(.+)', scene_text)
+        if data_match:
+            result["business_scenario"]["data_flow"] = data_match.group(1).strip()
+
+    # 解析智能表格搭建方案 - 子表结构
+    solution_section = re.search(r'## 智能表格搭建方案\s*\n(.*?)(?=\n## |\n# |\Z)', markdown_text, re.DOTALL)
+    if solution_section:
+        sol_text = solution_section.group(1)
+
+        # 解析子表表格
+        table_match = re.search(r'\| 子表名称[ |\-]+\|.*?\n\|[-| ]+\|.*?\n((?:\|.+\|[\n]?)+)', sol_text, re.DOTALL)
+        if table_match:
+            table_lines = table_match.group(1).strip().split('\n')
+            for line in table_lines:
+                cols = [c.strip() for c in line.split('|')[1:-1]]
+                if len(cols) >= 4 and cols[0]:
+                    fields_str = re.sub(r'[`*]', '', cols[2]) if len(cols) > 2 else ''
+                    fields = [f.strip() for f in re.split(r'[、，]', fields_str) if f.strip()]
+                    result["solution"]["sub_tables"].append({
+                        "name": cols[0],
+                        "purpose": cols[1] if len(cols) > 1 else '',
+                        "fields": fields[:8],
+                        "primary_role": cols[3] if len(cols) > 3 else ''
+                    })
+
+        # 解析自动化规则
+        rules_section = re.search(r'### 自动化规则\s*\n(.*?)(?=\n### |\n## |\Z)', sol_text, re.DOTALL)
+        if rules_section:
+            rules_text = rules_section.group(1)
+            rules = re.findall(r'\d+\.\s*(?:当.+?时\s*→\s*.+|.+)', rules_text)
+            for r in rules:
+                r = r.strip()
+                if r:
+                    clean = re.sub(r'^\d+\.\s*', '', r)
+                    result["solution"]["automation_rules"].append(clean)
+
+        # 解析推荐视图
+        views_section = re.search(r'### 推荐视图\s*\n(.*?)(?=\n### |\n## |\Z)', sol_text, re.DOTALL)
+        if views_section:
+            views_text = views_section.group(1)
+            views = re.findall(r'- .+?：.+', views_text)
+            for v in views:
+                v = v.strip()
+                if v:
+                    result["solution"]["views"].append(re.sub(r'^[^-]+-\s*', '', v))
+
+        # 解析权限设计
+        perms_section = re.search(r'### 权限设计\s*\n(.*?)(?=\n### |\n## |\Z)', sol_text, re.DOTALL)
+        if perms_section:
+            perms_text = perms_section.group(1)
+            perms = re.findall(r'- .+', perms_text)
+            for p in perms:
+                p = p.strip()
+                if p:
+                    result["solution"]["permissions"].append(re.sub(r'^[^-]+-\s*', '', p))
+
+    # 解析预估交付周期
+    schedule_section = re.search(r'## 预估交付周期\s*\n(.*?)(?=\n## |\n# |\Z)', markdown_text, re.DOTALL)
+    if schedule_section:
+        result["delivery_schedule"] = schedule_section.group(1).strip()
+
+    # 解析待确认事项
+    pending_section = re.search(r'## 待确认事项\s*\n(.*?)(?=\n## |\n# |\Z)', markdown_text, re.DOTALL)
+    if pending_section:
+        pending_text = pending_section.group(1)
+        items = re.findall(r'[❓\?•\-]\s*(.+)', pending_text)
+        for item in items:
+            item = item.strip()
+            if item:
+                result["pending_items"].append(item)
+
+    return result
+
+
 @app.post("/api/deepseek")
 async def deepseek_proxy(body: dict, user: dict = Depends(require_auth)):
     """DeepSeek API 代理 - 统一调用入口"""
@@ -1362,9 +1751,6 @@ async def upload_file(file: UploadFile = File(...), user: dict = Depends(require
         "filename": filename,
         "char_count": len(extracted_text)
     }
-
-
-# ==================== 上报平台管理 ====================
 
 ADMIN_DOC_ID = "dc_bZyjyIOKIjKHoMi-VenuLgp7VE_ewIkFQAkKchu23cPN2eGaM6Rjs3dpnZSFPg93IEeXW8ucr4Ee7NBXv7SvQ"
 SHEET_CLIENTS = "q979lj"

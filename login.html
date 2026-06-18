@@ -142,6 +142,7 @@ body {
             </div>
         </div>
         <button class="btn-login" id="btn-login" onclick="doLogin()">登录</button>
+        <button class="btn-login" style="background:#13b96f;margin-top:10px" onclick="testLogin()">🧪 测试登录</button>
     </div>
     <div class="login-footer">
         没有账号？<a onclick="showRegister()">立即注册</a>
@@ -329,6 +330,25 @@ async function doLogin() {
     } finally {
         btn.disabled = false;
         btn.textContent = '登录';
+    }
+}
+
+async function testLogin() {
+    try {
+        const resp = await fetch(API_BASE + '/api/test-login', { method: 'POST' });
+        const data = await resp.json();
+        if (data.success && data.access_token) {
+            localStorage.setItem(TOKEN_KEY, data.access_token);
+            localStorage.setItem('provider-auto-login', 'true');
+            localStorage.setItem('provider-name', data.user.provider_name);
+            localStorage.setItem('provider-assist-name', data.user.provider_name);
+            localStorage.setItem('provider-username', data.user.username);
+            window.location.href = 'client_list.html';
+        } else {
+            alert(data.error || '测试登录失败');
+        }
+    } catch(e) {
+        alert('网络错误，请检查后端服务是否运行');
     }
 }
 

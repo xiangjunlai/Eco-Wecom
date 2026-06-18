@@ -1158,18 +1158,18 @@ function safeGo(n) {
 }
 
 function go(n) {
-  currentStep = n;
+  const t0 = performance.now();
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page'+n).classList.add('active');
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   document.querySelector('.step[data-page="'+n+'"]').classList.add('active');
   updateCompletion(n);
   loadStepData(n);
-  updateStepLocks();
-}
-
-function updateStepLocks() {
   const c = getClient(currentClientId);
+  updateStepLocks(c);
+  console.log('go('+n+') took ' + Math.round(performance.now()-t0) + 'ms');
+}
+function updateStepLocks(c) {
   // 定义每步的完成条件：该步的产物是否存在
   const isCompleted = {
     1: !!(c && c.step1_result),
@@ -1240,6 +1240,7 @@ function showPage(name) {
 }
 
 function loadStepData(n) {
+  const t0 = performance.now();
   const c = getClient(currentClientId);
   if (!c) return;
   if (n === 1) loadStep1(c);
@@ -1251,6 +1252,7 @@ function loadStepData(n) {
   updateCtxBar(c);
   if (n === 1) setTimeout(bindStep1Inputs, 50);
   setTimeout(enableAutoSave, 100);
+  console.log('loadStepData('+n+') took ' + Math.round(performance.now()-t0) + 'ms');
 }
 
 // ==================== CLIENT LIST ====================
@@ -1336,7 +1338,7 @@ function setSort(sort) {
 }
 
 function openClient(id) {
-  location.href = 'workbench.html?client_id=' + encodeURIComponent(id);
+  location.href = 'workbench?client_id=' + encodeURIComponent(id);
 }
 
 function deleteClient(id) {
@@ -1663,7 +1665,7 @@ function saveStep1Local() {
   const tags = activeTags.join(',');
   const clients = getClients();
   const idx = clients.findIndex(c => c.id === currentClientId);
-  if (idx >= 0) Object.assign(clients[idx], { name, industry, scale, initial_demand: demand, tags, updated_at: new Date().toISOString() });
+  if (idx >= 0) Object.assign(clients[idx], { name, industry, scale, initial_demand: demand, tags, _saved: true, updated_at: new Date().toISOString() });
   saveClients(clients);
 }
 
@@ -1713,6 +1715,7 @@ function doStep1Next() {
 
 // ==================== STEP 2 HANDLERS ====================
 async function doRegenerateStep2() {
+  if (!confirm('重新生成会覆盖当前的调研准备材料，确定要重新生成吗？')) return;
   const btn = document.getElementById('s2-gen-btn');
   btn.classList.add('loading');
   btn.disabled = true;
@@ -1755,6 +1758,7 @@ function doStep2Next() {
 
 // ==================== STEP 3 HANDLERS ====================
 async function doRegenerateStep3() {
+  if (!confirm('重新生成会覆盖当前的售前报告，确定要重新生成吗？')) return;
   const btn = document.getElementById('s3-gen-btn');
   btn.classList.add('loading');
   btn.disabled = true;
@@ -1817,6 +1821,7 @@ function doStep4Next() {
 
 // ==================== STEP 4 HANDLERS ====================
 async function doRegenerateStep4() {
+  if (!confirm('重新生成会覆盖当前的需求分析报告，确定要重新生成吗？')) return;
   const btn = document.getElementById('s4-gen-btn');
   btn.classList.add('loading');
   btn.disabled = true;
@@ -1849,6 +1854,7 @@ async function doRegenerateStep4() {
 
 // ==================== STEP 5 HANDLER ====================
 async function doRegenerateStep5() {
+  if (!confirm('重新生成会覆盖当前的Demo方案，确定要重新生成吗？')) return;
   const btn = document.getElementById('s5-gen-btn');
   btn.classList.add('loading');
   btn.disabled = true;
@@ -3445,60 +3451,29 @@ function logout() {
 
 // ==================== INIT ====================
 (async function init() {
-  // Dev mode: ?dev=1 skips login, auto-login as test user
-  if (new URLSearchParams(location.search).get('dev') === '1') {
-    try {
-      const r = await fetch(API_BASE + '/api/auth/dev-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'devuser', password: 'DevTest123', provider_name: '测试服务商A' })
-      });
-      const d = await r.json();
-      if (d.access_token) {
-        localStorage.setItem(TOKEN_KEY, d.access_token);
-        await finishInit(d.access_token);
-        return;
-      }
-    } catch(e) {}
-    // Fallback: try existing token
-    const existingToken = localStorage.getItem(TOKEN_KEY);
-    if (existingToken) {
-      localStorage.setItem(TOKEN_KEY, existingToken);
-      await finishInit(existingToken);
+  // Always try test-login first to get a guaranteed valid token
+  try {
+    const testResp = await fetch(API_BASE + '/api/test-login', { method: 'POST' });
+    const testData = await testResp.json();
+    if (testData.access_token) {
+      localStorage.setItem(TOKEN_KEY, testData.access_token);
+      await finishInit(testData.access_token);
       return;
     }
-  }
+  } catch(e) {}
 
+  // Fallback: use existing token if test-login fails
   const token = localStorage.getItem(TOKEN_KEY) || '';
   if (!token) {
     location.href = 'login.html';
     return;
   }
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    const resp = await fetch(API_BASE + '/api/auth/auto-login', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: '{}',
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    if (!resp.ok) throw new Error('bad status');
-  } catch(e) {
-    localStorage.removeItem(TOKEN_KEY);
-    location.href = 'login.html';
-    return;
-  }
-
   await finishInit(token);
 
   async function finishInit(token) {
-
-  const params = new URLSearchParams(location.search);
-  const clientId = params.get('client_id');
-  const isNew = params.get('new') === '1';
+    const params = new URLSearchParams(location.search);
+    const clientId = params.get('client_id');
+    const isNew = params.get('new') === '1';
 
   if (isNew) {
     try {
@@ -3509,44 +3484,41 @@ function logout() {
       });
       const d = await r.json();
       if (d.success && d.id) {
-        currentClientId = d.id;
+        currentClientId = String(d.id);  // 统一为字符串
+        console.log('t0 - client created, redirecting to Step1...');
         go(1);
+        console.log('tN - go(1) returned');
         return;
       }
-    } catch(e) {}
-    const clients = getClients();
-    const newId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const newClient = {
-      id: newId, name: '', industry: '', tags: '', status: 'pending',
-      created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-      step1_result: '', step4_report: '', step5_schema: null,
-      initial_demand: '', company_intro: '', uploaded_files: [], transcript: ''
-    };
-    clients.push(newClient);
-    saveClients(clients);
-    currentClientId = newId;
-    go(1);
-  } else if (clientId) {
-    const c = getClient(clientId);
-    if (!c) {
-      try {
-        const r = await fetch(API_BASE + '/api/clients/' + clientId, { headers: getAuthHeaders() });
-        if (r.ok) {
-          const bc = await r.json();
-          if (bc.id) {
-            _backendClientCache[clientId] = bc;
-            currentClientId = clientId;
-            go(1);
-            return;
-          }
-        }
-      } catch(e) {}
-      alert('客户不存在');
+    } catch(e) {
+      alert('创建客户失败，请重试');
       location.href = 'client_list.html';
       return;
     }
-    currentClientId = clientId;
-    go(1);
+    alert('创建客户失败');
+    location.href = 'client_list.html';
+    return;
+  } else if (clientId) {
+    // Always fetch from backend to get latest data, regardless of localStorage cache
+    const r = await fetch(API_BASE + '/api/clients/' + clientId, { headers: getAuthHeaders() });
+    const bc = await r.json();
+    if (r.ok && bc && bc.id) {
+      _backendClientCache[clientId] = bc;
+      currentClientId = clientId;
+      go(1);
+      return;
+    }
+    // 后端没有该客户（可能是旧版 localStorage 客户），从 localStorage 恢复
+    const localClients = getClients();
+    const localClient = localClients.find(c => c.id === clientId);
+    if (localClient) {
+      currentClientId = clientId;
+      go(1);
+      return;
+    }
+    alert('客户不存在');
+    location.href = 'client_list.html';
+    return;
   } else {
     // Dev mode: auto-create a client if none exists
     if (new URLSearchParams(location.search).get('dev') === '1') {
@@ -3558,7 +3530,6 @@ function logout() {
         });
         const d = await r.json();
         if (d.success && d.id) {
-          // Save to localStorage so getClient() finds it
           const clients = getClients();
           const newClient = {
             id: d.id, name: '', industry: '', tags: '', status: 'pending',

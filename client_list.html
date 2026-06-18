@@ -102,10 +102,6 @@ select.compact:focus{border-color:var(--blue)}
 .kb-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
 .kb-title-row{display:flex;align-items:center;gap:16px}
 .kb-title{font-size:20px;font-weight:900;color:var(--text)}
-.kb-progress-wrap{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:8px 16px}
-.kb-progress-label{font-size:12px;font-weight:800;color:var(--text2)}
-.kb-progress-bar{width:120px;height:8px;background:#eef2f7;border-radius:999px;overflow:hidden}
-.kb-progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:999px;transition:width .5s cubic-bezier(.4,0,.2,1)}
 .kb-progress-pct{font-size:12px;font-weight:900;color:var(--blue);min-width:36px}
 
 .kb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
@@ -120,19 +116,24 @@ select.compact:focus{border-color:var(--blue)}
 .kb-card-btn:hover{background:#eef6ff;border-color:var(--blue)}
 .kb-card-priority{border-color:var(--blue);background:linear-gradient(135deg,#f0f7ff 0%,#fafbff 100%)}
 
+/* KB FILTER TABS */
+.kb-filter-tabs{display:flex;gap:4px;margin-bottom:16px;background:#f5f7fb;padding:4px;border-radius:12px;width:fit-content}
+.kb-filter-tab{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;color:var(--text2);transition:.15s;white-space:nowrap}
+.kb-filter-tab:hover{background:#fff}
+.kb-filter-tab.active{background:#fff;color:var(--text);box-shadow:0 2px 8px rgba(20,34,64,.08)}
+.kb-filter-tab b{font-weight:900;opacity:.7}
+
 /* CONTRAST */
-.kb-contrast{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
-.kb-contrast-header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
-.kb-contrast-title{font-size:15px;font-weight:900;color:var(--text)}
-.kb-contrast-badge{display:inline-flex;align-items:center;gap:5px;background:#f0f7ff;color:var(--blue);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800}
-.kb-contrast-table{width:100%;border-collapse:collapse}
-.kb-contrast-table th{text-align:left;padding:10px 14px;background:#f8fafc;border-bottom:1px solid var(--border);font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
-.kb-contrast-table td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:top}
-.kb-contrast-table tr:last-child td{border-bottom:0}
-.kb-contrast-default{color:var(--text3)}
-.kb-contrast-default del{color:#f87171}
-.kb-contrast-kb{color:var(--green);font-weight:700}
-.kb-badge{background:#f0fdf4;color:#059669;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:800;margin-left:6px}
+.kb-contrast{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow)}
+.kb-contrast-header{font-size:13px;font-weight:900;color:var(--text);margin-bottom:14px}
+.kb-contrast-item{margin-bottom:16px}
+.kb-contrast-item:last-child{margin-bottom:0}
+.kb-contrast-question{font-size:12px;color:var(--text3);margin-bottom:8px;font-weight:800}
+.kb-contrast-row{display:flex;gap:12px}
+.kb-contrast-side{flex:1;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.6}
+.kb-contrast-side.default{background:#f5f5f5;color:#888;border:1px solid #eee}
+.kb-contrast-side.enhanced{background:linear-gradient(135deg,#eef6ff,#f0f7ff);color:var(--text);border:1px solid var(--blue)}
+.kb-contrast-side-label{font-size:10px;font-weight:900;text-transform:uppercase;margin-bottom:6px;opacity:.7}
 
 /* FILE LIST */
 .kb-files{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
@@ -146,6 +147,16 @@ select.compact:focus{border-color:var(--blue)}
 .kb-file-tag{display:inline-block;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:800}
 .tag-case{background:#f0f7ff;color:var(--blue)}
 .tag-template{background:#fef3c7;color:#d97706}
+.tag-knowledge{background:#ecfeff;color:#0891b2}
+.tag-qa{background:#f0fdf4;color:#059669}
+.tag-sales{background:#faf5ff;color:#7c3aed}
+.kb-file-progress{width:80px;height:6px;background:#e8edf5;border-radius:999px;overflow:hidden}
+.kb-file-progress-bar{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:999px;transition:width .3s}
+.kb-delete-btn{background:none;border:none;cursor:pointer;font-size:14px;opacity:.4;padding:4px 8px;border-radius:6px;transition:.15s}
+.kb-delete-btn:hover{opacity:1;background:#fee2e2}
+.kb-header-progress{flex:1;height:8px;background:#e8edf5;border-radius:999px;overflow:hidden;max-width:200px}
+.kb-header-progress-bar{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:999px;transition:width .3s}
+.kb-file-row td{vertical-align:middle}
 .tag-qa{background:#f0fdf4;color:#059669}
 .tag-sales{background:#faf5ff;color:#7c3aed}
 .tag-knowledge{background:#ecfeff;color:#0891b2}
@@ -157,7 +168,7 @@ select.compact:focus{border-color:var(--blue)}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(20,34,64,.4);display:none;place-items:center;z-index:100}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,34,64,.4);place-items:center;z-index:100}
 .modal-overlay.active{display:grid}
 .modal-box{background:var(--panel);border-radius:24px;padding:28px;width:480px;box-shadow:0 24px 60px rgba(20,34,64,.2);max-height:90vh;overflow-y:auto}
 .modal-box h3{font-size:16px;margin-bottom:20px;color:var(--text)}
@@ -179,6 +190,14 @@ select.compact:focus{border-color:var(--blue)}
 .file-upload-hint{font-size:13px;color:var(--text3)}
 .file-upload-hint strong{color:var(--blue)}
 .file-upload-name{font-size:14px;font-weight:800;color:var(--text);margin-top:8px}
+.upload-file-list{max-height:300px;overflow-y:auto;margin-bottom:12px}
+.upload-file-item{display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.upload-file-item:last-child{border-bottom:none}
+.upload-file-name-input{flex:1;min-width:120px;font-size:13px;font-weight:800;color:var(--text);border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;outline:none}
+.upload-file-name-input:focus{border-color:var(--blue)}
+.upload-file-item select{flex-shrink:0;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:800;background:#fff;cursor:pointer}
+.upload-file-item select:focus{border-color:var(--blue)}
+.upload-file-item .kb-file-tag{flex-shrink:0}
 
 .hint-box{background:linear-gradient(135deg,#f0f7ff,#eef6ff);border:1px solid #bfdbfe;border-radius:12px;padding:14px;margin-bottom:16px}
 .hint-box-title{font-size:12px;font-weight:900;color:var(--blue);margin-bottom:8px;display:flex;align-items:center;gap:6px}
@@ -209,7 +228,7 @@ select.compact:focus{border-color:var(--blue)}
 </div>
 
 <!-- TOAST -->
-<div class="toast hidden" id="toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:800;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.15)"></div>
+<div class="toast hidden" id="toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:800;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.15);display:none"></div>
 
 <div class="main">
   <!-- TABS -->
@@ -240,10 +259,10 @@ select.compact:focus{border-color:var(--blue)}
       </div>
       <div class="toolbar-right">
         <div class="view-toggle">
-          <button class="view-btn active" id="view-grid-btn" onclick="setView('grid')" title="卡片视图">
+          <button class="view-btn" id="view-grid-btn" onclick="setView('grid')" title="卡片视图">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="0" width="6" height="6" rx="2"/><rect x="8" y="0" width="6" height="6" rx="2"/><rect x="0" y="8" width="6" height="6" rx="2"/><rect x="8" y="8" width="6" height="6" rx="2"/></svg>
           </button>
-          <button class="view-btn" id="view-list-btn" onclick="setView('list')" title="列表视图">
+          <button class="view-btn active" id="view-list-btn" onclick="setView('list')" title="列表视图">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="0" width="14" height="3" rx="1.5"/><rect x="0" y="5" width="14" height="3" rx="1.5"/><rect x="0" y="10" width="14" height="3" rx="1.5"/></svg>
           </button>
         </div>
@@ -255,79 +274,21 @@ select.compact:focus{border-color:var(--blue)}
 
   <!-- KNOWLEDGE BASE TAB -->
   <div id="kb-content" style="display:none">
-    <div class="kb-header">
-      <div class="kb-title-row">
-        <span class="kb-title">我的知识库</span>
-        <div class="kb-progress-wrap">
-          <span class="kb-progress-label">完善度</span>
-          <div class="kb-progress-bar"><div class="kb-progress-fill" id="kb-progress-fill" style="width:0%"></div></div>
-          <span class="kb-progress-pct" id="kb-progress-pct">0%</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:16px">
+      <div style="display:flex;align-items:center;gap:12px;flex:1">
+        <div style="flex:1;height:8px;background:#e8edf5;border-radius:999px;overflow:hidden;max-width:300px">
+          <div id="kb-progress-fill" style="height:100%;background:linear-gradient(90deg,#1263e6,#13b96f);border-radius:999px;transition:width .3s;width:0%"></div>
         </div>
+        <span id="kb-progress-pct" style="font-size:12px;font-weight:900;color:#1263e6;min-width:36px">0%</span>
       </div>
       <button class="btn-upload" id="btn-upload-kb" onclick="openUploadModal()">+ 上传知识库</button>
     </div>
 
     <!-- CONTRAST SECTION -->
     <div id="kb-contrast-section" style="display:none">
-      <div class="kb-contrast">
-        <div class="kb-contrast-header">
-          <span class="kb-contrast-title">📊 知识库增强效果预览</span>
-          <span class="kb-contrast-badge">✨ 已启用您的知识库</span>
-        </div>
-        <table class="kb-contrast-table">
-          <thead>
-            <tr>
-              <th style="width:35%">📚 默认全局知识库</th>
-              <th style="width:35%">✨ 您的知识库增强</th>
-              <th>说明</th>
-            </tr>
-          </thead>
-          <tbody id="kb-contrast-body"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- KB CATEGORY CARDS -->
-    <div class="kb-grid" id="kb-categories">
-      <div class="kb-card kb-card-priority" data-cat="case">
-        <div class="kb-card-top">
-          <div class="kb-card-icon" style="background:#eef6ff">📋</div>
-          <span class="kb-card-count" id="count-case">0个文件</span>
-        </div>
-        <div class="kb-card-name">案例库</div>
-        <div class="kb-card-desc">服务商服务过的客户案例</div>
-      </div>
-      <div class="kb-card kb-card-priority" data-cat="template">
-        <div class="kb-card-top">
-          <div class="kb-card-icon" style="background:#fef3c7">📄</div>
-          <span class="kb-card-count" id="count-template">0个文件</span>
-        </div>
-        <div class="kb-card-name">模板库</div>
-        <div class="kb-card-desc">需求报告模板框架</div>
-      </div>
-      <div class="kb-card kb-card-priority" data-cat="knowledge">
-        <div class="kb-card-top">
-          <div class="kb-card-icon" style="background:#ecfeff">🧠</div>
-          <span class="kb-card-count" id="count-knowledge">0个文件</span>
-        </div>
-        <div class="kb-card-name">行业知识</div>
-        <div class="kb-card-desc">行业knowhow、背景知识</div>
-      </div>
-      <div class="kb-card" data-cat="qa">
-        <div class="kb-card-top">
-          <div class="kb-card-icon" style="background:#f0fdf4">💬</div>
-          <span class="kb-card-count" id="count-qa">0个文件</span>
-        </div>
-        <div class="kb-card-name">QA</div>
-        <div class="kb-card-desc">售前/售后常见问答</div>
-      </div>
-      <div class="kb-card" data-cat="sales">
-        <div class="kb-card-top">
-          <div class="kb-card-icon" style="background:#faf5ff">📖</div>
-          <span class="kb-card-count" id="count-sales">0个文件</span>
-        </div>
-        <div class="kb-card-name">销售工具</div>
-        <div class="kb-card-desc">销售手册、一指禅、打单话术</div>
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow)">
+        <div style="font-size:13px;font-weight:900;color:var(--text);margin-bottom:14px">📊 知识库增强效果</div>
+        <div id="kb-contrast-body"></div>
       </div>
     </div>
 
@@ -335,14 +296,23 @@ select.compact:focus{border-color:var(--blue)}
     <div class="kb-files" id="kb-files-section" style="display:none">
       <div class="kb-files-header">
         <span class="kb-files-title">📁 已上传的知识库文件</span>
+        <div class="kb-filter-tabs" id="kb-filter-tabs">
+          <span class="kb-filter-tab active" data-cat="">全部 <b id="count-all">0</b></span>
+          <span class="kb-filter-tab" data-cat="case" style="color:#1263e6">案例库 <b id="count-case">0</b></span>
+          <span class="kb-filter-tab" data-cat="template" style="color:#d97706">模板库 <b id="count-template">0</b></span>
+          <span class="kb-filter-tab" data-cat="knowledge" style="color:#0891b2">行业知识 <b id="count-knowledge">0</b></span>
+          <span class="kb-filter-tab" data-cat="qa" style="color:#059669">QA <b id="count-qa">0</b></span>
+          <span class="kb-filter-tab" data-cat="sales" style="color:#7c3aed">销售工具 <b id="count-sales">0</b></span>
+        </div>
       </div>
       <table class="kb-files-table">
         <thead>
           <tr>
             <th>文件名</th>
+            <th>行业</th>
             <th>分类</th>
-            <th>上传时间</th>
-            <th>操作</th>
+            <th style="width:120px">状态</th>
+            <th style="width:50px"></th>
           </tr>
         </thead>
         <tbody id="kb-files-body"></tbody>
@@ -397,11 +367,10 @@ select.compact:focus{border-color:var(--blue)}
         </ul>
       </div>
       <div class="modal-field">
-        <label>选择文件（支持所有格式）</label>
+        <label>选择文件</label>
         <div class="file-upload-area" id="file-upload-zone" onclick="document.getElementById('upload-file-input').click()">
-          <input type="file" id="upload-file-input" onchange="onFileSelected(this)">
-          <div class="file-upload-hint">点击选择 或 拖拽文件到此处<br><strong>支持 .docx .pdf .txt .md 等所有格式</strong></div>
-          <div class="file-upload-name" id="upload-file-name" style="display:none"></div>
+          <input type="file" id="upload-file-input" multiple onchange="onFilesSelected(this)">
+          <div class="file-upload-hint">点击选择 或 拖拽文件到此处<br><strong>支持 .doc .docx .pdf .txt .md .xls .xlsx .csv</strong></div>
         </div>
       </div>
     </div>
@@ -409,32 +378,15 @@ select.compact:focus{border-color:var(--blue)}
     <!-- Step 2: Confirm -->
     <div id="upload-step2" style="display:none">
       <div class="hint-box">
-        <div class="hint-box-title">文件已选择，请确认信息</div>
-        <ul>
-          <li>AI会自动分析文件内容，判断最适合的类别</li>
-          <li>您可以修改类别和文件名</li>
-          <li>点击「AI解析」后将展示知识库增强效果</li>
-        </ul>
+        <div class="hint-box-title">已选择 <b id="selected-file-count">0</b> 个文件，请确认名称和类别</div>
       </div>
-      <div class="modal-field">
-        <label>文件分类</label>
-        <select id="upload-cat">
-          <option value="case">案例库</option>
-          <option value="template">模板库</option>
-          <option value="knowledge">行业知识</option>
-          <option value="qa">QA</option>
-          <option value="sales">销售工具</option>
-        </select>
-      </div>
-      <div class="modal-field">
-        <label>文件名（可修改）</label>
-        <input type="text" id="upload-filename" placeholder="留空则使用原文件名">
-      </div>
+      <div class="upload-file-list" id="upload-file-list"></div>
+      <div class="upload-progress-text" id="upload-progress-text" style="display:none;text-align:center;padding:10px;color:var(--blue);font-weight:800">正在解析…</div>
     </div>
 
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeUploadModal()">取消</button>
-      <button class="btn-ai" id="btn-ai-parse" onclick="doAiParse()" style="display:none">✨ AI解析</button>
+      <button class="btn-ai" id="btn-ai-parse" onclick="doBatchUpload()" style="display:none">开始解析并上传</button>
     </div>
   </div>
 </div>
@@ -448,9 +400,10 @@ var KB_STORAGE_KEY = 'provider-kb-files';
 
 var CAT_NAMES = {case:'案例库',template:'模板库',knowledge:'行业知识',qa:'QA',sales:'销售工具'};
 var CAT_COLORS = {case:'case',template:'template',knowledge:'knowledge',qa:'qa',sales:'sales'};
+var CAT_TAG_COLORS = {case:'#1263e6',template:'#d97706',knowledge:'#0891b2',qa:'#059669',sales:'#7c3aed'};
 
 var _backendClients = [];
-var _currentView = 'grid';
+var _currentView = 'list';
 var _searchText = '';
 var _filterProgress = '';
 var _filterTime = 'recent';
@@ -475,10 +428,25 @@ function autoLogin() {
     .then(function(d) {
       document.getElementById('user-greet').textContent = '你好！' + (d.user && (d.user.provider_name || d.user.username) || '服务商');
       loadClientsFromBackend();
-      loadKbFiles();
+      loadKbData();
     }).catch(function(e) {
-      localStorage.removeItem(TOKEN_KEY);
-      location.href = 'login.html';
+      // Token invalid - try test-login to get a fresh valid token
+      fetch(API_BASE + '/api/test-login', { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.access_token) {
+            localStorage.setItem(TOKEN_KEY, data.access_token);
+            document.getElementById('user-greet').textContent = '你好！' + (data.user && data.user.provider_name || '服务商');
+            loadClientsFromBackend();
+            loadKbData();
+          } else {
+            localStorage.removeItem(TOKEN_KEY);
+            location.href = 'login.html';
+          }
+        }).catch(function() {
+          localStorage.removeItem(TOKEN_KEY);
+          location.href = 'login.html';
+        });
     });
 }
 
@@ -509,93 +477,131 @@ function doLogout() {
 
 // KB FILES
 function loadKbFiles() {
-  _kbFiles = JSON.parse(localStorage.getItem(KB_STORAGE_KEY) || '[]');
-  renderKbUI();
+  loadKbData();
 }
 
 function saveKbFiles() {
-  localStorage.setItem(KB_STORAGE_KEY, JSON.stringify(_kbFiles));
-}
-
-function getKbProgress() {
-  var cats = ['case', 'template', 'knowledge', 'qa', 'sales'];
-  var filled = cats.filter(function(cat) { return _kbFiles.some(function(f) { return f.cat === cat; }); });
-  return { filled: filled.length, total: cats.length, pct: Math.round((filled.length / cats.length) * 100) };
+  // 不再使用 localStorage
 }
 
 function renderKbUI() {
-  var progress = getKbProgress();
-  document.getElementById('kb-progress-fill').style.width = progress.pct + '%';
-  document.getElementById('kb-progress-pct').textContent = progress.pct + '%';
+  // 计算完善度：文件数/10 * 100%，最高100%
+  var total = _kbFiles.length;
+  var completion = Math.min(Math.round(total / 10 * 100), 100);
+  document.getElementById('kb-progress-fill').style.width = completion + '%';
+  document.getElementById('kb-progress-pct').textContent = completion + '%';
 
+  // 更新分类计数
   var cats = ['case', 'template', 'knowledge', 'qa', 'sales'];
   cats.forEach(function(cat) {
-    var count = _kbFiles.filter(function(f) { return f.cat === cat; }).length;
-    document.getElementById('count-' + cat).textContent = count + '个文件';
+    var count = _kbFiles.filter(function(f) { return f.category === cat; }).length;
+    var el = document.getElementById('count-' + cat);
+    if (el) el.textContent = count;
   });
+  var elAll = document.getElementById('count-all');
+  if (elAll) elAll.textContent = total;
 
-  // Contrast
-  var parsed = _kbFiles.filter(function(f) { return f.parsed && f.contrast; });
-  var contrastSection = document.getElementById('kb-contrast-section');
-  if (parsed.length > 0) {
-    contrastSection.style.display = 'block';
-    var tbody = document.getElementById('kb-contrast-body');
-    tbody.innerHTML = parsed.map(function(f) {
-      var labels = {case:'案例增强', template:'模板优化', knowledge:'知识补充', qa:'话术定制', sales:'销售赋能'};
-      return '<tr><td class="kb-contrast-default"><b style="color:var(--text2)">' + f.contrast.title + '</b><br><del>' + f.contrast.defaultText + '</del></td><td class="kb-contrast-kb">' + f.contrast.kbText + '<span class="kb-badge">来自 ' + f.name + '</span></td><td style="font-size:12px;color:var(--text3)">' + (labels[f.cat] || '') + '</td></tr>';
-    }).join('');
-  } else {
-    contrastSection.style.display = 'none';
-  }
-
-  // File list
-  if (_kbFiles.length > 0) {
+  // 文件列表
+  var filterCat = window._kbFilter || '';
+  var filtered = filterCat ? _kbFiles.filter(function(f) { return f.category === filterCat; }) : _kbFiles.slice();
+  if (filtered.length > 0 || total > 0) {
     document.getElementById('kb-files-section').style.display = 'block';
-    var sorted = _kbFiles.slice().sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+    var sorted = filtered.sort(function(a, b) { return new Date(b.created_at || b.date) - new Date(a.created_at || a.date); });
     document.getElementById('kb-files-body').innerHTML = sorted.map(function(f) {
-      return '<tr><td class="kb-file-name" title="' + f.name + '">' + f.name + '</td><td><span class="kb-file-tag tag-' + CAT_COLORS[f.cat] + '">' + CAT_NAMES[f.cat] + '</span></td><td>' + f.date + '</td><td><button class="btn-icon danger" onclick="if(confirm(\'确定删除「' + f.name + '」？\'))deleteKbFile(' + f.id + ')">删除</button></td></tr>';
+      var statusText = {'uploading':'上传中','parsing':'解析中','indexing':'向量化中','generating':'生成中','completed':'完成','failed':'失败'}[f.status] || '未知';
+      var statusColor = {'uploading':'color:#f59e0b','parsing':'color:#f59e0b','indexing':'color:#f59e0b','generating':'color:#f59e0b','completed':'color:#13b96f','failed':'color:#ef4444'}[f.status] || '';
+      var progress = f.progress || 0;
+      var industryTag = f.industry ? '<span style="background:#f5f5f5;color:#666;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800;margin-left:4px">' + f.industry + '</span>' : '';
+      return '<tr><td class="kb-file-name" title="' + (f.original_filename || f.name) + '"><span style="font-weight:800">' + (f.display_name || f.name) + '</span>' + industryTag + '</td><td><span class="kb-file-tag" style="background:' + (CAT_TAG_COLORS[f.category] || '#888') + '20;color:' + (CAT_TAG_COLORS[f.category] || '#888') + '">' + CAT_NAMES[f.category] + '</span></td><td><span style="' + statusColor + ';font-size:12px;font-weight:800">' + statusText + '</span> <span style="font-size:11px;color:#98a2b3">' + progress + '%</span><div class="kb-file-progress" style="margin-top:4px"><div class="kb-file-progress-bar" style="width:' + progress + '%' + (f.status === 'failed' ? ';background:#ef4444' : f.status === 'completed' ? ';background:#13b96f' : '') + '"></div></div></td><td><button class="kb-delete-btn" onclick="deleteKbFile(\'' + f.id + '\')" title="删除">🗑️</button></td></tr>';
     }).join('');
+
+    // 更新筛选标签高亮
+    document.querySelectorAll('.kb-filter-tab').forEach(function(el) {
+      el.classList.toggle('active', el.dataset.cat === filterCat);
+    });
   } else {
     document.getElementById('kb-files-section').style.display = 'none';
   }
 }
 
 function deleteKbFile(id) {
-  _kbFiles = _kbFiles.filter(function(f) { return f.id !== id; });
-  saveKbFiles();
-  renderKbUI();
+  if (!confirm('确定删除这个文件？')) return;
+  fetch(API_BASE + '/api/kb/files/' + id, {
+    method: 'DELETE',
+    headers: { 'Authorization': 'Bearer ' + getToken() }
+  }).then(function(res) { return res.json(); })
+    .then(function(data) {
+      loadKbData();
+    });
+}
+
+function loadKbData() {
+  fetch(API_BASE + '/api/kb/files', {
+    headers: { 'Authorization': 'Bearer ' + getToken() }
+  }).then(function(res) { return res.json(); })
+    .then(function(data) {
+      _kbFiles = data.files || [];
+      renderKbUI();
+      loadEnhancement();
+    });
+}
+
+function loadEnhancement() {
+  fetch(API_BASE + '/api/kb/enhancement', {
+    headers: { 'Authorization': 'Bearer ' + getToken() }
+  }).then(function(res) { return res.json(); })
+    .then(function(data) {
+      var contrastSection = document.getElementById('kb-contrast-section');
+      var body = document.getElementById('kb-contrast-body');
+      var examples = data.examples || [];
+      if (examples.length > 0) {
+        contrastSection.style.display = 'block';
+        body.innerHTML = '<div style="margin-bottom:8px;color:#98a2b3;font-size:11px;font-weight:800">共' + examples.length + '个示例</div>' + examples.map(function(ex) {
+          return '<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px dashed #e8edf5"><div style="font-size:12px;color:#475467;margin-bottom:8px;font-weight:800">▸ ' + ex.question + '</div><div style="background:#fafbfc;border:1px solid #e8edf5;border-radius:8px;padding:10px 12px;margin-bottom:6px;font-size:12px;color:#666;line-height:1.5">通用：' + ex.default_answer + '</div><div style="background:linear-gradient(135deg,#f0f7ff,#eef6ff);border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12px;color:#1263e6;font-weight:600;line-height:1.5">✨ 增强：' + ex.enhanced_answer + '</div></div>';
+        }).join('');
+      } else {
+        contrastSection.style.display = 'none';
+      }
+    });
 }
 
 // UPLOAD MODAL
 function openUploadModal() {
-  _selectedFile = null;
+  window._selectedFiles = null;
   document.getElementById('upload-step1').style.display = 'block';
   document.getElementById('upload-step2').style.display = 'none';
   document.getElementById('btn-ai-parse').style.display = 'none';
   document.getElementById('file-upload-zone').style.display = 'block';
   document.querySelector('.file-upload-hint').style.display = '';
-  document.getElementById('upload-file-name').style.display = 'none';
   document.getElementById('upload-file-input').value = '';
-  document.getElementById('upload-filename').value = '';
+  document.getElementById('upload-file-list').innerHTML = '';
   document.getElementById('upload-modal').classList.add('active');
 }
 
 function closeUploadModal() {
   document.getElementById('upload-modal').classList.remove('active');
-  _selectedFile = null;
+  window._selectedFiles = null;
 }
 
-function onFileSelected(input) {
-  var file = input.files[0];
-  if (!file) return;
-  _selectedFile = file;
-  document.getElementById('upload-file-name').textContent = file.name;
-  document.getElementById('upload-file-name').style.display = '';
-  document.querySelector('.file-upload-hint').style.display = 'none';
-  document.getElementById('upload-filename').value = file.name;
-  // Auto-detect category based on filename
-  var cat = detectCategory(file.name);
-  document.getElementById('upload-cat').value = cat;
+function onFilesSelected(input) {
+  var files = Array.from(input.files);
+  if (!files.length) return;
+  window._selectedFiles = files.map(function(f, i) {
+    return { file: f, cat: detectCategory(f.name) };
+  });
+
+  // Render file list with editable name, industry and category selectors
+  var list = document.getElementById('upload-file-list');
+  var industries = ['餐饮','制造业','零售','教育','医疗','金融','科技','其他'];
+  list.innerHTML = files.map(function(f, i) {
+    // 去掉扩展名的显示名
+    var defaultName = f.name.replace(/\.[^.]+$/, '');
+    var cat = detectCategory(f.name);
+    var indOptions = industries.map(function(ind) { return '<option value="' + ind + '">' + ind + '</option>'; }).join('');
+    return '<div class="upload-file-item"><input type="text" id="file-name-' + i + '" value="' + defaultName + '" class="upload-file-name-input" title="' + f.name + '"><select id="file-industry-' + i + '" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:800;background:#fff;cursor:pointer"><option value="">行业</option>' + indOptions + '</select><select id="file-cat-' + i + '"><option value="case"' + (cat === 'case' ? ' selected' : '') + '>案例库</option><option value="template"' + (cat === 'template' ? ' selected' : '') + '>模板库</option><option value="knowledge"' + (cat === 'knowledge' ? ' selected' : '') + '>行业知识</option><option value="qa"' + (cat === 'qa' ? ' selected' : '') + '>QA</option><option value="sales"' + (cat === 'sales' ? ' selected' : '') + '>销售工具</option></select></div>';
+  }).join('');
+  document.getElementById('selected-file-count').textContent = files.length;
+
   // Show step 2
   document.getElementById('upload-step1').style.display = 'none';
   document.getElementById('upload-step2').style.display = 'block';
@@ -612,49 +618,102 @@ function detectCategory(filename) {
   return 'knowledge';
 }
 
-function doAiParse() {
-  if (!_selectedFile) return;
-  var cat = document.getElementById('upload-cat').value;
-  var displayName = document.getElementById('upload-filename').value.trim() || _selectedFile.name;
-  closeUploadModal();
-  showLoading('正在解析文件…');
+function doBatchUpload() {
+  var files = window._selectedFiles;
+  if (!files || !files.length) return;
+  var btn = document.getElementById('btn-ai-parse');
+  btn.disabled = true;
+  btn.textContent = '正在上传…';
+  document.getElementById('upload-progress-text').style.display = 'block';
 
-  var reader = new FileReader();
-  reader.onload = function() {
-    var base64 = reader.result.split(',')[1];
-    var entry = {
-      id: Date.now(),
-      cat: cat,
-      name: displayName,
-      fileName: _selectedFile.name,
-      size: _selectedFile.size,
-      type: _selectedFile.type,
-      content: base64,
+  // 收集每个文件的名称、行业和类别
+  files.forEach(function(item, i) {
+    item.displayName = document.getElementById('file-name-' + i).value.trim() || item.file.name;
+    item.industry = document.getElementById('file-industry-' + i).value;
+    item.category = document.getElementById('file-cat-' + i).value;
+  });
+
+  // 先添加到列表，显示0%进度
+  var tempIds = files.map(function(item, i) {
+    var tempId = 'uploading_' + Date.now() + '_' + i;
+    _kbFiles.push({
+      id: tempId,
+      category: item.category,
+      industry: item.industry,
+      display_name: item.displayName,
+      original_filename: item.file.name,
+      size: item.file.size,
+      type: item.file.type,
       date: new Date().toLocaleDateString(),
-      parsed: true,
-      contrast: generateContrast(cat, displayName)
+      status: 'uploading',
+      progress: 0
+    });
+    return tempId;
+  });
+  renderKbUI();
+  closeUploadModal();
+
+  // 逐个上传文件
+  var completed = 0;
+  files.forEach(function(item, i) {
+    var tempId = tempIds[i];
+    var formData = new FormData();
+    formData.append('display_name', item.displayName);
+    formData.append('category', item.category);
+    formData.append('industry', item.industry || '');
+    formData.append('file', item.file);
+
+    var xhr = new XMLHttpRequest();
+    xhr.upload.onprogress = function(e) {
+      if (e.lengthComputable) {
+        var pct = Math.round((e.loaded / e.total) * 30);
+        var entry = _kbFiles.find(function(f) { return f.id === tempId; });
+        if (entry) {
+          entry.progress = pct;
+          entry.status = 'uploading';
+          renderKbUI();
+        }
+      }
     };
-    _kbFiles.push(entry);
-    saveKbFiles();
-    hideLoading();
-    renderKbUI();
-    showToast('✨ ' + displayName + ' 已添加到' + (CAT_NAMES[cat] || '知识库') + '，增强效果已生成！');
-  };
-  reader.onerror = function() {
-    hideLoading();
-    showToast('文件读取失败，请重试', 'error');
-  };
-  reader.readAsDataURL(_selectedFile);
-}
-
-function showLoading(msg) {
-  var el = document.getElementById('loading-msg');
-  if (el) el.textContent = msg || '加载中…';
-  document.getElementById('loading-overlay').classList.remove('hidden');
-}
-
-function hideLoading() {
-  document.getElementById('loading-overlay').classList.add('hidden');
+    xhr.onload = function() {
+      var entry = _kbFiles.find(function(f) { return f.id === tempId; });
+      if (xhr.status === 200) {
+        try {
+          var res = JSON.parse(xhr.responseText);
+          if (entry) {
+            entry.id = res.id;
+            entry.progress = 100;
+            entry.status = 'completed';
+          }
+        } catch(e) {
+          if (entry) { entry.progress = 100; entry.status = 'completed'; }
+        }
+      } else {
+        if (entry) entry.status = 'failed';
+      }
+      completed++;
+      if (completed === files.length) {
+        loadKbData();
+        btn.disabled = false;
+        btn.textContent = '开始上传';
+        document.getElementById('upload-progress-text').style.display = 'none';
+      }
+    };
+    xhr.onerror = function() {
+      var entry = _kbFiles.find(function(f) { return f.id === tempId; });
+      if (entry) entry.status = 'failed';
+      completed++;
+      if (completed === files.length) {
+        loadKbData();
+        btn.disabled = false;
+        btn.textContent = '开始上传';
+        document.getElementById('upload-progress-text').style.display = 'none';
+      }
+    };
+    xhr.open('POST', API_BASE + '/api/kb/upload');
+    xhr.setRequestHeader('Authorization', 'Bearer ' + getToken());
+    xhr.send(formData);
+  });
 }
 
 function showToast(msg, type) {
@@ -662,9 +721,9 @@ function showToast(msg, type) {
   if (!el) return;
   el.textContent = msg;
   el.className = 'toast' + (type === 'error' ? ' toast-error' : '');
-  el.classList.remove('hidden');
+  el.style.display = 'block';
   clearTimeout(el._timer);
-  el._timer = setTimeout(function() { el.classList.add('hidden'); }, 3000);
+  el._timer = setTimeout(function() { el.style.display = 'none'; }, 2000);
 }
 
 function generateContrast(cat, name) {
@@ -695,12 +754,13 @@ function getProgress(c) {
   return p;
 }
 var LABELS = {0:'客户录入',1:'调研准备',2:'沟通纪要',3:'需求整理',4:'Demo设计'};
-var INDUSTRY_COLORS = {餐饮:'tag-餐饮',制造业:'tag-制造业',零售:'tag-零售',教育:'tag-教育',医疗:'tag-医疗',金融:'tag-金融'};
+var INDUSTRY_COLORS = {餐饮:'tag-餐饮',制造业:'tag-制造业',零售:'tag-零售',教育:'tag-教育',医疗:'tag-医疗',金融:'tag-金融',其他:'tag-其他'};
 
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.toggle('on', t.dataset.tab === tab); });
   document.getElementById('clients-content').style.display = tab === 'clients' ? '' : 'none';
   document.getElementById('kb-content').style.display = tab === 'kb' ? '' : 'none';
+  if (tab === 'kb') loadKbData();
 }
 
 function setView(v) {
@@ -731,7 +791,7 @@ function renderClientList() {
 
   var container = document.getElementById('client-container');
   if (clients.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><h3>' + (_searchText || _filterProgress ? '没有找到符合条件的客户' : '暂无客户') + '</h3><p>' + (_searchText || _filterProgress ? '调整筛选条件试试' : '点击下方按钮，创建第一个客户，开始售前调研工作') + '</p>' + (!_searchText && !_filterProgress ? '<button class="empty-cta" onclick="openNewClientModal()">+ 新建客户</button>' : '') + '</div>';
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><h3>' + (_searchText || _filterProgress ? '没有找到符合条件的客户' : '暂无客户') + '</h3><p>' + (_searchText || _filterProgress ? '调整筛选条件试试' : '点击下方按钮，创建第一个客户，开始售前调研工作') + '</p>' + (!_searchText && !_filterProgress ? '<button class="empty-cta" onclick="location.href=\'workbench?new=1\'">+ 新建客户</button>' : '') + '</div>';
     return;
   }
   if (_currentView === 'grid') renderGrid(clients, container);
@@ -773,7 +833,7 @@ function renderTable(clients, container) {
   container.innerHTML = html;
 }
 
-function openClient(id) { location.href = '/workbench?client_id=' + encodeURIComponent(id); }
+function openClient(id) { location.href = 'workbench?client_id=' + encodeURIComponent(id); }
 function openNewClientModal() { document.getElementById('new-client-modal').classList.add('active'); document.getElementById('new-name').value = ''; document.getElementById('new-industry').value = ''; setTimeout(function() { document.getElementById('new-name').focus(); }, 50); }
 function closeNewClientModal() { document.getElementById('new-client-modal').classList.remove('active'); }
 
@@ -783,8 +843,8 @@ function confirmNewClient() {
   if (!name) return;
   closeNewClientModal();
   createClientBackend(name, industry, function(d) {
-    if (d.success && d.id) location.href = '/workbench?client_id=' + d.id;
-    else location.href = '/workbench?new=1';
+    if (d.success && d.id) location.href = 'workbench?client_id=' + d.id;
+    else location.href = 'workbench?new=1';
   });
 }
 
@@ -796,8 +856,18 @@ function confirmDelete(id, name) {
   });
 }
 
-document.getElementById('btn-new-client').addEventListener('click', openNewClientModal);
+document.getElementById('btn-new-client').addEventListener('click', function() { location.href = 'workbench?new=1'; });
 init();
+
+// KB filter tabs
+document.querySelectorAll('.kb-filter-tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.kb-filter-tab').forEach(function(t) { t.classList.remove('active'); });
+    tab.classList.add('active');
+    window._kbFilter = tab.dataset.cat;
+    renderKbUI();
+  });
+});
 </script>
 </body>
 </html>
