@@ -2227,8 +2227,8 @@ function saveStep2ToClient() {
   data.part1.company_background = document.getElementById('s2-profile-text').textContent || '';
   data.part1.pain_points = Array.from(document.querySelectorAll('#s2-pains .pain')).map(el => el.textContent);
   data.part2 = Array.from(document.querySelectorAll('#s2-gaps .gap')).map(el => ({
-    gap: el.querySelector('b').textContent,
-    priority: el.querySelector('.priority').textContent.replace('优先级', '').trim()
+    gap: el.querySelector('.gap-text')?.textContent || el.querySelector('b')?.textContent || '',
+    priority: el.querySelector('.priority-select')?.value || el.querySelector('.priority')?.textContent?.replace('优先级', '').trim() || '高'
   }));
   data.part3 = data.part3 || {};
   data.part3.must_ask = Array.from(document.querySelectorAll('#s2-must-questions .q-card')).map(card => ({
