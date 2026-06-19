@@ -1876,7 +1876,7 @@ async function doRegenerateStep4() {
   btn.classList.add('loading');
   btn.disabled = true;
   saveStep4ToClient();
-  const c = getClient(currentClientId);
+  // Refresh client data after save
   showGenerateModal('正在重新生成售前报告', 'AI 正在分析沟通记录并生成需求报告', 4);
   setGenStep(1);
   genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时', true); }, 30000);
@@ -3275,7 +3275,12 @@ function renderArtifacts() {
   items.push({ name: '沟通记录库', tag: noteCount > 0 ? '已沉淀' : '待补充', tagCls: noteCount > 0 ? '' : 'todo', pct: notePct, dataKey: 'uploaded_files', desc: '已沉淀 ' + noteCount + ' 次沟通记录。' });
 
   // 售前解决方案
-  items.push({ name: '售前解决方案', tag: c.step4_report ? '已生成' : '待生成', tagCls: c.step4_report ? '' : 'todo', pct: c.step4_report ? 100 : 0, dataKey: 'step4_report', desc: '客户现状、核心痛点、解决方案、建设模块与实施阶段。' });
+  const hasPresales = !!(c.step4_presales);
+  const hasTechnical = !!(c.step4_technical);
+  items.push({ name: '售前解决方案', tag: hasPresales ? '已生成' : '待生成', tagCls: hasPresales ? '' : 'todo', pct: hasPresales ? 100 : 0, dataKey: 'step4_presales', desc: '面向客户汇报，包含痛点诊断、解决思路、建设模块与实施阶段。' });
+
+  // 技术路线及报价方案
+  items.push({ name: '技术路线及报价方案', tag: hasTechnical ? '已生成' : '待生成', tagCls: hasTechnical ? '' : 'todo', pct: hasTechnical ? 100 : 0, dataKey: 'step4_technical', desc: '面向内部评估，拆解技术路径、交付范围与报价口径。' });
 
   // Demo Schema
   items.push({ name: 'Demo Schema', tag: c.step5_schema ? '已生成' : '待生成', tagCls: c.step5_schema ? '' : 'todo', pct: c.step5_schema ? 100 : 0, dataKey: 'step5_schema', desc: '智能表格 Schema，可直接创建企微智能表格。' });
