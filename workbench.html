@@ -772,9 +772,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 
           <!-- Dual mode file upload (v22 glass) -->
           <div class="field record-field">
-            <div class="label">上传文件 <span class="hint">支持 .docx / .txt / .pdf</span></div>
+            <div class="label">上传文件 <span class="hint">支持 .docx / .txt / .pdf（可多选）</span></div>
             <div class="file-upload-area" id="s3-upload-area">
-              <input type="file" id="s3-file-input" accept=".docx,.txt,.pdf" style="display:none" onchange="handleFileUpload(this.files[0])">
+              <input type="file" id="s3-file-input" accept=".docx,.txt,.pdf" multiple style="display:none" onchange="handleFileUpload(this.files)">
               <div class="upload-drop-zone" id="s3-drop-zone"
                 ondragover="event.preventDefault();this.classList.add('drag-over')"
                 ondragleave="this.classList.remove('drag-over')"
@@ -784,8 +784,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
                 <div class="dz-hint" id="s3-dz-hint">点击选择文件 或 拖拽文件到此处</div>
                 <div class="file-name" id="s3-file-name-display" style="display:none"></div>
                 <div class="dz-actions" id="s3-dz-actions" style="display:none">
-                  <button type="button" onclick="event.stopPropagation();clearFileUpload()">移除</button>
-                  <button type="button" class="primary" onclick="event.stopPropagation();doAddFileRecord()">添加到记录</button>
+                  <button type="button" onclick="event.stopPropagation();clearFileUpload()">清除</button>
+                  <button type="button" class="primary" onclick="event.stopPropagation();doConfirmFileUpload()">确认上传（<span id="s3-file-count">0</span>个文件）</button>
                 </div>
               </div>
             </div>
@@ -2404,29 +2404,30 @@ function renderNoteList(c) {
 }
 
 // Dual-mode file upload handlers
-function handleFileUpload(file) {
-  if (!file) return;
-  showSelectedFile(file);
+function handleFileUpload(files) {
+  if (!files || files.length === 0) return;
+  showSelectedFiles(files);
 }
 
 function handleFileDrop(e) {
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file) showSelectedFile(file);
+  const files = e.dataTransfer.files;
+  if (files && files.length > 0) showSelectedFiles(files);
 }
 
-function showSelectedFile(file) {
+function showSelectedFiles(files) {
   const zone = document.getElementById('s3-drop-zone');
   const hint = document.getElementById('s3-dz-hint');
   const nameDisplay = document.getElementById('s3-file-name-display');
   const actions = document.getElementById('s3-dz-actions');
+  const countSpan = document.getElementById('s3-file-count');
   hint.style.display = 'none';
   nameDisplay.style.display = 'block';
-  nameDisplay.textContent = file.name;
+  nameDisplay.textContent = files.length === 1 ? files[0].name : `已选择 ${files.length} 个文件`;
   actions.style.display = 'flex';
+  if (countSpan) countSpan.textContent = files.length;
   zone.classList.add('has-file');
-  document.getElementById('s3-file-input').files = [file];
 }
 
 function clearFileUpload() {
@@ -2441,14 +2442,63 @@ function clearFileUpload() {
   document.getElementById('s3-file-input').value = '';
 }
 
-function uploadSelectedFile() {
-  const file = document.getElementById('s3-file-input').files[0];
-  if (!file) return;
-  handleFileUpload(file);
+function doConfirmFileUpload() {
+  const files = document.getElementById('s3-file-input').files;
+  if (!files || files.length === 0) { showToast('请先选择文件'); return; }
+  if (files.length === 1) {
+    doAddFileRecord(files[0]);
+    return;
+  }
+  // 多个文件：显示确认框
+  const list = Array.from(files).map(f => `<li style="text-align:left;margin-bottom:4px">📄 ${f.name}</li>`).join('');
+  if (!confirm(`确认上传 ${files.length} 个文件？\n\n${list}`)) return;
+  // 批量上传
+  showFullscreenLoading(`正在上传 ${files.length} 个文件…`);
+  let processed = 0;
+  let successCount = 0;
+  const c = getClient(currentClientId);
+  const allFiles = c.uploaded_files ? [...c.uploaded_files] : [];
+
+  function uploadNext(idx) {
+    if (idx >= files.length) {
+      updateClient(currentClientId, { uploaded_files: allFiles, transcript: allFiles.map(f=>f.text).join('\n\n---\n\n') });
+      clearFileUpload();
+      renderNoteList(getClient(currentClientId));
+      hideFullscreenLoading();
+      showToast(`已添加 ${successCount} 个文件到沟通记录`);
+      autoGenerateSummary();
+      return;
+    }
+    const file = files[idx];
+    const formData = new FormData();
+    formData.append('file', file);
+    fetch(API_BASE + '/api/upload', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + getToken() },
+      body: formData
+    }).then(r => r.json()).then(data => {
+      const extracted = data.text || data.content || '';
+      allFiles.push({
+        name: file.name,
+        text: extracted || '(文件内容提取失败，请手动粘贴)',
+        source: document.getElementById('s3-source').value,
+        stage: document.getElementById('s3-stage').value,
+        date: new Date().toLocaleDateString(),
+        type: 'file'
+      });
+      successCount++;
+    }).catch(() => {}).finally(() => {
+      processed++;
+      if (processed % 5 === 0 || processed === files.length) {
+        showFullscreenLoading(`正在上传 ${files.length} 个文件…（${processed}/${files.length}）`);
+      }
+      uploadNext(processed);
+    });
+  }
+  uploadNext(0);
 }
 
-function doAddFileRecord() {
-  const file = document.getElementById('s3-file-input').files[0];
+function doAddFileRecord(file) {
   if (!file) { showToast('请先选择文件'); return; }
   const c = getClient(currentClientId);
   const files = c.uploaded_files || [];
@@ -2456,7 +2506,7 @@ function doAddFileRecord() {
   fetch(API_BASE + '/api/upload', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + getToken() },
-    body: new FormData().append('file', file)
+    body: (() => { const fd = new FormData(); fd.append('file', file); return fd; })()
   }).then(r => r.json()).then(data => {
     const extracted = data.text || data.content || '';
     files.push({
