@@ -1029,9 +1029,8 @@ function updateClient(id, updates) {
   const clients = getClients();
   const idx = clients.findIndex(c => c.id === id);
   if (idx >= 0) { Object.assign(clients[idx], updates, { updated_at: new Date().toISOString() }); saveClients(clients); }
-  if (_backendClientCache[id]) {
-    _backendClientCache[id] = { ..._backendClientCache[id], ...updates };
-  }
+  // Always update cache, merging with existing data
+  _backendClientCache[id] = { ...(_backendClientCache[id] || {}), ...updates };
   fetch(API_BASE + '/api/clients/' + id, {
     method: 'PUT',
     headers: getAuthHeaders(),
@@ -1951,10 +1950,12 @@ function loadStep2(c) {
   if (!c.step1_result) return;
   const data = c.step1_result;
   document.getElementById('s2-profile-text').textContent = data.part1?.company_background || '-';
+  // 动态渲染 pain_points，不再依赖静态 4 个元素
+  const painGrid = document.getElementById('s2-pains');
   const pains = data.part1?.pain_points || [];
-  document.querySelectorAll('#s2-pains .pain').forEach((el, i) => {
-    el.textContent = pains[i] || '-';
-  });
+  painGrid.innerHTML = pains.length > 0
+    ? pains.map(p => `<div class="pain" contenteditable="false">${p}</div>`).join('')
+    : '<div class="pain" contenteditable="false">-</div>';
   renderGaps(data.part2 || []);
   // 先清空容器再渲染，避免 innerHTML+= 导致按钮叠加
   document.getElementById('s2-must-questions').innerHTML = '';
