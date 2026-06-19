@@ -2807,6 +2807,33 @@ function renderStep4Presales(data) {
 }
 
 
+
+function renderStep4Technical(data) {
+  const preview = document.getElementById('s4-technical-preview');
+  const empty = document.getElementById('s4-technical-empty');
+  const status = document.getElementById('s4-technical-status');
+  if (!data) return;
+  empty.style.display = 'none';
+  preview.style.display = 'block';
+  status.textContent = '已生成';
+  status.style.background = '#ecfdf5';
+  status.style.color = '#059669';
+
+  // 渲染摘要内容
+  const positioning = data['技术定位'] || data.技术定位 || '-';
+  const tableDesign = data['表格设计'] || data.表格设计 || [];
+  const approvalDesign = data['审批设计'] || data.审批设计 || [];
+  const autoDesign = data['自动化设计'] || data.自动化设计 || [];
+
+  preview.innerHTML = '<div style="font-size:13px;color:#344054;line-height:1.7;max-height:300px;overflow-y:auto">' +
+    (positioning && positioning !== '-' ? '<div style="margin-bottom:10px"><b style="color:#1263e6">技术定位</b><br>' + positioning + '</div>' : '') +
+    '<div style="margin-bottom:8px"><b>表格设计：</b>' + tableDesign.length + ' 张表</div>' +
+    (approvalDesign.length ? '<div style="margin-bottom:8px"><b>审批流程：</b>' + approvalDesign.length + ' 个</div>' : '') +
+    (autoDesign.length ? '<div style="margin-bottom:8px"><b>自动化规则：</b>' + autoDesign.length + ' 条</div>' : '') +
+    '<details style="margin-top:10px"><summary style="cursor:pointer;color:#1263e6;font-size:12px">查看完整内容</summary><pre style="white-space:pre-wrap;font-size:11px;color:#667085;margin-top:8px">' + JSON.stringify(data, null, 2) + '</pre></details></div>';
+}
+
+
 function loadStep5(c) {
   updateCtxBar(c);
   if (c.step5_schema) {
