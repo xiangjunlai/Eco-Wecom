@@ -2716,7 +2716,13 @@ async function generateStep4Presales() {
   const btn = document.getElementById('s4-presales-btn');
   btn.disabled = true;
   btn.textContent = '生成中...';
-  showFullscreenLoading('正在生成售前方案...');
+  showGenerateModal('正在生成售前方案', 'AI 正在分析沟通记录并生成售前方案', 4);
+  setGenStep(1);
+  let genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时，请重试', true); }, 30000);
+  setTimeout(() => { if (genReady) return; setGenStep(2); }, 500);
+  setTimeout(() => { if (genReady) return; setGenStep(3); }, 1500);
+  setTimeout(() => { if (genReady) return; setGenStep(4); }, 5000);
+  setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
   try {
     const resp = await fetch(API_BASE + '/api/step4/generate', {
       method: 'POST',
@@ -2724,19 +2730,22 @@ async function generateStep4Presales() {
       body: JSON.stringify({ client_id: currentClientId, type: 'presales' })
     });
     const data = await resp.json();
+    clearTimeout(genTimeout);
+    if (genReady) return;
     if (data.presales) {
       updateClient(currentClientId, { step4_presales: data.presales });
       renderStep4Presales(data.presales);
-      showToast('售前方案生成成功');
+      showGenSuccess('售前方案生成完成', '');
     } else {
       throw new Error(data.detail || '生成失败');
     }
   } catch(e) {
-    showToast('生成失败: ' + e.message);
+    clearTimeout(genTimeout);
+    if (genReady) return;
+    showGenError2(e.message || '生成失败', true);
   } finally {
     btn.disabled = false;
     btn.textContent = '重新生成';
-    hideFullscreenLoading();
   }
 }
 
@@ -2750,7 +2759,13 @@ async function generateStep4Technical() {
   const btn = document.getElementById('s4-technical-btn');
   btn.disabled = true;
   btn.textContent = '生成中...';
-  showFullscreenLoading('正在生成技术方案...');
+  showGenerateModal('正在生成技术方案', 'AI 正在分析沟通记录并生成技术方案', 4);
+  setGenStep(1);
+  let genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时，请重试', true); }, 30000);
+  setTimeout(() => { if (genReady) return; setGenStep(2); }, 500);
+  setTimeout(() => { if (genReady) return; setGenStep(3); }, 1500);
+  setTimeout(() => { if (genReady) return; setGenStep(4); }, 5000);
+  setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
   try {
     const resp = await fetch(API_BASE + '/api/step4/generate', {
       method: 'POST',
@@ -2758,19 +2773,22 @@ async function generateStep4Technical() {
       body: JSON.stringify({ client_id: currentClientId, type: 'technical' })
     });
     const data = await resp.json();
+    clearTimeout(genTimeout);
+    if (genReady) return;
     if (data.technical) {
       updateClient(currentClientId, { step4_technical: data.technical });
       renderStep4Technical(data.technical);
-      showToast('技术方案生成成功');
+      showGenSuccess('技术方案生成完成', '');
     } else {
       throw new Error(data.detail || '生成失败');
     }
   } catch(e) {
-    showToast('生成失败: ' + e.message);
+    clearTimeout(genTimeout);
+    if (genReady) return;
+    showGenError2(e.message || '生成失败', true);
   } finally {
     btn.disabled = false;
     btn.textContent = '重新生成';
-    hideFullscreenLoading();
   }
 }
 
