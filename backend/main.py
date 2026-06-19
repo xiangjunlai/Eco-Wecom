@@ -1159,6 +1159,168 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
 
     return result
 
+@app.post("/api/step4/preview-html")
+async def generate_step4_preview_html(body: dict, user: dict = Depends(require_auth)):
+    """生成售前方案可视化 HTML"""
+    import uuid
+    client_id = body.get("client_id")
+
+    if not client_id:
+        raise HTTPException(status_code=400, detail="client_id is required")
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM clients WHERE id = ? AND user_id = ?", (client_id, user["user_id"]))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="客户不存在")
+
+    client = dict(row)
+    for field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step4_presales", "step4_technical"):
+        if client.get(field) and isinstance(client[field], str):
+            try:
+                client[field] = json.loads(client[field])
+            except:
+                pass
+
+    customer_name = client.get("name", "客户")
+    industry = client.get("industry", "")
+    scale = client.get("scale", "")
+    initial_demand = client.get("initial_demand", "")
+
+    presales = client.get("step4_presales") or {}
+    technical = client.get("step4_technical") or {}
+
+    html_content = generate_solution_html(customer_name, industry, scale, initial_demand, presales, technical)
+
+    public_dir = Path(__file__).parent / "public"
+    public_dir.mkdir(exist_ok=True)
+    filename = "solution_{}_{}.html".format(client_id, uuid.uuid4().hex[:8])
+    filepath = public_dir / filename
+    filepath.write_text(html_content, encoding="utf-8")
+
+    return {"success": True, "url": "/public/{}".format(filename), "filename": filename}
+
+
+def generate_solution_html(customer_name, industry, scale, initial_demand, presales, technical):
+    positioning = presales.get('方案定位') or ''
+    phase1 = presales.get('一期边界') or []
+    phase2 = presales.get('二期边界') or []
+    customer_confirm = presales.get('客户需求确认') or {}
+
+    phase1_html = ''
+    for i, item in enumerate(phase1[:4], 1):
+        if isinstance(item, dict):
+            item_name = item.get('模块名称', str(item))
+            item_desc = item.get('模块描述', '')
+        else:
+            item_name = str(item)
+            item_desc = ''
+        phase1_html += '<div class="scenario"><div class="scenario-side"><div class="num">{:02d}</div><h3>{}</h3><div class="prio"><span class="badge p0">P0 一期重点</span></div></div><div class="scenario-body"><h3>建设内容</h3><p>{}</p></div></div>'.format(i, item_name, item_desc)
+
+    phase2_html = ''
+    for item in phase2:
+        if isinstance(item, dict):
+            item_name = item.get('模块名称', str(item))
+            item_desc = item.get('说明', '')
+        else:
+            item_name = str(item)
+            item_desc = ''
+        phase2_html += '<div class="qa-card"><b>二期：{}</b><span>{}</span></div>'.format(item_name, item_desc)
+
+    confirm_html = ''
+    for q in customer_confirm.get('待确认问题', []):
+        q_text = q.get('问题', str(q)) if isinstance(q, dict) else str(q)
+        q_desc = q.get('说明', '') if isinstance(q, dict) else ''
+        confirm_html += '<div class="qa-card"><b>{}</b><span>{}</span></div>'.format(q_text, q_desc)
+
+    return '''<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{customer_name}｜企业微信智能表格方案</title>
+  <style>
+    :root{{--wx-blue:#1677ff;--ink:#101828;--text:#344054;--muted:#667085;--line:#e6edf7;--bg:#f5f8fc;--card:#fff;--radius:20px}}
+    *{{box-sizing:border-box}}body{{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg);line-height:1.65}}
+    .page{{max-width:1240px;margin:0 auto;padding:26px 24px 76px}}
+    .topbar{{height:58px;display:flex;align-items:center;margin-bottom:18px}}
+    .brand{{display:flex;align-items:center;gap:12px;font-weight:800;color:var(--ink)}}
+    .brand-mark{{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#1677ff,#1ec7f4)}}
+    .hero{{position:relative;border-radius:32px;background:linear-gradient(135deg,rgba(255,255,255,.97),rgba(235,246,255,.96));min-height:280px;padding:48px}}
+    .hero h1{{margin:0;color:var(--ink);font-size:40px}}
+    .hero p{{margin:16px 0;color:var(--muted);font-size:18px}}
+    .chips{{display:flex;gap:10px;flex-wrap:wrap}}
+    .chip{{padding:8px 16px;background:#fff;border:1px solid #e2edf9;border-radius:999px;font-size:13px}}
+    section{{margin-top:38px}}
+    .section-head{{margin-bottom:18px}}
+    .kicker{{color:var(--wx-blue);font-size:12px;font-weight:900}}
+    .section-title h2{{font-size:28px;color:var(--ink);margin:5px 0 0}}
+    .summary-strip{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}}
+    .summary-item{{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px}}
+    .summary-item strong{{display:block;color:#14213d;font-size:16px}}
+    .summary-item span{{font-size:13px;color:var(--muted)}}
+    .scenario-list{{display:grid;gap:16px}}
+    .scenario{{display:grid;grid-template-columns:220px 1fr;gap:18px;padding:22px;border-radius:20px;background:#fff;border:1px solid var(--line)}}
+    .scenario-side{{border-radius:16px;background:linear-gradient(180deg,#f1f8ff,#fff);padding:18px}}
+    .scenario-side .num{{font-size:34px;font-weight:950;color:var(--wx-blue)}}
+    .scenario-side h3{{margin:8px 0 0;font-size:16px}}
+    .scenario-body h3{{margin:0 0 8px;font-size:18px}}
+    .scenario-body p{{margin:0;color:var(--muted)}}
+    .badge{{display:inline-flex;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800}}
+    .p0{{background:#fff1f0;color:#b42318}}
+    .qa{{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}}
+    .qa-card{{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}}
+    .qa-card b{{display:block;color:#1f3f70;margin-bottom:6px}}
+    .qa-card span{{color:var(--muted);font-size:14px}}
+    .cta{{margin-top:42px;border-radius:24px;padding:34px;background:linear-gradient(135deg,#1267e8,#22b8ff);color:#fff}}
+    .cta h2{{margin:0 0 8px;color:#fff;font-size:24px}}
+    .cta p{{margin:0;color:rgba(255,255,255,.86)}}
+    @media(max-width:768px){{.summary-strip,.scenario{{grid-template-columns:1fr}}.qa{{grid-template-columns:1fr}}}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar"><div class="brand"><span class="brand-mark"></span><span>企业微信生态服务方案</span></div></header>
+    <section class="hero">
+      <h1>{customer_name}<br>需求整理方案</h1>
+      <p>{positioning}</p>
+      <div class="chips"><span class="chip">{industry}</span><span class="chip">{scale}</span><span class="chip">一期重点建设</span></div>
+    </section>
+    <section><div class="section-head"><div class="kicker">01 / Background</div><div class="section-title"><h2>客户现状</h2></div></div>
+      <div class="summary-strip">
+        <div class="summary-item"><strong>客户名称</strong><span>{customer_name}</span></div>
+        <div class="summary-item"><strong>所属行业</strong><span>{industry}</span></div>
+        <div class="summary-item"><strong>企业规模</strong><span>{scale}</span></div>
+        <div class="summary-item"><strong>需求方向</strong><span>{initial_demand}</span></div>
+      </div>
+    </section>
+    <section><div class="section-head"><div class="kicker">02 / Phase 1</div><div class="section-title"><h2>一期建设范围</h2></div></div>
+      <div class="scenario-list">{phase1_html}</div>
+    </section>
+    <section><div class="section-head"><div class="kicker">03 / Phase 2</div><div class="section-title"><h2>二期评估范围</h2></div></div>
+      <div class="qa">{phase2_html}</div>
+    </section>
+    <section><div class="section-head"><div class="kicker">04 / Confirm</div><div class="section-title"><h2>待确认问题</h2></div></div>
+      <div class="qa">{confirm_html}</div>
+    </section>
+    <section class="cta"><div><h2>建议以一期建设范围作为起步</h2><p>先解决核心业务诉求，再基于实际使用情况迭代二期能力</p></div></section>
+  </div>
+</body>
+</html>'''.format(
+        customer_name=customer_name,
+        industry=industry,
+        scale=scale or '规模待确认',
+        initial_demand=initial_demand or '待沟通',
+        positioning=positioning or '基于企业微信智能表格的轻量定制方案',
+        phase1_html=phase1_html or '<p style="color:var(--muted)">一期范围待生成</p>',
+        phase2_html=phase2_html or '<div class="qa-card"><b>暂无二期评估内容</b><span>待后续沟通确认</span></div>',
+        confirm_html=confirm_html or '<div class="qa-card"><b>暂无待确认问题</b><span>请在方案确认时补充</span></div>'
+    )
+
+
 # ==================== 企业微信智能表格 ====================
 
 import subprocess
