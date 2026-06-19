@@ -929,7 +929,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
         <div class="demo-card demo-output active" id="customDemo">
           <div class="demo-card-head">
             <div><h3>企业微信智能表格 Demo</h3><span>左侧选择演示场景，右侧实时切换演示内容</span></div>
-            <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
+            <div style="display:flex;gap:8px">
+              <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
+              <button class="edit-btn success" style="background:#ecfdf5;color:#047857;border-color:#bbf7d0" onclick="createSmartSheet()">创建企微智能表格</button>
+            </div>
           </div>
           <div class="demo-workspace">
             <div class="demo-nav" data-demo-tabs="sheet">
@@ -944,8 +947,11 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
         </div>
         <div class="demo-card demo-output" id="agentDemo">
           <div class="demo-card-head">
-            <div><h3>Agent 小 Demo</h3><span>左侧选择 Agent 能力，右侧自动切换对话演示</span></div>
-            <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
+            <div><h3>Agent Demo</h3><span>左侧选择 Agent 能力，右侧自动切换对话演示</span></div>
+            <div style="display:flex;gap:8px">
+              <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
+              <button class="edit-btn success" style="background:#ecfdf5;color:#047857;border-color:#bbf7d0" onclick="createAgentDemo()">创建 Agent Demo</button>
+            </div>
           </div>
           <div class="agent-workspace">
             <div class="demo-nav" data-demo-tabs="agent">
@@ -2831,6 +2837,37 @@ async function createSmartSheet() {
     alert('创建失败: ' + e.message);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '创建企微智能表格'; }
+    hideFullscreenLoading();
+  }
+}
+
+async function createAgentDemo() {
+  const c = getClient(currentClientId);
+  const btn = document.querySelector('[onclick="createAgentDemo()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '创建中…'; }
+  showFullscreenLoading('正在生成 Agent Demo H5…');
+  try {
+    const resp = await fetch(API_BASE + '/api/agent-demo/create', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        client_data: {
+          name: c.name || '未知客户',
+          industry: c.industry || '',
+          step4_report: c.step4_report || {},
+          step1_result: c.step1_result || {}
+        }
+      })
+    });
+    const data = await resp.json();
+    if (!data.success) throw new Error(data.error || '创建失败');
+    showToast('Agent Demo 创建成功！');
+    addArtifact({ type: 'agent_demo', title: c.name + ' Agent Demo', url: data.url });
+    window.open(data.url, '_blank');
+  } catch(e) {
+    alert('创建失败: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '创建 Agent Demo'; }
     hideFullscreenLoading();
   }
 }
