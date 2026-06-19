@@ -890,11 +890,12 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
           </div>
           <div id="s4-tech-content"></div>
-          <div class="extract-hint">点击底部按钮后，右侧制品区会新增「售前解决方案」和「技术路线及报价方案」。</div>
+          <div class="extract-hint" id="s4-hint-empty">点击下方按钮生成需求分析报告</div>
+          <div class="extract-hint" id="s4-hint-regen" style="display:none">重新生成会覆盖当前报告</div>
         </div>
 
         <div class="step-action-bar">
-          <button class="btn secondary" id="s4-gen-btn" onclick="doRegenerateStep4()">重新生成售前报告</button>
+          <button class="btn secondary" id="s4-gen-btn" onclick="doRegenerateStep4()">生成需求分析报告</button>
           <button class="btn primary" id="s4-next-btn" onclick="doStep4Next()">下一步 →</button>
         </div>
       </section>
@@ -1843,26 +1844,26 @@ function doStep3Next() {
     showToast('请先添加沟通记录');
     return;
   }
-  if (!c.step3_summary) {
-    showToast('请等待摘要生成完成');
-    return;
-  }
   go(4);
 }
 
 function doStep4Next() {
   const c = getClient(currentClientId);
   saveStep4ToClient();
-  if (c.step5_schema) {
-    go(5);
-  } else {
-    doRegenerateStep4();
+  if (!c.step4_report) {
+    showToast('请先生成需求分析报告');
+    return;
   }
+  go(5);
 }
 
 // ==================== STEP 4 HANDLERS ====================
 async function doRegenerateStep4() {
-  if (!confirm('重新生成会覆盖当前的需求分析报告，确定要重新生成吗？')) return;
+  const c = getClient(currentClientId);
+  // 只有已存在报告时才要求确认
+  if (c.step4_report) {
+    if (!confirm('重新生成会覆盖当前的需求分析报告，确定要重新生成吗？')) return;
+  }
   const btn = document.getElementById('s4-gen-btn');
   btn.classList.add('loading');
   btn.disabled = true;
@@ -2653,8 +2654,19 @@ function loadAllNotes() {
 // ==================== STEP 4 ====================
 function loadStep4(c) {
   updateCtxBar(c);
+  const genBtn = document.getElementById('s4-gen-btn');
+  const hintEmpty = document.getElementById('s4-hint-empty');
+  const hintRegen = document.getElementById('s4-hint-regen');
   if (c.step4_report) {
     renderStep4Report(c.step4_report);
+    if (genBtn) { genBtn.textContent = '重新生成报告'; genBtn.style.display = ''; }
+    if (hintEmpty) hintEmpty.style.display = 'none';
+    if (hintRegen) hintRegen.style.display = '';
+  } else {
+    // 首次进入，显示"生成"按钮
+    if (genBtn) { genBtn.textContent = '生成需求分析报告'; genBtn.style.display = ''; }
+    if (hintEmpty) hintEmpty.style.display = '';
+    if (hintRegen) hintRegen.style.display = 'none';
   }
 }
 
