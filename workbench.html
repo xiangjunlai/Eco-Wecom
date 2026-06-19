@@ -1857,49 +1857,14 @@ function doStep3Next() {
 
 function doStep4Next() {
   const c = getClient(currentClientId);
-  saveStep4ToClient();
-  if (!c.step4_report) {
-    showToast('请先生成需求分析报告');
+  // 保存当前输入
+  saveStep4Input();
+  // 检查是否至少生成了一种方案
+  if (!c.step4_presales && !c.step4_technical) {
+    showToast('请先生成售前方案或技术方案');
     return;
   }
   go(5);
-}
-
-// ==================== STEP 4 HANDLERS ====================
-async function doRegenerateStep4() {
-  const c = getClient(currentClientId);
-  // 只有已存在报告时才要求确认
-  if (c.step4_report) {
-    if (!confirm('重新生成会覆盖当前的需求分析报告，确定要重新生成吗？')) return;
-  }
-  const btn = document.getElementById('s4-gen-btn');
-  btn.classList.add('loading');
-  btn.disabled = true;
-  saveStep4ToClient();
-  // Refresh client data after save
-  showGenerateModal('正在重新生成售前报告', 'AI 正在分析沟通记录并生成需求报告', 4);
-  setGenStep(1);
-  genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时', true); }, 30000);
-  setTimeout(() => { if (genReady) return; setGenStep(2); }, 500);
-  setTimeout(() => { if (genReady) return; setGenStep(3); }, 1500);
-  setTimeout(() => { if (genReady) return; setGenStep(4); }, 5000);
-  setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
-  fetch(API_BASE + '/api/reports/generate', {
-    method: 'POST', headers: getAuthHeaders(),
-    body: JSON.stringify({ transcript: c.transcript || '', industry: c.industry || '' })
-  }).then(r => r.json()).then(data => {
-    clearTimeout(genTimeout);
-    if (genReady) return;
-    if (data.result) {
-      updateClient(currentClientId, { step4_report: data.result });
-      showGenSuccess('售前报告生成完成', '');
-    } else {
-      showGenError2(data.error || '生成失败', true);
-    }
-  }).catch(e => { clearTimeout(genTimeout); if (genReady) return; showGenError2('网络错误', true); }).finally(() => {
-    btn.classList.remove('loading');
-    btn.disabled = false;
-  });
 }
 
 // ==================== STEP 5 HANDLER ====================
@@ -2808,43 +2773,29 @@ function renderStep4Presales(data) {
   status.textContent = '已生成';
   status.style.background = '#ecfdf5';
   status.style.color = '#059669';
-  // 渲染摘要内容
-  const facts = data.facts || {};
-  const proposal = data.proposal || {};
+
+  // 渲染摘要内容 - 使用 API 返回的中文 key
+  const positioning = data['方案定位'] || data.方案定位 || '-';
+  const phase1Scopes = data['一期边界'] || data.一期边界 || [];
+  const phase2Scopes = data['二期边界'] || data.二期边界 || [];
+  const notIncluded = data['暂不纳入'] || data.暂不纳入 || [];
+  const customerConfirm = data['客户需求确认'] || data.客户需求确认 || {};
+
   preview.innerHTML = `
-    <div style="font-size:13px;color:#344054;line-height:1.6">
-      <div style="margin-bottom:8px"><b>方案定位：</b>${proposal.approach || '-'}</div>
-      <div style="margin-bottom:8px"><b>一期范围：</b>${(proposal.phase1?.scope || []).join('、') || '-'}</div>
-      <div style="margin-bottom:8px"><b>二期范围：</b>${(proposal.phase2?.scope || []).join('、') || '-'}</div>
-      <div style="color:#667085;font-size:12px">完整内容可编辑查看</div>
+    <div style="font-size:13px;color:#344054;line-height:1.7;max-height:300px;overflow-y:auto">
+      ${positioning && positioning !== '-' ? `<div style="margin-bottom:10px"><b style="color:#1263e6">方案定位</b><br>${positioning}</div>` : ''}
+      ${phase1Scopes.length ? `<div style="margin-bottom:10px"><b>一期范围</b><br>${Array.isArray(phase1Scopes) ? phase1Scopes.join('、') : phase1Scopes}</div>` : ''}
+      ${phase2Scopes.length ? `<div style="margin-bottom:10px"><b>二期边界</b><br>${Array.isArray(phase2Scopes) ? phase2Scopes.join('、') : phase2Scopes}</div>` : ''}
+      ${notIncluded.length ? `<div style="margin-bottom:10px;color:#667085"><b>暂不纳入</b><br>${Array.isArray(notIncluded) ? notIncluded.join('、') : notIncluded}</div>` : ''}
+      <details style="margin-top:10px">
+        <summary style="cursor:pointer;color:#1263e6;font-size:12px">查看完整内容</summary>
+        <pre style="white-space:pre-wrap;font-size:11px;color:#667085;margin-top:8px">${JSON.stringify(data, null, 2)}</pre>
+      </details>
     </div>
   `;
 }
 
-function renderStep4Technical(data) {
-  const preview = document.getElementById('s4-technical-preview');
-  const empty = document.getElementById('s4-technical-empty');
-  const status = document.getElementById('s4-technical-status');
-  if (!data) return;
-  empty.style.display = 'none';
-  preview.style.display = 'block';
-  status.textContent = '已生成';
-  status.style.background = '#ecfdf5';
-  status.style.color = '#059669';
-  // 渲染摘要内容
-  const tech = data.technical || data || {};
-  preview.innerHTML = `
-    <div style="font-size:13px;color:#344054;line-height:1.6">
-      <div style="margin-bottom:8px"><b>技术定位：</b>${tech.positioning || '-'}</div>
-      <div style="margin-bottom:8px"><b>表格数量：</b>${(tech.tables || []).length} 张</div>
-      <div style="margin-bottom:8px"><b>复杂度：</b>${tech.complexity || '-'}</div>
-      <div style="color:#667085;font-size:12px">完整内容可编辑查看</div>
-    </div>
-  `;
-}
 
-// ==================== STEP 5 ====================
-// ==================== STEP 5 ====================
 function loadStep5(c) {
   updateCtxBar(c);
   if (c.step5_schema) {
