@@ -760,7 +760,7 @@ async def get_client(client_id: str, user: dict = Depends(require_auth)):
 
     result = dict(row)
     # Parse JSON fields back to objects
-    for field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step4_report", "step5_schema"):
+    for field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step4_report", "step4_presales", "step4_technical", "step5_schema"):
         if result.get(field) and isinstance(result[field], str):
             try:
                 result[field] = json.loads(result[field])
@@ -780,7 +780,7 @@ async def update_client(client_id: str, data: dict, user: dict = Depends(require
         raise HTTPException(status_code=404, detail="客户不存在")
 
     # 更新字段
-    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step4_report", "step5_schema", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url"]
+    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step4_report", "step4_presales", "step4_technical", "step5_schema", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url"]
     updates = []
     values = []
     for field in allowed_fields:
@@ -788,7 +788,7 @@ async def update_client(client_id: str, data: dict, user: dict = Depends(require
             updates.append(f"{field} = ?")
             val = data[field]
             # JSON fields must be serialized to string for SQLite
-            if field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step4_report", "step5_schema"):
+            if field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step4_report", "step4_presales", "step4_technical", "step5_schema"):
                 val = json.dumps(val) if val is not None else ""
             values.append(val)
 
@@ -997,6 +997,167 @@ async def generate_report(body: dict, user: dict = Depends(require_auth)):
             "cases_matched": bool(case_context)
         }
     }
+
+# ==================== Step4 方案生成 ====================
+
+STEP4_PRESALES_PROMPT = """你是一个企业微信智能表格售前方案顾问。请基于以下客户信息，生成《需求确认 & 方案设计表》的完整内容。
+
+【输入信息】
+客户名称：{customer_name}
+行业：{industry}
+规模：{scale}
+初始需求表达：{initial_demand}
+
+【Step1 - 客户画像】
+{company_background}
+
+【Step1 - 行业痛点】
+{pain_points}
+
+【Step2 - 信息缺口】
+{gaps}
+
+【Step2 - 提问清单】
+{must_ask}
+
+【Step3 - 沟通记录汇总】
+{transcript}
+
+【生成规则】
+1. 区分「客户已确认事实」vs「AI推断建议」：客户原话明确说过的才能写「客户已确认」，推断内容写「建议」「待确认」「二期评估」
+2. 一期边界：客户明确提到 + 当前痛点强 + 可用企微/智能表格轻量实现 + 不依赖复杂接口/数据清洗
+3. 二期边界：外部系统对接、复杂数据回写、AI自动判断、高级分析、历史数据清洗
+4. 暂不纳入：替代专业ERP/CRM、强监管实时风控、客户未提出但想强行卖的模块
+5. 方案定位：企业微信入口+智能表格数据底座+审批/自动化/权限/看板的轻量定制方案
+6. 客户原话必须翻译成业务语言
+
+请直接输出 JSON，不要输出其他内容。"""
+
+STEP4_TECHNICAL_PROMPT = """你是一个企业微信智能表格技术方案顾问（内部评估用）。请基于以下客户信息，生成技术路线及报价方案。
+
+【输入信息】
+客户名称：{customer_name}
+行业：{industry}
+规模：{scale}
+初始需求表达：{initial_demand}
+
+【Step1 - 客户画像】
+{company_background}
+
+【Step1 - 行业痛点】
+{pain_points}
+
+【Step2 - 信息缺口】
+{gaps}
+
+【Step3 - 沟通记录汇总】
+{transcript}
+
+【生成规则】
+1. 这是内部评估用，不是给客户看的正式汇报版
+2. 智能表格设计要具体：表名、字段名、字段类型、必填/选填、权限角色、填写规则
+3. 审批和自动化要写触发条件、审批节点、同步动作
+4. 一期边界：企微原生能力可实现、不依赖外部系统对接、不需要复杂数据清洗
+5. 二期评估：需要API对接、数据回写、外部系统集成的部分
+6. 不确定的地方一律写「待确认」或「二期评估」，不要瞎猜
+7. 报价相关：复杂度评估、交付工作量评估、风险点
+
+请直接输出 JSON，不要输出其他内容。"""
+
+@app.post("/api/step4/generate")
+async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth)):
+    """生成 Step4 售前方案和技术路线方案"""
+    client_id = body.get("client_id")
+    artifact_type = body.get("type", "both")  # both, presales, technical
+
+    if not client_id:
+        raise HTTPException(status_code=400, detail="client_id is required")
+
+    # 获取客户数据
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM clients WHERE id = ? AND user_id = ?", (client_id, user["user_id"]))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="客户不存在")
+
+    client = dict(row)
+    # 解析 JSON 字段
+    for field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files"):
+        if client.get(field) and isinstance(client[field], str):
+            try:
+                client[field] = json.loads(client[field])
+            except:
+                pass
+
+    # 构建输入上下文
+    customer_name = client.get("name", "")
+    industry = client.get("industry", "")
+    scale = client.get("scale", "")
+    initial_demand = client.get("initial_demand", "")
+
+    step1 = client.get("step1_result", {}) or {}
+    company_background = step1.get("part1", {}).get("company_background", "") or ""
+    pain_points = "\n".join(step1.get("part1", {}).get("pain_points", []) or [])
+    gaps = "\n".join([f"- {g.get('gap', '')}" for g in (step1.get("part2") or [])])
+
+    must_ask = step1.get("part3", {}).get("must_ask", []) or []
+    must_ask_text = "\n".join([f"{i+1}. {q.get('question', '')}" for i, q in enumerate(must_ask)])
+
+    # 沟通记录汇总
+    uploaded_files = client.get("uploaded_files") or []
+    if isinstance(uploaded_files, str):
+        try:
+            uploaded_files = json.loads(uploaded_files)
+        except:
+            uploaded_files = []
+    transcript = "\n\n".join([f"【{f.get('name', '记录')}】{f.get('text', '')}" for f in uploaded_files if f.get('text')])
+
+    # 替换 prompt 中的变量
+    def build_context(prompt_template):
+        return prompt_template.format(
+            customer_name=customer_name,
+            industry=industry,
+            scale=scale,
+            initial_demand=initial_demand,
+            company_background=company_background,
+            pain_points=pain_points,
+            gaps=gaps,
+            must_ask=must_ask_text,
+            transcript=transcript or "暂无沟通记录"
+        )
+
+    result = {}
+
+    if artifact_type in ("both", "presales"):
+        user_prompt = build_context(STEP4_PRESALES_PROMPT)
+        presales_result = call_deepseek(STEP4_PRESALES_PROMPT, user_prompt, max_tokens=4000)
+        # 尝试解析 JSON
+        try:
+            # 提取 JSON
+            json_match = re.search(r'\{[\s\S]*\}', presales_result)
+            if json_match:
+                result["presales"] = json.loads(json_match.group())
+            else:
+                result["presales"] = {"raw": presales_result}
+        except:
+            result["presales"] = {"raw": presales_result}
+
+    if artifact_type in ("both", "technical"):
+        user_prompt = build_context(STEP4_TECHNICAL_PROMPT)
+        technical_result = call_deepseek(STEP4_TECHNICAL_PROMPT, user_prompt, max_tokens=4000)
+        try:
+            json_match = re.search(r'\{[\s\S]*\}', technical_result)
+            if json_match:
+                result["technical"] = json.loads(json_match.group())
+            else:
+                result["technical"] = {"raw": technical_result}
+        except:
+            result["technical"] = {"raw": technical_result}
+
+    return result
 
 # ==================== 企业微信智能表格 ====================
 
