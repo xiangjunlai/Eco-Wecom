@@ -2816,6 +2816,7 @@ function renderStep4Presales(data) {
       ${phase1Scopes.length ? `<div style="margin-bottom:10px"><b>一期范围</b><br>${Array.isArray(phase1Scopes) ? phase1Scopes.join('、') : phase1Scopes}</div>` : ''}
       ${phase2Scopes.length ? `<div style="margin-bottom:10px"><b>二期边界</b><br>${Array.isArray(phase2Scopes) ? phase2Scopes.join('、') : phase2Scopes}</div>` : ''}
       ${notIncluded.length ? `<div style="margin-bottom:10px;color:#667085"><b>暂不纳入</b><br>${Array.isArray(notIncluded) ? notIncluded.join('、') : notIncluded}</div>` : ''}
+      <button class="btn secondary" style="margin-top:12px;width:100%" onclick="previewStep4HTML()">预览 HTML 方案</button>
       <details style="margin-top:10px">
         <summary style="cursor:pointer;color:#1263e6;font-size:12px">查看完整内容</summary>
         <pre style="white-space:pre-wrap;font-size:11px;color:#667085;margin-top:8px">${JSON.stringify(data, null, 2)}</pre>
@@ -2825,6 +2826,28 @@ function renderStep4Presales(data) {
 }
 
 
+
+async function previewStep4HTML() {
+  if (!currentClientId) return;
+  showFullscreenLoading('正在生成 HTML...');
+  try {
+    const resp = await fetch(API_BASE + '/api/step4/preview-html', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: currentClientId })
+    });
+    const data = await resp.json();
+    hideFullscreenLoading();
+    if (data.success && data.url) {
+      window.open(data.url, '_blank');
+    } else {
+      throw new Error(data.detail || '生成失败');
+    }
+  } catch(e) {
+    hideFullscreenLoading();
+    showToast('生成失败: ' + e.message);
+  }
+}
 
 function renderStep4Technical(data) {
   const preview = document.getElementById('s4-technical-preview');
