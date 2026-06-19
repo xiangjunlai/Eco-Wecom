@@ -1214,6 +1214,17 @@ function go(n) {
   document.getElementById('page'+n).classList.add('active');
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   document.querySelector('.step[data-page="'+n+'"]').classList.add('active');
+  // Save current step to localStorage and client data
+  localStorage.setItem('lastStep_' + currentClientId, String(n));
+  if (currentClientId) {
+    const clients = getClients();
+    const idx = clients.findIndex(c => c.id === currentClientId);
+    if (idx >= 0) {
+      clients[idx]._lastStep = n;
+      saveClients(clients);
+    }
+  }
+  currentStep = n;
   updateCompletion(n);
   loadStepData(n);
   const c = getClient(currentClientId);
@@ -3814,7 +3825,9 @@ function logout() {
     if (r.ok && bc && bc.id) {
       _backendClientCache[clientId] = bc;
       currentClientId = clientId;
-      go(1);
+      // Restore last step from localStorage or default to 1
+      const lastStep = parseInt(localStorage.getItem('lastStep_' + clientId) || '1');
+      go(lastStep);
       return;
     }
     // 后端没有该客户（可能是旧版 localStorage 客户），从 localStorage 恢复
@@ -3822,7 +3835,9 @@ function logout() {
     const localClient = localClients.find(c => c.id === clientId);
     if (localClient) {
       currentClientId = clientId;
-      go(1);
+      _backendClientCache[clientId] = localClient;
+      const lastStep = parseInt(localStorage.getItem('lastStep_' + clientId) || '1');
+      go(lastStep);
       return;
     }
     alert('客户不存在');
