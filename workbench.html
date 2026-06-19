@@ -849,58 +849,66 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
       </section>
 
       <!-- Step 4: 需求整理 -->
-      <section class="page" id="page4">
-        <div class="ctx-bar">
-          <span class="ctx-name" id="s4-ctx-name">-</span>
-          <span class="ctx-dot">·</span>
-          <span class="ctx-meta" id="s4-ctx-meta">-</span>
-          <span class="ctx-dot">·</span>
-          <span class="ctx-summary" id="s4-ctx-summary">-</span>
-        </div>
-        <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
-          <button class="small-btn" onclick="doRegenerateStep4()">重新生成</button>
-        </div>
-        <div class="analysis-card">
-          <div class="analysis-card-head">
-            <div><h3>PART 1 · 需求输入确认</h3><span>来自 Step3 的多次沟通记录，作为方案与报价的输入</span></div>
-            <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
-          </div>
-          <div class="requirement-grid">
-            <div class="req-box"><b>客户现状</b><p id="s4-current" contenteditable="true">-</p></div>
-            <div class="req-box"><b>核心问题</b><p id="s4-pain" contenteditable="true">-</p></div>
-            <div class="req-box"><b>涉及角色</b><p id="s4-roles" contenteditable="true">-</p></div>
-            <div class="req-box"><b>建设目标</b><p id="s4-goals" contenteditable="true">-</p></div>
-          </div>
-        </div>
-        <div class="analysis-card">
-          <div class="analysis-card-head">
-            <div><h3>产物 1 · 售前解决方案</h3><span>面向客户汇报，说明为什么做、做什么、分几步做</span></div>
-            <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
-          </div>
-          <div class="solution-grid">
-            <div class="solution-box wide"><b>方案摘要</b><p id="s4-summary" contenteditable="true">-</p></div>
-            <div class="solution-box"><b>建设模块</b><p id="s4-modules" contenteditable="true">-</p></div>
-            <div class="solution-box"><b>业务价值</b><p id="s4-value" contenteditable="true">-</p></div>
-            <div class="solution-box wide"><b>实施阶段</b><div class="flow-line" id="s4-phases" contenteditable="true">-</div></div>
-          </div>
-        </div>
-        <div class="analysis-card">
-          <div class="analysis-card-head">
-            <div><h3>产物 2 · 技术路线及报价方案</h3><span>面向服务商内部评估，拆解技术路径、交付范围与报价口径</span></div>
-            <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
-          </div>
-          <div id="s4-tech-content"></div>
-          <div class="extract-hint" id="s4-hint-empty">点击下方按钮生成需求分析报告</div>
-          <div class="extract-hint" id="s4-hint-regen" style="display:none">重新生成会覆盖当前报告</div>
-        </div>
+      	      <section class="page" id="page4">
+	        <div class="ctx-bar">
+	          <span class="ctx-name" id="s4-ctx-name">-</span>
+	          <span class="ctx-dot">·</span>
+	          <span class="ctx-meta" id="s4-ctx-meta">-</span>
+	          <span class="ctx-dot">·</span>
+	          <span class="ctx-summary" id="s4-ctx-summary">-</span>
+	        </div>
 
-        <div class="step-action-bar">
-          <button class="btn secondary" id="s4-gen-btn" onclick="doRegenerateStep4()">生成需求分析报告</button>
-          <button class="btn primary" id="s4-next-btn" onclick="doStep4Next()">下一步 →</button>
-        </div>
-      </section>
+	        <!-- 区域1: 方案输入确认 -->
+	        <div class="analysis-card" style="margin-bottom:16px">
+	          <div class="analysis-card-head">
+	            <div><h3>方案输入确认</h3><span>AI 从 Step1-3 汇总的输入摘要，编辑后可作为生成原料</span></div>
+	            <button class="edit-btn" id="s4-input-edit-btn" onclick="toggleStep4InputEdit()">编辑摘要</button>
+	          </div>
+	          <div class="requirement-grid" id="s4-input-grid">
+	            <div class="req-box"><b>客户现状</b><p id="s4-current" contenteditable="false">-</p></div>
+	            <div class="req-box"><b>核心问题</b><p id="s4-pain" contenteditable="false">-</p></div>
+	            <div class="req-box"><b>涉及角色</b><p id="s4-roles" contenteditable="false">-</p></div>
+	            <div class="req-box"><b>建设目标</b><p id="s4-goals" contenteditable="false">-</p></div>
+	          </div>
+	        </div>
 
-      <!-- Step 5: Demo生成 -->
+	        <!-- 区域2: 选择输出方案 -->
+	        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+	          <!-- 售前解决方案卡片 -->
+	          <div class="analysis-card">
+	            <div class="analysis-card-head">
+	              <div>
+	                <h3>产物 1 · 售前解决方案</h3>
+	                <span id="s4-presales-status" style="margin-left:8px;font-size:11px;padding:2px 8px;border-radius:6px;background:#f0f7ff;color:#1677ff">待生成</span>
+	              </div>
+	            </div>
+	            <p style="color:#667085;font-size:13px;margin:0 0 12px">面向客户汇报用，包含痛点诊断、解决思路、建设模块与实施阶段。</p>
+	            <div id="s4-presales-preview" style="display:none"></div>
+	            <div id="s4-presales-empty" style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">点击下方按钮生成</div>
+	            <button class="btn secondary" style="width:100%;margin-top:12px" id="s4-presales-btn" onclick="generateStep4Presales()">生成售前方案</button>
+	          </div>
+
+	          <!-- 技术路线及报价方案卡片 -->
+	          <div class="analysis-card">
+	            <div class="analysis-card-head">
+	              <div>
+	                <h3>产物 2 · 技术路线及报价方案</h3>
+	                <span id="s4-technical-status" style="margin-left:8px;font-size:11px;padding:2px 8px;border-radius:6px;background:#f0f7ff;color:#1677ff">待生成</span>
+	              </div>
+	            </div>
+	            <p style="color:#667085;font-size:13px;margin:0 0 12px">面向内部评估用，拆解技术路径、交付范围与报价口径。</p>
+	            <div id="s4-technical-preview" style="display:none"></div>
+	            <div id="s4-technical-empty" style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">点击下方按钮生成</div>
+	            <button class="btn secondary" style="width:100%;margin-top:12px" id="s4-technical-btn" onclick="generateStep4Technical()">生成技术报价</button>
+	          </div>
+	        </div>
+
+	        <div class="step-action-bar">
+	          <button class="btn secondary" id="s4-save-btn" onclick="saveStep4Input()">保存输入</button>
+	          <button class="btn primary" id="s4-next-btn" onclick="doStep4Next()">下一步 →</button>
+	        </div>
+	      </section>
+<!-- Step 5: Demo生成 -->
       <section class="page" id="page5">
         <div class="ctx-bar">
           <span class="ctx-name" id="s5-ctx-name">-</span>
@@ -2652,90 +2660,190 @@ function loadAllNotes() {
 }
 
 // ==================== STEP 4 ====================
+// 方案输入确认 - 输入编辑状态
+let s4InputEditing = false;
+
+function toggleStep4InputEdit() {
+  s4InputEditing = !s4InputEditing;
+  const btn = document.getElementById('s4-input-edit-btn');
+  const fields = document.querySelectorAll('#s4-input-grid [contenteditable]');
+  if (s4InputEditing) {
+    btn.textContent = '完成编辑';
+    btn.style.background = '#13b96f';
+    fields.forEach(f => f.contentEditable = 'true');
+  } else {
+    btn.textContent = '编辑摘要';
+    btn.style.background = '';
+    fields.forEach(f => f.contentEditable = 'false');
+  }
+}
+
+function saveStep4Input() {
+  const c = getClient(currentClientId);
+  if (!c.step4_report) c.step4_report = {};
+  c.step4_report.inputSummary = {
+    current: document.getElementById('s4-current').textContent || '',
+    pain: document.getElementById('s4-pain').textContent || '',
+    roles: document.getElementById('s4-roles').textContent || '',
+    goals: document.getElementById('s4-goals').textContent || ''
+  };
+  updateClient(currentClientId, { step4_report: c.step4_report });
+  showToast('输入摘要已保存');
+}
+
 function loadStep4(c) {
   updateCtxBar(c);
-  const genBtn = document.getElementById('s4-gen-btn');
-  const hintEmpty = document.getElementById('s4-hint-empty');
-  const hintRegen = document.getElementById('s4-hint-regen');
-  if (c.step4_report) {
-    renderStep4Report(c.step4_report);
-    if (genBtn) { genBtn.textContent = '重新生成报告'; genBtn.style.display = ''; }
-    if (hintEmpty) hintEmpty.style.display = 'none';
-    if (hintRegen) hintRegen.style.display = '';
+  // 加载方案输入确认
+  const inputSummary = c.step4_report?.inputSummary;
+  if (inputSummary) {
+    document.getElementById('s4-current').textContent = inputSummary.current || '-';
+    document.getElementById('s4-pain').textContent = inputSummary.pain || '-';
+    document.getElementById('s4-roles').textContent = inputSummary.roles || '-';
+    document.getElementById('s4-goals').textContent = inputSummary.goals || '-';
   } else {
-    // 首次进入，显示"生成"按钮
-    if (genBtn) { genBtn.textContent = '生成需求分析报告'; genBtn.style.display = ''; }
-    if (hintEmpty) hintEmpty.style.display = '';
-    if (hintRegen) hintRegen.style.display = 'none';
+    // 从 step1_result 和 step3 自动生成摘要
+    autoGenerateStep4Input(c);
+  }
+  // 加载售前方案
+  if (c.step4_presales) {
+    renderStep4Presales(c.step4_presales);
+  }
+  // 加载技术方案
+  if (c.step4_technical) {
+    renderStep4Technical(c.step4_technical);
   }
 }
 
-function saveStep4ToClient() {
-  const c = getClient(currentClientId);
-  const report = c.step4_report || {};
-  report.customer_info = report.customer_info || {};
-  report.customer_info.initial_demand = document.getElementById('s4-current').textContent || '';
-  report.core_pain_points = report.core_pain_points || [];
-  updateClient(currentClientId, { step4_report: report });
+function autoGenerateStep4Input(c) {
+  const step1 = c.step1_result || {};
+  const part1 = step1.part1 || {};
+  // 客户现状 - 基于公司背景
+  const current = part1.company_background?.replace(/^- /gm, '').split('\n')[0] || '-';
+  document.getElementById('s4-current').textContent = current;
+  // 核心问题 - 基于痛点
+  const pains = (part1.pain_points || []).slice(0, 3).join('、') || '-';
+  document.getElementById('s4-pain').textContent = pains;
+  // 涉及角色 - 从提问清单推断
+  const roles = (step1.part3?.must_ask || []).map(q => q.dimension).filter(Boolean);
+  document.getElementById('s4-roles').textContent = roles.length ? [...new Set(roles)].join('、') : '-';
+  // 建设目标 - 基于初始需求
+  document.getElementById('s4-goals').textContent = c.initial_demand || '-';
 }
 
-function regenerateStep4() {
+// 生成售前方案
+async function generateStep4Presales() {
   const c = getClient(currentClientId);
-  if (!c.transcript && (!c.uploaded_files || c.uploaded_files.length === 0)) {
-    alert('请先在 Step3 添加沟通记录'); return;
+  if (!c.uploaded_files || c.uploaded_files.length === 0) {
+    showToast('请先在 Step3 添加沟通记录');
+    return;
   }
-  showFullscreenLoading('正在生成需求分析报告…');
-  fetch(API_BASE + '/api/reports/generate', {
-    method: 'POST', headers: getAuthHeaders(),
-    body: JSON.stringify({ client_id: currentClientId, transcript: c.transcript || c.uploaded_files?.map(f=>f.text).join('\n\n') || '', industry: c.industry || '' })
-  }).then(r => r.json()).then(data => {
-    if (data.report && !data.report.error) {
-      updateClient(currentClientId, { step4_report: data.report });
-      renderStep4Report(data.report);
-      go(4);
+  const btn = document.getElementById('s4-presales-btn');
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+  showFullscreenLoading('正在生成售前方案...');
+  try {
+    const resp = await fetch(API_BASE + '/api/step4/generate', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: currentClientId, type: 'presales' })
+    });
+    const data = await resp.json();
+    if (data.presales) {
+      updateClient(currentClientId, { step4_presales: data.presales });
+      renderStep4Presales(data.presales);
+      showToast('售前方案生成成功');
     } else {
-      alert('生成失败: ' + (data.report?.error || '未知错误'));
+      throw new Error(data.detail || '生成失败');
     }
-  }).catch(e => alert('失败: '+e.message)).finally(() => {
+  } catch(e) {
+    showToast('生成失败: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '重新生成';
     hideFullscreenLoading();
-  });
+  }
 }
 
-function renderStep4Report(report) {
-  if (!report) return;
-  const info = report.customer_info || {};
-  document.getElementById('s4-current').textContent = info.initial_demand || '-';
-  const pains = (report.core_pain_points || []).map(p => `[${p.priority}] ${p.point}`).join('\n');
-  document.getElementById('s4-pain').textContent = pains || '-';
-  const roles = (report.business_scenario?.roles || []).join('、');
-  document.getElementById('s4-roles').textContent = roles || '-';
-  document.getElementById('s4-goals').textContent = (report.business_scenario?.core_flow || '-').replace(/→/g, ' → ');
-
-  const sol = report.solution || {};
-  const subTables = sol.sub_tables || [];
-  document.getElementById('s4-summary').textContent = `基于 ${info.industry || '该行业'} 需求，建议搭建 ${subTables.length} 张子表`;
-  document.getElementById('s4-modules').textContent = subTables.map(t => t.name).join('、') || '-';
-  document.getElementById('s4-value').textContent = sol.automation_rules?.join('、') || '-';
-  const phases = sol.sub_tables?.map((t, i) => `阶段${i+1}: ${t.name}`) || [];
-  document.getElementById('s4-phases').innerHTML = phases.map(s => `<span>${s}</span>`).join('') || '-';
-
-  renderTechContent(report);
+// 生成技术方案
+async function generateStep4Technical() {
+  const c = getClient(currentClientId);
+  if (!c.uploaded_files || c.uploaded_files.length === 0) {
+    showToast('请先在 Step3 添加沟通记录');
+    return;
+  }
+  const btn = document.getElementById('s4-technical-btn');
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+  showFullscreenLoading('正在生成技术方案...');
+  try {
+    const resp = await fetch(API_BASE + '/api/step4/generate', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: currentClientId, type: 'technical' })
+    });
+    const data = await resp.json();
+    if (data.technical) {
+      updateClient(currentClientId, { step4_technical: data.technical });
+      renderStep4Technical(data.technical);
+      showToast('技术方案生成成功');
+    } else {
+      throw new Error(data.detail || '生成失败');
+    }
+  } catch(e) {
+    showToast('生成失败: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '重新生成';
+    hideFullscreenLoading();
+  }
 }
 
-function renderTechContent(report) {
-  const container = document.getElementById('s4-tech-content');
-  const sol = report.solution || {};
-  const subs = sol.sub_tables || [];
-  container.innerHTML = subs.map(sub => `
-    <div class="solution-box">
-      <b>${sub.name}</b>
-      <p>用途: ${sub.purpose || '-'}</p>
-      <p>字段: ${(sub.fields || []).join('、')}</p>
-      <p>角色: ${sub.primary_role || '-'}</p>
+function renderStep4Presales(data) {
+  const preview = document.getElementById('s4-presales-preview');
+  const empty = document.getElementById('s4-presales-empty');
+  const status = document.getElementById('s4-presales-status');
+  if (!data) return;
+  empty.style.display = 'none';
+  preview.style.display = 'block';
+  status.textContent = '已生成';
+  status.style.background = '#ecfdf5';
+  status.style.color = '#059669';
+  // 渲染摘要内容
+  const facts = data.facts || {};
+  const proposal = data.proposal || {};
+  preview.innerHTML = `
+    <div style="font-size:13px;color:#344054;line-height:1.6">
+      <div style="margin-bottom:8px"><b>方案定位：</b>${proposal.approach || '-'}</div>
+      <div style="margin-bottom:8px"><b>一期范围：</b>${(proposal.phase1?.scope || []).join('、') || '-'}</div>
+      <div style="margin-bottom:8px"><b>二期范围：</b>${(proposal.phase2?.scope || []).join('、') || '-'}</div>
+      <div style="color:#667085;font-size:12px">完整内容可编辑查看</div>
     </div>
-  `).join('') || '<div class="solution-box"><p>暂无技术方案</p></div>';
+  `;
 }
 
+function renderStep4Technical(data) {
+  const preview = document.getElementById('s4-technical-preview');
+  const empty = document.getElementById('s4-technical-empty');
+  const status = document.getElementById('s4-technical-status');
+  if (!data) return;
+  empty.style.display = 'none';
+  preview.style.display = 'block';
+  status.textContent = '已生成';
+  status.style.background = '#ecfdf5';
+  status.style.color = '#059669';
+  // 渲染摘要内容
+  const tech = data.technical || data || {};
+  preview.innerHTML = `
+    <div style="font-size:13px;color:#344054;line-height:1.6">
+      <div style="margin-bottom:8px"><b>技术定位：</b>${tech.positioning || '-'}</div>
+      <div style="margin-bottom:8px"><b>表格数量：</b>${(tech.tables || []).length} 张</div>
+      <div style="margin-bottom:8px"><b>复杂度：</b>${tech.complexity || '-'}</div>
+      <div style="color:#667085;font-size:12px">完整内容可编辑查看</div>
+    </div>
+  `;
+}
+
+// ==================== STEP 5 ====================
 // ==================== STEP 5 ====================
 function loadStep5(c) {
   updateCtxBar(c);
