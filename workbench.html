@@ -2823,7 +2823,7 @@ async function previewStep4HTML() {
     const data = await resp.json();
     hideFullscreenLoading();
     if (data.success && data.url) {
-      window.open(data.url, '_blank');
+      window.open(API_BASE + data.url, '_blank');
     } else {
       throw new Error(data.detail || '生成失败');
     }
@@ -3017,7 +3017,7 @@ async function createSmartSheet() {
     }
     showToast('创建成功！' + total + ' 个子表');
     addArtifact({ type: 'doc', title: schemaObj.doc_name || 'Demo智能表格', url: data.url, docid });
-    window.open(data.url, '_blank');
+    window.open(API_BASE + data.url, '_blank');
   } catch(e) {
     alert('创建失败: ' + e.message);
   } finally {
@@ -3048,7 +3048,7 @@ async function createAgentDemo() {
     if (!data.success) throw new Error(data.error || '创建失败');
     showToast('Agent Demo 创建成功！');
     addArtifact({ type: 'agent_demo', title: c.name + ' Agent Demo', url: data.url });
-    window.open(data.url, '_blank');
+    window.open(API_BASE + data.url, '_blank');
   } catch(e) {
     alert('创建失败: ' + e.message);
   } finally {
@@ -3327,7 +3327,7 @@ function renderArtifacts() {
     let actions = '';
     if (a.url) actions += '<button class="art-btn" onclick="window.open(\'' + a.url + '\',\'_blank\')">打开</button>';
     actions += '<button class="art-btn danger" onclick="deleteArtifact(' + i + ')">删除</button>';
-    return '<div class="artifact"><div class="artifact-top"><h4>' + (a.title || '企微智能表格') + '</h4><span class="tag">已创建</span></div><p>' + (a.type === 'doc' ? 'DocID: ' + (a.docid || '-') : '') + '</p>' + (a.url ? '<div style="margin-top:8px"><a href="' + a.url + '" target="_blank" style="font-size:12px;color:#1263e6">打开链接 →</a></div>' : '') + '<div class="barbox"><div class="bar" style="width:100%"></div></div><div class="artifact-actions">' + actions + '</div></div>';
+    return '<div class="artifact"><div class="artifact-top"><h4>' + (a.title || '企微智能表格') + '</h4><span class="tag">已创建</span></div><p>' + (a.type === 'doc' ? 'DocID: ' + (a.docid || '-') : '') + '</p>' + (a.url ? '<div style="margin-top:8px"><a href="' + API_BASE + '" + a.url target="_blank" style="font-size:12px;color:#1263e6">打开链接 →</a></div>' : '') + '<div class="barbox"><div class="bar" style="width:100%"></div></div><div class="artifact-actions">' + actions + '</div></div>';
   }).join('');
   list.innerHTML += extra;
 }

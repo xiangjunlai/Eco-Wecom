@@ -1,0 +1,131 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>贝尔高林家居定制装修项目管理平台</title>
+<style>
+  :root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --background-color: #f8f9fa;
+    --text-color: #495057;
+  }
+  body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: var(--background-color);
+    color: var(--text-color);
+  }
+  .header {
+    background: var(--primary-color);
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .header img {
+    max-width: 100px;
+    margin-right: 15px;
+  }
+  .main-content {
+    padding: 20px;
+  }
+  .card {
+    background: white;
+    margin: 10px 0;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .dialogue模拟区 {
+    padding: 20px;
+    background: #e9ecef;
+    margin: 20px 0;
+    border-radius: 5px;
+    font-style: italic;
+  }
+  .footer {
+    background: var(--secondary-color);
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+  }
+  .animated {
+    opacity: 0;
+    transition: opacity 1s;
+  }
+  .visible {
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="logo.png" alt="贝尔高林标志">
+  <h1>贝尔高林家居定制装修</h1>
+</div>
+
+<div class="main-content animated">
+  <div class="card">
+    <h2>项目管理关键信息</h2>
+    <p>项目立项 → 任务分配 → 人力投入 → 进度跟踪 → 回款结算</p>
+  </div>
+  <div class="card">
+    <h2>角色与职责</h2>
+    <ul>
+      <li>项目经理</li>
+      <li>团队负责人</li>
+      <li>设计师</li>
+      <li>财务人员</li>
+      <li>HR</li>
+      <li>商务/销售人员</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>风险点与解决方案</h2>
+    <ul>
+      <li>项目监控不及时 → 实时数据更新与自动化提醒</li>
+      <li>人力资源调配效率低 → 任务调度表与人力投入统计</li>
+      <li>财务数据与项目执行脱节 → 财务追踪表</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>自动化规则</h2>
+    <ul>
+      <li>项目状态更新 → 自动高亮显示</li>
+      <li>人力投入超限 → 自动触发告警</li>
+      <li>任务到期 → 自动提醒Team Leader</li>
+    </ul>
+  </div>
+  <div class="dialogue模拟区">
+    <p>AI助手：您好，贝尔高林家居定制装修团队！我在这里帮助您了解项目管理平台。</p>
+    <p>用户：我需要一个系统，能让我们实时跟踪项目进度和财务状态。</p>
+    <p>AI助手：了解了，我们的平台将提供实时更新的项目总表和财务追踪表，以帮助您保持信息同步。</p>
+  </div>
+</div>
+
+<div class="footer">
+  <p>© 2023 贝尔高林家居定制装修</p>
+</div>
+
+<script>
+  // Simple script to animate elements as they load
+  window.addEventListener('DOMContentLoaded', (event) => {
+    const elements = document.querySelectorAll('.animated');
+    elements.forEach((element) => {
+      element.classList.add('visible');
+    });
+  });
+</script>
+
+</body>
+</html>
+```
+
+这个HTML页面包含了所有客户的需求点，并以响应式设计呈现了关键信息。顶部显示了客户名称和Logo，主要内容区根据贝尔高林家居定制装修行业的需求定制了项目管理流程和角色职责卡片。对话模拟区通过模拟AI助手与用户之间的对话，展示了平台的功能介绍。底部展示了服务商信息。页面加载时有基础的淡入动画效果，并且支持滚动和基础交互。所有CSS样式都使用了内联CSS，并且使用了CSS变量来管理颜色主题。
