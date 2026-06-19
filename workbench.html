@@ -803,11 +803,48 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             <button class="small-btn" onclick="loadAllNotes()">查看全部</button>
           </div>
           <div class="note-list" id="s3-note-list"></div>
+        </div>
 
-          <div class="step-action-bar">
-            <button class="btn secondary" id="s3-gen-btn" onclick="doRegenerateStep3()">重新生成沟通记录库</button>
-            <button class="btn primary" id="s3-next-btn" onclick="doStep3Next()">下一步 →</button>
+        <!-- Step3 AI 摘要卡片 -->
+        <div class="add-note-card" id="s3-summary-card">
+          <div class="add-note-head">
+            <div><h3>AI 沟通摘要</h3><span id="s3-summary-status">添加记录后自动生成</span></div>
           </div>
+          <div id="s3-summary-content">
+            <div id="s3-summary-empty" style="color:#98a2b3;font-size:13px;text-align:center;padding:24px">
+              暂无摘要，请先添加沟通记录
+            </div>
+            <div id="s3-summary-loading" style="display:none;text-align:center;padding:24px">
+              <div style="width:32px;height:32px;border-radius:50%;border:3px solid #e8edf5;border-top-color:#1263e6;animation:spin .8s linear infinite;margin:0 auto 12px"></div>
+              <p style="color:#667085;font-size:13px">AI 正在分析沟通记录…</p>
+            </div>
+            <div id="s3-summary-result" style="display:none">
+              <div style="margin-bottom:14px">
+                <div style="font-size:11px;font-weight:900;color:#1263e6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">关键需求</div>
+                <ul id="s3-key-requirements" style="margin:0;padding-left:18px;color:#344054;font-size:13px;line-height:1.8"></ul>
+              </div>
+              <div style="margin-bottom:14px">
+                <div style="font-size:11px;font-weight:900;color:#13b96f;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">角色与职责</div>
+                <div id="s3-roles" style="color:#344054;font-size:13px;line-height:1.8"></div>
+              </div>
+              <div style="margin-bottom:14px">
+                <div style="font-size:11px;font-weight:900;color:#ff8a00;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">决策链</div>
+                <div id="s3-decision-chain" style="color:#344054;font-size:13px;line-height:1.8"></div>
+              </div>
+              <div style="margin-bottom:14px">
+                <div style="font-size:11px;font-weight:900;color:#667085;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">进度与阶段</div>
+                <div id="s3-progress" style="color:#344054;font-size:13px;line-height:1.8"></div>
+              </div>
+              <div>
+                <div style="font-size:11px;font-weight:900;color:#ef4444;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">风险点</div>
+                <div id="s3-risk-points" style="color:#344054;font-size:13px;line-height:1.8"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-action-bar">
+          <button class="btn primary" id="s3-next-btn" onclick="doStep3Next()" disabled style="opacity:0.5;cursor:not-allowed">下一步 →</button>
         </div>
       </section>
 
@@ -1797,16 +1834,15 @@ async function doRegenerateStep3() {
 
 function doStep3Next() {
   const c = getClient(currentClientId);
-  if (!c.transcript && (!c.uploaded_files || c.uploaded_files.length === 0)) {
-    showToast('请先添加沟通记录后再点击生成');
+  if (!c.uploaded_files || c.uploaded_files.length === 0) {
+    showToast('请先添加沟通记录');
     return;
   }
-  saveStep3();
-  if (c.step4_report) {
-    go(4);
-  } else {
-    doRegenerateStep3();
+  if (!c.step3_summary) {
+    showToast('请等待摘要生成完成');
+    return;
   }
+  go(4);
 }
 
 function doStep4Next() {
@@ -2231,6 +2267,111 @@ function regenerateStep2() {
 function loadStep3(c) {
   updateCtxBar(c);
   renderNoteList(c);
+  renderStep3Summary(c);
+  updateStep3NextBtn(c);
+}
+
+// ==================== Step3 AI Summary ====================
+function renderStep3Summary(c) {
+  const summary = c.step3_summary;
+  const empty = document.getElementById('s3-summary-empty');
+  const loading = document.getElementById('s3-summary-loading');
+  const result = document.getElementById('s3-summary-result');
+  const status = document.getElementById('s3-summary-status');
+
+  if (!c.uploaded_files || c.uploaded_files.length === 0) {
+    // 无记录
+    empty.style.display = '';
+    loading.style.display = 'none';
+    result.style.display = 'none';
+    status.textContent = '添加记录后自动生成';
+    return;
+  }
+
+  if (!summary) {
+    // 有记录但没有摘要，显示空状态
+    empty.style.display = '';
+    loading.style.display = 'none';
+    result.style.display = 'none';
+    status.textContent = '正在生成摘要…';
+    return;
+  }
+
+  // 有摘要，显示结果
+  empty.style.display = 'none';
+  loading.style.display = 'none';
+  result.style.display = '';
+
+  // 填充内容
+  const kr = summary.key_requirements || [];
+  document.getElementById('s3-key-requirements').innerHTML = kr.map(r => `<li>${r}</li>`).join('') || '<li>暂无</li>';
+
+  const roles = summary.roles_and_responsibilities || [];
+  document.getElementById('s3-roles').innerHTML = roles.map(r => `<div>• <b>${r.role}</b>：${r.responsibility}（关心：${r.concern || '未知'}）</div>`).join('') || '暂无';
+
+  const dc = summary.decision_chain || {};
+  document.getElementById('s3-decision-chain').innerHTML =
+    `<div>• 拍板人：${dc.decision_maker || '未知'}</div>` +
+    `<div>• 影响者：${dc.influencer || '未知'}</div>` +
+    `<div>• 执行者：${dc.executor || '未知'}</div>`;
+
+  const ps = summary.progress_and_stages || {};
+  document.getElementById('s3-progress').innerHTML =
+    `<div>• 当前阶段：${ps.current_stage || '未知'}</div>` +
+    `<div>• 下一步：${(ps.next_steps || []).join('、') || '未知'}</div>` +
+    `<div>• 里程碑：${(ps.milestones || []).join('、') || '暂无'}</div>`;
+
+  const risks = summary.risk_points || [];
+  document.getElementById('s3-risk-points').innerHTML = risks.map(r =>
+    `<div>• ${r.risk} <span style="color:${r.status === '已明确' ? '#13b96f' : '#ff8a00'};font-size:12px">[${r.status || '待确认'}]</span></div>`
+  ).join('') || '暂无';
+
+  status.textContent = '摘要已生成';
+}
+
+async function autoGenerateSummary() {
+  const c = getClient(currentClientId);
+  const records = c.uploaded_files || [];
+  if (records.length === 0) return;
+
+  // 显示加载状态
+  document.getElementById('s3-summary-empty').style.display = 'none';
+  document.getElementById('s3-summary-loading').style.display = '';
+  document.getElementById('s3-summary-result').style.display = 'none';
+  document.getElementById('s3-summary-status').textContent = '正在生成摘要…';
+  document.getElementById('s3-next-btn').disabled = true;
+
+  try {
+    const resp = await fetch(API_BASE + '/api/summary/generate', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ records })
+    });
+    const data = await resp.json();
+    if (data.success && data.summary) {
+      updateClient(currentClientId, { step3_summary: data.summary });
+      renderStep3Summary(getClient(currentClientId));
+      updateStep3NextBtn(getClient(currentClientId));
+      // 更新右侧制品区
+      renderArtifacts();
+    } else {
+      throw new Error(data.error || '生成失败');
+    }
+  } catch(e) {
+    document.getElementById('s3-summary-status').textContent = '生成失败，点击重试';
+    document.getElementById('s3-summary-empty').style.display = '';
+    document.getElementById('s3-summary-loading').style.display = 'none';
+    showToast('摘要生成失败: ' + e.message);
+  }
+}
+
+function updateStep3NextBtn(c) {
+  const btn = document.getElementById('s3-next-btn');
+  const hasRecords = c.uploaded_files && c.uploaded_files.length > 0;
+  const hasSummary = !!c.step3_summary;
+  btn.disabled = !(hasRecords && hasSummary);
+  btn.style.opacity = btn.disabled ? '0.5' : '';
+  btn.style.cursor = btn.disabled ? 'not-allowed' : '';
 }
 
 function renderNoteList(c) {
@@ -2324,6 +2465,7 @@ function doAddFileRecord() {
     renderNoteList(getClient(currentClientId));
     hideFullscreenLoading();
     showToast('文件已添加到沟通记录');
+    autoGenerateSummary();
   }).catch(() => {
     hideFullscreenLoading();
     showToast('上传失败，请重试');
@@ -2386,6 +2528,8 @@ function saveStep3() {
     renderNoteList(getClient(currentClientId));
     showToast('沟通记录已保存');
     hideFullscreenLoading();
+    // 自动触发生成摘要
+    autoGenerateSummary();
   }
 }
 
@@ -2416,6 +2560,7 @@ function deleteNote(i) {
   files.splice(i, 1);
   updateClient(currentClientId, { uploaded_files: files, transcript: files.map(f=>f.text).join('\n\n---\n\n') });
   renderNoteList(getClient(currentClientId));
+  autoGenerateSummary();
 }
 function loadAllNotes() {
   const c = getClient(currentClientId);
