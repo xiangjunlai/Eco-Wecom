@@ -758,7 +758,15 @@ async def get_client(client_id: str, user: dict = Depends(require_auth)):
     if not row:
         raise HTTPException(status_code=404, detail="客户不存在")
 
-    return dict(row)
+    result = dict(row)
+    # Parse JSON fields back to objects
+    for field in ("step1_result", "step2_report", "step2_todo", "step2_schema"):
+        if result.get(field) and isinstance(result[field], str):
+            try:
+                result[field] = json.loads(result[field])
+            except:
+                pass
+    return result
 
 @app.put("/api/clients/{client_id}")
 async def update_client(client_id: str, data: dict, user: dict = Depends(require_auth)):
