@@ -117,6 +117,11 @@ app.add_middleware(
 init_db()
 init_kb_db()
 
+# 挂载 public 静态文件目录（用于 Agent Demo H5）
+public_dir = Path(__file__).parent / "public"
+public_dir.mkdir(exist_ok=True)
+app.mount("/public", StaticFiles(directory=str(public_dir)), name="public")
+
 # 初始化测试用受邀码
 seed_invitation_codes()
 seed_dev_user()
@@ -2067,6 +2072,152 @@ async def create_wecom_doc(body: dict, user: dict = Depends(require_auth)):
             return {"success": False, "error": "未获取 docid"}
 
         return {"success": True, "doc_name": doc_name, "docid": docid, "url": url, "sheets": []}
+
+
+# ==================== Step3 沟通摘要生成 ====================
+
+SUMMARY_SYSTEM_PROMPT = """你是一个专业的售前沟通记录分析助手。根据服务商的多次沟通记录，生成结构化的摘要报告。
+
+## 输出格式（严格按以下结构输出，直接输出 JSON，不要任何开场白）
+
+{
+  "key_requirements": ["要点1", "要点2", ...],        // 关键需求汇总
+  "roles_and_responsibilities": [                    // 角色和职责
+    {"role": "角色名", "responsibility": "职责描述", "concern": "关心什么"}
+  ],
+  "decision_chain": {                                // 决策链
+    "decision_maker": "拍板人",
+    "influencer": "影响者",
+    "executor": "执行者"
+  },
+  "progress_and_stages": {                           // 进度和阶段
+    "current_stage": "当前阶段",
+    "next_steps": ["下一步1", "下一步2"],
+    "milestones": ["里程碑1", "里程碑2"]
+  },
+  "risk_points": [                                   // 风险点
+    {"risk": "风险描述", "status": "待确认/已明确"}
+  }
+}
+
+## 要求
+1. 从沟通记录中提取所有关键需求，每个需求用一句话描述
+2. 角色要明确区分：决策者（拍板）、影响者（提意见）、执行者（具体干活）
+3. 风险点必须是客户提到但没说清楚的地方
+4. 直接输出有效 JSON，不要 markdown 代码块包裹"""
+
+
+@app.post("/api/summary/generate")
+async def generate_summary(body: dict, user: dict = Depends(require_auth)):
+    """生成沟通记录摘要"""
+    records = body.get("records", [])  # 沟通记录列表，每条包含 text, source, stage, date
+
+    if not records:
+        raise HTTPException(status_code=400, detail="沟通记录不能为空")
+
+    # 构建用户 prompt
+    records_text = "\n\n".join([
+        f"【记录{i+1}】来源：{r.get('source','未知')} | 阶段：{r.get('stage','未知')} | 日期：{r.get('date','')}\n{r.get('text','')}"
+        for i, r in enumerate(records)
+    ])
+
+    user_prompt = f"""## 沟通记录（共 {len(records)} 条）
+
+{records_text}
+
+请分析以上沟通记录，生成结构化的摘要报告。"""
+
+    result = call_deepseek(SUMMARY_SYSTEM_PROMPT, user_prompt, max_tokens=3000)
+
+    # 解析 JSON
+    import json, re
+    try:
+        # 尝试直接解析
+        summary = json.loads(result)
+    except:
+        # 尝试从 markdown 代码块中提取
+        m = re.search(r'```(?:json)?\s*([\s\S]*?)```', result)
+        if m:
+            try:
+                summary = json.loads(m.group(1).strip())
+            except:
+                summary = None
+        else:
+            summary = None
+
+    if not summary:
+        return {"success": False, "error": "AI 返回格式异常", "raw": result[:500]}
+
+    return {"success": True, "summary": summary}
+
+
+# ==================== Step5 Agent Demo H5 生成 ====================
+
+AGENT_DEMO_SYSTEM_PROMPT = """你是一个专业的 H5 页面生成助手。根据客户需求分析报告，生成一个独立的、可直接在浏览器中运行的 HTML5 页面。
+
+## 输出要求
+1. 生成完整的 HTML 文件，包含所有 CSS/JS 内联代码
+2. 页面必须是响应式的，支持手机和 PC
+3. 页面内容要基于客户真实需求定制
+4. 直接输出 HTML 代码，不要 markdown 代码块包裹
+
+## 页面结构要求
+- 顶部：客户名称 + Logo
+- 主要内容区：根据需求分析展示关键信息（角色卡片、流程步骤、风险点等）
+- 对话模拟区：模拟 AI 助手与用户的对话场景
+- 底部：服务商信息
+
+## 技术要求
+- 使用纯 HTML + CSS + JavaScript（无外部依赖）
+- 使用 CSS 变量管理颜色主题
+- 页面加载后有基础的动画效果
+- 支持滚动和基础交互"""
+
+
+@app.post("/api/agent-demo/create")
+async def create_agent_demo(body: dict, user: dict = Depends(require_auth)):
+    """生成 Agent Demo H5 页面"""
+    client_data = body.get("client_data", {})
+
+    # 构建用户 prompt
+    client_name = client_data.get("name", "未知客户")
+    industry = client_data.get("industry", "")
+    step4_report = client_data.get("step4_report", {})
+    step1_result = client_data.get("step1_result", {})
+
+    user_prompt = f"""## 客户信息
+- 客户名称：{client_name}
+- 行业：{industry}
+
+## 需求分析报告摘要
+{json.dumps(step4_report, ensure_ascii=False, indent=2) if step4_report else '暂无'}
+
+## 客户画像摘要
+{json.dumps(step1_result, ensure_ascii=False, indent=2) if step1_result else '暂无'}
+
+请基于以上信息，生成一个展示 AI 售前助手能力的 H5 页面。"""
+
+    result = call_deepseek(AGENT_DEMO_SYSTEM_PROMPT, user_prompt, max_tokens=8000)
+
+    # 保存到 public 目录
+    import uuid, os
+    from pathlib import Path
+
+    # 确保 public 目录存在
+    public_dir = Path(__file__).parent / "public"
+    public_dir.mkdir(exist_ok=True)
+
+    # 生成文件名
+    filename = f"agent_demo_{client_name}_{uuid.uuid4().hex[:8]}.html"
+    filepath = public_dir / filename
+
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(result)
+
+    # 返回访问 URL
+    url = f"/public/{filename}"
+
+    return {"success": True, "url": url, "filename": filename}
 
 
 # ==================== 健康检查 ====================
