@@ -884,7 +884,8 @@ document.getElementById('stage-pills').addEventListener('click', function(e) {
 
 // ===== RENAME =====
 function showRenameModal(clientId) {
-  var c = _backendClients.find(function(x) { return x.id === clientId; });
+  var numId = Number(clientId);
+  var c = _backendClients.find(function(x) { return x.id === numId || String(x.id) === String(clientId); });
   if (!c) return;
   var newName = prompt('请输入新的客户名称：', c.name || '');
   if (newName && newName.trim() && newName !== c.name) {
@@ -895,7 +896,7 @@ function showRenameModal(clientId) {
       headers: getAuthHeaders(),
       body: JSON.stringify({ name: c.name, industry: c.industry })
     }).then(function(r) { return r.json(); }).then(function() {
-      _backendClients = _backendClients.map(function(x) { return x.id === clientId ? c : x; });
+      _backendClients = _backendClients.map(function(x) { return (x.id === numId || String(x.id) === String(clientId)) ? c : x; });
       renderClientList();
       showToast('已重命名');
     });
@@ -905,8 +906,9 @@ function showRenameModal(clientId) {
 // ===== DELETE =====
 function deleteClient(id) {
   if (!confirm('确定删除这个客户？删除后无法恢复。')) return;
+  var numId = Number(id);
   deleteClientBackend(id, function() {
-    _backendClients = _backendClients.filter(function(c) { return c.id !== id; });
+    _backendClients = _backendClients.filter(function(c) { return c.id !== numId && String(c.id) !== String(id); });
     renderClientList();
     showToast('已删除');
   });
@@ -914,7 +916,8 @@ function deleteClient(id) {
 
 // ===== OPEN CLIENT =====
 function openClient(id) {
-  var c = _backendClients.find(function(x) { return x.id === id; });
+  var numId = Number(id);
+  var c = _backendClients.find(function(x) { return x.id === numId || String(x.id) === String(id); });
   if (!c) { location.href = 'workbench?client_id=' + encodeURIComponent(id); return; }
   var stage = getStage(c);
   location.href = 'workbench?client_id=' + encodeURIComponent(id) + '&step=' + stage;
