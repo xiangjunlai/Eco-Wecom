@@ -131,10 +131,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 }
 .client-card-footer .c-progress{display:flex;gap:5px;align-items:center;margin:0;padding:0;border:none}
 .client-card-footer-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.client-card .c-dot{width:20px;height:5px;border-radius:999px;flex-shrink:0;transition:all .25s cubic-bezier(.4,0,.2,1);position:relative}
-.client-card .c-dot.filled{background:linear-gradient(135deg,#1263e6,#0c55cd);box-shadow:0 1px 4px rgba(18,99,230,.35)}
-.client-card .c-dot.active{background:linear-gradient(135deg,#b9d8ff,#93bfff);box-shadow:0 1px 4px rgba(18,99,230,.2)}
-.client-card .c-dot:not(.filled):not(.active){background:#eef2f7;border:1.5px solid #d1d5db}
+.client-card .c-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .client-card .c-level{font-size:11px;color:#9ca3af;margin-left:6px;font-weight:500}
 .client-card-footer-left span{font-size:11px;color:#98a2b3}
 .client-card-footer-left .sep{color:#d1d5db}
@@ -679,22 +676,14 @@ function renderClientCard(c) {
 
   var dots = '';
   for (var i = 0; i < 5; i++) {
-    var filled = i < progress;
-    var active = i === progress;
-    var dotStyle = '';
-    if (filled) {
-      dotStyle = 'background:linear-gradient(135deg,#1263e6,#0c55cd);box-shadow:0 1px 4px rgba(18,99,230,.4)';
-    } else if (active) {
-      dotStyle = 'background:linear-gradient(135deg,#b9d8ff,#93bfff);box-shadow:0 1px 4px rgba(18,99,230,.25)';
-    } else {
-      dotStyle = 'background:#eef2f7;border:1.5px solid #d1d5db';
-    }
-    dots += '<div class="c-dot' + (filled ? ' filled' : active ? ' active' : '') + '" style="' + dotStyle + '"></div>';
+    var color = i < progress ? '#1263e6' : (i === progress ? '#b9d8ff' : '#e5e7eb');
+    dots += '<div class="c-dot" style="background:' + color + '"></div>';
   }
 
   var noteText = noteCount === 0 ? '暂无沟通' : noteCount + ' 次沟通';
   var updateText = timeAgo(c.updated_at || c.created_at);
   var createdDate = safeDate(c.created_at);
+  var metaDate = createdDate !== '未知' ? ' · ' + createdDate : '';
 
   var demandHtml = demandShort
     ? '<div class="c-demand">' + escapeHtml(demandShort) + '</div>'
@@ -704,7 +693,7 @@ function renderClientCard(c) {
     '<div class="client-card-header">' +
       '<div class="client-card-header-left">' +
         '<div class="c-name">' + escapeHtml(c.name || '未命名') + '</div>' +
-        '<div class="c-meta">' + escapeHtml(c.industry || '未定义行业') + ' · ' + createdDate + '</div>' +
+        '<div class="c-meta">' + escapeHtml(c.industry || '未定义行业') + metaDate + '</div>' +
       '</div>' +
       '<div class="client-card-header-right">' +
         '<span class="stage-badge ' + badgeCls + '">' + stageLabel + '</span>' +
