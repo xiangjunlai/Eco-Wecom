@@ -1280,121 +1280,188 @@ async def generate_step4_preview_html(body: dict, user: dict = Depends(require_a
     return {"success": True, "url": "/public/{}".format(filename), "filename": filename}
 
 
+@app.get("/api/step4/download-html")
+async def download_step4_html(filename: str, user: dict = Depends(require_auth)):
+    """下载已生成的 HTML 方案文件"""
+    public_dir = Path(__file__).parent / "public"
+    filepath = public_dir / filename
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="文件不存在或已过期")
+    from fastapi.responses import FileResponse
+    return FileResponse(filepath, media_type="text/html", filename=f"售前方案_{filename.split('_', 2)[-1]}")
+
+
+def _safe_get(obj, *keys, default=''):
+    for k in keys:
+        if isinstance(obj, dict):
+            obj = obj.get(k, None)
+        else:
+            return default
+        if obj is None:
+            return default
+    return obj or default
+
+def _render_insight(item, i):
+    title = _safe_get(item, '标题', default=f'洞察 {i}')
+    desc = _safe_get(item, '详细说明', default=str(item) if not isinstance(item, dict) else '')
+    return f'<div class="insight-item"><div class="insight-num">{i}</div><div><b>{title}</b><span>{desc}</span></div></div>'
+
+def _render_pain(item, i):
+    title = _safe_get(item, '问题标题', default=f'P-{i:02d}')
+    现状 = _safe_get(item, '现状', default='-')
+    方案 = _safe_get(item, '方案', default='-')
+    价值 = _safe_get(item, '价值', default='-')
+    prio = _safe_get(item, '优先级', default='P0')
+    prio_cls = 'p0' if 'P0' in prio else 'p1' if 'P1' in prio else 'p2'
+    return f'<div class="scenario"><div class="scenario-side"><div class="num">{i:02d}</div><h3>{title}</h3><span class="badge {prio_cls}">{prio}</span></div><div class="scenario-body"><div class="point-grid"><div class="point"><b>现状</b>{现状}</div><div class="point"><b>方案</b>{方案}</div><div class="point"><b>价值</b>{价值}</div></div></div></div>'
+
+def _render_table_row(item):
+    name = _safe_get(item, '表名', default='-')
+    tbl_type = _safe_get(item, '类型', default='-')
+    usage = _safe_get(item, '用途', default='-')
+    users = _safe_get(item, '使用对象', default='-')
+    phase1 = _safe_get(item, '一期必做', default='-')
+    cls = 'green' if phase1 in ('是','Yes','yes') else 'orange' if '待确认' in phase1 else ''
+    return f'<tr><td><b>{name}</b></td><td>{tbl_type}</td><td>{usage}</td><td>{users}</td><td><span class="tag-mini {cls}">{phase1}</span></td></tr>'
+
+def _render_permission(item):
+    role = _safe_get(item, '角色', default='-')
+    access = _safe_get(item, '可查看', default='-')
+    edit = _safe_get(item, '可编辑', default='-')
+    hidden = _safe_get(item, '隐藏字段', default='-')
+    return f'<tr><td><b>{role}</b></td><td>{access}</td><td>{edit}</td><td>{hidden}</td></tr>'
+
+def _render_confirm(item, i):
+    q = _safe_get(item, '问题', default=str(item) if not isinstance(item, dict) else f'Q{i}')
+    impact = _safe_get(item, '影响范围', default='-')
+    owner = _safe_get(item, '建议确认负责人', default='-')
+    timing = _safe_get(item, '建议确认时间', default='-')
+    return f'<tr><td><b>Q{i}</b></td><td>{q}</td><td>{impact}</td><td>{owner}</td><td>{timing}</td></tr>'
+
+def _render_phase(item, i):
+    name = _safe_get(item, '阶段名称', default=f'第{i}阶段')
+    work = _safe_get(item, '主要工作内容', default='-')
+    coop = _safe_get(item, '客户配合', default='-')
+    output = _safe_get(item, '输出物', default='-')
+    return f'<div class="phase"><div class="phase-num">{i}</div><h3>{name}</h3><p><b>工作：</b>{work}</p><p><b>配合：</b>{coop}</p><p><b>输出：</b>{output}</p></div>'
+
+def _render_boundary_item(item, tag_cls, tag_text):
+    scope = str(item.get('具体范围', item) if isinstance(item, dict) else item)
+    reason = item.get('原因', '') if isinstance(item, dict) else ''
+    extra = f'<br><small style="color:#667085">原因：{reason}</small>' if reason else ''
+    return f'<div class="qa-card"><b class="{tag_cls}">{tag_text}</b><span>{scope}</span>{extra}</div>'
+
 def generate_solution_html(customer_name, industry, scale, initial_demand, presales, technical):
-    positioning = presales.get('方案定位') or ''
-    phase1 = presales.get('一期边界') or []
-    phase2 = presales.get('二期边界') or []
-    customer_confirm = presales.get('客户需求确认') or {}
+    positioning = _safe_get(presales, '方案定位') or _safe_get(presales, '核心判断', default='')
+    insight_list = presales.get('需求洞察') or presales.get('核心判断列表') or []
+    pain_points = presales.get('核心痛点') or []
+    tables = presales.get('建议建设的智能表') or presales.get('智能表格总览') or []
+    permissions = presales.get('权限设计矩阵') or presales.get('权限设计') or []
+    confirms = presales.get('待确认问题') or []
+    phases = presales.get('实施计划') or presales.get('实施路径') or []
+    phase1 = presales.get('一期边界') or presales.get('一期明确覆盖') or []
+    phase2 = presales.get('二期边界') or presales.get('二期可扩展') or []
+    not_included = presales.get('暂不纳入') or presales.get('不建议纳入') or []
 
-    phase1_html = ''
-    for i, item in enumerate(phase1[:4], 1):
-        if isinstance(item, dict):
-            item_name = item.get('模块名称', str(item))
-            item_desc = item.get('模块描述', '')
-        else:
-            item_name = str(item)
-            item_desc = ''
-        phase1_html += '<div class="scenario"><div class="scenario-side"><div class="num">{:02d}</div><h3>{}</h3><div class="prio"><span class="badge p0">P0 一期重点</span></div></div><div class="scenario-body"><h3>建设内容</h3><p>{}</p></div></div>'.format(i, item_name, item_desc)
+    insight_main = positioning or '一期先搭建核心智能表，跑通业务主链路。'
+    insight_html = ''.join([_render_insight(it, i+1) for i, it in enumerate(insight_list[:6])])
+    pain_html = ''.join([_render_pain(it, i+1) for i, it in enumerate(pain_points[:6])])
 
-    phase2_html = ''
-    for item in phase2:
-        if isinstance(item, dict):
-            item_name = item.get('模块名称', str(item))
-            item_desc = item.get('说明', '')
-        else:
-            item_name = str(item)
-            item_desc = ''
-        phase2_html += '<div class="qa-card"><b>二期：{}</b><span>{}</span></div>'.format(item_name, item_desc)
+    table_rows = ''.join([_render_table_row(it) for it in tables])
+    table_section = f'<section id="tables"><div class="section-head"><div><div class="kicker">04 / Tables</div><h2>建议建设的智能表</h2></div></div><div class="table-wrap"><table><thead><tr><th>表名</th><th>类型</th><th>用途</th><th>使用对象</th><th>一期</th></tr></thead><tbody>{table_rows}</tbody></table></div></section>' if table_rows else ''
 
-    confirm_html = ''
-    for q in customer_confirm.get('待确认问题', []):
-        q_text = q.get('问题', str(q)) if isinstance(q, dict) else str(q)
-        q_desc = q.get('说明', '') if isinstance(q, dict) else ''
-        confirm_html += '<div class="qa-card"><b>{}</b><span>{}</span></div>'.format(q_text, q_desc)
+    perm_rows = ''.join([_render_permission(it) for it in permissions])
+    perm_section = f'<section id="permission"><div class="section-head"><div><div class="kicker">05 / Permission</div><h2>权限设计</h2></div></div><div class="table-wrap"><table><thead><tr><th>角色</th><th>可查看</th><th>可编辑</th><th>隐藏字段</th></tr></thead><tbody>{perm_rows}</tbody></table></div></section>' if perm_rows else ''
 
-    return '''<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{customer_name}｜企业微信智能表格方案</title>
-  <style>
-    :root{{--wx-blue:#1677ff;--ink:#101828;--text:#344054;--muted:#667085;--line:#e6edf7;--bg:#f5f8fc;--card:#fff;--radius:20px}}
-    *{{box-sizing:border-box}}body{{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg);line-height:1.65}}
-    .page{{max-width:1240px;margin:0 auto;padding:26px 24px 76px}}
-    .topbar{{height:58px;display:flex;align-items:center;margin-bottom:18px}}
-    .brand{{display:flex;align-items:center;gap:12px;font-weight:800;color:var(--ink)}}
-    .brand-mark{{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#1677ff,#1ec7f4)}}
-    .hero{{position:relative;border-radius:32px;background:linear-gradient(135deg,rgba(255,255,255,.97),rgba(235,246,255,.96));min-height:280px;padding:48px}}
-    .hero h1{{margin:0;color:var(--ink);font-size:40px}}
-    .hero p{{margin:16px 0;color:var(--muted);font-size:18px}}
-    .chips{{display:flex;gap:10px;flex-wrap:wrap}}
-    .chip{{padding:8px 16px;background:#fff;border:1px solid #e2edf9;border-radius:999px;font-size:13px}}
-    section{{margin-top:38px}}
-    .section-head{{margin-bottom:18px}}
-    .kicker{{color:var(--wx-blue);font-size:12px;font-weight:900}}
-    .section-title h2{{font-size:28px;color:var(--ink);margin:5px 0 0}}
-    .summary-strip{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}}
-    .summary-item{{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px}}
-    .summary-item strong{{display:block;color:#14213d;font-size:16px}}
-    .summary-item span{{font-size:13px;color:var(--muted)}}
-    .scenario-list{{display:grid;gap:16px}}
-    .scenario{{display:grid;grid-template-columns:220px 1fr;gap:18px;padding:22px;border-radius:20px;background:#fff;border:1px solid var(--line)}}
-    .scenario-side{{border-radius:16px;background:linear-gradient(180deg,#f1f8ff,#fff);padding:18px}}
-    .scenario-side .num{{font-size:34px;font-weight:950;color:var(--wx-blue)}}
-    .scenario-side h3{{margin:8px 0 0;font-size:16px}}
-    .scenario-body h3{{margin:0 0 8px;font-size:18px}}
-    .scenario-body p{{margin:0;color:var(--muted)}}
-    .badge{{display:inline-flex;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800}}
-    .p0{{background:#fff1f0;color:#b42318}}
-    .qa{{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}}
-    .qa-card{{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}}
-    .qa-card b{{display:block;color:#1f3f70;margin-bottom:6px}}
-    .qa-card span{{color:var(--muted);font-size:14px}}
-    .cta{{margin-top:42px;border-radius:24px;padding:34px;background:linear-gradient(135deg,#1267e8,#22b8ff);color:#fff}}
-    .cta h2{{margin:0 0 8px;color:#fff;font-size:24px}}
-    .cta p{{margin:0;color:rgba(255,255,255,.86)}}
-    @media(max-width:768px){{.summary-strip,.scenario{{grid-template-columns:1fr}}.qa{{grid-template-columns:1fr}}}}
-  </style>
-</head>
-<body>
-  <div class="page">
-    <header class="topbar"><div class="brand"><span class="brand-mark"></span><span>企业微信生态服务方案</span></div></header>
-    <section class="hero">
-      <h1>{customer_name}<br>需求整理方案</h1>
-      <p>{positioning}</p>
-      <div class="chips"><span class="chip">{industry}</span><span class="chip">{scale}</span><span class="chip">一期重点建设</span></div>
-    </section>
-    <section><div class="section-head"><div class="kicker">01 / Background</div><div class="section-title"><h2>客户现状</h2></div></div>
-      <div class="summary-strip">
-        <div class="summary-item"><strong>客户名称</strong><span>{customer_name}</span></div>
-        <div class="summary-item"><strong>所属行业</strong><span>{industry}</span></div>
-        <div class="summary-item"><strong>企业规模</strong><span>{scale}</span></div>
-        <div class="summary-item"><strong>需求方向</strong><span>{initial_demand}</span></div>
-      </div>
-    </section>
-    <section><div class="section-head"><div class="kicker">02 / Phase 1</div><div class="section-title"><h2>一期建设范围</h2></div></div>
-      <div class="scenario-list">{phase1_html}</div>
-    </section>
-    <section><div class="section-head"><div class="kicker">03 / Phase 2</div><div class="section-title"><h2>二期评估范围</h2></div></div>
-      <div class="qa">{phase2_html}</div>
-    </section>
-    <section><div class="section-head"><div class="kicker">04 / Confirm</div><div class="section-title"><h2>待确认问题</h2></div></div>
-      <div class="qa">{confirm_html}</div>
-    </section>
-    <section class="cta"><div><h2>建议以一期建设范围作为起步</h2><p>先解决核心业务诉求，再基于实际使用情况迭代二期能力</p></div></section>
-  </div>
-</body>
-</html>'''.format(
-        customer_name=customer_name,
-        industry=industry,
-        scale=scale or '规模待确认',
-        initial_demand=initial_demand or '待沟通',
-        positioning=positioning or '基于企业微信智能表格的轻量定制方案',
-        phase1_html=phase1_html or '<p style="color:var(--muted)">一期范围待生成</p>',
-        phase2_html=phase2_html or '<div class="qa-card"><b>暂无二期评估内容</b><span>待后续沟通确认</span></div>',
-        confirm_html=confirm_html or '<div class="qa-card"><b>暂无待确认问题</b><span>请在方案确认时补充</span></div>'
+    phase1_html = ''.join([_render_boundary_item(it, 'tag-p0', '一期') for it in phase1])
+    phase2_html = ''.join([_render_boundary_item(it, 'tag-p1', '二期') for it in phase2])
+    not_html = ''.join([_render_boundary_item(it, 'tag-p2', '不建议') for it in not_included])
+
+    phases_html = ''.join([_render_phase(it, i+1) for i, it in enumerate(phases[:5])])
+    roadmap_section = f'<section id="roadmap"><div class="section-head"><div><div class="kicker">07 / Roadmap</div><h2>实施路径</h2></div></div><div class="timeline">{phases_html}</div></section>' if phases_html else ''
+
+    confirm_rows = ''.join([_render_confirm(it, i+1) for i, it in enumerate(confirms)])
+    confirm_section = f'<section id="confirm"><div class="section-head"><div><div class="kicker">08 / Confirm</div><h2>待确认问题</h2></div></div><div class="table-wrap"><table><thead><tr><th>编号</th><th>问题</th><th>影响范围</th><th>负责人</th><th>时间</th></tr></thead><tbody>{confirm_rows}</tbody></table></div></section>' if confirm_rows else ''
+
+    # Build CSS with double braces for Python format strings
+    css = (
+        ":root{--blue:#1677ff;--cyan:#21c8f6;--green:#17b26a;--orange:#f79009;--ink:#101828;--text:#344054;--muted:#667085;--line:#e6edf7;--bg:#f5f8fc}"
+        "*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Microsoft YaHei\",sans-serif;color:var(--text);background:radial-gradient(circle at 12% -6%,rgba(22,119,255,.10),transparent 28%),radial-gradient(circle at 94% 0%,rgba(33,200,246,.08),transparent 26%),linear-gradient(180deg,#f7fbff 0%,#f5f8fc 42%,#f6f8fb 100%);line-height:1.65}"
+        ".page{max-width:1240px;margin:0 auto;padding:26px 24px 76px}"
+        ".topbar{height:58px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding:0 4px}.brand{display:flex;align-items:center;gap:12px;font-weight:900;color:var(--ink)}.brand-mark{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#1677ff,#1ec7f4);box-shadow:0 12px 24px rgba(22,119,255,.25);display:grid;place-items:center;color:#fff;font-weight:900}.doc-meta{font-size:13px;color:var(--muted)}"
+        ".hero{position:relative;overflow:hidden;border:1px solid rgba(22,119,255,.13);border-radius:32px;background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(235,246,255,.96) 58%,rgba(244,250,255,.96));box-shadow:0 18px 48px rgba(22,119,255,.10);padding:48px}.eyebrow{display:inline-flex;gap:9px;padding:7px 12px;border:1px solid #d8eaff;background:#edf6ff;color:#0f67d6;border-radius:999px;font-size:13px;font-weight:900;margin-bottom:18px}h1{margin:0;color:var(--ink);font-size:42px;line-height:1.14;letter-spacing:-1px}.hero-sub{margin:16px 0 20px;max-width:620px;font-size:17px;color:#475467}.chips{display:flex;gap:10px;flex-wrap:wrap}.chip{padding:8px 14px;background:rgba(255,255,255,.82);border:1px solid #e2edf9;border-radius:999px;color:#456074;font-size:13px;box-shadow:0 8px 18px rgba(16,24,40,.04)}"
+        "section{margin-top:38px}.section-head{display:flex;justify-content:space-between;gap:24px;align-items:flex-end;margin-bottom:18px}.kicker{color:var(--blue);font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}h2{font-size:28px;color:var(--ink);line-height:1.24;margin:5px 0 0}"
+        ".summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}.summary-item{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 8px 24px rgba(16,24,40,.05)}.summary-item strong{display:block;color:#14213d;font-size:15px}.summary-item span{font-size:13px;color:var(--muted)}"
+        ".insight{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;align-items:stretch}.insight-main{border-radius:22px;background:linear-gradient(135deg,#1677ff,#25bdf3);color:#fff;padding:26px;box-shadow:0 20px 44px rgba(22,119,255,.20)}.insight-main h3{font-size:22px;line-height:1.3;margin:0 0 10px;color:#fff}.insight-main p{color:rgba(255,255,255,.85);margin:0}.insight-list{display:grid;gap:10px}.insight-item{display:grid;grid-template-columns:40px 1fr;gap:12px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:0 8px 24px rgba(16,24,40,.05)}.insight-num{width:40px;height:40px;border-radius:13px;background:#eef7ff;color:#1677ff;display:grid;place-items:center;font-weight:900;font-size:16px}.insight-item b{display:block;color:var(--ink);margin-bottom:3px}.insight-item span{color:var(--muted);font-size:13px;line-height:1.5}"
+        ".scenario-list{display:grid;gap:14px}.scenario{display:grid;grid-template-columns:220px 1fr;gap:16px;padding:20px;border-radius:22px;background:#fff;border:1px solid var(--line);box-shadow:0 14px 38px rgba(16,24,40,.06)}.scenario-side{border-radius:16px;background:linear-gradient(180deg,#f1f8ff,#fff);border:1px solid #deecff;padding:16px}.scenario-side .num{font-size:32px;font-weight:950;color:#1677ff;line-height:1}.scenario-side h3{margin:6px 0 0;font-size:15px;color:var(--ink)}.badge{display:inline-flex;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900;margin-top:6px}.p0{background:#fff1f0;color:#b42318}.p1{background:#fff7e8;color:#b54708}.p2{background:#f2f4f7;color:#667085}"
+        ".scenario-body{padding-top:4px}.point-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}.point{background:#f8fbff;border:1px solid #e7f1ff;border-radius:12px;padding:10px;font-size:12px;color:#52677d;line-height:1.5}.point b{display:block;color:#203c5e;margin-bottom:4px;font-size:12px}"
+        ".table-wrap{overflow:hidden;border:1px solid var(--line);border-radius:22px;background:#fff;box-shadow:0 14px 38px rgba(16,24,40,.06)}table{width:100%;border-collapse:collapse}th,td{padding:13px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{background:#f1f8ff;color:#1e477d;font-size:12px;white-space:nowrap;font-weight:900}td{font-size:13px;color:#475467}tr:last-child td{border-bottom:0}"
+        ".timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.phase{position:relative;background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 14px 38px rgba(16,24,40,.06)}.phase-num{width:36px;height:36px;border-radius:13px;background:linear-gradient(135deg,#1677ff,#21c8f6);color:#fff;display:grid;place-items:center;font-weight:900;margin-bottom:10px}.phase h3{margin:0 0 6px;color:var(--ink);font-size:16px}.phase p{margin:4px 0;font-size:12px;color:var(--muted);line-height:1.5}"
+        ".qa{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.qa-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px}.qa-card b{display:block;margin-bottom:5px}.qa-card span{color:var(--muted);font-size:13px;line-height:1.5}.tag-p0{color:#b42318}.tag-p1{color:#b54708}.tag-p2{color:#667085}"
+        ".tag-mini{display:inline-flex;border-radius:999px;padding:3px 8px;font-weight:900;font-size:11px}.green{background:#ecfdf3;color:#079455}.orange{background:#fff7ed;color:#dc6803}"
+        ".cta{margin-top:42px;border-radius:28px;padding:32px;background:linear-gradient(135deg,#1267e8,#22b8ff);color:#fff;box-shadow:0 20px 46px rgba(22,119,255,.22);display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}.cta h2{margin:0 0 6px;color:#fff;font-size:26px}.cta p{margin:0;color:rgba(255,255,255,.85)}.cta-chip{background:#fff;color:#1263d1;font-weight:900;padding:10px 18px;border-radius:999px;font-size:13px}"
+        "@media(max-width:1000px){.hero,.insight,.scenario{grid-template-columns:1fr}.timeline{grid-template-columns:repeat(2,1fr)}}.table-wrap{overflow-x:auto}table{min-width:700px}"
     )
+
+    html = (
+        '<!DOCTYPE html>\n'
+        '<html lang="zh-CN">\n'
+        '<head>\n'
+        '<meta charset="UTF-8" />\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0" />\n'
+        '<title>' + customer_name + '｜企业微信智能表格方案</title>\n'
+        '<style>\n' + css + '\n</style>\n'
+        '</head>\n'
+        '<body>\n'
+        '<div class="page">\n'
+        '<header class="topbar"><div class="brand"><span class="brand-mark">企</span><span>企业微信生态服务方案</span></div><div class="doc-meta">售前方案 · 需求整理</div></header>\n\n'
+        '<section class="hero">\n'
+        '<div class="eyebrow">企业微信智能表格 · 售前方案</div>\n'
+        '<h1>' + customer_name + '<br>需求整理方案</h1>\n'
+        '<p class="hero-sub">' + insight_main + '</p>\n'
+        '<div class="chips">\n'
+        '<span class="chip">' + (industry or '行业待确认') + '</span>\n'
+        '<span class="chip">' + (scale or '规模待确认') + '</span>\n'
+        '<span class="chip">一期重点建设</span>\n'
+        '</div>\n'
+        '</section>\n\n'
+        '<section><div class="section-head"><div><div class="kicker">01 / Background</div><h2>客户基础信息</h2></div></div>\n'
+        '<div class="summary-strip">\n'
+        '<div class="summary-item"><strong>客户名称</strong><span>' + customer_name + '</span></div>\n'
+        '<div class="summary-item"><strong>所属行业</strong><span>' + (industry or '-') + '</span></div>\n'
+        '<div class="summary-item"><strong>企业规模</strong><span>' + (scale or '-') + '</span></div>\n'
+        '<div class="summary-item"><strong>需求方向</strong><span>' + (initial_demand or '-') + '</span></div>\n'
+        '</div>\n'
+        '</section>\n\n'
+        '<section><div class="section-head"><div><div class="kicker">02 / Insight</div><h2>需求洞察</h2></div></div>\n'
+        '<div class="insight">\n'
+        '<div class="insight-main"><h3>' + insight_main + '</h3><p>基于客户现状与核心诉求，梳理本期数字化建设的主线与优先顺序。</p></div>\n'
+        '<div class="insight-list">' + (insight_html or '') + '</div>\n'
+        '</div>\n'
+        '</section>\n\n'
+        '<section><div class="section-head"><div><div class="kicker">03 / Pain Points</div><h2>核心痛点</h2></div></div>\n'
+        '<div class="scenario-list">' + (pain_html or '<p style="color:var(--muted)">核心痛点待生成</p>') + '</div>\n'
+        '</section>\n\n'
+        + table_section + '\n'
+        + perm_section + '\n\n'
+        '<section><div class="section-head"><div><div class="kicker">06 / Boundary</div><h2>一期/二期/不建议边界</h2></div></div>\n'
+        '<div class="qa">\n'
+        + (phase1_html or '<div class="qa-card"><b class="tag-p0">一期</b><span>一期范围待生成</span></div>') + '\n'
+        + (phase2_html or '<div class="qa-card"><b class="tag-p1">二期</b><span>二期范围待评估</span></div>') + '\n'
+        + not_html + '\n'
+        '</div>\n'
+        '</section>\n\n'
+        + roadmap_section + '\n'
+        + confirm_section + '\n\n'
+        '<section class="cta">\n'
+        '<div><h2>建议下一步：确认字段、阶段字典与权限矩阵</h2><p>字段与权限确认后即可进入智能表原型搭建；接口和 AI 能力建议作为二期专项评估。</p></div>\n'
+        '<div class="cta-chip">企业微信入口 + 智能表格数据底座</div>\n'
+        '</section>\n'
+        '</div>\n'
+        '</body>\n'
+        '</html>'
+    )
+    return html
 
 
 # ==================== 企业微信智能表格 ====================

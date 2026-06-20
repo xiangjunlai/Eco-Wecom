@@ -334,6 +334,52 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .solution-box p{margin:0;color:#667085;font-size:12px;line-height:1.7;outline:none}
 .extract-hint{border:1px solid #e8edf5;background:#f8fafc;border-radius:14px;color:#667085;font-size:12px;line-height:1.7;padding:11px 12px;margin-top:12px}
 
+/* Step4 Card Visualizations */
+.s4-card-inner{font-size:13px;color:#344054;line-height:1.6}
+.s4-hero-insight{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;margin-bottom:14px;align-items:stretch}
+.s4-insight-main{background:linear-gradient(135deg,#1677ff,#25bdf3);border-radius:18px;padding:16px;color:#fff}
+.s4-insight-main b{display:block;font-size:12px;opacity:.85;margin-bottom:6px}
+.s4-insight-main p{margin:0;font-size:14px;line-height:1.5}
+.s4-insight-list{display:flex;flex-direction:column;gap:8px}
+.s4-insight-item{display:grid;grid-template-columns:32px 1fr;gap:10px;background:#f8fbff;border:1px solid #e2efff;border-radius:14px;padding:11px}
+.s4-insight-num{width:32px;height:32px;border-radius:10px;background:#eef7ff;color:#1677ff;display:grid;place-items:center;font-weight:900;font-size:14px}
+.s4-insight-item b{display:block;color:#182235;margin-bottom:2px;font-size:13px}
+.s4-insight-item span{color:#667085;font-size:12px;line-height:1.4}
+.s4-section{margin-bottom:12px;border:1px solid #e6edf7;border-radius:16px;overflow:hidden}
+.s4-section-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fbff;border-bottom:1px solid #e6edf7}
+.s4-section-head b{font-size:13px;color:#182235}
+.s4-expand-btn{font-size:12px;color:#667085;cursor:pointer}
+.s4-section-body{display:none;padding:12px;background:#fff}
+.s4-pain-item{display:grid;grid-template-columns:180px 1fr;gap:10px;padding:12px;border-radius:14px;background:#fff;border:1px solid #e6edf7;margin-bottom:8px}
+.s4-pain-side{border-radius:12px;background:linear-gradient(180deg,#f1f8ff,#fff);border:1px solid #deecff;padding:12px;display:flex;flex-direction:column;gap:4px}
+.s4-pain-num{font-size:26px;font-weight:950;color:#1677ff;line-height:1}
+.s4-pain-side b{font-size:13px;color:#182235}
+.s4-badge{display:inline-flex;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:900}
+.s4-badge.p0{background:#fff1f0;color:#b42318}.s4-badge.p1{background:#fff7e8;color:#b54708}.s4-badge.p2{background:#f2f4f7;color:#667085}
+.s4-pain-body{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-content:center}
+.s4-point{background:#f8fbff;border:1px solid #e7f1ff;border-radius:10px;padding:9px;font-size:12px;color:#52677d}
+.s4-point b{display:block;color:#203c5e;margin-bottom:3px}
+.s4-table{width:100%;border-collapse:collapse;font-size:12px}
+.s4-table th{background:#f1f8ff;color:#1e477d;padding:8px 10px;text-align:left;font-weight:900;white-space:nowrap}
+.s4-table td{padding:8px 10px;border-bottom:1px solid #eef2f7;color:#475467;vertical-align:top}
+.s4-table tr:last-child td{border-bottom:none}
+.s4-qa{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.s4-qa-card{background:#f8fbff;border:1px solid #e2efff;border-radius:12px;padding:11px}
+.s4-qa-card b{display:block;color:#1f3f70;margin-bottom:3px;font-size:12px}
+.s4-qa-card span{color:#667085;font-size:12px}
+.tag-p0{color:#b42318}.tag-p1{color:#b54708}.tag-p2{color:#667085}
+.s4-tagmini{display:inline-flex;border-radius:999px;padding:2px 7px;font-size:11px;font-weight:900}
+.s4-tagmini.green{background:#ecfdf3;color:#079455}.s4-tagmini.orange{background:#fff7ed;color:#dc6803}
+.s4-timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.s4-phase{background:#fff;border:1px solid #e6edf7;border-radius:14px;padding:12px;text-align:center}
+.s4-phase-num{width:30px;height:30px;border-radius:10px;background:linear-gradient(135deg,#1677ff,#21c8f6);color:#fff;display:inline-grid;place-items:center;font-weight:900;margin-bottom:6px}
+.s4-phase b{display:block;font-size:12px;color:#182235;margin-bottom:4px}
+.s4-phase p{font-size:11px;color:#667085;margin:2px 0;line-height:1.4}
+.s4-actions{display:flex;gap:8px;margin-top:14px}
+.s4-tech-pos{background:#f8fbff;border:1px solid #deecff;border-radius:16px;padding:14px;margin-bottom:12px}
+.s4-tech-pos b{display:block;font-size:12px;color:#1e477d;margin-bottom:5px}
+.s4-tech-pos p{margin:0;font-size:13px;color:#182235}
+
 /* Step 5 */
 .demo-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--soft);padding:20px;margin-bottom:16px}
 .demo-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
@@ -2776,6 +2822,34 @@ async function generateStep4Technical() {
   }
 }
 
+// ==================== Step4 Card Renderers ====================
+
+function _s4get(obj, ...keys) {
+  for (const k of keys) {
+    if (obj && typeof obj === 'object' && k in obj) {
+      obj = obj[k];
+    } else {
+      return null;
+    }
+  }
+  return obj || null;
+}
+
+function _s4esc(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function _s4renderInserts(data, key, renderer) {
+  const items = _s4get(data, key) || [];
+  if (!Array.isArray(items) || !items.length) return '';
+  return items.slice(0, 6).map(renderer).join('');
+}
+
 function renderStep4Presales(data) {
   const preview = document.getElementById('s4-presales-preview');
   const empty = document.getElementById('s4-presales-empty');
@@ -2787,50 +2861,95 @@ function renderStep4Presales(data) {
   status.style.background = '#ecfdf5';
   status.style.color = '#059669';
 
-  // 渲染摘要内容 - 使用 API 返回的中文 key
-  const positioning = data['方案定位'] || data.方案定位 || '-';
-  const phase1Scopes = data['一期边界'] || data.一期边界 || [];
-  const phase2Scopes = data['二期边界'] || data.二期边界 || [];
-  const notIncluded = data['暂不纳入'] || data.暂不纳入 || [];
-  const customerConfirm = data['客户需求确认'] || data.客户需求确认 || {};
+  const positioning = _s4get(data, '方案定位') || _s4get(data, '核心判断') || '-';
+  const insightList = _s4get(data, '需求洞察') || _s4get(data, '核心判断列表') || [];
+  const painPoints = _s4get(data, '核心痛点') || [];
+  const tables = _s4get(data, '建议建设的智能表') || _s4get(data, '智能表格总览') || [];
+  const permissions = _s4get(data, '权限设计矩阵') || _s4get(data, '权限设计') || [];
+  const confirms = _s4get(data, '待确认问题') || [];
+  const phases = _s4get(data, '实施计划') || _s4get(data, '实施路径') || [];
+  const phase1 = _s4get(data, '一期边界') || _s4get(data, '一期明确覆盖') || [];
+  const phase2 = _s4get(data, '二期边界') || _s4get(data, '二期可扩展') || [];
+  const notIncluded = _s4get(data, '暂不纳入') || _s4get(data, '不建议纳入') || [];
+
+  // Hero insight
+  const insightHtml = insightList.slice(0, 4).map((it, i) => {
+    const title = _s4get(it, '标题') || `洞察 ${i+1}`;
+    const desc = _s4get(it, '详细说明') || String(it);
+    return `<div class="s4-insight-item"><div class="s4-insight-num">${i+1}</div><div><b>${_s4esc(title)}</b><span>${_s4esc(desc)}</span></div></div>`;
+  }).join('');
+
+  // Pain points
+  const painHtml = painPoints.slice(0, 4).map((it, i) => {
+    const title = _s4get(it, '问题标题') || `P-${String(i+1).padStart(2,'0')}`;
+    const 现状 = _s4get(it, '现状') || '-';
+    const 方案 = _s4get(it, '方案') || '-';
+    const 价值 = _s4get(it, '价值') || '-';
+    const prio = _s4get(it, '优先级') || 'P0';
+    const prioCls = prio.includes('P0') ? 'p0' : prio.includes('P1') ? 'p1' : 'p2';
+    return `<div class="s4-pain-item">
+      <div class="s4-pain-side"><div class="s4-pain-num">${String(i+1).padStart(2,'0')}</div><b>${_s4esc(title)}</b><span class="s4-badge ${prioCls}">${_s4esc(prio)}</span></div>
+      <div class="s4-pain-body"><div class="s4-point"><b>现状</b>${_s4esc(现状)}</div><div class="s4-point"><b>方案</b>${_s4esc(方案)}</div><div class="s4-point"><b>价值</b>${_s4esc(价值)}</div></div>
+    </div>`;
+  }).join('');
+
+  // Tables
+  const tableHtml = tables.slice(0, 7).map(it => {
+    const name = _s4get(it, '表名') || '-';
+    const type = _s4get(it, '类型') || '-';
+    const usage = _s4get(it, '用途') || '-';
+    const users = _s4get(it, '使用对象') || '-';
+    const phase1flag = _s4get(it, '一期必做') || '-';
+    const cls = phase1flag === '是' || phase1flag === 'Yes' ? 'green' : phase1flag === '待确认' ? 'orange' : '';
+    return `<tr><td><b>${_s4esc(name)}</b></td><td>${_s4esc(type)}</td><td>${_s4esc(usage)}</td><td>${_s4esc(users)}</td><td><span class="s4-tagmini ${cls}">${_s4esc(phase1flag)}</span></td></tr>`;
+  }).join('');
+
+  // Permissions
+  const permHtml = permissions.slice(0, 6).map(it => {
+    const role = _s4get(it, '角色') || '-';
+    const access = _s4get(it, '可查看') || '-';
+    const edit = _s4get(it, '可编辑') || '-';
+    const hidden = _s4get(it, '隐藏字段') || '-';
+    return `<tr><td><b>${_s4esc(role)}</b></td><td>${_s4esc(access)}</td><td>${_s4esc(edit)}</td><td>${_s4esc(hidden)}</td></tr>`;
+  }).join('');
+
+  // Boundary
+  const b1 = phase1.slice(0, 4).map(it => `<div class="s4-qa-card"><b class="tag-p0">一期</b><span>${_s4esc(_s4get(it,'具体范围') || _s4get(it,'范围') || (typeof it === 'object' ? JSON.stringify(it) : it))}</span></div>`).join('');
+  const b2 = phase2.slice(0, 4).map(it => `<div class="s4-qa-card"><b class="tag-p1">二期</b><span>${_s4esc(_s4get(it,'具体范围') || _s4get(it,'范围') || (typeof it === 'object' ? JSON.stringify(it) : it))}</span></div>`).join('');
+
+  // Phases
+  const phasesHtml = phases.slice(0, 5).map((it, i) => {
+    const name = _s4get(it, '阶段名称') || `第${i+1}阶段`;
+    const work = _s4get(it, '主要工作内容') || '-';
+    const coop = _s4get(it, '客户配合') || '-';
+    const output = _s4get(it, '输出物') || '-';
+    return `<div class="s4-phase"><div class="s4-phase-num">${i+1}</div><b>${_s4esc(name)}</b><p><b>工作：</b>${_s4esc(work)}</p><p><b>配合：</b>${_s4esc(coop)}</p><p><b>输出：</b>${_s4esc(output)}</p></div>`;
+  }).join('');
+
+  // Confirms
+  const confirmHtml = confirms.slice(0, 6).map((it, i) => {
+    const q = _s4get(it, '问题') || String(it);
+    const impact = _s4get(it, '影响范围') || '-';
+    const owner = _s4get(it, '建议确认负责人') || '-';
+    const timing = _s4get(it, '建议确认时间') || '-';
+    return `<tr><td><b>Q${i+1}</b></td><td>${_s4esc(q)}</td><td>${_s4esc(impact)}</td><td>${_s4esc(owner)}</td><td>${_s4esc(timing)}</td></tr>`;
+  }).join('');
 
   preview.innerHTML = `
-    <div style="font-size:13px;color:#344054;line-height:1.7;max-height:300px;overflow-y:auto">
-      ${positioning && positioning !== '-' ? `<div style="margin-bottom:10px"><b style="color:#1263e6">方案定位</b><br>${positioning}</div>` : ''}
-      ${phase1Scopes.length ? `<div style="margin-bottom:10px"><b>一期范围</b><br>${Array.isArray(phase1Scopes) ? phase1Scopes.join('、') : phase1Scopes}</div>` : ''}
-      ${phase2Scopes.length ? `<div style="margin-bottom:10px"><b>二期边界</b><br>${Array.isArray(phase2Scopes) ? phase2Scopes.join('、') : phase2Scopes}</div>` : ''}
-      ${notIncluded.length ? `<div style="margin-bottom:10px;color:#667085"><b>暂不纳入</b><br>${Array.isArray(notIncluded) ? notIncluded.join('、') : notIncluded}</div>` : ''}
-      <button class="btn secondary" style="margin-top:12px;width:100%" onclick="previewStep4HTML()">预览 HTML 方案</button>
-      <details style="margin-top:10px">
-        <summary style="cursor:pointer;color:#1263e6;font-size:12px">查看完整内容</summary>
-        <pre style="white-space:pre-wrap;font-size:11px;color:#667085;margin-top:8px">${JSON.stringify(data, null, 2)}</pre>
-      </details>
+    <div class="s4-card-inner">
+      ${positioning && positioning !== '-' ? `<div class="s4-hero-insight"><div class="s4-insight-main"><b>核心判断</b><p>${_s4esc(positioning)}</p></div><div class="s4-insight-list">${insightHtml}</div></div>` : ''}
+      ${painHtml ? `<div class="s4-section"><div class="s4-section-head"><b>核心痛点</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body">${painHtml}</div></div>` : ''}
+      ${tableHtml ? `<div class="s4-section"><div class="s4-section-head"><b>智能表格总览</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><table class="s4-table"><thead><tr><th>表名</th><th>类型</th><th>用途</th><th>使用对象</th><th>一期</th></tr></thead><tbody>${tableHtml}</tbody></table></div></div>` : ''}
+      ${permHtml ? `<div class="s4-section"><div class="s4-section-head"><b>权限设计</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><table class="s4-table"><thead><tr><th>角色</th><th>可查看</th><th>可编辑</th><th>隐藏字段</th></tr></thead><tbody>${permHtml}</tbody></table></div></div>` : ''}
+      ${(b1 || b2) ? `<div class="s4-section"><div class="s4-section-head"><b>一期/二期边界</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><div class="s4-qa">${b1}${b2}</div></div></div>` : ''}
+      ${phasesHtml ? `<div class="s4-section"><div class="s4-section-head"><b>实施路径</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><div class="s4-timeline">${phasesHtml}</div></div></div>` : ''}
+      ${confirmHtml ? `<div class="s4-section"><div class="s4-section-head"><b>待确认问题</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><table class="s4-table"><thead><tr><th>编号</th><th>问题</th><th>影响</th><th>负责人</th><th>时间</th></tr></thead><tbody>${confirmHtml}</tbody></table></div></div>` : ''}
+      <div class="s4-actions">
+        <button class="btn secondary" onclick="previewStep4HTML()">预览 HTML</button>
+        <button class="btn secondary" onclick="downloadStep4HTML()">下载 HTML</button>
+      </div>
     </div>
   `;
-}
-
-
-
-async function previewStep4HTML() {
-  if (!currentClientId) return;
-  showFullscreenLoading('正在生成 HTML...');
-  try {
-    const resp = await fetch(API_BASE + '/api/step4/preview-html', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ client_id: currentClientId })
-    });
-    const data = await resp.json();
-    hideFullscreenLoading();
-    if (data.success && data.url) {
-      window.open(API_BASE + data.url, '_blank');
-    } else {
-      throw new Error(data.detail || '生成失败');
-    }
-  } catch(e) {
-    hideFullscreenLoading();
-    showToast('生成失败: ' + e.message);
-  }
 }
 
 function renderStep4Technical(data) {
@@ -2844,20 +2963,89 @@ function renderStep4Technical(data) {
   status.style.background = '#ecfdf5';
   status.style.color = '#059669';
 
-  // 渲染摘要内容
-  const positioning = data['技术定位'] || data.技术定位 || '-';
-  const tableDesign = data['表格设计'] || data.表格设计 || [];
-  const approvalDesign = data['审批设计'] || data.审批设计 || [];
-  const autoDesign = data['自动化设计'] || data.自动化设计 || [];
+  const positioning = _s4get(data, '技术定位') || _s4get(data, '核心判断') || '-';
+  const tableDesign = _s4get(data, '表格设计') || [];
+  const approvalDesign = _s4get(data, '审批设计') || [];
+  const autoDesign = _s4get(data, '自动化设计') || [];
+  const phases = _s4get(data, '实施计划') || _s4get(data, '实施路径') || [];
+  const risks = _s4get(data, '风险点') || [];
+  const scope = _s4get(data, '交付范围') || [];
 
-  preview.innerHTML = '<div style="font-size:13px;color:#344054;line-height:1.7;max-height:300px;overflow-y:auto">' +
-    (positioning && positioning !== '-' ? '<div style="margin-bottom:10px"><b style="color:#1263e6">技术定位</b><br>' + positioning + '</div>' : '') +
-    '<div style="margin-bottom:8px"><b>表格设计：</b>' + tableDesign.length + ' 张表</div>' +
-    (approvalDesign.length ? '<div style="margin-bottom:8px"><b>审批流程：</b>' + approvalDesign.length + ' 个</div>' : '') +
-    (autoDesign.length ? '<div style="margin-bottom:8px"><b>自动化规则：</b>' + autoDesign.length + ' 条</div>' : '') +
-    '<details style="margin-top:10px"><summary style="cursor:pointer;color:#1263e6;font-size:12px">查看完整内容</summary><pre style="white-space:pre-wrap;font-size:11px;color:#667085;margin-top:8px">' + JSON.stringify(data, null, 2) + '</pre></details></div>';
+  const tableHtml = tableDesign.slice(0, 7).map(it => {
+    const name = _s4get(it, '表名') || _s4get(it, '名称') || '-';
+    const fields = _s4get(it, '字段数') || _s4get(it, '核心字段') || '-';
+    const prio = _s4get(it, '优先级') || _s4get(it, '一期') || '-';
+    return `<tr><td><b>${_s4esc(name)}</b></td><td>${_s4esc(fields)}</td><td>${_s4esc(prio)}</td></tr>`;
+  }).join('');
+
+  const approvalHtml = approvalDesign.slice(0, 4).map(it => {
+    const name = _s4get(it, '流程名称') || _s4get(it, '名称') || '-';
+    const nodes = _s4get(it, '节点数') || _s4get(it, '审批节点') || '-';
+    return `<div class="s4-qa-card"><b>${_s4esc(name)}</b><span>${_s4esc(nodes)} 个节点</span></div>`;
+  }).join('');
+
+  const autoHtml = autoDesign.slice(0, 4).map(it => {
+    const name = _s4get(it, '规则名称') || _s4get(it, '名称') || '-';
+    const trigger = _s4get(it, '触发条件') || '-';
+    return `<div class="s4-qa-card"><b>${_s4esc(name)}</b><span>触发：${_s4esc(trigger)}</span></div>`;
+  }).join('');
+
+  const phasesHtml = phases.slice(0, 4).map((it, i) => {
+    const name = _s4get(it, '阶段名称') || `阶段${i+1}`;
+    const work = _s4get(it, '主要工作内容') || '-';
+    return `<div class="s4-phase"><div class="s4-phase-num">${i+1}</div><b>${_s4esc(name)}</b><p>${_s4esc(work)}</p></div>`;
+  }).join('');
+
+  preview.innerHTML = `
+    <div class="s4-card-inner">
+      ${positioning && positioning !== '-' ? `<div class="s4-tech-pos"><b>技术定位</b><p>${_s4esc(positioning)}</p></div>` : ''}
+      ${tableHtml ? `<div class="s4-section"><div class="s4-section-head"><b>表格设计（${tableDesign.length} 张）</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><table class="s4-table"><thead><tr><th>表名</th><th>核心字段</th><th>优先级</th></tr></thead><tbody>${tableHtml}</tbody></table></div></div>` : ''}
+      ${approvalHtml ? `<div class="s4-section"><div class="s4-section-head"><b>审批流程（${approvalDesign.length} 个）</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><div class="s4-qa">${approvalHtml}</div></div></div>` : ''}
+      ${autoHtml ? `<div class="s4-section"><div class="s4-section-head"><b>自动化规则（${autoDesign.length} 条）</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><div class="s4-qa">${autoHtml}</div></div></div>` : ''}
+      ${phasesHtml ? `<div class="s4-section"><div class="s4-section-head"><b>实施阶段</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><div class="s4-timeline">${phasesHtml}</div></div></div>` : ''}
+      ${risks.length ? `<div class="s4-section"><div class="s4-section-head"><b>风险点</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><div class="s4-qa">${risks.slice(0,4).map(it => `<div class="s4-qa-card"><b>风险</b><span>${_s4esc(String(it))}</span></div>`).join('')}</div></div>` : ''}
+    </div>
+  `;
 }
 
+function toggleS4Section(btn) {
+  const body = btn.closest('.s4-section').querySelector('.s4-section-body');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : '';
+  btn.textContent = isOpen ? '收起 ▸' : '展开 ▾';
+}
+
+async function previewStep4HTML() {
+  if (!currentClientId) return;
+  showFullscreenLoading('正在生成 HTML...');
+  try {
+    const resp = await fetch(API_BASE + '/api/step4/preview-html', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: currentClientId })
+    });
+    const respData = await resp.json();
+    hideFullscreenLoading();
+    if (respData.success && respData.url) {
+      window._lastStep4HtmlFile = respData.filename;
+      window.open(API_BASE + respData.url, '_blank');
+    } else {
+      throw new Error(respData.detail || '生成失败');
+    }
+  } catch(e) {
+    hideFullscreenLoading();
+    showToast('生成失败: ' + e.message);
+  }
+}
+
+async function downloadStep4HTML() {
+  const filename = window._lastStep4HtmlFile;
+  if (filename) {
+    window.open(API_BASE + '/api/step4/download-html?filename=' + encodeURIComponent(filename), '_blank');
+  } else {
+    showToast('请先生成 HTML 方案');
+  }
+}
 
 function loadStep5(c) {
   updateCtxBar(c);
@@ -3316,8 +3504,19 @@ function renderArtifacts() {
         actions += '<button class="art-btn" id="step1-wecom-create-btn" onclick="doCreateStep1WecomDoc()">生成企微文档</button>';
       }
     }
-    else if (item.dataKey && item.dataKey !== 'step1_result') actions += '<button class="art-btn" onclick="doPreview(' + i + ')">预览</button>';
-    if (item.dataKey) actions += '<button class="art-btn" onclick="copyArtifactData(\'' + item.dataKey + '\')">复制</button>';
+    else if (item.dataKey && item.dataKey !== 'step1_result') {
+      if (item.pct === 0) {
+        actions += '<button class="art-btn" disabled style="opacity:0.4">预览</button>';
+        actions += '<button class="art-btn" disabled style="opacity:0.4">复制</button>';
+      } else if (item.dataKey === 'step4_presales') {
+        actions += '<button class="art-btn" onclick="previewStep4HTML()">预览 HTML</button>';
+        actions += '<button class="art-btn" onclick="downloadStep4HTML()">下载</button>';
+        actions += '<button class="art-btn" onclick="copyArtifactData(\'step4_presales\')">复制</button>';
+      } else {
+        actions += '<button class="art-btn" onclick="doPreview(' + i + ')">预览</button>';
+        actions += '<button class="art-btn" onclick="copyArtifactData(\'' + item.dataKey + '\')">复制</button>';
+      }
+    }
     if (item.dataKey === 'step5_schema' && c.step5_schema) actions += '<button class="art-btn success" onclick="createSmartSheet()">创建表格</button>';
     return '<div class="artifact"><div class="artifact-top"><h4>' + item.name + '</h4><span class="tag ' + item.tagCls + '">' + item.tag + '</span></div><p>' + (item.desc || '') + '</p><div class="barbox"><div class="bar" style="width:' + item.pct + '%"></div></div><div class="artifact-actions">' + actions + '</div></div>';
   }).join('');
@@ -3761,20 +3960,17 @@ function reportToMarkdown(report) {
 function doPreview(idx) {
   const c = getClient(currentClientId);
   if (!c) return;
+  // items indices: 0=画像,1=调研清单,2=沟通记录,3=售前方案,4=技术方案,5=Demo
   const map = {
     1: { name: '调研问题清单', data: c.step1_result },
     2: { name: '沟通记录库', data: (c.uploaded_files || []).map(f => '[' + (f.date||'') + '] ' + (f.source||'') + '\n' + (f.text||'')).join('\n\n---\n\n') },
-    3: { name: '售前解决方案', data: c.step4_report, isReport: true },
-    4: { name: 'Demo Schema', data: c.step5_schema }
+    3: { name: '售前解决方案', data: c.step4_presales },
+    4: { name: '技术路线及报价方案', data: c.step4_technical },
+    5: { name: 'Demo Schema', data: c.step5_schema }
   };
   const item = map[idx];
   if (!item || !item.data) { showToast('暂无内容可预览'); return; }
-  let text;
-  if (item.isReport && typeof item.data === 'object') {
-    text = reportToMarkdown(item.data);
-  } else {
-    text = typeof item.data === 'object' ? JSON.stringify(item.data, null, 2) : item.data;
-  }
+  let text = typeof item.data === 'object' ? JSON.stringify(item.data, null, 2) : item.data;
   const modal = document.getElementById('artifact-preview-modal');
   document.getElementById('preview-modal-title').textContent = item.name;
   document.getElementById('preview-modal-content').textContent = text;
@@ -3785,7 +3981,8 @@ function copyArtifactData(key) {
   const c = getClient(currentClientId);
   let text = '';
   if (key === 'step1_result') { text = JSON.stringify(c.step1_result, null, 2); }
-  else if (key === 'step4_report') { text = JSON.stringify(c.step4_report, null, 2); }
+  else if (key === 'step4_presales') { text = JSON.stringify(c.step4_presales, null, 2); }
+  else if (key === 'step4_technical') { text = JSON.stringify(c.step4_technical, null, 2); }
   else if (key === 'step5_schema') { text = JSON.stringify(c.step5_schema, null, 2); }
   else if (key === 'uploaded_files') { text = (c.uploaded_files || []).map(f => '[' + (f.date||'') + '] ' + (f.source||'') + '\n' + (f.text||'')).join('\n\n---\n\n'); }
   if (!text) { showToast('无内容可复制'); return; }
