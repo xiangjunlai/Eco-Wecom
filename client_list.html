@@ -204,22 +204,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .agent-eval-icon{font-size:18px}
 .agent-eval-title{font-size:14px;font-weight:700;color:var(--text)}
 .agent-eval-sub{font-size:11px;color:var(--text3);margin-left:auto}
-.agent-eval-body{display:flex;gap:24px;align-items:flex-start}
-.agent-radar-wrap{width:180px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
+.agent-eval-body{display:flex;gap:28px;align-items:flex-start}
+.agent-radar-wrap{width:220px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px}
 .agent-grade{text-align:center}
 .agent-grade .grade-label{font-size:11px;color:var(--text3);display:block}
-.agent-grade .grade-value{font-size:28px;font-weight:900;background:linear-gradient(135deg,#1263e6,#13b96f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2}
-.agent-dims{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
-.dim-item{display:flex;flex-direction:column;gap:5px}
-.dim-header{display:flex;align-items:center;justify-content:space-between}
-.dim-name{font-size:12px;font-weight:600;color:var(--text)}
-.dim-score{font-size:12px;font-weight:700;color:#1263e6}
-.dim-bar{height:6px;background:#eef2f7;border-radius:999px;overflow:hidden}
+.agent-grade .grade-value{font-size:32px;font-weight:900;background:linear-gradient(135deg,#1263e6,#13b96f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2}
+.agent-dims{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;padding-top:8px}
+.dim-item{display:flex;flex-direction:column;gap:4px}
+.dim-header{display:flex;align-items:center;gap:8px}
+.dim-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap}
+.dim-score{font-size:11px;font-weight:700;color:#1263e6;margin-left:auto;flex-shrink:0}
+.dim-bar{height:5px;background:#eef2f7;border-radius:999px;overflow:hidden}
 .dim-bar-fill{height:100%;border-radius:999px;transition:width .6s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,#1263e6,#13b96f)}
 .dim-desc{font-size:11px;color:var(--text3);line-height:1.4}
 .dim-analyzing{height:6px;background:linear-gradient(90deg,#e8edf5 25%,#b9d8ff 50%,#e8edf5 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:999px}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-.agent-eval-loading{text-align:center;padding:20px 0;color:var(--text3);font-size:13px}
 .kb-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
 .kb-progress-pct{font-size:12px;font-weight:900;color:var(--blue);min-width:36px}
 .kb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
@@ -448,19 +447,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
       <div class="agent-eval-card">
         <div class="agent-eval-header">
           <span class="agent-eval-icon">🎯</span>
-          <span class="agent-eval-title">售前Agent能力评估</span>
+          <span class="agent-eval-title">调研助手能力评估</span>
           <span class="agent-eval-sub">基于知识库质量综合分析</span>
         </div>
         <div class="agent-eval-body">
-          <!-- 左侧：雷达图 -->
+          <!-- 左侧：雷达图（突出显示） -->
           <div class="agent-radar-wrap">
-            <svg id="radar-chart" width="180" height="180" viewBox="0 0 180 180"></svg>
+            <svg id="radar-chart" width="240" height="240" viewBox="0 0 240 240"></svg>
             <div class="agent-grade" id="agent-grade">
               <span class="grade-label">综合等级</span>
               <span class="grade-value" id="grade-value">—</span>
             </div>
           </div>
-          <!-- 右侧：五维度进度条 -->
+          <!-- 右侧：五维度简洁列表 -->
           <div class="agent-dims" id="agent-dims"></div>
         </div>
       </div>
@@ -1112,7 +1111,7 @@ function getDimDesc(dim, score) {
 function renderRadarChart(scores) {
   var svg = document.getElementById('radar-chart');
   if (!svg) return;
-  var w = 180, h = 180, cx = 90, cy = 90, r = 65;
+  var cx = 120, cy = 120, r = 75, labelR = 100;
   var keys = ['industry','scenario','pricing','demo','question'];
   var n = 5;
   var toXY = function(i, val) {
@@ -1122,7 +1121,7 @@ function renderRadarChart(scores) {
   };
 
   // Draw grid rings
-  var gridLevels = [0.25, 0.5, 0.75, 1.0];
+  var gridLevels = [0.33, 0.66, 1.0];
   var gridLines = gridLevels.map(function(lvl) {
     var pts = keys.map(function(k, i) {
       var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
@@ -1151,18 +1150,17 @@ function renderRadarChart(scores) {
     return '<circle cx="' + pt.x + '" cy="' + pt.y + '" r="3.5" fill="#1263e6" stroke="#fff" stroke-width="1.5"/>';
   }).join('');
 
-  // Draw labels
+  // Draw labels outside the chart
   var labels = keys.map(function(k, i) {
     var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
-    var labelR = r + 14;
     var lx = cx + labelR * Math.cos(angle);
     var ly = cy + labelR * Math.sin(angle);
-    var anchor = Math.cos(angle) > 0.5 ? 'start' : Math.cos(angle) < -0.5 ? 'end' : 'middle';
+    var anchor = Math.abs(Math.cos(angle)) > 0.5 ? (Math.cos(angle) > 0 ? 'start' : 'end') : 'middle';
     var dim = AGENT_DIMS[i];
-    return '<text x="' + lx + '" y="' + ly + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="9" fill="#667085" font-weight="600">' + dim.icon + ' ' + dim.name.replace('能力','') + '</text>';
+    return '<text x="' + lx + '" y="' + ly + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="10" fill="#667085" font-weight="600">' + dim.icon + ' ' + dim.name.replace('能力','') + '</text>';
   }).join('');
 
-  svg.innerHTML = '<defs><linearGradient id="radarGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1263e6" stop-opacity="0.3"/><stop offset="100%" stop-color="#13b96f" stop-opacity="0.2"/></linearGradient></defs>' + gridLines + axisLines + poly + dots + labels;
+  svg.innerHTML = '<defs><linearGradient id="radarGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1263e6" stop-opacity="0.35"/><stop offset="100%" stop-color="#13b96f" stop-opacity="0.2"/></linearGradient></defs>' + gridLines + axisLines + poly + dots + labels;
 }
 
 function renderAgentEval(scores, grade) {
