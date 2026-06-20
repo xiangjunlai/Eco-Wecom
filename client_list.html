@@ -7,13 +7,14 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --blue:#1263e6;--blue-dark:#0c55cf;--green:#13b96f;--orange:#f59e0b;--red:#ef4444;
+  --blue:#1263e6;--blue-dark:#0c55cd;--green:#13b96f;--orange:#f59e0b;--red:#ef4444;
   --bg:#f5f7fb;--panel:#fff;--border:#e8edf5;
   --text:#162033;--text2:#475467;--text3:#98a2b3;
   --radius:20px;--shadow:0 8px 32px rgba(20,34,64,.08);
 }
 body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);min-height:100vh;color:var(--text)}
 
+/* ===== HEADER ===== */
 .header{background:var(--panel);border-bottom:1px solid var(--border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(20,34,64,.04)}
 .header-left{display:flex;align-items:center;gap:14px}
 .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--green));display:grid;place-items:center;color:#fff;font-weight:900;font-size:16px;flex-shrink:0}
@@ -23,87 +24,137 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .btn-logout{border:1px solid var(--border);background:#fff;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:800;color:var(--text2);cursor:pointer;transition:.15s}
 .btn-logout:hover{background:#f5f7fb}
 
+/* ===== TABS ===== */
 .main{padding:28px 40px;max-width:1200px;margin:0 auto}
-
-/* TABS */
 .tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--panel);padding:6px;border-radius:16px;width:fit-content;border:1px solid var(--border)}
 .tab{padding:10px 22px;border-radius:13px;font-size:13px;font-weight:800;color:var(--text2);cursor:pointer;transition:.15s;border:0;background:transparent}
 .tab.on{background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;box-shadow:0 4px 12px rgba(18,99,230,.25)}
 .tab:not(.on):hover{background:#f0f4fb}
 
-/* TOOLBAR */
-.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
-.toolbar-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.toolbar-right{display:flex;align-items:center;gap:10px}
-.search-wrap{display:flex;align-items:center;gap:8px;background:var(--panel);border:1.5px solid var(--border);border-radius:12px;padding:0 12px;height:38px}
-.search-wrap:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(18,99,230,.1)}
-.search-wrap input{border:0;outline:0;font-size:13px;color:var(--text);background:transparent;width:180px}
-.search-wrap input::placeholder{color:var(--text3)}
-.search-icon{color:var(--text3);font-size:14px}
-select.compact{border:1.5px solid var(--border);background:var(--panel);border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;color:var(--text2);cursor:pointer;outline:0;height:38px}
-select.compact:focus{border-color:var(--blue)}
-.view-toggle{display:flex;gap:4px;background:#f5f7fb;padding:4px;border-radius:10px}
-.view-btn{width:30px;height:30px;border:0;border-radius:8px;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--text3);transition:.15s}
-.view-btn.active{background:#fff;color:var(--blue);box-shadow:0 2px 6px rgba(20,34,64,.08)}
-.btn-new{border:0;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border-radius:13px;padding:0 20px;height:38px;font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 4px 14px rgba(18,99,230,.25);transition:.18s}
-.btn-new:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(18,99,230,.3)}
-.btn-upload{border:1.5px solid var(--blue);background:#fff;color:var(--blue);border-radius:13px;padding:0 18px;height:38px;font-size:13px;font-weight:900;cursor:pointer;transition:.18s}
-.btn-upload:hover{background:#eef6ff}
+/* ===== TOOLBAR ===== */
+.page-toolbar{background:var(--panel);border-radius:20px;padding:18px 20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(18,99,230,.06)}
+/* 状态概览筛选栏 */
+.stage-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.stage-pill{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid transparent;transition:.15s;color:var(--text2);background:#f3f4f6;white-space:nowrap}
+.stage-pill:hover{background:#eef6ff;border-color:#b9d8ff;color:var(--blue)}
+.stage-pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.stage-pill .pill-count{font-size:11px;opacity:.75;margin-left:4px}
+/* 工具栏第二行 */
+.toolbar-row2{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.toolbar-row2 .search-wrap{flex:1;min-width:200px;position:relative}
+.toolbar-row2 .search-wrap input{padding-left:34px;width:100%;height:36px;border:1.5px solid var(--border);border-radius:11px;padding:0 12px 0 34px;font-size:13px;outline:0;transition:.15s;background:var(--panel)}
+.toolbar-row2 .search-wrap input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(18,99,230,.1)}
+.toolbar-row2 .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none}
+.toolbar-row2 .industry-select-wrap{position:relative;min-width:140px}
+.toolbar-row2 .industry-select-wrap select{height:36px;padding:0 28px 0 12px;font-size:12px;border:1.5px solid var(--border);border-radius:11px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2398a2b3' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;appearance:none;cursor:pointer;outline:0;color:var(--text2);font-weight:500}
+.toolbar-row2 .industry-select-wrap select:focus{border-color:var(--blue)}
+.toolbar-row2 .sort-bar{display:flex;gap:4px}
+.toolbar-row2 .sort-btn{padding:7px 12px;border-radius:10px;font-size:12px;cursor:pointer;border:1.5px solid transparent;background:#f3f4f6;color:var(--text2);transition:.15s;font-weight:500}
+.toolbar-row2 .sort-btn:hover{background:#eef6ff;color:var(--blue)}
+.toolbar-row2 .sort-btn.active{background:#eef6ff;color:var(--blue);border-color:#b9d8ff}
+.toolbar-row2 .view-toggle{display:flex;background:#f3f4f6;border-radius:11px;padding:3px;gap:2px}
+.toolbar-row2 .view-toggle button{padding:5px 10px;border-radius:8px;font-size:12px;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:.15s}
+.toolbar-row2 .view-toggle button.active{background:#fff;color:var(--blue);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.toolbar-row2 .btn-new{padding:0 16px;height:36px;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border:none;box-shadow:0 3px 10px rgba(18,99,230,.3);transition:.18s}
+.toolbar-row2 .btn-new:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(18,99,230,.35)}
 
-/* CLIENT LIST */
-.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-.client-table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border)}
-.client-table th{text-align:left;padding:14px 18px;background:#f8fafc;border-bottom:1px solid var(--border);font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.6px}
-.client-table td{padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);vertical-align:middle}
-.client-table tr:last-child td{border-bottom:0}
-.client-table tr:hover td{background:#f8fafc}
-.td-name{font-weight:900;color:var(--text);font-size:14px}
-.td-demand{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default}
-.td-demand:hover{white-space:normal;overflow:visible}
-.td-actions{display:flex;gap:6px}
-.btn-icon{border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:800;color:var(--text2);cursor:pointer;transition:.15s}
-.btn-icon:hover{background:#f5f7fb;border-color:var(--blue);color:var(--blue)}
-.btn-icon.danger:hover{background:#fff1f0;border-color:var(--red);color:var(--red)}
-.stage-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
-.stage-0{background:#eef2f7}.stage-1{background:var(--blue)}.stage-2{background:var(--orange)}.stage-3{background:var(--green)}
+/* ===== LIST META ===== */
+.list-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:13px;color:var(--text2)}
+.list-meta b{font-size:15px;color:var(--text);font-weight:600}
+.list-meta-left{display:flex;align-items:center;gap:8px}
+.list-meta-right{font-size:12px;color:var(--text3)}
+.list-meta-right .filter-active{color:var(--blue);font-weight:500}
 
-/* CARD */
-.client-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;transition:.2s;box-shadow:var(--shadow);position:relative}
-.client-card:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(20,34,64,.1);border-color:#d0daf0}
-.card-actions{position:absolute;top:16px;right:16px;display:flex;gap:6px;opacity:0;transition:.15s}
-.client-card:hover .card-actions{opacity:1}
-.card-top{display:flex;justify-content:space-between;align-items:start;margin-bottom:10px}
-.client-name{font-weight:900;font-size:17px;color:var(--text);line-height:1.3}
-.client-date{font-size:11px;color:var(--text3);white-space:nowrap;margin-top:2px}
-.industry-tag{display:inline-block;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:800}
-.tag-餐饮{background:#fff7ed;color:#d97706}
-.tag-制造业{background:#f0fdf4;color:#059669}
-.tag-零售{background:#faf5ff;color:#7c3aed}
-.tag-教育{background:#ecfeff;color:#0891b2}
-.tag-医疗{background:#fef3f2;color:#dc2626}
-.tag-金融{background:#fefce8;color:#ca9a07}
-.tag-其他{background:#f5f7fb;color:var(--text2)}
-.client-demand{font-size:12px;color:var(--text2);line-height:1.5;margin:10px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.step-dots{display:flex;gap:5px;margin-bottom:8px}
-.sdot{width:8px;height:8px;border-radius:50%}
-.sdot.done{background:var(--green)}
-.sdot.active{background:var(--blue);box-shadow:0 0 0 3px rgba(18,99,230,.15)}
-.sdot.todo{background:#eef2f7}
-.progress-label{font-size:11px;color:var(--text3);display:flex;justify-content:space-between}
+/* ===== CLIENT CARDS ===== */
+.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.client-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px 18px;cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.04);position:relative;overflow:visible}
+.client-card:hover{border-color:var(--blue);box-shadow:0 6px 18px rgba(18,99,230,.12);transform:translateY(-2px)}
+.client-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.client-card-header-left{flex:1;min-width:0}
+.client-card .c-name{font-size:14px;font-weight:600;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-card .c-meta{font-size:12px;color:#9ca3af;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-card-header-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.client-card .stage-badge{display:inline-flex;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+.stage-badge.s1{background:#fff1f0;color:#b42318}
+.stage-badge.s2{background:#fef3e2;color:#c55a11}
+.stage-badge.s3{background:#fff7e6;color:#ad6800}
+.stage-badge.s4{background:#e6f0ff;color:#1677ff}
+.stage-badge.s5{background:#e8f5ff;color:#0958d9}
+.stage-badge.s6{background:#ecfdf3;color:#079455}
+.client-card .more-btn{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:#f3f4f6;color:#667085;cursor:pointer;border:none;font-size:14px;line-height:1;transition:.15s;flex-shrink:0}
+.client-card .more-btn:hover{background:#e6e8eb;color:#344054}
+.client-card-dropdown{position:absolute;right:14px;top:52px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 24px rgba(18,24,40,.15);z-index:100;overflow:hidden;display:none;min-width:130px}
+.client-card-dropdown.visible{display:block}
+.client-card-dropdown button{width:100%;padding:10px 14px;text-align:left;font-size:13px;color:#344054;cursor:pointer;border:none;background:#fff;transition:.15s;display:block}
+.client-card-dropdown button:hover{background:#f5f7fb}
+.client-card-dropdown button.danger{color:#dc2626}
+.client-card .c-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.client-card .c-tag{font-size:11px;padding:2px 8px;border-radius:5px;background:#f3f4f6;color:#6b7280}
+.client-card .c-demand{margin-top:9px;font-size:12px;color:#475467;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.client-card .c-progress{display:flex;gap:5px;align-items:center;margin-top:11px;padding-top:11px;border-top:1px solid #f3f4f6}
+.client-card .c-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.client-card .c-level{font-size:11px;color:#9ca3af;margin-left:5px}
+.client-card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.client-card-footer-left{font-size:11px;color:#98a2b3}
+.client-card-footer-right{display:flex;gap:6px;align-items:center}
+.client-card .btn-view{padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:#eef6ff;color:var(--blue);transition:.15s}
+.client-card .btn-view:hover{background:var(--blue);color:#fff}
 
-/* EMPTY */
-.empty-state{text-align:center;padding:80px 40px;background:var(--panel);border-radius:24px;border:1px dashed var(--border);box-shadow:var(--shadow)}
-.empty-icon{font-size:56px;margin-bottom:20px;opacity:.5}
-.empty-state h3{font-size:18px;color:var(--text);margin-bottom:10px}
-.empty-state p{color:var(--text3);font-size:14px;margin-bottom:28px}
-.empty-cta{border:0;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border-radius:14px;padding:14px 28px;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(18,99,230,.25)}
+/* ===== TABLE VIEW ===== */
+.client-table-wrap{background:var(--panel);border-radius:16px;overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.client-table{width:100%;border-collapse:collapse;font-size:13px}
+.client-table th{background:#f8fbff;color:#667085;font-size:12px;font-weight:600;padding:11px 14px;text-align:left;white-space:nowrap;border-bottom:1px solid #e5e7eb}
+.client-table td{padding:13px 14px;border-bottom:1px solid #f3f4f6;color:#344054;vertical-align:top}
+.client-table tr:last-child td{border-bottom:none}
+.client-table tr:hover td{background:#fafbff}
+.client-table .c-name-cell{font-weight:600;color:#111827}
+.client-table .c-next-btn{padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:#eef6ff;color:var(--blue);white-space:nowrap;display:inline-block}
+.client-table .c-next-btn:hover{background:var(--blue);color:#fff}
+.client-table .td-actions{display:flex;gap:6px;align-items:center;padding-top:10px}
+.client-table .td-demand{font-size:12px;color:#667085;max-width:200px}
+.client-table .td-name-wrap{font-weight:600;color:#111827;font-size:14px}
 
-/* KNOWLEDGE BASE */
+/* ===== EMPTY STATE ===== */
+.empty-list{background:var(--panel);border-radius:24px;border:1px dashed var(--border);padding:60px 40px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:.6}
+.empty-list h3{font-size:18px;color:var(--text);margin-bottom:8px;font-weight:700}
+.empty-list p{color:var(--text3);font-size:14px;margin-bottom:24px;line-height:1.6}
+.empty-steps{display:flex;gap:12px;justify-content:center;margin-bottom:28px;flex-wrap:wrap}
+.empty-step{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);background:#f5f7fb;padding:8px 14px;border-radius:12px}
+.empty-step .step-num{width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+.empty-step .step-arrow{color:var(--text3);font-size:14px}
+.empty-cta{border:0;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border-radius:14px;padding:12px 28px;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(18,99,230,.25);transition:.18s}
+.empty-cta:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(18,99,230,.3)}
+
+/* ===== MODAL ===== */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,34,64,.4);place-items:center;z-index:100}
+.modal-overlay.active{display:grid}
+.modal-box{background:var(--panel);border-radius:24px;padding:28px;width:480px;box-shadow:0 24px 60px rgba(20,34,64,.2);max-height:90vh;overflow-y:auto}
+.modal-box h3{font-size:16px;margin-bottom:20px;color:var(--text)}
+.modal-field{margin-bottom:14px}
+.modal-field label{display:block;font-size:11px;font-weight:800;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.modal-field input,.modal-field select,.modal-field textarea{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;font-size:13px;outline:0;transition:.15s;font-family:inherit}
+.modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(18,99,230,.1)}
+.modal-field textarea{resize:vertical;min-height:80px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.btn-cancel{border:1px solid var(--border);background:#fff;border-radius:12px;padding:10px 18px;font-size:13px;font-weight:800;color:var(--text2);cursor:pointer}
+.btn-cancel:hover{background:#f5f7fb}
+.btn-confirm{border:0;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border-radius:12px;padding:10px 18px;font-size:13px;font-weight:900;cursor:pointer}
+.btn-confirm:disabled{opacity:.5;cursor:not-allowed}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#162033;color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:800;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.15);display:none}
+.toast.show{display:block}
+
+/* ===== LOADING ===== */
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.85);display:grid;place-items:center;z-index:9999;backdrop-filter:blur(8px)}
+.loading-overlay.hidden{display:none}
+.spinner{width:36px;height:36px;border-radius:50%;border:4px solid #e8edf5;border-top-color:var(--blue);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== KNOWLEDGE BASE ===== */
 .kb-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
-.kb-title-row{display:flex;align-items:center;gap:16px}
-.kb-title{font-size:20px;font-weight:900;color:var(--text)}
 .kb-progress-pct{font-size:12px;font-weight:900;color:var(--blue);min-width:36px}
-
 .kb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
 .kb-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);transition:.2s}
 .kb-card:hover{border-color:#d0daf0;box-shadow:0 12px 36px rgba(20,34,64,.1)}
@@ -115,27 +166,11 @@ select.compact:focus{border-color:var(--blue)}
 .kb-card-btn{width:100%;border:1.5px dashed var(--border);background:#fafbff;border-radius:10px;padding:8px;color:var(--blue);font-size:12px;font-weight:800;cursor:pointer;transition:.15s;text-align:center}
 .kb-card-btn:hover{background:#eef6ff;border-color:var(--blue)}
 .kb-card-priority{border-color:var(--blue);background:linear-gradient(135deg,#f0f7ff 0%,#fafbff 100%)}
-
-/* KB FILTER TABS */
 .kb-filter-tabs{display:flex;gap:4px;margin-bottom:16px;background:#f5f7fb;padding:4px;border-radius:12px;width:fit-content}
 .kb-filter-tab{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;color:var(--text2);transition:.15s;white-space:nowrap}
 .kb-filter-tab:hover{background:#fff}
 .kb-filter-tab.active{background:#fff;color:var(--text);box-shadow:0 2px 8px rgba(20,34,64,.08)}
 .kb-filter-tab b{font-weight:900;opacity:.7}
-
-/* CONTRAST */
-.kb-contrast{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow)}
-.kb-contrast-header{font-size:13px;font-weight:900;color:var(--text);margin-bottom:14px}
-.kb-contrast-item{margin-bottom:16px}
-.kb-contrast-item:last-child{margin-bottom:0}
-.kb-contrast-question{font-size:12px;color:var(--text3);margin-bottom:8px;font-weight:800}
-.kb-contrast-row{display:flex;gap:12px}
-.kb-contrast-side{flex:1;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.6}
-.kb-contrast-side.default{background:#f5f5f5;color:#888;border:1px solid #eee}
-.kb-contrast-side.enhanced{background:linear-gradient(135deg,#eef6ff,#f0f7ff);color:var(--text);border:1px solid var(--blue)}
-.kb-contrast-side-label{font-size:10px;font-weight:900;text-transform:uppercase;margin-bottom:6px;opacity:.7}
-
-/* FILE LIST */
 .kb-files{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
 .kb-files-header{padding:14px 18px;background:#f8fafc;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .kb-files-title{font-size:13px;font-weight:900;color:var(--text)}
@@ -156,40 +191,16 @@ select.compact:focus{border-color:var(--blue)}
 .kb-delete-btn:hover{opacity:1;background:#fee2e2}
 .kb-header-progress{flex:1;height:8px;background:#e8edf5;border-radius:999px;overflow:hidden;max-width:200px}
 .kb-header-progress-bar{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:999px;transition:width .3s}
-.kb-file-row td{vertical-align:middle}
-.tag-qa{background:#f0fdf4;color:#059669}
-.tag-sales{background:#faf5ff;color:#7c3aed}
-.tag-knowledge{background:#ecfeff;color:#0891b2}
-
-/* LOADING */
-.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.85);display:grid;place-items:center;z-index:9999;backdrop-filter:blur(8px)}
-.loading-overlay.hidden{display:none}
-.spinner{width:36px;height:36px;border-radius:50%;border:4px solid #e8edf5;border-top-color:var(--blue);animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,34,64,.4);place-items:center;z-index:100}
-.modal-overlay.active{display:grid}
-.modal-box{background:var(--panel);border-radius:24px;padding:28px;width:480px;box-shadow:0 24px 60px rgba(20,34,64,.2);max-height:90vh;overflow-y:auto}
-.modal-box h3{font-size:16px;margin-bottom:20px;color:var(--text)}
-.modal-field{margin-bottom:14px}
-.modal-field label{display:block;font-size:11px;font-weight:800;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
-.modal-field input,.modal-field select,.modal-field textarea{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;font-size:13px;outline:0;transition:.15s;font-family:inherit}
-.modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(18,99,230,.1)}
-.modal-field textarea{resize:vertical;min-height:80px}
-.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
-.btn-cancel{border:1px solid var(--border);background:#fff;border-radius:12px;padding:10px 18px;font-size:13px;font-weight:800;color:var(--text2);cursor:pointer}
-.btn-cancel:hover{background:#f5f7fb}
-.btn-confirm{border:0;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border-radius:12px;padding:10px 18px;font-size:13px;font-weight:900;cursor:pointer}
-.btn-confirm:disabled{opacity:.5;cursor:not-allowed}
-.btn-ai{border:0;background:linear-gradient(135deg,var(--orange),#d97706);color:#fff;border-radius:12px;padding:10px 18px;font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 4px 14px rgba(217,119,6,.25)}
-
+.hint-box{background:linear-gradient(135deg,#f0f7ff,#eef6ff);border:1px solid #bfdbfe;border-radius:12px;padding:14px;margin-bottom:16px}
+.hint-box-title{font-size:12px;font-weight:900;color:var(--blue);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.hint-box-title::before{content:'💡'}
+.hint-box ul{font-size:12px;color:var(--text2);line-height:1.8;padding-left:20px;margin:0}
+.hint-box li{margin-bottom:4px}
 .file-upload-area{border:2px dashed var(--border);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:14px}
 .file-upload-area:hover{border-color:var(--blue);background:#f0f7ff}
 .file-upload-area input{display:none}
 .file-upload-hint{font-size:13px;color:var(--text3)}
 .file-upload-hint strong{color:var(--blue)}
-.file-upload-name{font-size:14px;font-weight:800;color:var(--text);margin-top:8px}
 .upload-file-list{max-height:300px;overflow-y:auto;margin-bottom:12px}
 .upload-file-item{display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .upload-file-item:last-child{border-bottom:none}
@@ -198,28 +209,9 @@ select.compact:focus{border-color:var(--blue)}
 .upload-file-item select{flex-shrink:0;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:800;background:#fff;cursor:pointer}
 .upload-file-item select:focus{border-color:var(--blue)}
 .upload-file-item .kb-file-tag{flex-shrink:0}
-
-.hint-box{background:linear-gradient(135deg,#f0f7ff,#eef6ff);border:1px solid #bfdbfe;border-radius:12px;padding:14px;margin-bottom:16px}
-.hint-box-title{font-size:12px;font-weight:900;color:var(--blue);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.hint-box-title::before{content:'💡'}
-.hint-box ul{font-size:12px;color:var(--text2);line-height:1.8;padding-left:20px;margin:0}
-.hint-box li{margin-bottom:4px}
 </style>
 </head>
 <body>
-
-<div class="header">
-  <div class="header-left">
-    <div class="logo">客</div>
-    <div>
-      <div class="header-title">服务商需求调研助手</div>
-    </div>
-  </div>
-  <div class="header-right">
-    <span class="user-greet" id="user-greet">你好！加载中…</span>
-    <button class="btn-logout" id="btn-logout" onclick="doLogout()">退出登录</button>
-  </div>
-</div>
 
 <!-- LOADING OVERLAY -->
 <div class="loading-overlay hidden" id="loading-overlay">
@@ -228,7 +220,19 @@ select.compact:focus{border-color:var(--blue)}
 </div>
 
 <!-- TOAST -->
-<div class="toast hidden" id="toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:800;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,.15);display:none"></div>
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">客</div>
+    <div class="header-title">服务商需求调研助手</div>
+  </div>
+  <div class="header-right">
+    <span class="user-greet" id="user-greet">你好！加载中…</span>
+    <button class="btn-logout" id="btn-logout" onclick="doLogout()">退出登录</button>
+  </div>
+</div>
 
 <div class="main">
   <!-- TABS -->
@@ -239,42 +243,111 @@ select.compact:focus{border-color:var(--blue)}
 
   <!-- CLIENTS TAB -->
   <div id="clients-content">
-    <div class="toolbar">
-      <div class="toolbar-left">
+    <!-- 工具栏 -->
+    <div class="page-toolbar">
+      <!-- 第一行：阶段筛选胶囊 -->
+      <div class="stage-pills" id="stage-pills">
+        <span class="stage-pill active" data-stage="">
+          全部客户<span class="pill-count" id="count-all">0</span>
+        </span>
+        <span class="stage-pill" data-stage="step1">
+          客户录入<span class="pill-count" id="count-step1">0</span>
+        </span>
+        <span class="stage-pill" data-stage="step2">
+          调研准备<span class="pill-count" id="count-step2">0</span>
+        </span>
+        <span class="stage-pill" data-stage="step3">
+          沟通记录<span class="pill-count" id="count-step3">0</span>
+        </span>
+        <span class="stage-pill" data-stage="step4">
+          方案生成<span class="pill-count" id="count-step4">0</span>
+        </span>
+        <span class="stage-pill" data-stage="step5">
+          Demo设计<span class="pill-count" id="count-step5">0</span>
+        </span>
+        <span class="stage-pill" data-stage="done">
+          已完成<span class="pill-count" id="count-done">0</span>
+        </span>
+      </div>
+      <!-- 第二行：搜索+行业筛选+排序+视图+新建 -->
+      <div class="toolbar-row2">
         <div class="search-wrap">
           <span class="search-icon">🔍</span>
-          <input type="text" id="search-input" placeholder="搜索客户名称…" oninput="onSearchChange()">
+          <input type="text" id="filter-search" placeholder="搜索客户名称、行业或需求关键词…" oninput="renderClientList()">
         </div>
-        <select class="compact" id="filter-progress" onchange="onFilterChange()">
-          <option value="">全部进度</option>
-          <option value="pending">客户录入</option>
-          <option value="prepared">调研准备</option>
-          <option value="uploaded">沟通纪要</option>
-          <option value="done">已完成</option>
-        </select>
-        <select class="compact" id="filter-time" onchange="onFilterChange()">
-          <option value="recent">最近更新</option>
-          <option value="oldest">最早更新</option>
-        </select>
-      </div>
-      <div class="toolbar-right">
+        <div class="industry-select-wrap">
+          <select id="filter-industry" onchange="renderClientList()">
+            <option value="">全部行业</option>
+          </select>
+        </div>
+        <div class="sort-bar">
+          <button class="sort-btn active" data-sort="updated" onclick="setSort('updated')">最新</button>
+          <button class="sort-btn" data-sort="name" onclick="setSort('name')">名称</button>
+          <button class="sort-btn" data-sort="created" onclick="setSort('created')">创建</button>
+        </div>
         <div class="view-toggle">
-          <button class="view-btn" id="view-grid-btn" onclick="setView('grid')" title="卡片视图">
+          <button class="active" data-view="card" onclick="setView('card')" title="卡片视图">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="0" width="6" height="6" rx="2"/><rect x="8" y="0" width="6" height="6" rx="2"/><rect x="0" y="8" width="6" height="6" rx="2"/><rect x="8" y="8" width="6" height="6" rx="2"/></svg>
           </button>
-          <button class="view-btn active" id="view-list-btn" onclick="setView('list')" title="列表视图">
+          <button data-view="table" onclick="setView('table')" title="列表视图">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="0" width="14" height="3" rx="1.5"/><rect x="0" y="5" width="14" height="3" rx="1.5"/><rect x="0" y="10" width="14" height="3" rx="1.5"/></svg>
           </button>
         </div>
         <button class="btn-new" id="btn-new-client">+ 新建客户</button>
       </div>
     </div>
-    <div id="client-container"></div>
+
+    <!-- 列表标题区 -->
+    <div class="list-meta" id="list-meta">
+      <div class="list-meta-left">
+        <b>客户列表</b>
+        <span id="list-count-text">共 0 个客户</span>
+      </div>
+      <div class="list-meta-right" id="list-meta-right"></div>
+    </div>
+
+    <!-- 卡片视图 -->
+    <div id="client-list-grid" class="client-grid"></div>
+
+    <!-- 表格视图 -->
+    <div id="client-list-table" style="display:none">
+      <div class="client-table-wrap">
+        <table class="client-table">
+          <thead>
+            <tr>
+              <th>客户名称</th>
+              <th>行业</th>
+              <th>当前阶段</th>
+              <th>沟通次数</th>
+              <th>需求摘要</th>
+              <th>更新时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="client-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 空状态 -->
+    <div id="empty-list" class="empty-list" style="display:none">
+      <div class="empty-icon">📋</div>
+      <h3>还没有客户</h3>
+      <p>点击下方按钮，创建第一个客户，<br>开始您的售前调研工作</p>
+      <div class="empty-steps">
+        <div class="empty-step"><span class="step-num">1</span>创建客户<span class="step-arrow">→</span></div>
+        <div class="empty-step"><span class="step-num">2</span>录入需求<span class="step-arrow">→</span></div>
+        <div class="empty-step"><span class="step-num">3</span>调研沟通<span class="step-arrow">→</span></div>
+        <div class="empty-step"><span class="step-num">4</span>生成方案<span class="step-arrow">→</span></div>
+        <div class="empty-step"><span class="step-num">5</span>设计Demo</div>
+      </div>
+      <button class="empty-cta" onclick="goNewClient()">+ 新建客户</button>
+    </div>
   </div>
 
   <!-- KNOWLEDGE BASE TAB -->
   <div id="kb-content" style="display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:16px">
+    <div class="kb-header">
       <div style="display:flex;align-items:center;gap:12px;flex:1">
         <div style="flex:1;height:8px;background:#e8edf5;border-radius:999px;overflow:hidden;max-width:300px">
           <div id="kb-progress-fill" style="height:100%;background:linear-gradient(90deg,#1263e6,#13b96f);border-radius:999px;transition:width .3s;width:0%"></div>
@@ -284,7 +357,6 @@ select.compact:focus{border-color:var(--blue)}
       <button class="btn-upload" id="btn-upload-kb" onclick="openUploadModal()">+ 上传知识库</button>
     </div>
 
-    <!-- CONTRAST SECTION -->
     <div id="kb-contrast-section" style="display:none">
       <div style="background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow)">
         <div style="font-size:13px;font-weight:900;color:var(--text);margin-bottom:14px">📊 知识库增强效果</div>
@@ -292,17 +364,16 @@ select.compact:focus{border-color:var(--blue)}
       </div>
     </div>
 
-    <!-- FILE LIST -->
     <div class="kb-files" id="kb-files-section" style="display:none">
       <div class="kb-files-header">
         <span class="kb-files-title">📁 已上传的知识库文件</span>
         <div class="kb-filter-tabs" id="kb-filter-tabs">
-          <span class="kb-filter-tab active" data-cat="">全部 <b id="count-all">0</b></span>
-          <span class="kb-filter-tab" data-cat="case" style="color:#1263e6">案例库 <b id="count-case">0</b></span>
-          <span class="kb-filter-tab" data-cat="template" style="color:#d97706">模板库 <b id="count-template">0</b></span>
-          <span class="kb-filter-tab" data-cat="knowledge" style="color:#0891b2">行业知识 <b id="count-knowledge">0</b></span>
-          <span class="kb-filter-tab" data-cat="qa" style="color:#059669">QA <b id="count-qa">0</b></span>
-          <span class="kb-filter-tab" data-cat="sales" style="color:#7c3aed">销售工具 <b id="count-sales">0</b></span>
+          <span class="kb-filter-tab active" data-cat="">全部 <b id="count-all-kb">0</b></span>
+          <span class="kb-filter-tab" data-cat="case" style="color:#1263e6">案例库 <b id="count-case-kb">0</b></span>
+          <span class="kb-filter-tab" data-cat="template" style="color:#d97706">模板库 <b id="count-template-kb">0</b></span>
+          <span class="kb-filter-tab" data-cat="knowledge" style="color:#0891b2">行业知识 <b id="count-knowledge-kb">0</b></span>
+          <span class="kb-filter-tab" data-cat="qa" style="color:#059669">QA <b id="count-qa-kb">0</b></span>
+          <span class="kb-filter-tab" data-cat="sales" style="color:#7c3aed">销售工具 <b id="count-sales-kb">0</b></span>
         </div>
       </div>
       <table class="kb-files-table">
@@ -321,40 +392,10 @@ select.compact:focus{border-color:var(--blue)}
   </div>
 </div>
 
-<!-- NEW CLIENT MODAL -->
-<div class="modal-overlay" id="new-client-modal">
-  <div class="modal-box">
-    <h3>新建客户</h3>
-    <div class="modal-field">
-      <label>客户名称</label>
-      <input type="text" id="new-name" placeholder="请输入客户名称" onkeydown="if(event.key==='Enter')confirmNewClient()">
-    </div>
-    <div class="modal-field">
-      <label>所属行业</label>
-      <select id="new-industry">
-        <option value="">请选择行业</option>
-        <option value="餐饮">餐饮</option>
-        <option value="制造业">制造业</option>
-        <option value="零售">零售</option>
-        <option value="教育">教育</option>
-        <option value="医疗">医疗</option>
-        <option value="金融">金融</option>
-        <option value="其他">其他</option>
-      </select>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeNewClientModal()">取消</button>
-      <button class="btn-confirm" onclick="confirmNewClient()">确认创建</button>
-    </div>
-  </div>
-</div>
-
 <!-- UPLOAD MODAL -->
 <div class="modal-overlay" id="upload-modal">
   <div class="modal-box">
     <h3 id="upload-modal-title">上传知识库文件</h3>
-
-    <!-- Step 1: File Select -->
     <div id="upload-step1">
       <div class="hint-box">
         <div class="hint-box-title">上传知识库，报告更精准</div>
@@ -374,8 +415,6 @@ select.compact:focus{border-color:var(--blue)}
         </div>
       </div>
     </div>
-
-    <!-- Step 2: Confirm -->
     <div id="upload-step2" style="display:none">
       <div class="hint-box">
         <div class="hint-box-title">已选择 <b id="selected-file-count">0</b> 个文件，请确认名称和类别</div>
@@ -383,14 +422,12 @@ select.compact:focus{border-color:var(--blue)}
       <div class="upload-file-list" id="upload-file-list"></div>
       <div class="upload-progress-text" id="upload-progress-text" style="display:none;text-align:center;padding:10px;color:var(--blue);font-weight:800">正在解析…</div>
     </div>
-
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeUploadModal()">取消</button>
-      <button class="btn-ai" id="btn-ai-parse" onclick="doBatchUpload()" style="display:none">开始解析并上传</button>
+      <button class="btn-ai" id="btn-ai-parse" onclick="doBatchUpload()" style="display:none;background:linear-gradient(135deg,var(--orange),#d97706);box-shadow:0 4px 14px rgba(217,119,6,.25)">开始解析并上传</button>
     </div>
   </div>
 </div>
-
 
 <script>
 var API_BASE = 'http://localhost:8000';
@@ -399,25 +436,77 @@ var STORAGE_KEY = 'provider-assist-clients';
 var KB_STORAGE_KEY = 'provider-kb-files';
 
 var CAT_NAMES = {case:'案例库',template:'模板库',knowledge:'行业知识',qa:'QA',sales:'销售工具'};
-var CAT_COLORS = {case:'case',template:'template',knowledge:'knowledge',qa:'qa',sales:'sales'};
 var CAT_TAG_COLORS = {case:'#1263e6',template:'#d97706',knowledge:'#0891b2',qa:'#059669',sales:'#7c3aed'};
 
 var _backendClients = [];
-var _currentView = 'list';
-var _searchText = '';
-var _filterProgress = '';
-var _filterTime = 'recent';
+var _currentView = 'card';
+var _currentStageFilter = '';
+var _currentSort = 'updated';
 var _kbFiles = [];
 var _selectedFile = null;
 
-function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
-function getAuthHeaders() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }; }
+// ===== STAGE SYSTEM =====
+var STAGE_LABELS = {
+  step1: '客户录入', step2: '调研准备', step3: '沟通记录',
+  step4: '方案生成', step5: 'Demo设计', done: '已完成'
+};
+var STAGE_BADGE_CLASS = {
+  step1: 's1', step2: 's2', step3: 's3', step4: 's4', step5: 's5', done: 's6'
+};
 
+function getStage(c) {
+  if (c._completed) return 'done';
+  if (c.step5_schema) return 'step5';
+  if (c.step4_presales || c.step4_technical || c.step4_report) return 'step4';
+  if (c.transcript || (c.uploaded_files && c.uploaded_files.length > 0)) return 'step3';
+  if (c.step1_result) return 'step2';
+  return 'step1';
+}
+
+function getProgress(c) {
+  if (c._completed) return 5;
+  var p = 0;
+  if (c.industry || c.name) p = 1;
+  if (c.step1_result) p = 2;
+  if (c.transcript || (c.uploaded_files && c.uploaded_files.length > 0)) p = 3;
+  if (c.step4_presales || c.step4_technical || c.step4_report) p = 4;
+  if (c.step5_schema) p = 5;
+  return p;
+}
+
+function getNoteCount(c) {
+  return (c.uploaded_files || []).length;
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '未知';
+  var diff = Date.now() - new Date(dateStr).getTime();
+  var days = Math.floor(diff / 86400000);
+  if (days === 0) return '今天';
+  if (days === 1) return '昨天';
+  if (days < 7) return days + '天前';
+  if (days < 30) return Math.floor(days / 7) + '周前';
+  return new Date(dateStr).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+}
+
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ===== INIT =====
 function init() {
-  var token = getToken();
+  var token = localStorage.getItem(TOKEN_KEY) || '';
   if (!token) { location.href = 'login.html'; return; }
   autoLogin();
 }
+
+function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
+function getAuthHeaders() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }; }
 
 function autoLogin() {
   fetch(API_BASE + '/api/auth/auto-login', {
@@ -430,7 +519,6 @@ function autoLogin() {
       loadClientsFromBackend();
       loadKbData();
     }).catch(function(e) {
-      // Token invalid - try test-login to get a fresh valid token
       fetch(API_BASE + '/api/test-login', { method: 'POST' })
         .then(function(r) { return r.json(); })
         .then(function(data) {
@@ -475,47 +563,338 @@ function doLogout() {
   location.href = 'login.html';
 }
 
-// KB FILES
-function loadKbFiles() {
-  loadKbData();
+// ===== TOAST =====
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(function() { el.classList.remove('show'); }, 2000);
 }
 
-function saveKbFiles() {
-  // 不再使用 localStorage
+// ===== CARD MENU =====
+function toggleCardMenu(cardId, event) {
+  event.stopPropagation();
+  document.querySelectorAll('.client-card-dropdown.visible').forEach(function(el) {
+    if (el.id !== 'menu-' + cardId) el.classList.remove('visible');
+  });
+  var menu = document.getElementById('menu-' + cardId);
+  if (menu) menu.classList.toggle('visible');
 }
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.client-card')) {
+    document.querySelectorAll('.client-card-dropdown.visible').forEach(function(el) {
+      el.classList.remove('visible');
+    });
+  }
+});
+
+// ===== RENDER CLIENT CARD =====
+function renderClientCard(c) {
+  var stage = getStage(c);
+  var progress = getProgress(c);
+  var noteCount = getNoteCount(c);
+  var demand = c.initial_demand || '';
+  var demandShort = demand.length > 60 ? demand.substring(0, 60) + '…' : demand;
+  var tags = (c.tags || '').split(',').filter(Boolean);
+  var badgeCls = STAGE_BADGE_CLASS[stage] || 's1';
+  var stageLabel = STAGE_LABELS[stage] || '客户录入';
+  var cardId = 'card-' + c.id.replace(/[^a-zA-Z0-9]/g, '_');
+
+  var dots = '';
+  for (var i = 0; i < 5; i++) {
+    var color = i < progress ? '#1263e6' : (i === progress ? '#b9d8ff' : '#e5e7eb');
+    dots += '<div class="c-dot" style="background:' + color + '"></div>';
+  }
+
+  var noteText = noteCount === 0 ? '暂无沟通记录' : noteCount + ' 次沟通';
+  var updateText = timeAgo(c.updated_at || c.created_at);
+
+  var tagsHtml = '';
+  if (tags.length) {
+    tagsHtml = '<div class="c-tags">' + tags.map(function(t) {
+      return '<span class="c-tag">' + escapeHtml(t) + '</span>';
+    }).join('') + '</div>';
+  }
+
+  return '<div class="client-card" id="' + cardId + '">' +
+    '<div class="client-card-header">' +
+      '<div class="client-card-header-left">' +
+        '<div class="c-name">' + escapeHtml(c.name || '未命名') + '</div>' +
+        '<div class="c-meta">' + escapeHtml(c.industry || '未定义行业') + ' · ' + new Date(c.created_at || '').toLocaleDateString('zh-CN') + '</div>' +
+      '</div>' +
+      '<div class="client-card-header-right">' +
+        '<span class="stage-badge ' + badgeCls + '">' + stageLabel + '</span>' +
+        '<button class="more-btn" onclick="toggleCardMenu(\'' + cardId + '\', event)" title="更多">⋮</button>' +
+        '<div class="client-card-dropdown" id="menu-' + cardId + '">' +
+          '<button onclick="event.stopPropagation();showRenameModal(\'' + c.id + '\')">重命名客户</button>' +
+          '<button class="danger" onclick="event.stopPropagation();deleteClient(\'' + c.id + '\')">删除客户</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    tagsHtml +
+    (demandShort ? '<div class="c-demand">' + escapeHtml(demandShort) + '</div>' : '<div class="c-demand" style="color:#c0c8d4;font-style:italic">暂未录入需求</div>') +
+    '<div class="c-progress">' + dots + '<span class="c-level">' + progress + '/5</span></div>' +
+    '<div class="client-card-footer">' +
+      '<div class="client-card-footer-left">' + noteText + ' · ' + updateText + '</div>' +
+      '<div class="client-card-footer-right">' +
+        '<button class="btn-view" onclick="event.stopPropagation();openClient(\'' + c.id + '\')">查看</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+// ===== RENDER TABLE ROW =====
+function renderClientTableRow(c) {
+  var stage = getStage(c);
+  var progress = getProgress(c);
+  var noteCount = getNoteCount(c);
+  var demand = c.initial_demand || '';
+  var demandShort = demand.length > 35 ? demand.substring(0, 35) + '…' : (demand || '<span style="color:#c0c8d4;font-style:italic">暂未录入需求</span>');
+  var badgeCls = STAGE_BADGE_CLASS[stage] || 's1';
+  var stageLabel = STAGE_LABELS[stage] || '客户录入';
+  var updateText = timeAgo(c.updated_at || c.created_at);
+  var industry = c.industry ? '<span style="font-size:11px;padding:2px 8px;background:#f3f4f6;color:#6b7280;border-radius:999px">' + escapeHtml(c.industry) + '</span>' : '-';
+
+  return '<tr onclick="openClient(\'' + c.id + '\')" style="cursor:pointer">' +
+    '<td><div class="c-name-wrap">' + escapeHtml(c.name || '未命名') + '</div></td>' +
+    '<td>' + industry + '</td>' +
+    '<td><span class="stage-badge ' + badgeCls + '">' + stageLabel + '</span></td>' +
+    '<td>' + noteCount + '</td>' +
+    '<td class="td-demand">' + demandShort + '</td>' +
+    '<td style="color:#98a2b3;font-size:12px;white-space:nowrap">' + updateText + '</td>' +
+    '<td class="td-actions">' +
+      '<button class="c-next-btn" onclick="event.stopPropagation();openClient(\'' + c.id + '\')">查看</button>' +
+      '<button class="more-btn" style="width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:#f3f4f6;color:#667085;cursor:pointer;border:none;font-size:14px" onclick="event.stopPropagation();showTableMenu(\'' + c.id + '\', this)" title="更多">⋮</button>' +
+      '<div class="client-card-dropdown table-menu" id="table-menu-' + c.id + '" style="right:0;left:auto;top:36px;position:absolute">' +
+        '<button onclick="event.stopPropagation();showRenameModal(\'' + c.id + '\')">重命名客户</button>' +
+        '<button class="danger" onclick="event.stopPropagation();deleteClient(\'' + c.id + '\')">删除客户</button>' +
+      '</div>' +
+    '</td>' +
+  '</tr>';
+}
+
+// ===== VIEW MODE =====
+function setView(view) {
+  _currentView = view;
+  document.querySelectorAll('.view-toggle button').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.view === view);
+  });
+  document.getElementById('client-list-grid').style.display = view === 'card' ? '' : 'none';
+  document.getElementById('client-list-table').style.display = view === 'table' ? '' : 'none';
+  renderClientList();
+}
+
+function setSort(sort) {
+  _currentSort = sort;
+  document.querySelectorAll('.sort-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.sort === sort);
+  });
+  renderClientList();
+}
+
+// ===== TABLE MORE MENU =====
+function showTableMenu(clientId, btn) {
+  event.stopPropagation();
+  document.querySelectorAll('.table-menu.visible').forEach(function(el) {
+    if (el.id !== 'table-menu-' + clientId) el.classList.remove('visible');
+  });
+  var menu = document.getElementById('table-menu-' + clientId);
+  if (menu) menu.classList.toggle('visible');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.td-actions')) {
+    document.querySelectorAll('.table-menu.visible').forEach(function(el) {
+      el.classList.remove('visible');
+    });
+  }
+});
+
+// ===== RENDER CLIENT LIST =====
+function renderClientList() {
+  var clients = _backendClients.slice();
+  var allClients = clients;
+
+  // Stage filter
+  if (_currentStageFilter) {
+    clients = clients.filter(function(c) { return getStage(c) === _currentStageFilter; });
+  }
+
+  // Search filter
+  var search = document.getElementById('filter-search').value.trim().toLowerCase();
+  if (search) {
+    clients = clients.filter(function(c) {
+      return (c.name || '').toLowerCase().indexOf(search) >= 0 ||
+             (c.industry || '').toLowerCase().indexOf(search) >= 0 ||
+             (c.initial_demand || '').toLowerCase().indexOf(search) >= 0;
+    });
+  }
+
+  // Industry filter
+  var industryFilter = document.getElementById('filter-industry').value;
+  if (industryFilter) {
+    clients = clients.filter(function(c) { return c.industry === industryFilter; });
+  }
+
+  // Sort
+  if (_currentSort === 'updated') {
+    clients.sort(function(a, b) { return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0); });
+  } else if (_currentSort === 'name') {
+    clients.sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
+  } else if (_currentSort === 'created') {
+    clients.sort(function(a, b) { return new Date(a.created_at || 0) - new Date(b.created_at || 0); });
+  }
+
+  // Update stage pill counts
+  var counts = { '': allClients.length, step1: 0, step2: 0, step3: 0, step4: 0, step5: 0, done: 0 };
+  allClients.forEach(function(c) {
+    var s = getStage(c);
+    if (counts[s] !== undefined) counts[s]++;
+  });
+  document.getElementById('count-all').textContent = counts[''];
+  document.getElementById('count-step1').textContent = counts.step1;
+  document.getElementById('count-step2').textContent = counts.step2;
+  document.getElementById('count-step3').textContent = counts.step3;
+  document.getElementById('count-step4').textContent = counts.step4;
+  document.getElementById('count-step5').textContent = counts.step5;
+  document.getElementById('count-done').textContent = counts.done;
+
+  // Update list meta
+  document.getElementById('list-count-text').textContent = '共 ' + allClients.length + ' 个客户';
+  var metaRight = document.getElementById('list-meta-right');
+  var metaText = '';
+  if (_currentStageFilter) {
+    metaText = '<span class="filter-active">当前查看：' + (STAGE_LABELS[_currentStageFilter] || _currentStageFilter) + '</span>';
+  }
+  if (search) {
+    metaText += (metaText ? ' · ' : '') + '搜索："' + escapeHtml(search) + '"';
+  }
+  metaRight.innerHTML = metaText;
+
+  // Update industry dropdown
+  var allIndustries = [''].concat([...new Set(allClients.map(function(c) { return c.industry; }).filter(Boolean))]);
+  var sel = document.getElementById('filter-industry');
+  var cur = sel.value;
+  sel.innerHTML = allIndustries.map(function(i) {
+    return '<option value="' + escapeHtml(i) + '">' + (i || '全部行业') + '</option>';
+  }).join('');
+  sel.value = cur;
+
+  // Render
+  var grid = document.getElementById('client-list-grid');
+  var tableBody = document.getElementById('client-table-body');
+  var empty = document.getElementById('empty-list');
+
+  if (clients.length === 0) {
+    grid.innerHTML = '';
+    tableBody.innerHTML = '';
+    empty.style.display = allClients.length === 0 ? 'grid' : 'none';
+    return;
+  }
+  empty.style.display = 'none';
+
+  if (_currentView === 'card') {
+    grid.innerHTML = clients.map(function(c) { return renderClientCard(c); }).join('');
+  } else {
+    tableBody.innerHTML = clients.map(function(c) { return renderClientTableRow(c); }).join('');
+  }
+}
+
+// ===== STAGE PILL HANDLER =====
+document.getElementById('stage-pills').addEventListener('click', function(e) {
+  var pill = e.target.closest('.stage-pill');
+  if (!pill) return;
+  document.querySelectorAll('.stage-pill').forEach(function(p) { p.classList.remove('active'); });
+  pill.classList.add('active');
+  _currentStageFilter = pill.dataset.stage || '';
+  renderClientList();
+});
+
+// ===== RENAME =====
+function showRenameModal(clientId) {
+  var c = _backendClients.find(function(x) { return x.id === clientId; });
+  if (!c) return;
+  var newName = prompt('请输入新的客户名称：', c.name || '');
+  if (newName && newName.trim() && newName !== c.name) {
+    c.name = newName.trim();
+    c.updated_at = new Date().toISOString();
+    fetch(API_BASE + '/api/clients/' + clientId, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ name: c.name, industry: c.industry })
+    }).then(function(r) { return r.json(); }).then(function() {
+      _backendClients = _backendClients.map(function(x) { return x.id === clientId ? c : x; });
+      renderClientList();
+      showToast('已重命名');
+    });
+  }
+}
+
+// ===== DELETE =====
+function deleteClient(id) {
+  if (!confirm('确定删除这个客户？删除后无法恢复。')) return;
+  deleteClientBackend(id, function() {
+    _backendClients = _backendClients.filter(function(c) { return c.id !== id; });
+    renderClientList();
+    showToast('已删除');
+  });
+}
+
+// ===== OPEN CLIENT =====
+function openClient(id) {
+  var c = _backendClients.find(function(x) { return x.id === id; });
+  if (!c) { location.href = 'workbench?client_id=' + encodeURIComponent(id); return; }
+  var stage = getStage(c);
+  // Jump to the latest step the client is at
+  location.href = 'workbench?client_id=' + encodeURIComponent(id) + '&step=' + stage;
+}
+
+function goNewClient() {
+  location.href = 'workbench?new=1';
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.toggle('on', t.dataset.tab === tab); });
+  document.getElementById('clients-content').style.display = tab === 'clients' ? '' : 'none';
+  document.getElementById('kb-content').style.display = tab === 'kb' ? '' : 'none';
+  if (tab === 'kb') loadKbData();
+}
+
+// ===== KB =====
+function loadKbFiles() { loadKbData(); }
+function saveKbFiles() {}
 
 function renderKbUI() {
-  // 计算完善度：文件数/10 * 100%，最高100%
   var total = _kbFiles.length;
   var completion = Math.min(Math.round(total / 10 * 100), 100);
   document.getElementById('kb-progress-fill').style.width = completion + '%';
   document.getElementById('kb-progress-pct').textContent = completion + '%';
 
-  // 更新分类计数
   var cats = ['case', 'template', 'knowledge', 'qa', 'sales'];
   cats.forEach(function(cat) {
     var count = _kbFiles.filter(function(f) { return f.category === cat; }).length;
-    var el = document.getElementById('count-' + cat);
+    var el = document.getElementById('count-' + cat + '-kb');
     if (el) el.textContent = count;
   });
-  var elAll = document.getElementById('count-all');
+  var elAll = document.getElementById('count-all-kb');
   if (elAll) elAll.textContent = total;
 
-  // 文件列表
   var filterCat = window._kbFilter || '';
   var filtered = filterCat ? _kbFiles.filter(function(f) { return f.category === filterCat; }) : _kbFiles.slice();
   if (filtered.length > 0 || total > 0) {
     document.getElementById('kb-files-section').style.display = 'block';
-    var sorted = filtered.sort(function(a, b) { return new Date(b.created_at || b.date) - new Date(a.created_at || a.date); });
+    var sorted = filtered.sort(function(a, b) { return new Date(b.created_at || b.date) - new Date(a.created_at || b.date); });
     document.getElementById('kb-files-body').innerHTML = sorted.map(function(f) {
-      var statusText = {'uploading':'上传中','parsing':'解析中','indexing':'向量化中','generating':'生成中','completed':'完成','failed':'失败'}[f.status] || '未知';
-      var statusColor = {'uploading':'color:#f59e0b','parsing':'color:#f59e0b','indexing':'color:#f59e0b','generating':'color:#f59e0b','completed':'color:#13b96f','failed':'color:#ef4444'}[f.status] || '';
+      var statusText = {uploading:'上传中',parsing:'解析中',indexing:'向量化中',generating:'生成中',completed:'完成',failed:'失败'}[f.status] || '未知';
+      var statusColor = {uploading:'color:#f59e0b',parsing:'color:#f59e0b',indexing:'color:#f59e0b',generating:'color:#f59e0b',completed:'color:#13b96f',failed:'color:#ef4444'}[f.status] || '';
       var progress = f.progress || 0;
       var industryTag = f.industry ? '<span style="background:#f5f5f5;color:#666;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800;margin-left:4px">' + f.industry + '</span>' : '';
       return '<tr><td class="kb-file-name" title="' + (f.original_filename || f.name) + '"><span style="font-weight:800">' + (f.display_name || f.name) + '</span>' + industryTag + '</td><td><span class="kb-file-tag" style="background:' + (CAT_TAG_COLORS[f.category] || '#888') + '20;color:' + (CAT_TAG_COLORS[f.category] || '#888') + '">' + CAT_NAMES[f.category] + '</span></td><td><span style="' + statusColor + ';font-size:12px;font-weight:800">' + statusText + '</span> <span style="font-size:11px;color:#98a2b3">' + progress + '%</span><div class="kb-file-progress" style="margin-top:4px"><div class="kb-file-progress-bar" style="width:' + progress + '%' + (f.status === 'failed' ? ';background:#ef4444' : f.status === 'completed' ? ';background:#13b96f' : '') + '"></div></div></td><td><button class="kb-delete-btn" onclick="deleteKbFile(\'' + f.id + '\')" title="删除">🗑️</button></td></tr>';
     }).join('');
-
-    // 更新筛选标签高亮
     document.querySelectorAll('.kb-filter-tab').forEach(function(el) {
       el.classList.toggle('active', el.dataset.cat === filterCat);
     });
@@ -530,9 +909,7 @@ function deleteKbFile(id) {
     method: 'DELETE',
     headers: { 'Authorization': 'Bearer ' + getToken() }
   }).then(function(res) { return res.json(); })
-    .then(function(data) {
-      loadKbData();
-    });
+    .then(function(data) { loadKbData(); });
 }
 
 function loadKbData() {
@@ -565,7 +942,7 @@ function loadEnhancement() {
     });
 }
 
-// UPLOAD MODAL
+// ===== UPLOAD MODAL =====
 function openUploadModal() {
   window._selectedFiles = null;
   document.getElementById('upload-step1').style.display = 'block';
@@ -590,19 +967,25 @@ function onFilesSelected(input) {
     return { file: f, cat: detectCategory(f.name) };
   });
 
-  // Render file list with editable name, industry and category selectors
   var list = document.getElementById('upload-file-list');
   var industries = ['餐饮','制造业','零售','教育','医疗','金融','科技','其他'];
   list.innerHTML = files.map(function(f, i) {
-    // 去掉扩展名的显示名
     var defaultName = f.name.replace(/\.[^.]+$/, '');
     var cat = detectCategory(f.name);
     var indOptions = industries.map(function(ind) { return '<option value="' + ind + '">' + ind + '</option>'; }).join('');
-    return '<div class="upload-file-item"><input type="text" id="file-name-' + i + '" value="' + defaultName + '" class="upload-file-name-input" title="' + f.name + '"><select id="file-industry-' + i + '" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:800;background:#fff;cursor:pointer"><option value="">行业</option>' + indOptions + '</select><select id="file-cat-' + i + '"><option value="case"' + (cat === 'case' ? ' selected' : '') + '>案例库</option><option value="template"' + (cat === 'template' ? ' selected' : '') + '>模板库</option><option value="knowledge"' + (cat === 'knowledge' ? ' selected' : '') + '>行业知识</option><option value="qa"' + (cat === 'qa' ? ' selected' : '') + '>QA</option><option value="sales"' + (cat === 'sales' ? ' selected' : '') + '>销售工具</option></select></div>';
+    return '<div class="upload-file-item">' +
+      '<input type="text" id="file-name-' + i + '" value="' + escapeHtml(defaultName) + '" class="upload-file-name-input" title="' + escapeHtml(f.name) + '">' +
+      '<select id="file-industry-' + i + '" style="flex-shrink:0;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:800;background:#fff;cursor:pointer"><option value="">行业</option>' + indOptions + '</select>' +
+      '<select id="file-cat-' + i + '">' +
+        '<option value="case"' + (cat === 'case' ? ' selected' : '') + '>案例库</option>' +
+        '<option value="template"' + (cat === 'template' ? ' selected' : '') + '>模板库</option>' +
+        '<option value="knowledge"' + (cat === 'knowledge' ? ' selected' : '') + '>行业知识</option>' +
+        '<option value="qa"' + (cat === 'qa' ? ' selected' : '') + '>QA</option>' +
+        '<option value="sales"' + (cat === 'sales' ? ' selected' : '') + '>销售工具</option>' +
+      '</select>' +
+    '</div>';
   }).join('');
   document.getElementById('selected-file-count').textContent = files.length;
-
-  // Show step 2
   document.getElementById('upload-step1').style.display = 'none';
   document.getElementById('upload-step2').style.display = 'block';
   document.getElementById('btn-ai-parse').style.display = '';
@@ -626,14 +1009,12 @@ function doBatchUpload() {
   btn.textContent = '正在上传…';
   document.getElementById('upload-progress-text').style.display = 'block';
 
-  // 收集每个文件的名称、行业和类别
   files.forEach(function(item, i) {
     item.displayName = document.getElementById('file-name-' + i).value.trim() || item.file.name;
     item.industry = document.getElementById('file-industry-' + i).value;
     item.category = document.getElementById('file-cat-' + i).value;
   });
 
-  // 先添加到列表，显示0%进度
   var tempIds = files.map(function(item, i) {
     var tempId = 'uploading_' + Date.now() + '_' + i;
     _kbFiles.push({
@@ -653,7 +1034,6 @@ function doBatchUpload() {
   renderKbUI();
   closeUploadModal();
 
-  // 逐个上传文件
   var completed = 0;
   files.forEach(function(item, i) {
     var tempId = tempIds[i];
@@ -668,11 +1048,7 @@ function doBatchUpload() {
       if (e.lengthComputable) {
         var pct = Math.round((e.loaded / e.total) * 30);
         var entry = _kbFiles.find(function(f) { return f.id === tempId; });
-        if (entry) {
-          entry.progress = pct;
-          entry.status = 'uploading';
-          renderKbUI();
-        }
+        if (entry) { entry.progress = pct; entry.status = 'uploading'; renderKbUI(); }
       }
     };
     xhr.onload = function() {
@@ -680,11 +1056,7 @@ function doBatchUpload() {
       if (xhr.status === 200) {
         try {
           var res = JSON.parse(xhr.responseText);
-          if (entry) {
-            entry.id = res.id;
-            entry.progress = 100;
-            entry.status = 'completed';
-          }
+          if (entry) { entry.id = res.id; entry.progress = 100; entry.status = 'completed'; }
         } catch(e) {
           if (entry) { entry.progress = 100; entry.status = 'completed'; }
         }
@@ -692,172 +1064,19 @@ function doBatchUpload() {
         if (entry) entry.status = 'failed';
       }
       completed++;
-      if (completed === files.length) {
-        loadKbData();
-        btn.disabled = false;
-        btn.textContent = '开始上传';
-        document.getElementById('upload-progress-text').style.display = 'none';
-      }
+      if (completed === files.length) { loadKbData(); btn.disabled = false; btn.textContent = '开始上传'; document.getElementById('upload-progress-text').style.display = 'none'; }
     };
     xhr.onerror = function() {
       var entry = _kbFiles.find(function(f) { return f.id === tempId; });
       if (entry) entry.status = 'failed';
       completed++;
-      if (completed === files.length) {
-        loadKbData();
-        btn.disabled = false;
-        btn.textContent = '开始上传';
-        document.getElementById('upload-progress-text').style.display = 'none';
-      }
+      if (completed === files.length) { loadKbData(); btn.disabled = false; btn.textContent = '开始上传'; document.getElementById('upload-progress-text').style.display = 'none'; }
     };
     xhr.open('POST', API_BASE + '/api/kb/upload');
     xhr.setRequestHeader('Authorization', 'Bearer ' + getToken());
     xhr.send(formData);
   });
 }
-
-function showToast(msg, type) {
-  var el = document.getElementById('toast');
-  if (!el) return;
-  el.textContent = msg;
-  el.className = 'toast' + (type === 'error' ? ' toast-error' : '');
-  el.style.display = 'block';
-  clearTimeout(el._timer);
-  el._timer = setTimeout(function() { el.style.display = 'none'; }, 2000);
-}
-
-function generateContrast(cat, name) {
-  var defaults = {
-    case: { title: '案例概述', defaultText: '企业数字化转型案例，帮助企业提升效率', kbText: name + ' 实战案例，已服务50+企业，平均效率提升40%' },
-    template: { title: '报告框架', defaultText: '痛点分析 → 方案设计 → 实施路径', kbText: '【' + name + '】专业框架：背景分析 → 需求挖掘 → 方案定制 → 价值呈现 → 实施保障' },
-    knowledge: { title: '行业知识', defaultText: '该行业数字化转型趋势', kbText: name + '：深度行业knowhow，涵盖核心痛点和最佳实践' },
-    qa: { title: '常见问答', defaultText: 'Q: 项目周期多久？ A: 通常2-4周', kbText: 'Q: 项目周期？ A: 基于' + name + '，可缩短至1-2周' },
-    sales: { title: '销售话术', defaultText: '了解客户需求，推荐合适方案', kbText: '基于' + name + '：精准痛点切入 + 行业案例佐证 + 快速方案呈现' }
-  };
-  return defaults[cat] || defaults.case;
-}
-
-// CLIENT LIST
-function getStage(c) {
-  if (c.step4_report || c.step5_schema) return 'done';
-  if (c.transcript || (c.uploaded_files && c.uploaded_files.length > 0)) return 'uploaded';
-  if (c.step1_result) return 'prepared';
-  return 'pending';
-}
-function getProgress(c) {
-  var p = 0;
-  if (c.industry) p = 1;
-  if (c.step1_result) p = 2;
-  if (c.transcript || (c.uploaded_files && c.uploaded_files.length > 0)) p = 3;
-  if (c.step4_report) p = 4;
-  if (c.step5_schema) p = 5;
-  return p;
-}
-var LABELS = {0:'客户录入',1:'调研准备',2:'沟通纪要',3:'需求整理',4:'Demo设计'};
-var INDUSTRY_COLORS = {餐饮:'tag-餐饮',制造业:'tag-制造业',零售:'tag-零售',教育:'tag-教育',医疗:'tag-医疗',金融:'tag-金融',其他:'tag-其他'};
-
-function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach(function(t) { t.classList.toggle('on', t.dataset.tab === tab); });
-  document.getElementById('clients-content').style.display = tab === 'clients' ? '' : 'none';
-  document.getElementById('kb-content').style.display = tab === 'kb' ? '' : 'none';
-  if (tab === 'kb') loadKbData();
-}
-
-function setView(v) {
-  _currentView = v;
-  document.getElementById('view-grid-btn').classList.toggle('active', v === 'grid');
-  document.getElementById('view-list-btn').classList.toggle('active', v === 'list');
-  renderClientList();
-}
-
-function onSearchChange() {
-  _searchText = document.getElementById('search-input').value.trim().toLowerCase();
-  renderClientList();
-}
-
-function onFilterChange() {
-  _filterProgress = document.getElementById('filter-progress').value;
-  _filterTime = document.getElementById('filter-time').value;
-  renderClientList();
-}
-
-function renderClientList() {
-  var clients = _backendClients.slice();
-  if (_searchText) clients = clients.filter(function(c) { return (c.name || '').toLowerCase().indexOf(_searchText) >= 0; });
-  if (_filterProgress) clients = clients.filter(function(c) { return getStage(c) === _filterProgress; });
-  if (_filterTime === 'recent') clients.sort(function(a,b) { return new Date(b.updated_at||0) - new Date(a.updated_at||0); });
-  else if (_filterTime === 'oldest') clients.sort(function(a,b) { return new Date(a.updated_at||0) - new Date(b.updated_at||0); });
-  else clients.sort(function(a,b) { return (a.name||'').localeCompare(b.name||''); });
-
-  var container = document.getElementById('client-container');
-  if (clients.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><h3>' + (_searchText || _filterProgress ? '没有找到符合条件的客户' : '暂无客户') + '</h3><p>' + (_searchText || _filterProgress ? '调整筛选条件试试' : '点击下方按钮，创建第一个客户，开始售前调研工作') + '</p>' + (!_searchText && !_filterProgress ? '<button class="empty-cta" onclick="location.href=\'workbench?new=1\'">+ 新建客户</button>' : '') + '</div>';
-    return;
-  }
-  if (_currentView === 'grid') renderGrid(clients, container);
-  else renderTable(clients, container);
-}
-
-function renderGrid(clients, container) {
-  var html = '<div class="client-grid">';
-  clients.forEach(function(c) {
-    var progress = getProgress(c);
-    var dotsArr = [1,2,3,4,5].map(function(d) {
-      var cls = d < progress ? 'done' : d === progress ? 'active' : 'todo';
-      return '<div class="sdot ' + cls + '"></div>';
-    }).join('');
-    var indTag = c.industry ? '<span class="industry-tag ' + (INDUSTRY_COLORS[c.industry] || 'tag-other') + '">' + c.industry + '</span>' : '';
-    var dem = c.initial_demand || '';
-    var demShort = dem.length > 60 ? dem.substring(0,60) + '...' : dem;
-    var upd = c.updated_at ? new Date(c.updated_at).toLocaleDateString() : '';
-    var stageTag = getStage(c) === 'done' ? '<span style="color:var(--green);font-weight:800">&#10003; 已完成</span>' : '';
-    html += '<div class="client-card" onclick="openClient(\'' + c.id + '\')"><div class="card-actions"><button class="btn-icon" onclick="event.stopPropagation();openClient(\'' + c.id + '\')">&#26597;&#30475;</button><button class="btn-icon danger" onclick="if(confirm(\'&#30830;&#23450;&#21024;&#38500;&#23458;&#25143;))deleteClient(\'' + c.id + '\')">&#21024;&#38500;</button></div><div class="card-top"><div class="client-name">' + (c.name||'&#26410;&#21629;&#21517;&#23458;&#25143;') + '</div><div class="client-date">' + upd + '</div></div><div style="margin-bottom:10px">' + indTag + '</div>' + (dem ? '<div class="client-demand">' + demShort + '</div>' : '') + '<div class="step-dots">' + dotsArr + '</div><div class="progress-label"><span>' + progress + '/5 &#183; ' + (LABELS[progress-1]||'&#24050;&#23436;&#25104;') + '</span>' + stageTag + '</div></div>';
-  });
-  html += '</div>';
-  container.innerHTML = html;
-}
-
-function renderTable(clients, container) {
-  var html = '<table class="client-table"><thead><tr><th>客户名称</th><th>行业</th><th>当前阶段</th><th>沟通次数</th><th>初始需求</th><th>更新时间</th><th>操作</th></tr></thead><tbody>';
-  clients.forEach(function(c) {
-    var progress = getProgress(c);
-    var noteCount = (c.uploaded_files||[]).length;
-    var demand = c.initial_demand || '';
-    var demandShort = demand.length > 40 ? demand.substring(0,40) + '…' : demand;
-    var updated = c.updated_at ? new Date(c.updated_at).toLocaleDateString() : '';
-    var industryTag = c.industry ? '<span class="industry-tag ' + (INDUSTRY_COLORS[c.industry]||'tag-其他') + '" style="font-size:11px;padding:2px 8px">' + c.industry + '</span>' : '';
-    var demandEsc = (demand||'').replace(/"/g, '&quot;');
-    html += '<tr><td class="td-name">' + (c.name||'未命名客户') + '</td><td>' + industryTag + '</td><td><span class="stage-dot stage-' + (progress-1) + '"></span>' + (LABELS[progress-1]||'已完成') + '</td><td>' + noteCount + '次</td><td class="td-demand" title="' + demandEsc + '">' + (demandShort||'-') + '</td><td>' + updated + '</td><td class="td-actions"><button class="btn-icon" onclick="openClient(\'' + c.id + '\')">查看</button><button class="btn-icon danger" onclick="confirmDelete(\'' + c.id + '\',\'' + (c.name||'').replace(/'/g,"\\'") + '\')">删除</button></td></tr>';
-  });
-  html += '</tbody></table>';
-  container.innerHTML = html;
-}
-
-function openClient(id) { location.href = 'workbench?client_id=' + encodeURIComponent(id); }
-function openNewClientModal() { document.getElementById('new-client-modal').classList.add('active'); document.getElementById('new-name').value = ''; document.getElementById('new-industry').value = ''; setTimeout(function() { document.getElementById('new-name').focus(); }, 50); }
-function closeNewClientModal() { document.getElementById('new-client-modal').classList.remove('active'); }
-
-function confirmNewClient() {
-  var name = document.getElementById('new-name').value.trim();
-  var industry = document.getElementById('new-industry').value;
-  if (!name) return;
-  closeNewClientModal();
-  createClientBackend(name, industry, function(d) {
-    if (d.success && d.id) location.href = 'workbench?client_id=' + d.id;
-    else location.href = 'workbench?new=1';
-  });
-}
-
-function confirmDelete(id, name) {
-  if (!confirm('确定删除客户「' + (name||'') + '」？此操作不可恢复。')) return;
-  deleteClientBackend(id, function() {
-    _backendClients = _backendClients.filter(function(c) { return c.id != id; });
-    renderClientList();
-  });
-}
-
-document.getElementById('btn-new-client').addEventListener('click', function() { location.href = 'workbench?new=1'; });
-init();
 
 // KB filter tabs
 document.querySelectorAll('.kb-filter-tab').forEach(function(tab) {
@@ -868,6 +1087,14 @@ document.querySelectorAll('.kb-filter-tab').forEach(function(tab) {
     renderKbUI();
   });
 });
+
+// New client button
+document.getElementById('btn-new-client').addEventListener('click', function() {
+  location.href = 'workbench?new=1';
+});
+
+// Init
+init();
 </script>
 </body>
 </html>
