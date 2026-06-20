@@ -196,25 +196,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   background:var(--panel);
   border:1px solid #e8edf5;
   border-radius:20px;
-  padding:20px 22px;
+  padding:22px 24px;
   margin-bottom:20px;
   box-shadow:0 1px 3px rgba(18,34,64,.06),0 2px 8px rgba(18,34,64,.04);
 }
-.agent-eval-header{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.agent-eval-header{display:flex;align-items:center;gap:8px;margin-bottom:20px}
 .agent-eval-icon{font-size:18px}
 .agent-eval-title{font-size:14px;font-weight:700;color:var(--text)}
 .agent-eval-sub{font-size:11px;color:var(--text3);margin-left:auto}
-.agent-eval-body{display:flex;gap:28px;align-items:flex-start}
-.agent-radar-wrap{width:220px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px}
-.agent-grade{text-align:center}
-.agent-grade .grade-label{font-size:11px;color:var(--text3);display:block}
-.agent-grade .grade-value{font-size:32px;font-weight:900;background:linear-gradient(135deg,#1263e6,#13b96f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2}
-.agent-dims{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;padding-top:8px}
-.dim-item{display:flex;flex-direction:column;gap:4px}
+.ae-body{display:flex;gap:28px;align-items:flex-start}
+.ae-radar-section{width:240px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.ae-grade{text-align:center}
+.ae-grade-label{font-size:11px;color:var(--text3);display:block}
+.ae-grade-val{font-size:36px;font-weight:900;background:linear-gradient(135deg,#1263e6,#13b96f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2}
+.ae-dims-section{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;padding-top:10px}
+.dim-item{display:flex;flex-direction:column;gap:5px}
 .dim-header{display:flex;align-items:center;gap:8px}
-.dim-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap}
-.dim-score{font-size:11px;font-weight:700;color:#1263e6;margin-left:auto;flex-shrink:0}
-.dim-bar{height:5px;background:#eef2f7;border-radius:999px;overflow:hidden}
+.dim-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;flex:1}
+.dim-score{font-size:13px;font-weight:800;color:#1263e6;flex-shrink:0}
+.dim-bar{height:6px;background:#eef2f7;border-radius:999px;overflow:hidden}
 .dim-bar-fill{height:100%;border-radius:999px;transition:width .6s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,#1263e6,#13b96f)}
 .dim-desc{font-size:11px;color:var(--text3);line-height:1.4}
 .dim-analyzing{height:6px;background:linear-gradient(90deg,#e8edf5 25%,#b9d8ff 50%,#e8edf5 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:999px}
@@ -450,17 +450,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
           <span class="agent-eval-title">调研助手能力评估</span>
           <span class="agent-eval-sub">基于知识库质量综合分析</span>
         </div>
-        <div class="agent-eval-body">
-          <!-- 左侧：雷达图（突出显示） -->
-          <div class="agent-radar-wrap">
-            <svg id="radar-chart" width="240" height="240" viewBox="0 0 240 240"></svg>
-            <div class="agent-grade" id="agent-grade">
-              <span class="grade-label">综合等级</span>
-              <span class="grade-value" id="grade-value">—</span>
+        <div class="ae-body">
+          <div class="ae-radar-section">
+            <svg id="radar-chart" width="260" height="260" viewBox="0 0 260 260"></svg>
+            <div class="ae-grade">
+              <span class="ae-grade-label">综合评级</span>
+              <span class="ae-grade-val" id="grade-value">—</span>
             </div>
           </div>
-          <!-- 右侧：五维度简洁列表 -->
-          <div class="agent-dims" id="agent-dims"></div>
+          <div class="ae-dims-section" id="agent-dims"></div>
         </div>
       </div>
     </div>
@@ -1111,7 +1109,7 @@ function getDimDesc(dim, score) {
 function renderRadarChart(scores) {
   var svg = document.getElementById('radar-chart');
   if (!svg) return;
-  var cx = 120, cy = 120, r = 75, labelR = 100;
+  var cx = 130, cy = 130, r = 80, labelR = 108;
   var keys = ['industry','scenario','pricing','demo','question'];
   var n = 5;
   var toXY = function(i, val) {
@@ -1120,7 +1118,7 @@ function renderRadarChart(scores) {
     return { x: cx + r * frac * Math.cos(angle), y: cy + r * frac * Math.sin(angle) };
   };
 
-  // Draw grid rings
+  // Grid rings
   var gridLevels = [0.33, 0.66, 1.0];
   var gridLines = gridLevels.map(function(lvl) {
     var pts = keys.map(function(k, i) {
@@ -1130,13 +1128,13 @@ function renderRadarChart(scores) {
     return '<polygon points="' + pts + '" fill="none" stroke="#e8edf5" stroke-width="1"/>';
   }).join('');
 
-  // Draw axes
+  // Axes
   var axisLines = keys.map(function(k, i) {
     var pt = toXY(i, 100);
     return '<line x1="' + cx + '" y1="' + cy + '" x2="' + pt.x + '" y2="' + pt.y + '" stroke="#e8edf5" stroke-width="1"/>';
   }).join('');
 
-  // Draw data polygon
+  // Data polygon
   var dataPts = keys.map(function(k, i) {
     var s = scores[k] || 0;
     var pt = toXY(i, s);
@@ -1144,20 +1142,20 @@ function renderRadarChart(scores) {
   }).join(' ');
   var poly = '<polygon points="' + dataPts + '" fill="url(#radarGrad)" stroke="#1263e6" stroke-width="2" stroke-linejoin="round"/>';
 
-  // Draw vertex dots
+  // Dots
   var dots = keys.map(function(k, i) {
     var pt = toXY(i, scores[k] || 0);
-    return '<circle cx="' + pt.x + '" cy="' + pt.y + '" r="3.5" fill="#1263e6" stroke="#fff" stroke-width="1.5"/>';
+    return '<circle cx="' + pt.x + '" cy="' + pt.y + '" r="4" fill="#1263e6" stroke="#fff" stroke-width="1.5"/>';
   }).join('');
 
-  // Draw labels outside the chart
+  // Labels
   var labels = keys.map(function(k, i) {
     var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
     var lx = cx + labelR * Math.cos(angle);
     var ly = cy + labelR * Math.sin(angle);
-    var anchor = Math.abs(Math.cos(angle)) > 0.5 ? (Math.cos(angle) > 0 ? 'start' : 'end') : 'middle';
+    var anchor = Math.cos(angle) > 0.3 ? 'start' : Math.cos(angle) < -0.3 ? 'end' : 'middle';
     var dim = AGENT_DIMS[i];
-    return '<text x="' + lx + '" y="' + ly + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="10" fill="#667085" font-weight="600">' + dim.icon + ' ' + dim.name.replace('能力','') + '</text>';
+    return '<text x="' + lx + '" y="' + ly + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="10" fill="#667085" font-weight="500">' + dim.icon + ' ' + dim.name.replace('能力','') + '</text>';
   }).join('');
 
   svg.innerHTML = '<defs><linearGradient id="radarGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1263e6" stop-opacity="0.35"/><stop offset="100%" stop-color="#13b96f" stop-opacity="0.2"/></linearGradient></defs>' + gridLines + axisLines + poly + dots + labels;
