@@ -205,7 +205,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .agent-eval-title{font-size:14px;font-weight:700;color:var(--text)}
 .agent-eval-sub{font-size:11px;color:var(--text3);margin-left:auto}
 .ae-body{display:flex;gap:28px;align-items:flex-start}
-.ae-radar-section{width:240px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.ae-radar-section{width:300px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px}
 .ae-grade{text-align:center}
 .ae-grade-label{font-size:11px;color:var(--text3);display:block}
 .ae-grade-val{font-size:36px;font-weight:900;background:linear-gradient(135deg,#1263e6,#13b96f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2}
@@ -452,7 +452,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
         </div>
         <div class="ae-body">
           <div class="ae-radar-section">
-            <svg id="radar-chart" width="260" height="260" viewBox="0 0 260 260"></svg>
+            <svg id="radar-chart" width="320" height="320" viewBox="-10 -10 320 320"></svg>
             <div class="ae-grade">
               <span class="ae-grade-label">综合评级</span>
               <span class="ae-grade-val" id="grade-value">—</span>
@@ -1109,7 +1109,7 @@ function getDimDesc(dim, score) {
 function renderRadarChart(scores) {
   var svg = document.getElementById('radar-chart');
   if (!svg) return;
-  var cx = 130, cy = 130, r = 80, labelR = 108;
+  var cx = 155, cy = 155, r = 90, labelR = 120;
   var keys = ['industry','scenario','pricing','demo','question'];
   var n = 5;
   var toXY = function(i, val) {
