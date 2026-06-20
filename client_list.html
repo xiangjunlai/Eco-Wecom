@@ -601,7 +601,7 @@ function renderClientCard(c) {
   var tags = (c.tags || '').split(',').filter(Boolean);
   var badgeCls = STAGE_BADGE_CLASS[stage] || 's1';
   var stageLabel = STAGE_LABELS[stage] || '客户录入';
-  var cardId = 'card-' + c.id.replace(/[^a-zA-Z0-9]/g, '_');
+  var cardId = 'card-' + String(c.id || '').replace(/[^a-zA-Z0-9]/g, '_');
 
   var dots = '';
   for (var i = 0; i < 5; i++) {
