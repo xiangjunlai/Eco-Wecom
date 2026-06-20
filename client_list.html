@@ -17,7 +17,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 /* ===== HEADER ===== */
 .header{background:var(--panel);border-bottom:1px solid var(--border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(20,34,64,.04)}
 .header-left{display:flex;align-items:center;gap:14px}
-.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--blue),var(--green));display:grid;place-items:center;color:#fff;font-weight:900;font-size:16px;flex-shrink:0}
+.logo-wrap{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-icon{width:36px;height:36px;flex-shrink:0}
 .header-title{font-weight:900;font-size:16px;color:var(--text)}
 .header-right{display:flex;align-items:center;gap:10px}
 .user-greet{font-size:13px;color:var(--text2)}
@@ -33,29 +34,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 
 /* ===== TOOLBAR ===== */
 .page-toolbar{background:var(--panel);border-radius:20px;padding:18px 20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(18,99,230,.06)}
-/* 状态概览筛选栏 */
 .stage-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
 .stage-pill{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid transparent;transition:.15s;color:var(--text2);background:#f3f4f6;white-space:nowrap}
 .stage-pill:hover{background:#eef6ff;border-color:#b9d8ff;color:var(--blue)}
 .stage-pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
 .stage-pill .pill-count{font-size:11px;opacity:.75;margin-left:4px}
-/* 工具栏第二行 */
 .toolbar-row2{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .toolbar-row2 .search-wrap{flex:1;min-width:200px;position:relative}
-.toolbar-row2 .search-wrap input{padding-left:34px;width:100%;height:36px;border:1.5px solid var(--border);border-radius:11px;padding:0 12px 0 34px;font-size:13px;outline:0;transition:.15s;background:var(--panel)}
+.toolbar-row2 .search-wrap input{padding-left:34px;width:100%;height:36px;border:1.5px solid var(--border);border-radius:11px;padding:0 12px 0 34px;font-size:13px;outline:0;transition:.15s;background:var(--panel);font-family:inherit}
 .toolbar-row2 .search-wrap input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(18,99,230,.1)}
 .toolbar-row2 .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none}
 .toolbar-row2 .industry-select-wrap{position:relative;min-width:140px}
-.toolbar-row2 .industry-select-wrap select{height:36px;padding:0 28px 0 12px;font-size:12px;border:1.5px solid var(--border);border-radius:11px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2398a2b3' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;appearance:none;cursor:pointer;outline:0;color:var(--text2);font-weight:500}
+.toolbar-row2 .industry-select-wrap select{height:36px;padding:0 28px 0 12px;font-size:12px;border:1.5px solid var(--border);border-radius:11px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2398a2b3' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center;appearance:none;cursor:pointer;outline:0;color:var(--text2);font-weight:500;font-family:inherit}
 .toolbar-row2 .industry-select-wrap select:focus{border-color:var(--blue)}
 .toolbar-row2 .sort-bar{display:flex;gap:4px}
-.toolbar-row2 .sort-btn{padding:7px 12px;border-radius:10px;font-size:12px;cursor:pointer;border:1.5px solid transparent;background:#f3f4f6;color:var(--text2);transition:.15s;font-weight:500}
+.toolbar-row2 .sort-btn{padding:7px 12px;border-radius:10px;font-size:12px;cursor:pointer;border:1.5px solid transparent;background:#f3f4f6;color:var(--text2);transition:.15s;font-weight:500;font-family:inherit}
 .toolbar-row2 .sort-btn:hover{background:#eef6ff;color:var(--blue)}
 .toolbar-row2 .sort-btn.active{background:#eef6ff;color:var(--blue);border-color:#b9d8ff}
 .toolbar-row2 .view-toggle{display:flex;background:#f3f4f6;border-radius:11px;padding:3px;gap:2px}
 .toolbar-row2 .view-toggle button{padding:5px 10px;border-radius:8px;font-size:12px;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:.15s}
 .toolbar-row2 .view-toggle button.active{background:#fff;color:var(--blue);box-shadow:0 1px 3px rgba(0,0,0,.1)}
-.toolbar-row2 .btn-new{padding:0 16px;height:36px;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border:none;box-shadow:0 3px 10px rgba(18,99,230,.3);transition:.18s}
+.toolbar-row2 .btn-new{padding:0 16px;height:36px;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border:none;box-shadow:0 3px 10px rgba(18,99,230,.3);transition:.18s;font-family:inherit}
 .toolbar-row2 .btn-new:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(18,99,230,.35)}
 
 /* ===== LIST META ===== */
@@ -66,39 +65,79 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .list-meta-right .filter-active{color:var(--blue);font-weight:500}
 
 /* ===== CLIENT CARDS ===== */
-.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.client-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px 18px;cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.04);position:relative;overflow:visible}
-.client-card:hover{border-color:var(--blue);box-shadow:0 6px 18px rgba(18,99,230,.12);transform:translateY(-2px)}
-.client-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.client-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.client-card{
+  background:var(--panel);
+  border:1px solid #e8edf5;
+  border-radius:16px;
+  padding:0;
+  cursor:pointer;
+  transition:all .22s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 1px 3px rgba(18,34,64,.04),0 1px 2px rgba(18,34,64,.06);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  position:relative;
+}
+.client-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:3px;
+  background:linear-gradient(90deg,var(--blue),var(--green));
+  opacity:0;
+  transition:opacity .2s;
+}
+.client-card:hover{
+  border-color:#d0daf0;
+  box-shadow:0 8px 24px rgba(18,99,230,.12),0 3px 8px rgba(18,99,230,.08);
+  transform:translateY(-2px);
+}
+.client-card:hover::before{opacity:1}
+.client-card-header{padding:16px 18px 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .client-card-header-left{flex:1;min-width:0}
-.client-card .c-name{font-size:14px;font-weight:600;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.client-card .c-meta{font-size:12px;color:#9ca3af;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.client-card-header-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.client-card .stage-badge{display:inline-flex;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
-.stage-badge.s1{background:#fff1f0;color:#b42318}
-.stage-badge.s2{background:#fef3e2;color:#c55a11}
-.stage-badge.s3{background:#fff7e6;color:#ad6800}
-.stage-badge.s4{background:#e6f0ff;color:#1677ff}
-.stage-badge.s5{background:#e8f5ff;color:#0958d9}
-.stage-badge.s6{background:#ecfdf3;color:#079455}
+.client-card .c-name{font-size:15px;font-weight:700;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.client-card .c-meta{font-size:12px;color:#9ca3af;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-card-header-right{display:flex;align-items:center;gap:6px;flex-shrink:0;padding-top:2px}
+.client-card .stage-badge{
+  display:inline-flex;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;
+  white-space:nowrap;letter-spacing:.2px;
+  box-shadow:0 1px 2px rgba(0,0,0,.06);
+}
+.stage-badge.s1{background:#fff1f0;color:#b42318;border:1px solid #fecdcd}
+.stage-badge.s2{background:#fef3e2;color:#c55a11;border:1px solid #fcd9a0}
+.stage-badge.s3{background:#fff7e6;color:#ad6800;border:1px solid #fde69e}
+.stage-badge.s4{background:#e6f0ff;color:#1677ff;border:1px solid #adc6ff}
+.stage-badge.s5{background:#e8f5ff;color:#0958d9;border:1px solid #adc6ff}
+.stage-badge.s6{background:#ecfdf3;color:#079455;border:1px solid #a6e8cc}
 .client-card .more-btn{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:#f3f4f6;color:#667085;cursor:pointer;border:none;font-size:14px;line-height:1;transition:.15s;flex-shrink:0}
 .client-card .more-btn:hover{background:#e6e8eb;color:#344054}
-.client-card-dropdown{position:absolute;right:14px;top:52px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 24px rgba(18,24,40,.15);z-index:100;overflow:hidden;display:none;min-width:130px}
+.client-card-dropdown{position:absolute;right:14px;top:54px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 24px rgba(18,24,40,.15);z-index:100;overflow:hidden;display:none;min-width:130px}
 .client-card-dropdown.visible{display:block}
 .client-card-dropdown button{width:100%;padding:10px 14px;text-align:left;font-size:13px;color:#344054;cursor:pointer;border:none;background:#fff;transition:.15s;display:block}
 .client-card-dropdown button:hover{background:#f5f7fb}
 .client-card-dropdown button.danger{color:#dc2626}
-.client-card .c-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
-.client-card .c-tag{font-size:11px;padding:2px 8px;border-radius:5px;background:#f3f4f6;color:#6b7280}
-.client-card .c-demand{margin-top:9px;font-size:12px;color:#475467;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.client-card .c-progress{display:flex;gap:5px;align-items:center;margin-top:11px;padding-top:11px;border-top:1px solid #f3f4f6}
-.client-card .c-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.client-card .c-level{font-size:11px;color:#9ca3af;margin-left:5px}
-.client-card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
-.client-card-footer-left{font-size:11px;color:#98a2b3}
-.client-card-footer-right{display:flex;gap:6px;align-items:center}
-.client-card .btn-view{padding:5px 13px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:#eef6ff;color:var(--blue);transition:.15s}
-.client-card .btn-view:hover{background:var(--blue);color:#fff}
+.client-card-body{padding:0 18px;flex:1}
+.client-card .c-demand{
+  font-size:12px;color:#475467;line-height:1.6;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  margin-bottom:12px;
+}
+.client-card-footer{
+  padding:10px 18px 14px;
+  margin-top:auto;
+  border-top:1px solid #f3f4f6;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.client-card .c-progress{display:flex;gap:5px;align-items:center}
+.client-card .c-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .2s}
+.client-card .c-level{font-size:11px;color:#9ca3af;margin-left:6px;font-weight:500}
+.client-card-footer-left{display:flex;align-items:center;gap:10px}
+.client-card-footer-left span{font-size:11px;color:#98a2b3}
+.client-card-footer-left .sep{color:#d1d5db}
+.client-card-footer-right{}
+.client-card .btn-view{padding:5px 14px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;border:none;background:#eef6ff;color:var(--blue);transition:.15s;font-family:inherit;letter-spacing:.2px}
+.client-card .btn-view:hover{background:var(--blue);color:#fff;box-shadow:0 3px 8px rgba(18,99,230,.25)}
 
 /* ===== TABLE VIEW ===== */
 .client-table-wrap{background:var(--panel);border-radius:16px;overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.04)}
@@ -108,9 +147,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .client-table tr:last-child td{border-bottom:none}
 .client-table tr:hover td{background:#fafbff}
 .client-table .c-name-cell{font-weight:600;color:#111827}
-.client-table .c-next-btn{padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:#eef6ff;color:var(--blue);white-space:nowrap;display:inline-block}
+.client-table .c-next-btn{padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:#eef6ff;color:var(--blue);white-space:nowrap;display:inline-block;font-family:inherit}
 .client-table .c-next-btn:hover{background:var(--blue);color:#fff}
-.client-table .td-actions{display:flex;gap:6px;align-items:center;padding-top:10px}
+.client-table .td-actions{display:flex;gap:6px;align-items:center;padding-top:10px;position:relative}
 .client-table .td-demand{font-size:12px;color:#667085;max-width:200px}
 .client-table .td-name-wrap{font-weight:600;color:#111827;font-size:14px}
 
@@ -123,7 +162,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .empty-step{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);background:#f5f7fb;padding:8px 14px;border-radius:12px}
 .empty-step .step-num{width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
 .empty-step .step-arrow{color:var(--text3);font-size:14px}
-.empty-cta{border:0;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border-radius:14px;padding:12px 28px;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(18,99,230,.25);transition:.18s}
+.empty-cta{border:0;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border-radius:14px;padding:12px 28px;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(18,99,230,.25);transition:.18s;font-family:inherit}
 .empty-cta:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(18,99,230,.3)}
 
 /* ===== MODAL ===== */
@@ -137,9 +176,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(18,99,230,.1)}
 .modal-field textarea{resize:vertical;min-height:80px}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
-.btn-cancel{border:1px solid var(--border);background:#fff;border-radius:12px;padding:10px 18px;font-size:13px;font-weight:800;color:var(--text2);cursor:pointer}
+.btn-cancel{border:1px solid var(--border);background:#fff;border-radius:12px;padding:10px 18px;font-size:13px;font-weight:800;color:var(--text2);cursor:pointer;font-family:inherit}
 .btn-cancel:hover{background:#f5f7fb}
-.btn-confirm{border:0;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border-radius:12px;padding:10px 18px;font-size:13px;font-weight:900;cursor:pointer}
+.btn-confirm{border:0;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border-radius:12px;padding:10px 18px;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit}
 .btn-confirm:disabled{opacity:.5;cursor:not-allowed}
 
 /* ===== TOAST ===== */
@@ -204,11 +243,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .upload-file-list{max-height:300px;overflow-y:auto;margin-bottom:12px}
 .upload-file-item{display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .upload-file-item:last-child{border-bottom:none}
-.upload-file-name-input{flex:1;min-width:120px;font-size:13px;font-weight:800;color:var(--text);border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;outline:none}
+.upload-file-name-input{flex:1;min-width:120px;font-size:13px;font-weight:800;color:var(--text);border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;outline:none;font-family:inherit}
 .upload-file-name-input:focus{border-color:var(--blue)}
-.upload-file-item select{flex-shrink:0;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:800;background:#fff;cursor:pointer}
+.upload-file-item select{flex-shrink:0;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-weight:800;background:#fff;cursor:pointer;font-family:inherit}
 .upload-file-item select:focus{border-color:var(--blue)}
-.upload-file-item .kb-file-tag{flex-shrink:0}
 </style>
 </head>
 <body>
@@ -225,7 +263,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 <!-- HEADER -->
 <div class="header">
   <div class="header-left">
-    <div class="logo">客</div>
+    <a class="logo-wrap" href="client_list.html">
+      <!-- Logo: Robot icon with gradient -->
+      <svg class="logo-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="logoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#1263e6"/>
+            <stop offset="100%" stop-color="#13b96f"/>
+          </linearGradient>
+        </defs>
+        <rect width="36" height="36" rx="10" fill="url(#logoGrad)"/>
+        <!-- Robot head -->
+        <rect x="10" y="12" width="16" height="13" rx="3" fill="white" fill-opacity="0.95"/>
+        <!-- Robot eyes -->
+        <circle cx="15" cy="17.5" r="2" fill="#1263e6"/>
+        <circle cx="21" cy="17.5" r="2" fill="#1263e6"/>
+        <!-- Robot antenna -->
+        <line x1="18" y1="9" x2="18" y2="12" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="18" cy="8" r="1.5" fill="#13b96f"/>
+        <!-- Robot mouth -->
+        <rect x="14" y="21" width="8" height="1.5" rx="0.75" fill="#1263e6" fill-opacity="0.5"/>
+        <!-- Robot body hint -->
+        <rect x="13" y="26" width="10" height="4" rx="2" fill="white" fill-opacity="0.6"/>
+      </svg>
+    </a>
     <div class="header-title">服务商需求调研助手</div>
   </div>
   <div class="header-right">
@@ -245,7 +306,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   <div id="clients-content">
     <!-- 工具栏 -->
     <div class="page-toolbar">
-      <!-- 第一行：阶段筛选胶囊 -->
       <div class="stage-pills" id="stage-pills">
         <span class="stage-pill active" data-stage="">
           全部客户<span class="pill-count" id="count-all">0</span>
@@ -269,7 +329,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
           已完成<span class="pill-count" id="count-done">0</span>
         </span>
       </div>
-      <!-- 第二行：搜索+行业筛选+排序+视图+新建 -->
       <div class="toolbar-row2">
         <div class="search-wrap">
           <span class="search-icon">🔍</span>
@@ -354,7 +413,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
         </div>
         <span id="kb-progress-pct" style="font-size:12px;font-weight:900;color:#1263e6;min-width:36px">0%</span>
       </div>
-      <button class="btn-upload" id="btn-upload-kb" onclick="openUploadModal()">+ 上传知识库</button>
+      <button class="btn-upload" id="btn-upload-kb" onclick="openUploadModal()" style="border:1.5px solid var(--blue);background:#fff;color:var(--blue);border-radius:13px;padding:0 18px;height:38px;font-size:13px;font-weight:900;cursor:pointer;transition:.18s;font-family:inherit">+ 上传知识库</button>
     </div>
 
     <div id="kb-contrast-section" style="display:none">
@@ -424,7 +483,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeUploadModal()">取消</button>
-      <button class="btn-ai" id="btn-ai-parse" onclick="doBatchUpload()" style="display:none;background:linear-gradient(135deg,var(--orange),#d97706);box-shadow:0 4px 14px rgba(217,119,6,.25)">开始解析并上传</button>
+      <button class="btn-ai" id="btn-ai-parse" onclick="doBatchUpload()" style="display:none;background:linear-gradient(135deg,var(--orange),#d97706);box-shadow:0 4px 14px rgba(217,119,6,.25);border:0;color:#fff;border-radius:12px;padding:10px 18px;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit">开始解析并上传</button>
     </div>
   </div>
 </div>
@@ -436,14 +495,13 @@ var STORAGE_KEY = 'provider-assist-clients';
 var KB_STORAGE_KEY = 'provider-kb-files';
 
 var CAT_NAMES = {case:'案例库',template:'模板库',knowledge:'行业知识',qa:'QA',sales:'销售工具'};
-var CAT_TAG_COLORS = {case:'#1263e6',template:'#d97706',knowledge:'#0891b2',qa:'#059669',sales:'#7c3aed'};
+var CAT_TAG_COLORS = {case:'#1263e6',template:'#d97706',knowledge:'#0891b2',qa:'059669',sales:'#7c3aed'};
 
 var _backendClients = [];
 var _currentView = 'card';
 var _currentStageFilter = '';
 var _currentSort = 'updated';
 var _kbFiles = [];
-var _selectedFile = null;
 
 // ===== STAGE SYSTEM =====
 var STAGE_LABELS = {
@@ -485,13 +543,22 @@ function getNoteCount(c) {
 
 function timeAgo(dateStr) {
   if (!dateStr) return '未知';
-  var diff = Date.now() - new Date(dateStr).getTime();
+  var d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '未知';
+  var diff = Date.now() - d.getTime();
   var days = Math.floor(diff / 86400000);
   if (days === 0) return '今天';
   if (days === 1) return '昨天';
   if (days < 7) return days + '天前';
   if (days < 30) return Math.floor(days / 7) + '周前';
-  return new Date(dateStr).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+}
+
+function safeDate(dateStr) {
+  if (!dateStr) return '未知';
+  var d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '未知';
+  return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
 }
 
 function escapeHtml(str) {
@@ -602,8 +669,7 @@ function renderClientCard(c) {
   var progress = getProgress(c);
   var noteCount = getNoteCount(c);
   var demand = c.initial_demand || '';
-  var demandShort = demand.length > 60 ? demand.substring(0, 60) + '…' : demand;
-  var tags = (c.tags || '').split(',').filter(Boolean);
+  var demandShort = demand.length > 80 ? demand.substring(0, 80) + '…' : demand;
   var badgeCls = STAGE_BADGE_CLASS[stage] || 's1';
   var stageLabel = STAGE_LABELS[stage] || '客户录入';
   var cardId = 'card-' + String(c.id || '').replace(/[^a-zA-Z0-9]/g, '_');
@@ -614,21 +680,19 @@ function renderClientCard(c) {
     dots += '<div class="c-dot" style="background:' + color + '"></div>';
   }
 
-  var noteText = noteCount === 0 ? '暂无沟通记录' : noteCount + ' 次沟通';
+  var noteText = noteCount === 0 ? '暂无沟通' : noteCount + ' 次沟通';
   var updateText = timeAgo(c.updated_at || c.created_at);
+  var createdDate = safeDate(c.created_at);
 
-  var tagsHtml = '';
-  if (tags.length) {
-    tagsHtml = '<div class="c-tags">' + tags.map(function(t) {
-      return '<span class="c-tag">' + escapeHtml(t) + '</span>';
-    }).join('') + '</div>';
-  }
+  var demandHtml = demandShort
+    ? '<div class="c-demand">' + escapeHtml(demandShort) + '</div>'
+    : '<div class="c-demand" style="color:#c0c8d4;font-style:italic">暂未录入需求</div>';
 
   return '<div class="client-card" id="' + cardId + '">' +
     '<div class="client-card-header">' +
       '<div class="client-card-header-left">' +
         '<div class="c-name">' + escapeHtml(c.name || '未命名') + '</div>' +
-        '<div class="c-meta">' + escapeHtml(c.industry || '未定义行业') + ' · ' + new Date(c.created_at || '').toLocaleDateString('zh-CN') + '</div>' +
+        '<div class="c-meta">' + escapeHtml(c.industry || '未定义行业') + ' · ' + createdDate + '</div>' +
       '</div>' +
       '<div class="client-card-header-right">' +
         '<span class="stage-badge ' + badgeCls + '">' + stageLabel + '</span>' +
@@ -639,11 +703,15 @@ function renderClientCard(c) {
         '</div>' +
       '</div>' +
     '</div>' +
-    tagsHtml +
-    (demandShort ? '<div class="c-demand">' + escapeHtml(demandShort) + '</div>' : '<div class="c-demand" style="color:#c0c8d4;font-style:italic">暂未录入需求</div>') +
-    '<div class="c-progress">' + dots + '<span class="c-level">' + progress + '/5</span></div>' +
+    '<div class="client-card-body">' +
+      demandHtml +
+    '</div>' +
     '<div class="client-card-footer">' +
-      '<div class="client-card-footer-left">' + noteText + ' · ' + updateText + '</div>' +
+      '<div class="client-card-footer-left">' +
+        '<span>' + noteText + '</span>' +
+        '<span class="sep">·</span>' +
+        '<span>' + updateText + '</span>' +
+      '</div>' +
       '<div class="client-card-footer-right">' +
         '<button class="btn-view" onclick="event.stopPropagation();openClient(\'' + c.id + '\')">查看</button>' +
       '</div>' +
@@ -723,12 +791,10 @@ function renderClientList() {
   var clients = _backendClients.slice();
   var allClients = clients;
 
-  // Stage filter
   if (_currentStageFilter) {
     clients = clients.filter(function(c) { return getStage(c) === _currentStageFilter; });
   }
 
-  // Search filter
   var search = document.getElementById('filter-search').value.trim().toLowerCase();
   if (search) {
     clients = clients.filter(function(c) {
@@ -738,13 +804,11 @@ function renderClientList() {
     });
   }
 
-  // Industry filter
   var industryFilter = document.getElementById('filter-industry').value;
   if (industryFilter) {
     clients = clients.filter(function(c) { return c.industry === industryFilter; });
   }
 
-  // Sort
   if (_currentSort === 'updated') {
     clients.sort(function(a, b) { return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0); });
   } else if (_currentSort === 'name') {
@@ -853,7 +917,6 @@ function openClient(id) {
   var c = _backendClients.find(function(x) { return x.id === id; });
   if (!c) { location.href = 'workbench?client_id=' + encodeURIComponent(id); return; }
   var stage = getStage(c);
-  // Jump to the latest step the client is at
   location.href = 'workbench?client_id=' + encodeURIComponent(id) + '&step=' + stage;
 }
 
