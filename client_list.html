@@ -191,7 +191,35 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .spinner{width:36px;height:36px;border-radius:50%;border:4px solid #e8edf5;border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ===== KNOWLEDGE BASE ===== */
+/* ===== AGENT EVAL CARD ===== */
+.agent-eval-card{
+  background:var(--panel);
+  border:1px solid #e8edf5;
+  border-radius:20px;
+  padding:20px 22px;
+  margin-bottom:20px;
+  box-shadow:0 1px 3px rgba(18,34,64,.06),0 2px 8px rgba(18,34,64,.04);
+}
+.agent-eval-header{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+.agent-eval-icon{font-size:18px}
+.agent-eval-title{font-size:14px;font-weight:700;color:var(--text)}
+.agent-eval-sub{font-size:11px;color:var(--text3);margin-left:auto}
+.agent-eval-body{display:flex;gap:24px;align-items:flex-start}
+.agent-radar-wrap{width:180px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
+.agent-grade{text-align:center}
+.agent-grade .grade-label{font-size:11px;color:var(--text3);display:block}
+.agent-grade .grade-value{font-size:28px;font-weight:900;background:linear-gradient(135deg,#1263e6,#13b96f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2}
+.agent-dims{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+.dim-item{display:flex;flex-direction:column;gap:5px}
+.dim-header{display:flex;align-items:center;justify-content:space-between}
+.dim-name{font-size:12px;font-weight:600;color:var(--text)}
+.dim-score{font-size:12px;font-weight:700;color:#1263e6}
+.dim-bar{height:6px;background:#eef2f7;border-radius:999px;overflow:hidden}
+.dim-bar-fill{height:100%;border-radius:999px;transition:width .6s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,#1263e6,#13b96f)}
+.dim-desc{font-size:11px;color:var(--text3);line-height:1.4}
+.dim-analyzing{height:6px;background:linear-gradient(90deg,#e8edf5 25%,#b9d8ff 50%,#e8edf5 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:999px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.agent-eval-loading{text-align:center;padding:20px 0;color:var(--text3);font-size:13px}
 .kb-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
 .kb-progress-pct{font-size:12px;font-weight:900;color:var(--blue);min-width:36px}
 .kb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
@@ -416,10 +444,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
       <button class="btn-upload" id="btn-upload-kb" onclick="openUploadModal()" style="border:1.5px solid var(--blue);background:#fff;color:var(--blue);border-radius:13px;padding:0 18px;height:38px;font-size:13px;font-weight:900;cursor:pointer;transition:.18s;font-family:inherit">+ 上传知识库</button>
     </div>
 
-    <div id="kb-contrast-section" style="display:none">
-      <div style="background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--shadow)">
-        <div style="font-size:13px;font-weight:900;color:var(--text);margin-bottom:14px">📊 知识库增强效果</div>
-        <div id="kb-contrast-body"></div>
+    <div id="kb-contrast-section">
+      <div class="agent-eval-card">
+        <div class="agent-eval-header">
+          <span class="agent-eval-icon">🎯</span>
+          <span class="agent-eval-title">售前Agent能力评估</span>
+          <span class="agent-eval-sub">基于知识库质量综合分析</span>
+        </div>
+        <div class="agent-eval-body">
+          <!-- 左侧：雷达图 -->
+          <div class="agent-radar-wrap">
+            <svg id="radar-chart" width="180" height="180" viewBox="0 0 180 180"></svg>
+            <div class="agent-grade" id="agent-grade">
+              <span class="grade-label">综合等级</span>
+              <span class="grade-value" id="grade-value">—</span>
+            </div>
+          </div>
+          <!-- 右侧：五维度进度条 -->
+          <div class="agent-dims" id="agent-dims"></div>
+        </div>
       </div>
     </div>
 
@@ -996,23 +1039,163 @@ function loadKbData() {
     });
 }
 
+// ===== 售前AGENT能力评估 =====
+var AGENT_DIMS = [
+  { key: 'industry',    name: '行业理解能力',     icon: '🏭',
+    desc0: '暂无行业知识上传，Agent只能给出通用建议',
+    desc30: '已上传基础行业背景，Agent能识别客户行业特征',
+    desc60: '行业知识较完善，能生成带行业特点的背景分析',
+    desc90: '深度行业knowhow覆盖，生成内容接近行业专家水平' },
+  { key: 'scenario',   name: '场景拆解能力',     icon: '🧩',
+    desc0: '无案例参考，场景识别能力弱',
+    desc30: '能区分基础场景，但缺少细分场景深度',
+    desc60: '案例积累较全，场景拆解较为细致准确',
+    desc90: '大量真实案例支撑，场景拆解精准，接近专家直觉' },
+  { key: 'pricing',    name: '报价建议能力',     icon: '💰',
+    desc0: '无法给出有效报价参考',
+    desc30: '只能生成通用报价模板，缺少模块价格依据',
+    desc60: '具备基础报价框架，但缺乏市场参考数据',
+    desc90: '参考大量案例，能给出合理报价区间和专业模块拆分' },
+  { key: 'demo',       name: 'Demo设计能力',     icon: '🎨',
+    desc0: '缺少模板支持，Demo生成质量一般',
+    desc30: '有基础模板，能生成简单框架但内容单薄',
+    desc60: '模板库较全，能生成有行业针对性的Demo结构',
+    desc90: '模板+案例双重加持，Demo内容专业、维度完整' },
+  { key: 'question',   name: '客户问题清单能力',  icon: '📝',
+    desc0: '只能生成通用问题，缺乏针对性',
+    desc30: '能生成基础沟通问题清单，深度不足',
+    desc60: '问题覆盖较全面，能结合行业特点提问',
+    desc90: 'QA库完善，生成的问题清单专业且有深度，接近售前专家' }
+];
+
+var DIM_WEIGHTS = { industry: 1.2, scenario: 1.2, pricing: 1.0, demo: 1.0, question: 1.0 };
+
+function computeAgentScores(files) {
+  var counts = { case: 0, template: 0, knowledge: 0, qa: 0, sales: 0 };
+  (files || []).forEach(function(f) {
+    if (counts[f.category] !== undefined) counts[f.category]++;
+  });
+
+  // Scoring algorithm
+  var raw = {
+    industry:  Math.min(counts.knowledge * 12 + counts.sales * 8 + counts.case * 5, 100),
+    scenario:  Math.min(counts.case * 18, 100),
+    pricing:   Math.min(counts.template * 20 + counts.case * 10, 100),
+    demo:      Math.min(counts.template * 20 + counts.case * 12, 100),
+    question:  Math.min(counts.qa * 20 + counts.sales * 10 + counts.case * 5, 100)
+  };
+
+  var total = 0, weightSum = 0;
+  Object.keys(DIM_WEIGHTS).forEach(function(k) {
+    total += raw[k] * DIM_WEIGHTS[k];
+    weightSum += DIM_WEIGHTS[k];
+  });
+  var avg = Math.round(total / weightSum);
+
+  var grade;
+  if (avg >= 80) grade = 'S';
+  else if (avg >= 65) grade = 'A';
+  else if (avg >= 50) grade = 'B';
+  else if (avg >= 30) grade = 'C';
+  else grade = 'D';
+
+  return { scores: raw, avg: avg, grade: grade };
+}
+
+function getDimDesc(dim, score) {
+  if (score < 10) return dim.desc0;
+  if (score < 40) return dim.desc30;
+  if (score < 70) return dim.desc60;
+  return dim.desc90;
+}
+
+function renderRadarChart(scores) {
+  var svg = document.getElementById('radar-chart');
+  if (!svg) return;
+  var w = 180, h = 180, cx = 90, cy = 90, r = 65;
+  var keys = ['industry','scenario','pricing','demo','question'];
+  var n = 5;
+  var toXY = function(i, val) {
+    var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    var frac = val / 100;
+    return { x: cx + r * frac * Math.cos(angle), y: cy + r * frac * Math.sin(angle) };
+  };
+
+  // Draw grid rings
+  var gridLevels = [0.25, 0.5, 0.75, 1.0];
+  var gridLines = gridLevels.map(function(lvl) {
+    var pts = keys.map(function(k, i) {
+      var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+      return (cx + r * lvl * Math.cos(angle)) + ',' + (cy + r * lvl * Math.sin(angle));
+    }).join(' ');
+    return '<polygon points="' + pts + '" fill="none" stroke="#e8edf5" stroke-width="1"/>';
+  }).join('');
+
+  // Draw axes
+  var axisLines = keys.map(function(k, i) {
+    var pt = toXY(i, 100);
+    return '<line x1="' + cx + '" y1="' + cy + '" x2="' + pt.x + '" y2="' + pt.y + '" stroke="#e8edf5" stroke-width="1"/>';
+  }).join('');
+
+  // Draw data polygon
+  var dataPts = keys.map(function(k, i) {
+    var s = scores[k] || 0;
+    var pt = toXY(i, s);
+    return pt.x + ',' + pt.y;
+  }).join(' ');
+  var poly = '<polygon points="' + dataPts + '" fill="url(#radarGrad)" stroke="#1263e6" stroke-width="2" stroke-linejoin="round"/>';
+
+  // Draw vertex dots
+  var dots = keys.map(function(k, i) {
+    var pt = toXY(i, scores[k] || 0);
+    return '<circle cx="' + pt.x + '" cy="' + pt.y + '" r="3.5" fill="#1263e6" stroke="#fff" stroke-width="1.5"/>';
+  }).join('');
+
+  // Draw labels
+  var labels = keys.map(function(k, i) {
+    var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    var labelR = r + 14;
+    var lx = cx + labelR * Math.cos(angle);
+    var ly = cy + labelR * Math.sin(angle);
+    var anchor = Math.cos(angle) > 0.5 ? 'start' : Math.cos(angle) < -0.5 ? 'end' : 'middle';
+    var dim = AGENT_DIMS[i];
+    return '<text x="' + lx + '" y="' + ly + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="9" fill="#667085" font-weight="600">' + dim.icon + ' ' + dim.name.replace('能力','') + '</text>';
+  }).join('');
+
+  svg.innerHTML = '<defs><linearGradient id="radarGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1263e6" stop-opacity="0.3"/><stop offset="100%" stop-color="#13b96f" stop-opacity="0.2"/></linearGradient></defs>' + gridLines + axisLines + poly + dots + labels;
+}
+
+function renderAgentEval(scores, grade) {
+  var dimsEl = document.getElementById('agent-dims');
+  if (!dimsEl) return;
+
+  dimsEl.innerHTML = AGENT_DIMS.map(function(dim) {
+    var score = scores[dim.key] || 0;
+    var desc = getDimDesc(dim, score);
+    return '<div class="dim-item">' +
+      '<div class="dim-header">' +
+        '<span class="dim-name">' + dim.icon + ' ' + dim.name + '</span>' +
+        '<span class="dim-score">' + score + '%</span>' +
+      '</div>' +
+      '<div class="dim-bar"><div class="dim-bar-fill" style="width:' + score + '%"></div></div>' +
+      '<div class="dim-desc">' + desc + '</div>' +
+    '</div>';
+  }).join('');
+
+  var gradeEl = document.getElementById('grade-value');
+  if (gradeEl) gradeEl.textContent = grade;
+
+  renderRadarChart(scores);
+}
+
+function loadAgentEval() {
+  var scores = computeAgentScores(_kbFiles);
+  renderAgentEval(scores.scores, scores.grade);
+}
+
 function loadEnhancement() {
-  fetch(API_BASE + '/api/kb/enhancement', {
-    headers: { 'Authorization': 'Bearer ' + getToken() }
-  }).then(function(res) { return res.json(); })
-    .then(function(data) {
-      var contrastSection = document.getElementById('kb-contrast-section');
-      var body = document.getElementById('kb-contrast-body');
-      var examples = data.examples || [];
-      if (examples.length > 0) {
-        contrastSection.style.display = 'block';
-        body.innerHTML = '<div style="margin-bottom:8px;color:#98a2b3;font-size:11px;font-weight:800">共' + examples.length + '个示例</div>' + examples.map(function(ex) {
-          return '<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px dashed #e8edf5"><div style="font-size:12px;color:#475467;margin-bottom:8px;font-weight:800">▸ ' + ex.question + '</div><div style="background:#fafbfc;border:1px solid #e8edf5;border-radius:8px;padding:10px 12px;margin-bottom:6px;font-size:12px;color:#666;line-height:1.5">通用：' + ex.default_answer + '</div><div style="background:linear-gradient(135deg,#f0f7ff,#eef6ff);border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12px;color:#1263e6;font-weight:600;line-height:1.5">✨ 增强：' + ex.enhanced_answer + '</div></div>';
-        }).join('');
-      } else {
-        contrastSection.style.display = 'none';
-      }
-    });
+  var scores = computeAgentScores(_kbFiles);
+  renderAgentEval(scores.scores, scores.grade);
 }
 
 // ===== UPLOAD MODAL =====
