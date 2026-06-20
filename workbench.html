@@ -1927,35 +1927,29 @@ function doStep4Next() {
 // ==================== STEP 5 HANDLER ====================
 async function doRegenerateStep5() {
   if (!confirm('重新生成会覆盖当前的Demo方案，确定要重新生成吗？')) return;
+  const c = getClient(currentClientId);
+  if (!c.step4_presales && !c.step4_report && !c.transcript) {
+    alert('请先生成售前方案（Step4）再生成 Demo'); return;
+  }
   const btn = document.getElementById('s5-gen-btn');
   btn.classList.add('loading');
   btn.disabled = true;
-  saveStep5ToClient();
-  const c = getClient(currentClientId);
-  showGenerateModal('正在重新生成Demo方案', 'AI 正在设计智能表格结构', 5);
-  setGenStep(1);
-  genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时', true); }, 30000);
-  setTimeout(() => { if (genReady) return; setGenStep(2); }, 500);
-  setTimeout(() => { if (genReady) return; setGenStep(3); }, 1500);
-  setTimeout(() => { if (genReady) return; setGenStep(4); }, 5000);
-  setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
-  fetch(API_BASE + '/api/reports/generate', {
-    method: 'POST', headers: getAuthHeaders(),
-    body: JSON.stringify({ transcript: c.transcript || '', industry: c.industry || '', output_type: 'schema' })
-  }).then(r => r.json()).then(data => {
-    clearTimeout(genTimeout);
-    if (genReady) return;
-    if (data.demo_json) {
-      updateClient(currentClientId, { step5_schema: data.demo_json });
-      loadStep5(getClient(currentClientId));
-      showGenSuccess('Demo方案生成完成', '');
-    } else {
-      showGenError2(data.error || '生成失败', true);
-    }
-  }).catch(e => { clearTimeout(genTimeout); if (genReady) return; showGenError2('网络错误', true); }).finally(() => {
+  showFullscreenLoading('正在生成智能表格 Demo…');
+  try {
+    const schema = await generateDemoSchema(c);
+    window._demoSchema = schema;
+    updateClient(currentClientId, { step5_schema: schema });
+    renderSchemaPreview(schema);
+    renderSheetDemo(schema);
+    renderAgentCanvas();
+    showToast('Demo 生成完成');
+  } catch(e) {
+    alert('Demo 生成失败: ' + e.message);
+  } finally {
     btn.classList.remove('loading');
     btn.disabled = false;
-  });
+    hideFullscreenLoading();
+  }
 }
 
 // primaryAction and saveCurrentStep are deprecated - use the step-specific handlers instead
@@ -3079,56 +3073,150 @@ function regenerateStep5() {
   });
 }
 
+// ==================== Step5 Demo Generation ====================
+
 async function generateDemoSchema(c) {
-  const schemaPrompt = `你是企业微信智能表格架构师。根据客户需求+知识库字段经验池设计Demo。
+  // 调用新的后端端点，基于Step4方案生成真实Demo数据
+  const resp = await fetch(API_BASE + '/api/step5/generate-demo', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ client_id: c.id || currentClientId })
+  });
+  if (!resp.ok) throw new Error('生成失败');
+  const data = await resp.json();
+  if (!data.success || !data.demo) throw new Error(data.detail || '生成失败');
+  return data.demo;
+}
 
-## 设计原则
-1. 知识库字段经验池是参考而非约束——它代表同行业服务商的真实交付经验
-2. 每表控制在8-15个字段，2-3条示例数据
-3. 最终产出应该是知识库经验 + 客户个性化需求的结合体
-
-## 输出格式
-直接输出有效JSON，不要markdown代码块，不要用\`\`\`包裹。
-JSON结构：
-{"doc_name":"文档名称","sheets":[{"sheet_name":"子表名","fields":[{"field_title":"字段名","field_type":"类型"}],"sample_records":[{"字段名":"值"}]}]}
-类型只允许：FIELD_TYPE_TEXT / FIELD_TYPE_NUMBER / FIELD_TYPE_SINGLE_SELECT / FIELD_TYPE_DATE_TIME / FIELD_TYPE_CURRENCY / FIELD_TYPE_PERCENTAGE / FIELD_TYPE_PROGRESS / FIELD_TYPE_PHONE_NUMBER / FIELD_TYPE_EMAIL / FIELD_TYPE_CHECKBOX / FIELD_TYPE_URL / FIELD_TYPE_SELECT`;
-
-  const report = c.step4_report || {};
-  const sol = report.solution || {};
-  const subTables = sol.sub_tables || [];
-  const subList = subTables.map(t => `表「${t.name}」: ${(t.fields || []).join('、')}`).join('\n');
-  const schemaUserPrompt = `## 需求分析报告摘要
-行业: ${report.customer_info?.industry || c.industry || '未知'}
-客户现状: ${report.customer_info?.initial_demand || '-'}
-核心痛点: ${(report.core_pain_points || []).map(p => p.point).join('、')}
-业务场景: ${report.business_scenario?.core_flow || '-'}
-角色: ${(report.business_scenario?.roles || []).join('、')}
-
-## 建议子表（来自需求分析）
-${subList || '根据需求自行设计'}
-
-## 沟通记录
-${(c.transcript || '').substring(0, 1500)}
-
-请结合需求分析报告和沟通记录，设计企业微信智能表格Demo。`;
-
-  const schemaText = await callDeepSeek(schemaPrompt, schemaUserPrompt);
-  let schema = null;
-  if (schemaText) {
-    try { schema = JSON.parse(schemaText.trim()); } catch {
-      const m = schemaText.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (m) try { schema = JSON.parse(m[1].trim()); } catch {}
-      if (!schema) {
-        const start = schemaText.indexOf('{');
-        const end = schemaText.lastIndexOf('}');
-        if (start >= 0 && end > start) {
-          try { schema = JSON.parse(schemaText.slice(start, end + 1)); } catch {}
-        }
-      }
-    }
+function renderSheetDemo(schema) {
+  const canvas = document.getElementById('sheet-canvas');
+  if (!schema?.sheets?.length) {
+    canvas.innerHTML = '<div style="color:#667085;font-size:13px;text-align:center;padding:40px">暂无表格数据，请先生成 Demo</div>';
+    return;
   }
-  if (!schema || !schema.sheets) throw new Error('AI返回格式异常');
-  return schema;
+
+  // 构建动态 Tab 导航
+  const navItems = schema.sheets.map((sheet, idx) => {
+    const isActive = idx === 0 ? ' active' : '';
+    const label = sheet.sheet_name || `表格${idx+1}`;
+    return `<button class="demo-nav-item${isActive}" data-target="sheet${idx}" onclick="switchSheetTab(this,'sheet${idx}')"><b>${escapeHtml(label)}</b><span>${sheet.sample_records?.length || 0} 条记录</span></button>`;
+  }).join('');
+
+  // 构建每个表格的 Panel
+  const sheetPanels = schema.sheets.map((sheet, idx) => {
+    const isActive = idx === 0 ? ' active' : '';
+    const fields = sheet.fields || [];
+    const records = sheet.sample_records || [];
+
+    // 表头
+    const headers = fields.map(f => `<span>${escapeHtml(f.field_title)}</span>`).join('');
+
+    // 数据行（最多显示10条，超出可滚动）
+    const rows = records.slice(0, 15).map(rec => {
+      const cells = fields.map(f => {
+        let val = rec[f.field_title] ?? '';
+        // 超载标识着色
+        if (f.field_title === '超载标识' && val === '超载') {
+          return `<span style="color:#b42318;font-weight:700">${escapeHtml(String(val))}</span>`;
+        }
+        if (f.field_title === '回款状态' && val === '逾期') {
+          return `<span style="color:#b42318;font-weight:700">${escapeHtml(String(val))}</span>`;
+        }
+        if (f.field_title === '风险等级' && val === '高') {
+          return `<span style="color:#b42318;font-weight:700">${escapeHtml(String(val))}</span>`;
+        }
+        if (f.field_title === '任务状态' && val === '进行中') {
+          return `<span style="color:#1263e6;font-weight:700">${escapeHtml(String(val))}</span>`;
+        }
+        return escapeHtml(String(val));
+      }).join('');
+      return `<div class="fake-row">${cells}</div>`;
+    }).join('');
+
+    return `<div class="sheet-panel${isActive}" id="sheet${idx}">
+      <div class="sheet-demo refined">
+        <div class="sheet-top"><b>${escapeHtml(sheet.sheet_name || 'Demo')}</b><span>企业微信智能表格 · ${records.length} 条记录</span></div>
+        <div class="fake-table compact-table">
+          <div class="fake-row head">${headers}</div>
+          ${rows}
+        </div>
+        ${records.length > 15 ? `<div style="text-align:center;color:#667085;font-size:12px;padding:8px;background:#f8fbff;border-top:1px solid #e6edf7">只显示前 15 条，共 ${records.length} 条</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // 更新 Tab 导航
+  const nav = document.querySelector('#customDemo .demo-nav[data-demo-tabs="sheet"]');
+  if (nav) nav.innerHTML = navItems;
+
+  // 更新 Canvas
+  canvas.innerHTML = sheetPanels;
+}
+
+function switchSheetTab(el, targetId) {
+  const nav = el.closest('.demo-nav');
+  nav.querySelectorAll('.demo-nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('#customDemo .sheet-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById(targetId);
+  if (panel) panel.classList.add('active');
+}
+
+function renderAgentCanvas() {
+  const c = getClient(currentClientId);
+  const schema = window._demoSchema;
+  const scenarios = schema?.agent_scenarios || [];
+  const name = c?.name || '该客户';
+
+  const navItems = scenarios.map((s, idx) => {
+    const isActive = idx === 0 ? ' active' : '';
+    const typeLabel = s.type === 'qa' ? '问答' : '自动任务';
+    const label = s.type === 'qa' ? (s.question?.substring(0, 20) + '…') : (s.task || `任务${idx+1}`);
+    return `<button class="demo-nav-item${isActive}" data-target="agent${idx}" onclick="switchSheetTab(this,'agent${idx}')"><b>${escapeHtml(label)}</b><span>${typeLabel}</span></button>`;
+  }).join('');
+
+  const agentPanels = scenarios.map((s, idx) => {
+    const isActive = idx === 0 ? ' active' : '';
+    if (s.type === 'qa') {
+      return `<div class="agent-chat-panel${isActive}" id="agent${idx}">
+        <div class="agent-head"><b>${escapeHtml(name)}</b><span>AI 问答</span></div>
+        <div class="msg bot">您好，我是您的 AI 售前助手，可以帮您查询项目状态、分析回款风险、生成周报等。</div>
+        <div class="msg user">${escapeHtml(s.question)}</div>
+        <div class="msg bot">${escapeHtml(s.answer)}</div>
+        <div class="agent-input">输入问题… <span>发送</span></div>
+      </div>`;
+    } else {
+      return `<div class="agent-chat-panel${isActive}" id="agent${idx}">
+        <div class="agent-head"><b>自动任务</b><span>${escapeHtml(s.task || '')}</span></div>
+        <div class="msg bot">自动任务已配置，当触发条件满足时将自动执行。</div>
+        <div class="msg bot"><b>任务名称：</b>${escapeHtml(s.task || '')}</div>
+        <div class="msg bot"><b>任务描述：</b>${escapeHtml(s.description || '')}</div>
+        <div class="msg bot"><b>触发条件：</b>${escapeHtml(s.trigger || '')}</div>
+        <div class="agent-input">等待触发…</div>
+      </div>`;
+    }
+  }).join('');
+
+  // 如果没有场景，显示默认
+  if (!scenarios.length) {
+    const nav = document.querySelector('#agentDemo .demo-nav[data-demo-tabs="agent"]');
+    if (nav) nav.innerHTML = `<div style="padding:12px;color:#667085;font-size:12px">暂无 Agent 场景</div>`;
+    document.getElementById('agent-canvas').innerHTML = '<div style="color:#667085;font-size:13px;text-align:center;padding:40px">暂无 Agent 场景数据</div>';
+    return;
+  }
+
+  const nav = document.querySelector('#agentDemo .demo-nav[data-demo-tabs="agent"]');
+  if (nav) nav.innerHTML = navItems;
+  document.getElementById('agent-canvas').innerHTML = agentPanels;
+}
+
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function renderSchemaPreview(schema) {
@@ -3137,7 +3225,7 @@ function renderSchemaPreview(schema) {
   previewCard.style.marginBottom = '16px';
   previewCard.innerHTML = `
     <div class="demo-card-head">
-      <div><h3>生成的智能表格 Schema</h3><span>可直接创建或复制修改后再创建</span></div>
+      <div><h3>智能表格 Demo</h3><span>基于 Step4 方案生成真实数据</span></div>
       <div style="display:flex;gap:8px">
         <button class="edit-btn" onclick="copySchema()">复制 JSON</button>
         <button class="edit-btn success" style="background:#ecfdf5;color:#047857;border-color:#bbf7d0" onclick="createSmartSheet()">创建企微智能表格</button>
@@ -3147,32 +3235,15 @@ function renderSchemaPreview(schema) {
   `;
   const existing = document.querySelector('#page5 .demo-card');
   if (existing) existing.remove();
-  document.querySelector('#page5 .demo-card').before(previewCard);
+  const target = document.querySelector('#page5 .demo-card');
+  if (target) target.before(previewCard);
   document.getElementById('schema-preview-content').textContent = JSON.stringify(schema, null, 2);
   window._demoSchema = schema;
 }
 
-function renderSheetDemo(schema) {
+function renderSheetCanvas() {
   const canvas = document.getElementById('sheet-canvas');
-  if (!schema?.sheets?.length) return;
-  const firstSheet = schema.sheets[0];
-  canvas.innerHTML = `
-    <div class="sheet-panel active" id="sheet-ledger">
-      <div class="sheet-demo refined">
-        <div class="sheet-top"><b>${firstSheet.sheet_name || 'Demo'}</b><span>企业微信智能表格</span></div>
-        <div class="fake-table compact-table">
-          <div class="fake-row head">
-            ${(firstSheet.fields || []).map(f => `<span>${f.field_title}</span>`).join('')}
-          </div>
-          ${(firstSheet.sample_records || []).map(rec => `
-            <div class="fake-row">
-              ${(firstSheet.fields || []).map(f => `<span>${rec[f.field_title] || ''}</span>`).join('')}
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    </div>
-  `;
+  canvas.innerHTML = '<div style="color:#667085;font-size:13px;text-align:center;padding:40px">请先生成 Demo 方案</div>';
 }
 
 function copySchema() {
@@ -3212,172 +3283,6 @@ async function createSmartSheet() {
     if (btn) { btn.disabled = false; btn.textContent = '创建企微智能表格'; }
     hideFullscreenLoading();
   }
-}
-
-async function createAgentDemo() {
-  const c = getClient(currentClientId);
-  const btn = document.querySelector('[onclick="createAgentDemo()"]');
-  if (btn) { btn.disabled = true; btn.textContent = '创建中…'; }
-  showFullscreenLoading('正在生成 Agent Demo H5…');
-  try {
-    const resp = await fetch(API_BASE + '/api/agent-demo/create', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({
-        client_data: {
-          name: c.name || '未知客户',
-          industry: c.industry || '',
-          step4_report: c.step4_report || {},
-          step1_result: c.step1_result || {}
-        }
-      })
-    });
-    const data = await resp.json();
-    if (!data.success) throw new Error(data.error || '创建失败');
-    showToast('Agent Demo 创建成功！');
-    addArtifact({ type: 'agent_demo', title: c.name + ' Agent Demo', url: data.url });
-    window.open(API_BASE + data.url, '_blank');
-  } catch(e) {
-    alert('创建失败: ' + e.message);
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '创建 Agent Demo'; }
-    hideFullscreenLoading();
-  }
-}
-
-function switchDemoType(el) {
-  document.querySelectorAll('.demo-type').forEach(d => d.classList.remove('active'));
-  el.classList.add('active');
-  const demo = el.dataset.demo;
-  document.getElementById('customDemo').classList.toggle('active', demo === 'custom');
-  document.getElementById('agentDemo').classList.toggle('active', demo === 'agent');
-}
-
-function switchDemoScene(el, scope) {
-  const nav = el.closest('.demo-nav');
-  nav.querySelectorAll('.demo-nav-item').forEach(i => i.classList.remove('active'));
-  el.classList.add('active');
-  const target = el.dataset.target;
-  if (scope === 'sheet') {
-    document.querySelectorAll('#customDemo .sheet-panel').forEach(p => p.classList.remove('active'));
-    const panel = document.getElementById('sheet-'+target);
-    if (panel) panel.classList.add('active');
-  } else {
-    document.querySelectorAll('#agentDemo .agent-chat-panel').forEach(p => p.classList.remove('active'));
-    const panel = document.getElementById('agent-'+target);
-    if (panel) panel.classList.add('active');
-  }
-}
-
-// ==================== DEMO CANVAS TEMPLATES ====================
-function renderSheetCanvas() {
-  const canvas = document.getElementById('sheet-canvas');
-  canvas.innerHTML = `
-    <div class="sheet-panel active" id="sheet-ledger">
-      <div class="sheet-demo refined">
-        <div class="sheet-top"><b>客户台账</b><span>企业微信智能表格</span></div>
-        <div class="fake-table compact-table">
-          <div class="fake-row head"><span>客户名称</span><span>业务类型</span><span>审核状态</span><span>负责人</span><span>最近会话</span><span>下一步</span></div>
-          <div class="fake-row"><span>A银行</span><span>机构服务</span><span>待审批</span><span>李四</span><span>已检索</span><span>补充资料</span></div>
-          <div class="fake-row"><span>B证券</span><span>客户运营</span><span>已通过</span><span>王五</span><span>已归档</span><span>进入回访</span></div>
-          <div class="fake-row"><span>C保险</span><span>合规审核</span><span>需修正</span><span>赵六</span><span>待检索</span><span>重新提交</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="sheet-panel" id="sheet-approval">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px">
-          <h4 style="margin:0 0 12px;font-size:15px">合规审核表单</h4>
-          <p style="margin:10px 0;color:#667085;font-size:12px">客户名称：A银行</p>
-          <p style="margin:10px 0;color:#667085;font-size:12px">业务类型：机构服务</p>
-          <p style="margin:10px 0;color:#667085;font-size:12px">附件：授权证明、会话摘要、客户资料</p>
-        </div>
-        <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px">
-          <div style="padding:12px;border-radius:14px;background:#eef6ff;color:#1263e6;font-size:12px;font-weight:900;text-align:center">销售提交</div>
-          <div style="height:18px;width:2px;background:#d9e6f7;margin-left:18px"></div>
-          <div style="padding:12px;border-radius:14px;background:#eef6ff;color:#1263e6;font-size:12px;font-weight:900;text-align:center">风控审核</div>
-          <div style="height:18px;width:2px;background:#d9e6f7;margin-left:18px"></div>
-          <div style="padding:12px;border-radius:14px;background:#eef6ff;color:#1263e6;font-size:12px;font-weight:900;text-align:center">负责人审批</div>
-          <div style="height:18px;width:2px;background:#d9e6f7;margin-left:18px"></div>
-          <div style="padding:12px;border-radius:14px;background:#ecfdf5;color:#047857;font-size:12px;font-weight:900;text-align:center">归档完成</div>
-        </div>
-      </div>
-    </div>
-    <div class="sheet-panel" id="sheet-record">
-      <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px;display:grid;gap:12px">
-        <div style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start"><b style="color:#1263e6;font-size:12px">09:00</b><span style="font-size:13px;color:#344054">销售提交 A银行审核材料</span></div>
-        <div style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start"><b style="color:#1263e6;font-size:12px">10:20</b><span style="font-size:13px;color:#344054">风控要求补充客户授权证明</span></div>
-        <div style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start"><b style="color:#1263e6;font-size:12px">11:05</b><span style="font-size:13px;color:#344054">销售补充附件并重新提交</span></div>
-        <div style="display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:start"><b style="color:#13b96f;font-size:12px">11:30</b><span style="font-size:13px;color:#344054">负责人审批通过，进入归档</span></div>
-      </div>
-    </div>
-    <div class="sheet-panel" id="sheet-dashboard">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
-        <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:18px;text-align:center"><b style="font-size:24px;color:#1263e6;display:block">12</b><span style="font-size:12px;color:#667085">待审批</span></div>
-        <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:18px;text-align:center"><b style="font-size:24px;color:#13b96f;display:block">86</b><span style="font-size:12px;color:#667085">已归档客户</span></div>
-        <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:18px;text-align:center"><b style="font-size:24px;color:#ff8a00;display:block">5</b><span style="font-size:12px;color:#667085">超时处理</span></div>
-        <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:18px;text-align:center"><b style="font-size:24px;color:#1263e6;display:block">72%</b><span style="font-size:12px;color:#667085">回访完成率</span></div>
-      </div>
-      <div style="border:1px solid #e8edf5;background:#fff;border-radius:18px;padding:16px;display:grid;gap:10px">
-        <div style="height:12px;border-radius:999px;background:linear-gradient(90deg,#1263e6,#13b96f);width:78%"></div>
-        <div style="height:12px;border-radius:999px;background:linear-gradient(90deg,#1263e6,#13b96f);width:54%"></div>
-        <div style="height:12px;border-radius:999px;background:linear-gradient(90deg,#1263e6,#13b96f);width:32%"></div>
-      </div>
-    </div>
-    <div class="sheet-panel" id="sheet-chatsearch">
-      <div style="border:1px solid #dbe7f6;background:#fff;border-radius:16px;padding:13px 15px;color:#667085;font-size:13px;margin-bottom:12px">搜索：A银行 授权证明</div>
-      <div style="border:1px solid #e8edf5;background:#fff;border-radius:16px;padding:14px;margin-bottom:10px"><b style="font-size:13px;color:#182235">客户会话</b><p style="margin:8px 0 0;color:#667085;font-size:12px">客户提到"资料周五补齐"，建议提醒销售补充附件后再提交审批。</p></div>
-      <div style="border:1px solid #e8edf5;background:#fff;border-radius:16px;padding:14px"><b style="font-size:13px;color:#182235">业务标签</b><p style="margin:8px 0 0;color:#667085;font-size:12px">合规审核 / 材料补齐 / 审批待处理</p></div>
-    </div>
-  `;
-}
-
-function renderAgentCanvas() {
-  const c = getClient(currentClientId);
-  const name = c?.name || '该客户';
-  const industry = c?.industry || '';
-  const report = c?.step4_report || {};
-  const pains = (report.core_pain_points || []).map(p => p.point).join('、') || '暂无';
-  const roles = (report.business_scenario?.roles || []).join('、') || '未知';
-  const transcript = (c?.transcript || '').substring(0, 500) || '暂无沟通记录';
-  const canvas = document.getElementById('agent-canvas');
-  canvas.innerHTML = `
-    <div class="agent-chat-panel active" id="agent-profile">
-      <div class="agent-head"><b>${name}</b><span>客户资料查询</span></div>
-      <div class="msg bot">你好，我是您的AI售前助手。可以帮您查询客户资料、检索沟通记录、分析需求。</div>
-      <div class="msg user">帮我查询 ${name} 的基本资料。</div>
-      <div class="msg bot">${name}｜${industry}｜标签：${(c?.tags||'').split(',').filter(Boolean).join('、')||'-'}｜核心需求：${pains.substring(0,30)}</div>
-      <div class="agent-input">输入问题… <span>发送</span></div>
-    </div>
-    <div class="agent-chat-panel" id="agent-material">
-      <div class="agent-head"><b>${name}</b><span>审核材料检查</span></div>
-      <div class="msg bot">我可以帮您分析客户材料完整性，识别缺失项。</div>
-      <div class="msg user">帮我检查 ${name} 的材料完整性。</div>
-      <div class="msg bot">根据需求分析报告，${name} 涉及的核心痛点为：${pains.substring(0,50)}。建议关注：${roles}相关材料是否齐全。</div>
-      <div class="agent-input">输入问题… <span>发送</span></div>
-    </div>
-    <div class="agent-chat-panel" id="agent-conversation">
-      <div class="agent-head"><b>${name}</b><span>会话记录检索</span></div>
-      <div class="msg bot">我可以帮您检索客户沟通记录中的关键信息。</div>
-      <div class="msg user">检索关于 ${name} 的沟通记录。</div>
-      <div class="msg bot">找到以下关键信息：\n客户痛点：${pains}\n涉及角色：${roles}\n\n${transcript !== '暂无沟通记录' ? '沟通记录摘要：' + transcript.substring(0, 100) + '…' : '暂无沟通记录'}</div>
-      <div class="agent-input">输入问题… <span>发送</span></div>
-    </div>
-    <div class="agent-chat-panel" id="agent-qa">
-      <div class="agent-head"><b>${name}</b><span>知识问答</span></div>
-      <div class="msg bot">我可以回答关于${industry || '本行业'}的常见问题。</div>
-      <div class="msg user">${industry || '本行业'}客户最关心什么？</div>
-      <div class="msg bot">${industry || '该行业'}客户常见关注点：${pains || '合规风控、审批协同、项目进度管理'}。典型角色：${roles}。</div>
-      <div class="agent-input">输入问题… <span>发送</span></div>
-    </div>
-    <div class="agent-chat-panel" id="agent-handoff">
-      <div class="agent-head"><b>${name}</b><span>人工转接</span></div>
-      <div class="msg bot">当遇到复杂问题时，我可以帮您生成转接摘要。</div>
-      <div class="msg user">这个客户需要接财务系统，怎么评估？</div>
-      <div class="msg bot">建议转给技术售前评估。需确认：①财务系统类型和接口权限 ②数据字段和同步频率 ③当前痛点：${pains.substring(0,30)}。我可以生成转接摘要文档。</div>
-      <div class="agent-input">输入问题… <span>发送</span></div>
-    </div>
-  `;
 }
 
 // ==================== CONTEXT BAR ====================
