@@ -129,10 +129,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   border-top:1px solid #f3f4f6;
   display:flex;justify-content:space-between;align-items:center;
 }
-.client-card .c-progress{display:flex;gap:5px;align-items:center}
+.client-card-footer .c-progress{display:flex;gap:5px;align-items:center;margin:0;padding:0;border:none}
+.client-card-footer-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .client-card .c-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .2s}
 .client-card .c-level{font-size:11px;color:#9ca3af;margin-left:6px;font-weight:500}
-.client-card-footer-left{display:flex;align-items:center;gap:10px}
 .client-card-footer-left span{font-size:11px;color:#98a2b3}
 .client-card-footer-left .sep{color:#d1d5db}
 .client-card-footer-right{}
@@ -708,6 +708,7 @@ function renderClientCard(c) {
     '</div>' +
     '<div class="client-card-footer">' +
       '<div class="client-card-footer-left">' +
+        '<div class="c-progress">' + dots + '<span class="c-level">' + progress + '/5</span></div>' +
         '<span>' + noteText + '</span>' +
         '<span class="sep">·</span>' +
         '<span>' + updateText + '</span>' +
