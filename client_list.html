@@ -94,15 +94,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   transform:translateY(-2px);
 }
 .client-card:hover::before{opacity:1}
-.client-card-header{padding:16px 18px 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.client-card-header-left{flex:1;min-width:0}
-.client-card .c-name{font-size:15px;font-weight:700;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
-.client-card .c-meta{font-size:12px;color:#9ca3af;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.client-card-header-right{display:flex;align-items:center;gap:6px;flex-shrink:0;padding-top:2px}
+
+/* 三区块结构 */
+.cc-head{padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.cc-head-left{flex:1;min-width:0}
+.cc-head-right{display:flex;align-items:center;gap:5px;flex-shrink:0;padding-top:2px}
+.client-card .c-name{font-size:14px;font-weight:700;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.client-card .c-meta{font-size:11px;color:#9ca3af;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 .client-card .stage-badge{
-  display:inline-flex;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;
+  display:inline-flex;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;
   white-space:nowrap;letter-spacing:.2px;
-  box-shadow:0 1px 2px rgba(0,0,0,.06);
 }
 .stage-badge.s1{background:#fff1f0;color:#b42318;border:1px solid #fecdcd}
 .stage-badge.s2{background:#fef3e2;color:#c55a11;border:1px solid #fcd9a0}
@@ -110,29 +112,42 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .stage-badge.s4{background:#e6f0ff;color:#1677ff;border:1px solid #adc6ff}
 .stage-badge.s5{background:#e8f5ff;color:#0958d9;border:1px solid #adc6ff}
 .stage-badge.s6{background:#ecfdf3;color:#079455;border:1px solid #a6e8cc}
-.client-card .more-btn{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:#f3f4f6;color:#667085;cursor:pointer;border:none;font-size:14px;line-height:1;transition:.15s;flex-shrink:0}
+
+.client-card .more-btn{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;background:#f3f4f6;color:#667085;cursor:pointer;border:none;font-size:13px;line-height:1;transition:.15s;flex-shrink:0}
 .client-card .more-btn:hover{background:#e6e8eb;color:#344054}
-.client-card-dropdown{position:absolute;right:14px;top:54px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 24px rgba(18,24,40,.15);z-index:100;overflow:hidden;display:none;min-width:130px}
+
+.client-card-dropdown{position:absolute;right:12px;top:50px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 8px 24px rgba(18,24,40,.15);z-index:100;overflow:hidden;display:none;min-width:130px}
 .client-card-dropdown.visible{display:block}
 .client-card-dropdown button{width:100%;padding:10px 14px;text-align:left;font-size:13px;color:#344054;cursor:pointer;border:none;background:#fff;transition:.15s;display:block}
 .client-card-dropdown button:hover{background:#f5f7fb}
 .client-card-dropdown button.danger{color:#dc2626}
-.client-card-body{padding:0 18px;flex:1}
+
+/* 需求区 */
+.cc-body{padding:0 16px 12px;flex:1}
 .client-card .c-demand{
-  font-size:12px;color:#475467;line-height:1.6;
+  font-size:12px;color:#475467;line-height:1.55;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-  margin-bottom:12px;
 }
-.client-card-footer{
-  padding:10px 18px 14px;
+.client-card .c-demand-empty{color:#c0c8d4;font-style:italic}
+
+/* 底部固定区 */
+.cc-foot{
+  padding:10px 16px 12px;
   margin-top:auto;
   border-top:1px solid #f3f4f6;
   display:flex;justify-content:space-between;align-items:center;
 }
-.client-card-footer .c-progress{display:flex;gap:5px;align-items:center;margin:0;padding:0;border:none}
-.client-card-footer-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.client-card .c-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.client-card .c-level{font-size:11px;color:#9ca3af;margin-left:6px;font-weight:500}
+.cc-foot-left{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+
+/* 进度点：光晕 + 外环 */
+.client-card .c-dots{display:flex;gap:4px;align-items:center}
+.client-card .c-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:all .2s}
+.client-card .c-dot.done{background:#1263e6;box-shadow:0 0 0 2px rgba(18,99,230,.25)}
+.client-card .c-dot.active{background:#b9d8ff;box-shadow:0 0 0 2.5px rgba(18,99,230,.4),0 0 6px rgba(18,99,230,.2)}
+.client-card .c-dot:not(.done):not(.active){background:#d1d5db}
+.client-card .cc-sep{color:#d1d5db;font-size:11px}
+.client-card .cc-note{font-size:11px;color:#9ca3af}
+.client-card .cc-time{font-size:11px;color:#b0b8c8}
 .client-card-footer-left span{font-size:11px;color:#98a2b3}
 .client-card-footer-left .sep{color:#d1d5db}
 .client-card-footer-right{}
@@ -676,8 +691,10 @@ function renderClientCard(c) {
 
   var dots = '';
   for (var i = 0; i < 5; i++) {
-    var color = i < progress ? '#1263e6' : (i === progress ? '#b9d8ff' : '#e5e7eb');
-    dots += '<div class="c-dot" style="background:' + color + '"></div>';
+    var cls = '';
+    if (i < progress) cls = 'done';
+    else if (i === progress) cls = 'active';
+    dots += '<div class="c-dot ' + cls + '"></div>';
   }
 
   var noteText = noteCount === 0 ? '暂无沟通' : noteCount + ' 次沟通';
@@ -687,15 +704,16 @@ function renderClientCard(c) {
 
   var demandHtml = demandShort
     ? '<div class="c-demand">' + escapeHtml(demandShort) + '</div>'
-    : '<div class="c-demand" style="color:#c0c8d4;font-style:italic">暂未录入需求</div>';
+    : '<div class="c-demand c-demand-empty">暂未录入需求</div>';
 
   return '<div class="client-card" id="' + cardId + '">' +
-    '<div class="client-card-header">' +
-      '<div class="client-card-header-left">' +
+    // 区块1：头部
+    '<div class="cc-head">' +
+      '<div class="cc-head-left">' +
         '<div class="c-name">' + escapeHtml(c.name || '未命名') + '</div>' +
         '<div class="c-meta">' + escapeHtml(c.industry || '未定义行业') + metaDate + '</div>' +
       '</div>' +
-      '<div class="client-card-header-right">' +
+      '<div class="cc-head-right">' +
         '<span class="stage-badge ' + badgeCls + '">' + stageLabel + '</span>' +
         '<button class="more-btn" onclick="toggleCardMenu(\'' + cardId + '\', event)" title="更多">⋮</button>' +
         '<div class="client-card-dropdown" id="menu-' + cardId + '">' +
@@ -704,19 +722,18 @@ function renderClientCard(c) {
         '</div>' +
       '</div>' +
     '</div>' +
-    '<div class="client-card-body">' +
-      demandHtml +
-    '</div>' +
-    '<div class="client-card-footer">' +
-      '<div class="client-card-footer-left">' +
-        '<div class="c-progress">' + dots + '<span class="c-level">' + progress + '/5</span></div>' +
-        '<span>' + noteText + '</span>' +
-        '<span class="sep">·</span>' +
-        '<span>' + updateText + '</span>' +
+    // 区块2：需求区
+    '<div class="cc-body">' + demandHtml + '</div>' +
+    // 区块3：底部（固定）
+    '<div class="cc-foot">' +
+      '<div class="cc-foot-left">' +
+        '<div class="c-dots">' + dots + '</div>' +
+        '<span class="cc-sep">·</span>' +
+        '<span class="cc-note">' + noteText + '</span>' +
+        '<span class="cc-sep">·</span>' +
+        '<span class="cc-time">' + updateText + '</span>' +
       '</div>' +
-      '<div class="client-card-footer-right">' +
-        '<button class="btn-view" onclick="event.stopPropagation();openClient(\'' + c.id + '\')">查看</button>' +
-      '</div>' +
+      '<button class="btn-view" onclick="event.stopPropagation();openClient(\'' + c.id + '\')">查看</button>' +
     '</div>' +
   '</div>';
 }
