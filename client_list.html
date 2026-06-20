@@ -475,7 +475,12 @@ function getProgress(c) {
 }
 
 function getNoteCount(c) {
-  return (c.uploaded_files || []).length;
+  var files = c.uploaded_files;
+  if (!files) return 0;
+  if (typeof files === 'string') {
+    try { files = JSON.parse(files); } catch(e) { return 0; }
+  }
+  return Array.isArray(files) ? files.length : 0;
 }
 
 function timeAgo(dateStr) {
