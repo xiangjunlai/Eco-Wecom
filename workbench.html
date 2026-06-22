@@ -1543,7 +1543,7 @@ function switchToClient(id) {
   document.removeEventListener('click', closeClientDropdownOutside);
   if (String(id) === String(currentClientId)) return;
   currentClientId = String(id);
-  // 从后端拉最新数据
+  history.replaceState(null, '', '?client_id=' + id + '&step=step' + currentStep);
   fetch(API_BASE + '/api/clients/' + id, { headers: getAuthHeaders() })
     .then(r => r.json())
     .then(data => {
