@@ -105,11 +105,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   white-space:nowrap;letter-spacing:.2px;
   box-shadow:0 1px 2px rgba(0,0,0,.06);
 }
-.stage-badge.s1{background:#fff1f0;color:#b42318;border:1px solid #fecdcd}
-.stage-badge.s2{background:#fef3e2;color:#c55a11;border:1px solid #fcd9a0}
-.stage-badge.s3{background:#fff7e6;color:#ad6800;border:1px solid #fde69e}
-.stage-badge.s4{background:#e6f0ff;color:#1677ff;border:1px solid #adc6ff}
-.stage-badge.s5{background:#e8f5ff;color:#0958d9;border:1px solid #adc6ff}
+.stage-badge.s1{background:#f0f4ff;color:#1263e6;border:1px solid #d0dcff}
+.stage-badge.s2{background:#e8f5ff;color:#0958d9;border:1px solid #b3d4ff}
+.stage-badge.s3{background:#f0faf6;color:#13b96f;border:1px solid #a8e8cf}
+.stage-badge.s4{background:#fef9e6;color:#c55a11;border:1px solid #fcd9a0}
+.stage-badge.s5{background:#fef3e2;color:#c55a11;border:1px solid #fcd9a0}
 .stage-badge.s6{background:#ecfdf3;color:#079455;border:1px solid #a6e8cc}
 .client-card .more-btn{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:#f3f4f6;color:#667085;cursor:pointer;border:none;font-size:14px;line-height:1;transition:.15s;flex-shrink:0}
 .client-card .more-btn:hover{background:#e6e8eb;color:#344054}
@@ -772,8 +772,6 @@ function renderClientCard(c) {
     var color = i < progress ? '#1263e6' : (i === progress ? '#b9d8ff' : '#e5e7eb');
     dots += '<div class="c-dot" style="background:' + color + '"></div>';
   }
-  var noteText = noteCount === 0 ? '暂无沟通' : noteCount + ' 次沟通';
-
   var noteText = noteCount === 0 ? '暂无沟通' : noteCount + ' 次沟通';
   var updateText = timeAgo(c.updated_at || c.created_at);
   var createdDate = safeDate(c.created_at);
