@@ -716,14 +716,23 @@ async def delete_kb_file(file_id: str, user: dict = Depends(require_auth)):
 
 @app.get("/api/clients")
 async def list_clients(user: dict = Depends(require_auth)):
-    """获取客户列表"""
+    """获取客户列表（不含大字段）"""
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute(
-        "SELECT * FROM clients WHERE user_id = ? ORDER BY updated_at DESC",
-        (user["user_id"],)
-    )
-    clients = [dict(row) for row in cursor.fetchall()]
+    # 只查列表页需要的字段，避免返回巨大的 uploaded_files / transcript / step4_report
+    cursor.execute("""
+        SELECT id, user_id, name, industry, initial_demand, status,
+               step1_result, step2_report, step2_todo, step2_schema,
+               step4_presales, step4_technical, step5_schema,
+               created_at, updated_at, demo_url,
+               COALESCE(LENGTH(uploaded_files) - LENGTH(REPLACE(uploaded_files, '[', '')), 0) AS note_count
+        FROM clients WHERE user_id = ? ORDER BY updated_at DESC
+    """, (user["user_id"],))
+    cols = ["id", "user_id", "name", "industry", "initial_demand", "status",
+            "step1_result", "step2_report", "step2_todo", "step2_schema",
+            "step4_presales", "step4_technical", "step5_schema",
+            "created_at", "updated_at", "demo_url", "note_count"]
+    clients = [dict(zip(cols, row)) for row in cursor.fetchall()]
     conn.close()
     return clients
 
