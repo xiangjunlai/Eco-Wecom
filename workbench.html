@@ -1065,7 +1065,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	          <button class="btn primary" id="s4-next-btn" onclick="doStep4Next()">下一步 →</button>
 	        </div>
 	      </section>
-<!-- Step 5: Demo设计 -->
+<!-- Step 5: Demo生成 -->
+      <!-- Step 5: Demo设计 -->
       <section class="page" id="page5">
         <div class="ctx-bar">
           <span class="ctx-name" id="s5-ctx-name">-</span>
@@ -1150,9 +1151,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 
           <!-- 底部操作栏 -->
           <div class="step-action-bar" style="border-top:1px solid #e5e7eb;padding:12px 20px;background:#fff;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-            <div style="display:flex;gap:8px;align-items:center">
-              <!-- 左侧留空或显示状态 -->
-            </div>
+            <div style="display:flex;gap:8px;align-items:center"></div>
             <button class="btn ghost" id="s5-done-btn" onclick="markClientDone()" style="background:#1263e6;color:#fff;border:none">已完成</button>
           </div>
         </div>
@@ -1160,8 +1159,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 
     </div>
   </main>
-
-  <!-- RIGHT PANEL (ARTIFACTS) - v22 enhanced -->
+<!-- RIGHT PANEL (ARTIFACTS) - v22 enhanced -->
   <aside class="panel art">
     <div class="art-head">
       <h2>完成制品</h2>
@@ -2214,18 +2212,14 @@ function doStep4Next() {
   go(5);
 }
 
-// ==================== STEP 5 HANDLER ====================
-
 // ==================== STEP 5: Smart Sheet Editor ====================
 
-// Current in-memory schema for the editor
 let _s5Schema = null;
 let _s5CurrentSheet = 0;
 
-// ---- Load Step5 ----
 function loadStep5(c) {
   updateCtxBar(c);
-  const doneBtn = document.getElementById('s5-done-btn');
+  var doneBtn = document.getElementById('s5-done-btn');
   if (doneBtn) {
     if (c._completed) {
       doneBtn.textContent = '已完成 ✓';
@@ -2248,10 +2242,9 @@ function loadStep5(c) {
   }
 }
 
-// ---- Initialize Editor ----
 function initS5Editor(schema) {
   _s5Schema = schema ? (typeof schema === 'string' ? JSON.parse(schema) : schema) : {
-    doc_name: getClient(currentClientId)?.name + '智能表格',
+    doc_name: (getClient(currentClientId) && getClient(currentClientId).name || '') + '智能表格',
     sheets: [],
     agent_scenarios: []
   };
@@ -2259,179 +2252,169 @@ function initS5Editor(schema) {
   renderS5Editor();
 }
 
-// ---- Render Full Editor ----
+function escHtml(str) {
+  if (str == null) return '';
+  str = String(str);
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function renderS5Editor() {
-  const schema = _s5Schema;
-  const sheets = schema?.sheets || [];
-  const hasData = sheets.length > 0;
+  var schema = _s5Schema;
+  var sheets = schema && schema.sheets || [];
+  var hasData = sheets.length > 0;
 
-  // Update toolbar
   document.getElementById('s5-sheet-count').textContent = (sheets.length || 0) + ' 个子表';
-  document.getElementById('s5-schema-status').textContent = hasData ? '· 已生成' : '· 未生成';
+  var statusEl = document.getElementById('s5-schema-status');
+  if (statusEl) statusEl.textContent = hasData ? '· 已生成' : '· 未生成';
 
-  // Render sheet tabs
-  const tabsEl = document.getElementById('s5-sheet-tabs');
+  var tabsEl = document.getElementById('s5-sheet-tabs');
   if (!hasData) {
     tabsEl.innerHTML = '<span style="color:#98a2b3;font-size:13px;padding-bottom:6px">暂无子表，请先生成 Demo 方案</span>';
   } else {
-    tabsEl.innerHTML = sheets.map((s, i) =>
-      `<button class="demo-nav-item${i === _s5CurrentSheet ? ' active' : ''}" onclick="selectSheet(${i})" style="flex-shrink:0">
-        <b>${escapeHtml(s.sheet_name || '未命名表')}</b><span>${s.fields?.length || 0}字段 · ${s.sample_records?.length || 0}条</span>
-      </button>`
-    ).join('') + `<button class="btn secondary" onclick="doAddSheet()" style="height:30px;font-size:12px;padding:0 12px;flex-shrink:0">+ 新增子表</button>`;
+    var tabsHtml = sheets.map(function(s, i) {
+      var active = i === _s5CurrentSheet ? ' active' : '';
+      var name = escHtml(s.sheet_name || '未命名表');
+      var fcount = s.fields && s.fields.length || 0;
+      var rcount = s.sample_records && s.sample_records.length || 0;
+      return '<button class="demo-nav-item' + active + '" onclick="selectSheet(' + i + ')" style="flex-shrink:0">' +
+        '<b>' + name + '</b><span>' + fcount + '字段 · ' + rcount + '条</span>' +
+      '</button>';
+    }).join('');
+    tabsEl.innerHTML = tabsHtml + '<button class="btn secondary" onclick="doAddSheet()" style="height:30px;font-size:12px;padding:0 12px;flex-shrink:0">+ 新增子表</button>';
   }
 
-  // Show/hide editor
-  document.getElementById('s5-empty-state').style.display = hasData ? 'none' : '';
-  document.getElementById('s5-sheet-editor').style.display = hasData ? '' : 'none';
+  var emptyState = document.getElementById('s5-empty-state');
+  var sheetEditor = document.getElementById('s5-sheet-editor');
+  if (emptyState) emptyState.style.display = hasData ? 'none' : '';
+  if (sheetEditor) sheetEditor.style.display = hasData ? '' : 'none';
 
-  if (hasData) {
-    renderCurrentSheet();
-  }
+  if (hasData) renderCurrentSheet();
 }
 
-// ---- Select Sheet ----
 function selectSheet(idx) {
   _s5CurrentSheet = idx;
   renderS5Editor();
 }
 
-// ---- Render Current Sheet ----
 function renderCurrentSheet() {
-  const schema = _s5Schema;
-  const sheets = schema?.sheets || [];
+  var schema = _s5Schema;
+  var sheets = schema && schema.sheets || [];
   if (!sheets.length) return;
-  const sheet = sheets[_s5CurrentSheet];
+  var sheet = sheets[_s5CurrentSheet];
   if (!sheet) return;
 
-  // Sheet name
-  document.getElementById('s5-sheet-name').value = sheet.sheet_name || '';
+  var nameEl = document.getElementById('s5-sheet-name');
+  if (nameEl) nameEl.value = sheet.sheet_name || '';
 
-  // Fields
-  const fields = sheet.fields || [];
-  const tbody = document.getElementById('s5-fields-tbody');
-  tbody.innerHTML = fields.map((f, i) => `
-    <tr style="${i % 2 === 0 ? '' : 'background:#f9fafb'}">
-      <td style="padding:8px 16px;color:#98a2b3;font-size:12px">${i + 1}</td>
-      <td style="padding:8px 16px">
-        <input value="${escapeHtml(f.field_title || '')}" oninput="onFieldChange(${i}, 'field_title', this.value)"
-          style="border:none;outline:none;font-size:13px;width:100%;background:transparent" placeholder="字段名称">
-      </td>
-      <td style="padding:8px 16px">
-        <select onchange="onFieldChange(${i}, 'field_type', this.value)" style="border:none;outline:none;font-size:13px;background:transparent">
-          ${['text','number','date','select','percent','phone'].map(t => `<option value="${t}" ${f.field_type === t ? 'selected' : ''}>${t}</option>`).join('')}
-        </select>
-      </td>
-      <td style="padding:8px 16px;text-align:center">
-        <input type="checkbox" ${f.required ? 'checked' : ''} onchange="onFieldChange(${i}, 'required', this.checked)">
-      </td>
-      <td style="padding:8px 16px;text-align:center">
-        <button class="btn danger" onclick="doDeleteField(${i})" style="height:24px;font-size:11px;padding:0 8px">删除</button>
-      </td>
-    </tr>
-  `).join('');
+  var fields = sheet.fields || [];
+  var tbody = document.getElementById('s5-fields-tbody');
+  if (!tbody) return;
 
-  // Records
-  const records = sheet.sample_records || [];
-  document.getElementById('s5-record-count').textContent = (records.length || 0) + ' 条';
+  var fieldTypes = ['text','number','date','select','percent','phone'];
+  var rows = fields.map(function(f, i) {
+    var bg = i % 2 === 0 ? '' : 'background:#f9fafb';
+    var ftOpts = fieldTypes.map(function(t) {
+      return '<option value="' + t + '"' + (f.field_type === t ? ' selected' : '') + '>' + t + '</option>';
+    }).join('');
+    return '<tr style="' + bg + '">' +
+      '<td style="padding:8px 16px;color:#98a2b3;font-size:12px">' + (i + 1) + '</td>' +
+      '<td style="padding:8px 16px"><input value="' + escHtml(f.field_title || '') + '" oninput="onFieldChange(' + i + ',\'field_title\',this.value)" style="border:none;outline:none;font-size:13px;width:100%;background:transparent" placeholder="字段名称"></td>' +
+      '<td style="padding:8px 16px"><select onchange="onFieldChange(' + i + ',\'field_type\',this.value)" style="border:none;outline:none;font-size:13px;background:transparent">' + ftOpts + '</select></td>' +
+      '<td style="padding:8px 16px;text-align:center"><input type="checkbox"' + (f.required ? ' checked' : '') + ' onchange="onFieldChange(' + i + ',\'required\',this.checked)"></td>' +
+      '<td style="padding:8px 16px;text-align:center"><button class="btn danger" onclick="doDeleteField(' + i + ')" style="height:24px;font-size:11px;padding:0 8px">删除</button></td>' +
+    '</tr>';
+  });
+  tbody.innerHTML = rows.join('');
 
-  // Record header (field titles)
-  const recHeader = document.getElementById('s5-records-header');
-  recHeader.innerHTML = '<tr style="background:#f3f4f6">' + fields.map((f, i) =>
-    `<th style="padding:8px 12px;text-align:left;font-size:12px;color:#667085;white-space:nowrap;border-bottom:1px solid #e5e7eb">${escapeHtml(f.field_title || '字段' + (i+1))}</th>`
-  ).join('') + '<th style="padding:8px 12px;width:50px;border-bottom:1px solid #e5e7eb"></th>';
+  var records = sheet.sample_records || [];
+  var recCount = document.getElementById('s5-record-count');
+  if (recCount) recCount.textContent = (records.length || 0) + ' 条';
 
-  // Record body
-  const recBody = document.getElementById('s5-records-body');
-  recBody.innerHTML = records.map((rec, ri) => `
-    <tr style="${ri % 2 === 0 ? '' : 'background:#f9fafb'}">
-      ${fields.map((f, fi) => {
-        const val = rec[f.field_title] ?? '';
-        if (f.field_type === 'select') {
-          return `<td style="padding:6px 12px">
-            <select onchange="onRecordChange(${ri}, ${fi}, this.value)" style="border:none;outline:none;font-size:12px;background:transparent;min-width:80px">
-              <option value="">-</option>
-              ${(f.options || []).map(o => `<option value="${escapeHtml(o)}" ${val === o ? 'selected' : ''}>${escapeHtml(o)}</option>`).join('')}
-            </select>
-          </td>`;
-        } else if (f.field_type === 'number' || f.field_type === 'percent') {
-          return `<td style="padding:6px 12px">
-            <input type="number" value="${escapeHtml(val)}" oninput="onRecordChange(${ri}, ${fi}, this.value)"
-              style="border:none;outline:none;font-size:12px;background:transparent;width:80px" placeholder="0">
-          </td>`;
-        } else if (f.field_type === 'date') {
-          return `<td style="padding:6px 12px">
-            <input type="date" value="${escapeHtml(val)}" onchange="onRecordChange(${ri}, ${fi}, this.value)"
-              style="border:none;outline:none;font-size:12px;background:transparent">
-          </td>`;
-        } else {
-          return `<td style="padding:6px 12px">
-            <input value="${escapeHtml(val)}" oninput="onRecordChange(${ri}, ${fi}, this.value)"
-              style="border:none;outline:none;font-size:12px;background:transparent;min-width:100px" placeholder="-">
-          </td>`;
-        }
-      }).join('')}
-      <td style="padding:6px 12px;text-align:center">
-        <button class="btn danger" onclick="doDeleteRecord(${ri})" style="height:22px;font-size:11px;padding:0 6px">×</button>
-      </td>
-    </tr>
-  `).join('');
+  var recHeader = document.getElementById('s5-records-header');
+  if (recHeader) {
+    recHeader.innerHTML = '<tr style="background:#f3f4f6">' + fields.map(function(f, i) {
+      return '<th style="padding:8px 12px;text-align:left;font-size:12px;color:#667085;white-space:nowrap;border-bottom:1px solid #e5e7eb">' + escHtml(f.field_title || '字段' + (i+1)) + '</th>';
+    }).join('') + '<th style="padding:8px 12px;width:50px;border-bottom:1px solid #e5e7eb"></th></tr>';
+  }
+
+  var recBody = document.getElementById('s5-records-body');
+  if (!recBody) return;
+  var recRows = records.map(function(rec, ri) {
+    var bg = ri % 2 === 0 ? '' : 'background:#f9fafb';
+    var cells = fields.map(function(f, fi) {
+      var val = rec[f.field_title] || '';
+      if (f.field_type === 'select') {
+        var opts = (f.options || []).map(function(o) {
+          return '<option value="' + escHtml(o) + '"' + (val === o ? ' selected' : '') + '>' + escHtml(o) + '</option>';
+        }).join('');
+        return '<td style="padding:6px 12px"><select onchange="onRecordChange(' + ri + ',' + fi + ',this.value)" style="border:none;outline:none;font-size:12px;background:transparent;min-width:80px"><option value="">-</option>' + opts + '</select></td>';
+      } else if (f.field_type === 'number' || f.field_type === 'percent') {
+        return '<td style="padding:6px 12px"><input type="number" value="' + escHtml(val) + '" oninput="onRecordChange(' + ri + ',' + fi + ',this.value)" style="border:none;outline:none;font-size:12px;background:transparent;width:80px" placeholder="0"></td>';
+      } else if (f.field_type === 'date') {
+        return '<td style="padding:6px 12px"><input type="date" value="' + escHtml(val) + '" onchange="onRecordChange(' + ri + ',' + fi + ',this.value)" style="border:none;outline:none;font-size:12px;background:transparent"></td>';
+      } else {
+        return '<td style="padding:6px 12px"><input value="' + escHtml(val) + '" oninput="onRecordChange(' + ri + ',' + fi + ',this.value)" style="border:none;outline:none;font-size:12px;background:transparent;min-width:100px" placeholder="-"></td>';
+      }
+    }).join('');
+    return '<tr style="' + bg + '">' + cells + '<td style="padding:6px 12px;text-align:center"><button class="btn danger" onclick="doDeleteRecord(' + ri + ')" style="height:22px;font-size:11px;padding:0 6px">×</button></td></tr>';
+  });
+  recBody.innerHTML = recRows.join('');
 }
 
-// ---- Sheet/Field/Record Mutations ----
 function onSheetNameChange(name) {
-  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
   _s5Schema.sheets[_s5CurrentSheet].sheet_name = name;
 }
 
 function onFieldChange(idx, prop, val) {
-  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
   _s5Schema.sheets[_s5CurrentSheet].fields[idx][prop] = val;
-  if (prop === 'field_title') renderCurrentSheet(); // header changes
+  if (prop === 'field_title') renderCurrentSheet();
 }
 
 function doAddField() {
-  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
   _s5Schema.sheets[_s5CurrentSheet].fields.push({ field_title: '新字段', field_type: 'text', required: false });
   renderCurrentSheet();
 }
 
 function doDeleteField(idx) {
-  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
   _s5Schema.sheets[_s5CurrentSheet].fields.splice(idx, 1);
   renderCurrentSheet();
 }
 
 function onRecordChange(ri, fi, val) {
-  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
-  const sheet = _s5Schema.sheets[_s5CurrentSheet];
-  const field = sheet.fields[fi];
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
+  var sheet = _s5Schema.sheets[_s5CurrentSheet];
+  var field = sheet.fields && sheet.fields[fi];
   if (!field) return;
   if (!sheet.sample_records[ri]) sheet.sample_records[ri] = {};
   sheet.sample_records[ri][field.field_title] = val;
 }
 
 function doAddRecord() {
-  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
   _s5Schema.sheets[_s5CurrentSheet].sample_records.push({});
   renderCurrentSheet();
 }
 
 function doDeleteRecord(idx) {
-  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
   _s5Schema.sheets[_s5CurrentSheet].sample_records.splice(idx, 1);
   renderCurrentSheet();
 }
 
 function doAddSheet() {
   if (!_s5Schema) return;
+  _s5Schema.sheets = _s5Schema.sheets || [];
   _s5Schema.sheets.push({ sheet_name: '新子表', fields: [{ field_title: '字段1', field_type: 'text', required: false }], sample_records: [] });
   _s5CurrentSheet = _s5Schema.sheets.length - 1;
   renderS5Editor();
 }
 
 function doDeleteCurrentSheet() {
-  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
   if (_s5Schema.sheets.length <= 1) { alert('至少保留一个子表'); return; }
   if (!confirm('确定删除此子表？')) return;
   _s5Schema.sheets.splice(_s5CurrentSheet, 1);
@@ -2439,27 +2422,24 @@ function doDeleteCurrentSheet() {
   renderS5Editor();
 }
 
-// ---- Save ----
 function doSaveStep5Schema() {
   if (!_s5Schema) return;
-  const schemaObj = _s5Schema;
-  updateClient(currentClientId, { step5_schema: schemaObj });
+  updateClient(currentClientId, { step5_schema: _s5Schema });
   showToast('已保存');
-  renderS5Editor(); // refresh state
+  renderS5Editor();
 }
 
-// ---- Regenerate from backend ----
 async function doRegenerateStep5() {
   if (!confirm('重新生成会覆盖当前的 Demo 方案，确定要重新生成吗？')) return;
-  const c = getClient(currentClientId);
+  var c = getClient(currentClientId);
   if (!c.step4_presales && !c.step4_report && !c.transcript) {
     alert('请先生成售前方案（Step4）再生成 Demo'); return;
   }
-  const btn = document.getElementById('s5-regen-btn');
+  var btn = document.getElementById('s5-regen-btn');
   if (btn) { btn.classList.add('loading'); btn.disabled = true; }
   showFullscreenLoading('正在生成智能表格 Demo…');
   try {
-    const schema = await generateDemoSchema(c);
+    var schema = await generateDemoSchema(c);
     window._demoSchema = schema;
     _s5Schema = schema;
     updateClient(currentClientId, { step5_schema: schema });
@@ -2473,48 +2453,43 @@ async function doRegenerateStep5() {
   }
 }
 
-// ---- Backend call ----
 async function generateDemoSchema(c) {
-  const resp = await fetch(API_BASE + '/api/step5/generate-demo', {
+  var resp = await fetch(API_BASE + '/api/step5/generate-demo', {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ client_id: c.id || currentClientId })
   });
   if (!resp.ok) throw new Error('生成失败');
-  const data = await resp.json();
+  var data = await resp.json();
   if (!data.success || !data.demo) throw new Error(data.detail || '生成失败');
   return data.demo;
 }
 
-// ---- Create Smart Sheet (Wecom) ----
 async function createSmartSheet() {
-  const schema = _s5Schema || getClient(currentClientId)?.step5_schema;
+  var schema = _s5Schema || (getClient(currentClientId) && getClient(currentClientId).step5_schema);
   if (!schema) { alert('请先生成 Demo'); return; }
-  const schemaObj = typeof schema === 'string' ? JSON.parse(schema) : schema;
-  const total = schemaObj.sheets ? schemaObj.sheets.length : 0;
-
-  const btn = document.getElementById('create-smart-sheet-btn');
+  var schemaObj = typeof schema === 'string' ? JSON.parse(schema) : schema;
+  var total = schemaObj.sheets ? schemaObj.sheets.length : 0;
+  var btn = document.getElementById('create-smart-sheet-btn');
   if (btn) { btn.disabled = true; btn.textContent = '生成智能表格中…'; }
-
-  showFullscreenLoading(total > 0 ? `正在创建 ${total} 个子表…` : '正在创建智能表格…');
+  showFullscreenLoading(total > 0 ? '正在创建 ' + total + ' 个子表…' : '正在创建智能表格…');
   try {
-    const resp = await fetch(API_BASE + '/api/create', {
+    var resp = await fetch(API_BASE + '/api/create', {
       method: 'POST', headers: getAuthHeaders(),
       body: JSON.stringify(schemaObj)
     });
-    const data = await resp.json();
+    var data = await resp.json();
     if (!data.success) throw new Error(data.error || '创建文档失败');
-    const docid = data.docid;
-    for (let i = 1; i < total; i++) {
+    var docid = data.docid;
+    for (var i = 1; i < total; i++) {
       await fetch(API_BASE + '/api/create', {
         method: 'POST', headers: getAuthHeaders(),
-        body: JSON.stringify({ docid, sheet: schemaObj.sheets[i] })
+        body: JSON.stringify({ docid: docid, sheet: schemaObj.sheets[i] })
       });
     }
-    // 保存 demo_url
     updateClient(currentClientId, { demo_url: data.url });
     showToast('创建成功！' + total + ' 个子表');
-    renderArtifacts(); // refresh artifact panel to show "查看智能表格" button
+    renderArtifacts();
     window.open(data.url, '_blank');
   } catch(e) {
     alert('创建失败: ' + e.message);
@@ -2525,17 +2500,59 @@ async function createSmartSheet() {
 }
 
 function doCopyDemoUrl() {
-  const c = getClient(currentClientId);
-  if (!c?.demo_url) return;
-  navigator.clipboard.writeText(c.demo_url).then(() => showToast('链接已复制'));
-  const btn = document.getElementById('copy-demo-url-btn');
-  if (btn) { const orig = btn.textContent; btn.textContent = '已复制'; setTimeout(() => btn.textContent = orig, 1500); }
+  var c = getClient(currentClientId);
+  if (!c || !c.demo_url) return;
+  navigator.clipboard.writeText(c.demo_url).then(function() { showToast('链接已复制'); });
+  var btn = document.getElementById('copy-demo-url-btn');
+  if (btn) { var orig = btn.textContent; btn.textContent = '已复制'; setTimeout(function() { btn.textContent = orig; }, 1500); }
 }
 
-// ---- Escape HTML helper ----
-function escapeHtml(str) {
-  if (str == null) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function loadStep2(c) {
+  if (!c.step1_result) return;
+  const data = c.step1_result;
+  document.getElementById('s2-profile-text').textContent = data.part1?.company_background || '-';
+  // 动态渲染 pain_points，不再依赖静态 4 个元素
+  const painGrid = document.getElementById('s2-pains');
+  const pains = data.part1?.pain_points || [];
+  painGrid.innerHTML = pains.length > 0
+    ? pains.map(p => `<div class="pain" contenteditable="false">${p}</div>`).join('')
+    : '<div class="pain" contenteditable="false">-</div>';
+  renderGaps(data.part2 || []);
+  // 先清空容器再渲染，避免 innerHTML+= 导致按钮叠加
+  document.getElementById('s2-must-questions').innerHTML = '';
+  document.getElementById('s2-deep-questions').innerHTML = '';
+  document.getElementById('s2-industry-notes').innerHTML = '';
+  renderQuestions(data.part3 || {});
+  updateCtxBar(c);
+}
+function loadStep3(c) {
+  updateCtxBar(c);
+  renderNoteList(c);
+  renderStep3Summary(c);
+  updateStep3NextBtn(c);
+}
+function loadStep4(c) {
+  updateCtxBar(c);
+  // 加载方案输入确认
+  const inputSummary = c.step4_report?.inputSummary;
+  if (inputSummary) {
+    document.getElementById('s4-current').textContent = inputSummary.current || '-';
+    document.getElementById('s4-pain').textContent = inputSummary.pain || '-';
+    document.getElementById('s4-roles').textContent = inputSummary.roles || '-';
+    document.getElementById('s4-goals').textContent = inputSummary.goals || '-';
+  } else {
+    // 从 step1_result 和 step3 自动生成摘要
+    autoGenerateStep4Input(c);
+  }
+  // 加载售前方案
+  if (c.step4_presales) {
+    renderStep4Presales(c.step4_presales);
+  }
+  // 加载技术方案
+  if (c.step4_technical) {
+    renderStep4Technical(c.step4_technical);
+  }
 }
 
 
@@ -2643,10 +2660,8 @@ function renderArtifacts() {
   // 技术路线及报价方案
   items.push({ name: '技术路线及报价方案', tag: hasTechnical ? '已生成' : '待生成', tagCls: hasTechnical ? '' : 'todo', pct: hasTechnical ? 100 : 0, dataKey: 'step4_technical', desc: '面向内部评估，拆解技术路径、交付范围与报价口径。' });
 
-  // 智能表格Demo
-  const hasDemoSchema = !!(c.step5_schema);
-  const hasDemoUrl = !!(c.demo_url);
-  items.push({ name: '智能表格Demo', tag: hasDemoSchema ? '已生成' : '待生成', tagCls: hasDemoSchema ? '' : 'todo', pct: hasDemoSchema ? (hasDemoUrl ? 100 : 60) : 0, dataKey: 'step5_schema', desc: '智能表格 Demo 数据，可编辑字段和样例内容。' });
+  // Demo Schema
+  items.push({ name: 'Demo Schema', tag: c.step5_schema ? '已生成' : '待生成', tagCls: c.step5_schema ? '' : 'todo', pct: c.step5_schema ? 100 : 0, dataKey: 'step5_schema', desc: '智能表格 Schema，可直接创建企微智能表格。' });
 
   list.innerHTML = items.map((item, i) => {
     let actions = '';
@@ -2678,24 +2693,18 @@ function renderArtifacts() {
         actions += '<button class="art-btn" onclick="copyArtifactData(\'' + item.dataKey + '\')">复制</button>';
       }
     }
-    // 智能表格Demo的制品区按钮
-    if (item.dataKey === 'step5_schema') {
-      if (hasDemoUrl) {
-        actions += '<a class="art-btn success" href="' + escapeHtml(c.demo_url) + '" target="_blank">查看智能表格</a>';
-        actions += '<button class="art-btn" id="copy-demo-url-btn" onclick="doCopyDemoUrl()">复制链接</button>';
-      } else if (hasDemoSchema) {
-        actions += '<button class="art-btn success" id="create-smart-sheet-btn" onclick="createSmartSheet()">生成企微智能表格</button>';
-      } else {
-        actions += '<button class="art-btn" disabled style="opacity:0.4">生成企微智能表格</button>';
-      }
-    }
+    if (item.dataKey === 'step5_schema' && c.step5_schema) actions += '<button class="art-btn success" onclick="createSmartSheet()">创建表格</button>';
     return '<div class="artifact"><div class="artifact-top"><h4>' + item.name + '</h4><span class="tag ' + item.tagCls + '">' + item.tag + '</span></div><p>' + (item.desc || '') + '</p><div class="barbox"><div class="bar" style="width:' + item.pct + '%"></div></div><div class="artifact-actions">' + actions + '</div></div>';
   }).join('');
 
-  // 企微已创建表格（从 demo_url 迁移过来的独立条目，显示在底部）
-  if (hasDemoUrl) {
-    // 已经用上面的按钮形式展示了，不需要重复
-  }
+  // 企微已创建表格
+  const extra = (c._artifacts || []).map((a, i) => {
+    let actions = '';
+    if (a.url) actions += '<button class="art-btn" onclick="window.open(\'' + a.url + '\',\'_blank\')">打开</button>';
+    actions += '<button class="art-btn danger" onclick="deleteArtifact(' + i + ')">删除</button>';
+    return '<div class="artifact"><div class="artifact-top"><h4>' + (a.title || '企微智能表格') + '</h4><span class="tag">已创建</span></div><p>' + (a.type === 'doc' ? 'DocID: ' + (a.docid || '-') : '') + '</p>' + (a.url ? '<div style="margin-top:8px"><a href="' + API_BASE + '" + a.url target="_blank" style="font-size:12px;color:#1263e6">打开链接 →</a></div>' : '') + '<div class="barbox"><div class="bar" style="width:100%"></div></div><div class="artifact-actions">' + actions + '</div></div>';
+  }).join('');
+  list.innerHTML += extra;
 }
 
 function doPreviewProfile() {
