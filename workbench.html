@@ -1496,28 +1496,40 @@ function closeClientDropdownOutside(e) {
 function renderClientDropdownList() {
   const list = document.getElementById('client-dropdown-list');
   if (!list) return;
+  // 先显示本地缓存的客户（快速）
+  const localClients = getClients();
+  renderDropdownClients(localClients, list);
+  // 再异步拉后端完整列表（最新）
   fetch(API_BASE + '/api/clients', { headers: getAuthHeaders() })
     .then(r => r.json())
     .then(data => {
       const clients = Array.isArray(data) ? data : (data.clients || []);
-      if (clients.length === 0) {
-        list.innerHTML = '<div class="client-dropdown-item" style="color:#98a2b3;cursor:default">暂无客户</div>';
-        return;
-      }
-      list.innerHTML = clients.map(c => {
-        const isActive = String(c.id) === String(currentClientId);
-        const name = escapeHtml(c.name || '未命名');
-        const meta = escapeHtml(c.industry || '未定义行业');
-        const done = c._completed ? ' ✅' : '';
-        return '<div class="client-dropdown-item' + (isActive ? ' active' : '') + '" onclick="switchToClient(\'' + c.id + '\')">' +
-          '<div class="cdi-name">' + name + done + '</div>' +
-          '<div class="cdi-meta">' + meta + '</div>' +
-        '</div>';
-      }).join('<div class="client-dropdown-divider"></div>');
+      if (clients.length > 0) renderDropdownClients(clients, list);
     })
-    .catch(() => {
-      if (list) list.innerHTML = '<div class="client-dropdown-item" style="color:#98a2b3;cursor:default">加载失败</div>';
-    });
+    .catch(() => {});
+}
+
+function renderDropdownClients(clients, list) {
+  if (!clients || clients.length === 0) {
+    list.innerHTML = '<div class="client-dropdown-item" style="color:#98a2b3;cursor:default">暂无客户</div>';
+    return;
+  }
+  // 去重：以 id 为 key，后面出现的覆盖前面的
+  const seen = {};
+  const ordered = [];
+  for (const c of clients) {
+    if (!seen[c.id]) { seen[c.id] = c; ordered.push(c); }
+  }
+  list.innerHTML = ordered.map(c => {
+    const isActive = String(c.id) === String(currentClientId);
+    const name = escapeHtml(c.name || '未命名');
+    const meta = escapeHtml(c.industry || '未定义行业');
+    const done = c._completed ? ' ✅' : '';
+    return '<div class="client-dropdown-item' + (isActive ? ' active' : '') + '" onclick="switchToClient(\'' + c.id + '\')">' +
+      '<div class="cdi-name">' + name + done + '</div>' +
+      '<div class="cdi-meta">' + meta + '</div>' +
+    '</div>';
+  }).join('<div class="client-dropdown-divider"></div>');
 }
 
 function switchToClient(id) {
