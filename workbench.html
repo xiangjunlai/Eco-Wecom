@@ -17,10 +17,16 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 
 /* ==== SIDEBAR ==== */
 .sidebar{padding:18px;display:flex;flex-direction:column;gap:16px}
-.brand{height:64px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.brand{height:64px;display:flex;align-items:center;gap:12px;position:relative}
 .logo{width:42px;height:42px;border-radius:15px;background:linear-gradient(135deg,#1263e6,#19c58a);display:grid;place-items:center;color:#fff;font-weight:900;letter-spacing:.5px;box-shadow:0 10px 24px rgba(18,99,230,.22);font-size:18px}
 .brand-title{font-weight:900;font-size:17px}
 .brand-sub{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;max-width:150px}
+.client-dropdown-item{padding:10px 14px;font-size:13px;color:#374151;cursor:pointer;transition:background .12s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-dropdown-item:hover{background:#f0f6ff}
+.client-dropdown-item.active{background:#eef3ff;color:#1263e6;font-weight:600}
+.client-dropdown-item .cdi-name{font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.client-dropdown-item .cdi-meta{font-size:11px;color:#98a2b3;margin-top:2px}
+.client-dropdown-divider{height:1px;background:#f0f2f5;margin:4px 0}
 .flow{position:relative;margin-top:6px;padding-left:3px}
 .flow:before{content:"";position:absolute;left:25px;top:24px;bottom:24px;width:2px;background:linear-gradient(#1263e6 0 28%,#dfe6ef 28% 100%)}
 .step{position:relative;display:flex;flex-direction:row;align-items:center;gap:12px;padding:12px 10px;border-radius:14px;cursor:pointer;transition:background .15s,transform .15s;margin:5px 0}
@@ -602,11 +608,14 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
   <!-- LEFT SIDEBAR -->
   <aside class="panel sidebar" id="sidebar">
     <!-- Brand / current client -->
-    <div class="brand" id="sidebar-brand" onclick="goToList()">
+    <div class="brand" id="sidebar-brand">
       <img class="logo" id="sidebar-logo" src="/logo.jpg">
-      <div>
-        <div class="brand-title" id="sidebar-client-name">当前客户</div>
-        <div class="brand-sub" id="sidebar-client-meta">点击选择客户</div>
+      <div class="brand-client-select" style="flex:1;min-width:0">
+        <div class="brand-title" id="sidebar-client-name" onclick="toggleClientDropdown()" style="cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;display:block">当前客户</div>
+        <div class="brand-sub" id="sidebar-client-meta" onclick="toggleClientDropdown()" style="cursor:pointer">点击选择客户 ▾</div>
+        <div id="client-dropdown" style="display:none;position:absolute;top:68px;left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 24px rgba(18,24,40,.15);z-index:200;overflow:hidden;max-height:280px;overflow-y:auto">
+          <div id="client-dropdown-list"></div>
+        </div>
       </div>
     </div>
 
@@ -1460,6 +1469,59 @@ function updateFloatingAction(n) {
   } else {
     fp.style.opacity = '';
   }
+}
+
+function toggleClientDropdown() {
+  const dd = document.getElementById('client-dropdown');
+  if (!dd) return;
+  if (dd.style.display === 'none') {
+    renderClientDropdownList();
+    dd.style.display = '';
+    document.addEventListener('click', closeClientDropdownOutside);
+  } else {
+    dd.style.display = 'none';
+    document.removeEventListener('click', closeClientDropdownOutside);
+  }
+}
+
+function closeClientDropdownOutside(e) {
+  const dd = document.getElementById('client-dropdown');
+  const brand = document.getElementById('sidebar-brand');
+  if (dd && brand && !brand.contains(e.target)) {
+    dd.style.display = 'none';
+    document.removeEventListener('click', closeClientDropdownOutside);
+  }
+}
+
+function renderClientDropdownList() {
+  const list = document.getElementById('client-dropdown-list');
+  if (!list) return;
+  const clients = getClients() || [];
+  const current = getClient(currentClientId);
+  if (clients.length === 0) {
+    list.innerHTML = '<div class="client-dropdown-item" style="color:#98a2b3;cursor:default">暂无客户</div>';
+    return;
+  }
+  list.innerHTML = clients.map(c => {
+    const isActive = String(c.id) === String(currentClientId);
+    const name = escapeHtml(c.name || '未命名');
+    const meta = escapeHtml(c.industry || '未定义行业');
+    const done = c._completed ? ' ✅' : '';
+    return '<div class="client-dropdown-item' + (isActive ? ' active' : '') + '" onclick="switchToClient(\'' + c.id + '\')">' +
+      '<div class="cdi-name">' + name + done + '</div>' +
+      '<div class="cdi-meta">' + meta + '</div>' +
+    '</div>';
+  }).join('<div class="client-dropdown-divider"></div>');
+}
+
+function switchToClient(id) {
+  const dd = document.getElementById('client-dropdown');
+  if (dd) dd.style.display = 'none';
+  document.removeEventListener('click', closeClientDropdownOutside);
+  if (String(id) === String(currentClientId)) return;
+  currentClientId = String(id);
+  _backendClientCache[id] = getClient(id);
+  go(1);
 }
 
 function goToList() {
