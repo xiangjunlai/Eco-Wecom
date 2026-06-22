@@ -1499,15 +1499,17 @@ function renderClientDropdownList() {
   if (!list) return;
   // 先显示本地缓存的客户（快速）
   const localClients = getClients();
+  console.log('[dropdown] localClients:', localClients, 'count:', localClients.length);
   renderDropdownClients(localClients, list);
   // 再异步拉后端完整列表（最新）
   fetch(API_BASE + '/api/clients', { headers: getAuthHeaders() })
-    .then(r => r.json())
+    .then(r => { console.log('[dropdown] /api/clients status:', r.status); return r.json(); })
     .then(data => {
+      console.log('[dropdown] api data:', data && data.length ? data.length + ' clients' : data);
       const clients = Array.isArray(data) ? data : (data.clients || []);
       if (clients.length > 0) renderDropdownClients(clients, list);
     })
-    .catch(() => {});
+    .catch(e => console.error('[dropdown] fetch error:', e));
 }
 
 function renderDropdownClients(clients, list) {
