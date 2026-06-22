@@ -611,8 +611,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
     <div class="brand" id="sidebar-brand">
       <img class="logo" id="sidebar-logo" src="/logo.jpg">
       <div class="brand-client-select" style="flex:1;min-width:0">
-        <div class="brand-title" id="sidebar-client-name" onclick="toggleClientDropdown()" style="cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;display:block">当前客户 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;flex-shrink:0"><path d="M6 9l6 6 6-6"/></svg></div>
-        <div class="brand-sub" id="sidebar-client-meta" onclick="toggleClientDropdown()" style="cursor:pointer">点击选择客户 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;flex-shrink:0"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="brand-title" id="sidebar-client-name" onclick="toggleClientDropdown()" style="cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap"><span id="sidebar-client-name-text" style="overflow:hidden;text-overflow:ellipsis;max-width:130px">当前客户</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="brand-sub" id="sidebar-client-meta" onclick="toggleClientDropdown()" style="cursor:pointer;display:flex;align-items:center;gap:4px"><span id="sidebar-client-meta-text" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px">点击选择客户</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M6 9l6 6 6-6"/></svg></div>
         <div id="client-dropdown" style="display:none;position:absolute;top:68px;left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 24px rgba(18,24,40,.15);z-index:200;overflow:hidden;max-height:280px;overflow-y:auto">
           <div id="client-dropdown-list"></div>
         </div>
@@ -2825,8 +2825,8 @@ function loadStep4(c) {
 // ==================== CONTEXT BAR ====================
 function updateCtxBar(c) {
   if (!c) return;
-  const sbName = document.getElementById('sidebar-client-name');
-  const sbMeta = document.getElementById('sidebar-client-meta');
+  const sbName = document.getElementById('sidebar-client-name-text');
+  const sbMeta = document.getElementById('sidebar-client-meta-text');
   if (sbName) sbName.textContent = c.name || '当前客户';
   if (sbMeta) sbMeta.textContent = c.industry || '点击选择客户';
   ['s2','s3','s4','s5'].forEach(s => {
@@ -3484,7 +3484,9 @@ function logout() {
         const sbProvider = document.getElementById('sidebar-provider-name');
         const sbUser = document.getElementById('sidebar-username');
         if (sbProvider) sbProvider.textContent = testData.user.provider_name || '-';
-        if (sbUser) sbUser.textContent = testData.user.username || '-';
+        if (sbUser) {
+          sbUser.textContent = testData.user.username || '-';
+        }
       }
       await finishInit(testData.access_token);
       return;
