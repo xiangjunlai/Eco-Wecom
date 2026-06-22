@@ -191,10 +191,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .spinner{width:36px;height:36px;border-radius:50%;border:4px solid #e8edf5;border-top-color:var(--blue);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ===== AGENT EVAL WRAPPER ===== */
-#kb-contrast-section{margin-bottom:0}
-
-/* ===== KNOWLEDGE BASE ===== */
+/* ===== AGENT EVAL CARD (v22 redesigned) ===== */
 .agent-eval-card{
   background:var(--panel);
   border:1px solid #e8edf5;
@@ -204,16 +201,62 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   box-shadow:0 1px 3px rgba(18,34,64,.06),0 2px 8px rgba(18,34,64,.04);
 }
 /* Header */
-.ae-header{margin-bottom:18px}
-.ae-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-.ae-title-left{display:flex;align-items:center;gap:8px}
+.ae-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px}
+.ae-header-left{display:flex;align-items:center;gap:8px}
 .ae-icon{font-size:18px}
 .ae-title{font-size:15px;font-weight:700;color:var(--text)}
-.ae-title-right{display:flex;align-items:center;gap:12px}
+.ae-header-right{display:flex;align-items:center;gap:8px}
 .ae-updated{font-size:11px;color:var(--text3)}
 .ae-reload-btn{background:none;border:none;cursor:pointer;font-size:11px;color:#1263e6;padding:3px 8px;border-radius:6px;transition:.15s;font-weight:500}
 .ae-reload-btn:hover{background:#eef6ff}
-.ae-title-desc{font-size:12px;color:var(--text3);line-height:1.5}
+.ae-upload-btn{
+  padding:6px 14px;border-radius:9px;font-size:12px;font-weight:700;
+  cursor:pointer;border:none;background:#1263e6;color:#fff;transition:.15s;
+}
+.ae-upload-btn:hover{background:#0c55cd}
+.ae-title-desc{font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:18px}
+
+/* Body: left radar + right dim list */
+.ae-body{display:flex;gap:28px;align-items:flex-start}
+
+/* Left column: radar + grade bar */
+.ae-radar-col{width:260px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0}
+.ae-radar-wrap{width:260px;height:260px;position:relative}
+.ae-radar-wrap svg{width:100%!important;height:100%!important;display:block}
+.ae-grade-bar{
+  width:100%;margin-top:10px;
+  background:linear-gradient(90deg,#f0f7ff,#eef6ff);
+  border:1px solid #ddeeff;border-radius:10px;
+  padding:8px 14px;display:flex;align-items:center;gap:10px;
+}
+.ae-grade-letter{
+  font-size:28px;font-weight:900;line-height:1;
+  background:linear-gradient(135deg,#1263e6,#13b96f);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;flex-shrink:0;
+}
+.ae-grade-text{font-size:11px;color:#667085;line-height:1.5}
+
+/* Right column: 5 dim rows */
+.ae-list-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+
+.ae-dim-row{
+  background:#fafbfc;border:1px solid #eef2f7;border-radius:12px;
+  padding:10px 14px;
+}
+.ae-dim-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ae-dim-icon{font-size:15px;flex-shrink:0}
+.ae-dim-name{font-size:13px;font-weight:700;color:var(--text);flex:1;min-width:0}
+.ae-dim-pct{font-size:13px;font-weight:800;flex-shrink:0}
+.ae-dim-status{
+  display:inline-flex;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;flex-shrink:0;
+}
+.ae-dim-status.high{border:1px solid #a6e8cc;background:#ecfdf3;color:#079455}
+.ae-dim-status.mid{border:1px solid #fde69e;background:#fff7e6;color:#ad6800}
+.ae-dim-status.low{border:1px solid #fecdcd;background:#fff1f0;color:#b42318}
+.ae-dim-bar{height:6px;background:#eef2f7;border-radius:999px;overflow:hidden}
+.ae-dim-fill{height:100%;border-radius:999px;transition:width .6s ease}
+.ae-dim-desc{font-size:11px;color:var(--text3);margin-top:4px;line-height:1.4}
 
 /* Completion Card */
 .ae-comp-card{
@@ -246,69 +289,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   cursor:pointer;border:1.5px solid #1263e6;background:#fff;color:#1263e6;transition:.15s;
 }
 .ae-btn-ghost:hover{background:#eef6ff}
-
-/* Overview Row */
-.ae-overview{display:flex;gap:16px;margin-bottom:16px}
-.ae-grade-card{
-  width:120px;flex-shrink:0;
-  background:linear-gradient(135deg,#f0f7ff,#eef6ff);
-  border:1px solid #ddeeff;border-radius:14px;
-  padding:14px;text-align:center;
-}
-.ae-grade-label{font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px}
-.ae-grade-val{font-size:40px;font-weight:900;line-height:1;background:linear-gradient(135deg,#1263e6,#13b96f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.ae-grade-msg{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.4;text-align:left}
-
-/* 5 Dim Mini Cards */
-.ae-dims-row{flex:1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-.ae-dim-mini{
-  background:#fafbfc;border:1px solid #eef2f7;border-radius:12px;
-  padding:10px 12px;display:flex;flex-direction:column;gap:5px;
-}
-.ae-dim-mini-name{font-size:11px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:4px}
-.ae-dim-mini-pct{font-size:20px;font-weight:900;color:#1263e6;line-height:1}
-.ae-dim-mini-bar{height:4px;background:#eef2f7;border-radius:999px;overflow:hidden}
-.ae-dim-mini-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#1263e6,#13b96f);transition:width .5s}
-.ae-dim-mini-status{
-  display:inline-flex;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:700;
-}
-.ae-dim-mini-status.high{border:1px solid #a6e8cc;background:#ecfdf3;color:#079455}
-.ae-dim-mini-status.mid{border:1px solid #fde69e;background:#fff7e6;color:#ad6800}
-.ae-dim-mini-status.low{border:1px solid #fecdcd;background:#fff1f0;color:#b42318}
-
-/* Detail Cards */
-.ae-details{display:flex;flex-direction:column;gap:10px}
-.ae-detail-card{
-  display:flex;gap:14px;align-items:flex-start;
-  background:#fafbfc;border:1px solid #eef2f7;border-radius:14px;
-  padding:14px 16px;
-}
-.ae-detail-icon{font-size:24px;flex-shrink:0;margin-top:2px}
-.ae-detail-body{flex:1;min-width:0}
-.ae-detail-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
-.ae-detail-name{font-size:13px;font-weight:700;color:var(--text)}
-.ae-detail-pct{font-size:12px;font-weight:800;color:#1263e6}
-.ae-detail-status{
-  display:inline-flex;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;
-}
-.ae-detail-status.high{border:1px solid #a6e8cc;background:#ecfdf3;color:#079455}
-.ae-detail-status.mid{border:1px solid #fde69e;background:#fff7e6;color:#ad6800}
-.ae-detail-status.low{border:1px solid #fecdcd;background:#fff1f0;color:#b42318}
-.ae-detail-desc{font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:6px}
-.ae-detail-basis{
-  background:#fff;border:1px solid #eef2f7;border-radius:8px;
-  padding:8px 12px;margin-bottom:8px;
-}
-.ae-detail-basis-title{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:4px}
-.ae-detail-basis-text{font-size:11px;color:var(--text3);line-height:1.5}
-.ae-detail-suggest{font-size:11px;color:var(--text3);line-height:1.5}
-.ae-detail-suggest strong{color:var(--text2)}
-.ae-detail-actions{display:flex;gap:6px;flex-shrink:0}
-.ae-btn-sm{
-  padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;
-  cursor:pointer;border:1.5px solid #e8edf5;background:#fff;color:var(--text2);transition:.15s;white-space:nowrap;
-}
-.ae-btn-sm:hover{border-color:#1263e6;color:#1263e6;background:#eef6ff}
 .kb-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
 .kb-progress-pct{font-size:12px;font-weight:900;color:var(--blue);min-width:36px}
 .kb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
@@ -1152,8 +1132,10 @@ function getDimDesc(dim, score) {
 function renderRadarChart(scores) {
   var svg = document.getElementById('radar-chart');
   if (!svg) return;
-  var cx = 155, cy = 155, r = 90, labelR = 120;
+  var size = 260, cx = size/2, cy = size/2, r = 90, labelR = 118;
   var keys = ['industry','scenario','pricing','demo','question'];
+  // Short names: 去掉"能力"后取前2字
+  var shortNames = ['行业','场景','报价','Demo','问题'];
   var n = 5;
   var toXY = function(i, val) {
     var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
@@ -1191,14 +1173,14 @@ function renderRadarChart(scores) {
     return '<circle cx="' + pt.x + '" cy="' + pt.y + '" r="4" fill="#1263e6" stroke="#fff" stroke-width="1.5"/>';
   }).join('');
 
-  // Labels
+  // Labels: icon + short name
   var labels = keys.map(function(k, i) {
     var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
     var lx = cx + labelR * Math.cos(angle);
     var ly = cy + labelR * Math.sin(angle);
     var anchor = Math.cos(angle) > 0.3 ? 'start' : Math.cos(angle) < -0.3 ? 'end' : 'middle';
-    var dim = AGENT_DIMS[i];
-    return '<text x="' + lx + '" y="' + ly + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="10" fill="#667085" font-weight="500">' + dim.icon + ' ' + dim.name.replace('能力','') + '</text>';
+    var icon = AGENT_DIMS[i].icon;
+    return '<text x="' + lx + '" y="' + ly + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="10" fill="#667085" font-weight="600">' + icon + ' ' + shortNames[i] + '</text>';
   }).join('');
 
   svg.innerHTML = '<defs><linearGradient id="radarGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1263e6" stop-opacity="0.35"/><stop offset="100%" stop-color="#13b96f" stop-opacity="0.2"/></linearGradient></defs>' + gridLines + axisLines + poly + dots + labels;
@@ -1209,98 +1191,77 @@ function renderAgentEval(scores, grade) {
   if (!wrap) return;
 
   var gradeMsgs = {
-    S: '当前知识库已能支撑较完整的售前调研和方案生成',
-    A: '知识库覆盖面较全，Agent能力较强，建议继续补充薄弱环节',
-    B: '基础能力具备，部分维度仍有提升空间',
+    S: '知识库完整度高，Agent 可支撑全流程售前工作',
+    A: '知识库覆盖面较全，薄弱环节可继续补充',
+    B: '基础能力具备，部分维度仍需增强',
     C: '知识库仍在建设初期，建议优先补充核心分类',
     D: '知识库匮乏，建议先上传基础行业资料'
   };
 
-  function dimStatus(score) {
-    if (score >= 80) return 'high';
-    if (score >= 50) return 'mid';
+  function dimStatus(s) {
+    if (s >= 80) return 'high';
+    if (s >= 50) return 'mid';
     return 'low';
   }
   function statusLabel(s) {
     return {high:'已完善',mid:'待增强',low:'需补充'}[s] || '';
   }
+  function barColor(s) {
+    if (s >= 80) return 'linear-gradient(90deg,#1263e6,#13b96f)';
+    if (s >= 50) return 'linear-gradient(90deg,#f59e0b,#fbbf24)';
+    if (s >= 30) return 'linear-gradient(90deg,#ef4444,#f87171)';
+    return 'linear-gradient(90deg,#94a3b8,#cbd5e1)';
+  }
+  function pctColor(s) {
+    if (s >= 80) return '#1263e6';
+    if (s >= 50) return '#d97706';
+    if (s >= 30) return '#ef4444';
+    return '#94a3b8';
+  }
 
-  var miniCards = AGENT_DIMS.map(function(dim) {
-    var score = scores[dim.key] || 0;
-    var st = dimStatus(score);
-    return '<div class="ae-dim-mini">' +
-      '<div class="ae-dim-mini-name">' + dim.icon + ' ' + dim.name.replace('能力','') + '</div>' +
-      '<div class="ae-dim-mini-pct">' + score + '%</div>' +
-      '<div class="ae-dim-mini-bar"><div class="ae-dim-mini-fill" style="width:' + score + '%"></div></div>' +
-      '<span class="ae-dim-mini-status ' + st + '">' + statusLabel(st) + '</span>' +
-    '</div>';
-  }).join('');
-
-  var catNames = {
-    industry: '行业背景资料、行业报告、业务流程文档',
-    scenario: '客户案例、服务记录、项目复盘文档',
-    pricing: '报价表、合同模板、历史成交记录',
-    demo: '方案模板、Demo截图、产品介绍PPT',
-    question: '访谈纪要、常见问题、调研问卷模板'
-  };
-  var suggest = {
-    industry: '建议补充行业白皮书、竞品分析报告、客户痛点调研',
-    scenario: '建议补充更多细分场景案例，覆盖不同行业赛道',
-    pricing: '建议补充标准报价矩阵、模块价格表、历史报价区间',
-    demo: '建议补充各场景Demo截图、标杆客户方案片段',
-    question: '建议补充客户访谈纪要、常见问题清单、调研模板'
-  };
-
-  var detailCards = AGENT_DIMS.map(function(dim) {
+  // Build 5 dim rows
+  var dimRows = AGENT_DIMS.map(function(dim) {
     var score = scores[dim.key] || 0;
     var st = dimStatus(score);
     var desc = getDimDesc(dim, score);
-    return '<div class="ae-detail-card">' +
-      '<div class="ae-detail-icon">' + dim.icon + '</div>' +
-      '<div class="ae-detail-body">' +
-        '<div class="ae-detail-header">' +
-          '<span class="ae-detail-name">' + dim.name + '</span>' +
-          '<span class="ae-detail-pct">' + score + '%</span>' +
-          '<span class="ae-detail-status ' + st + '">' + statusLabel(st) + '</span>' +
-        '</div>' +
-        '<div class="ae-detail-desc">' + desc + '</div>' +
-        '<div class="ae-detail-basis">' +
-          '<div class="ae-detail-basis-title">&#128193; 关联资料类型</div>' +
-          '<div class="ae-detail-basis-text">' + catNames[dim.key] + '</div>' +
-        '</div>' +
-        '<div class="ae-detail-suggest"><strong>&#128161; 建议：</strong>' + suggest[dim.key] + '</div>' +
+    return '<div class="ae-dim-row">' +
+      '<div class="ae-dim-top">' +
+        '<span class="ae-dim-icon">' + dim.icon + '</span>' +
+        '<span class="ae-dim-name">' + dim.name + '</span>' +
+        '<span class="ae-dim-pct" style="color:' + pctColor(score) + '">' + score + '%</span>' +
+        '<span class="ae-dim-status ' + st + '">' + statusLabel(st) + '</span>' +
       '</div>' +
-      '<div class="ae-detail-actions">' +
-        '<button class="ae-btn-sm" onclick="openUploadModal()">补充资料</button>' +
-        '<button class="ae-btn-sm" onclick="document.getElementById(\'kb-files-section\').scrollIntoView({behavior:\'smooth\'})">查看文件</button>' +
-      '</div>' +
+      '<div class="ae-dim-bar"><div class="ae-dim-fill" style="width:' + score + '%;background:' + barColor(score) + '"></div></div>' +
+      '<div class="ae-dim-desc">' + desc + '</div>' +
     '</div>';
   }).join('');
 
   wrap.innerHTML = '<div class="agent-eval-card">' +
     '<div class="ae-header">' +
-      '<div class="ae-title-row">' +
-        '<div class="ae-title-left">' +
-          '<span class="ae-icon">&#127919;</span>' +
-          '<span class="ae-title">调研助手能力评估</span>' +
+      '<div class="ae-header-left">' +
+        '<span class="ae-icon">&#127919;</span>' +
+        '<span class="ae-title">调研助手能力评估</span>' +
+        '<span class="ae-updated">最近更新：' + new Date().toLocaleDateString('zh-CN') + '</span>' +
+        '<button class="ae-reload-btn" onclick="loadKbData()">重新评估</button>' +
+      '</div>' +
+      '<button class="ae-upload-btn" onclick="openUploadModal()">+ 上传知识库</button>' +
+    '</div>' +
+    '<div class="ae-title-desc">基于已上传知识库，评估 AI 在行业理解、场景拆解、报价建议、Demo 设计和问题清单生成上的可用程度。</div>' +
+    '<div class="ae-body">' +
+      '<div class="ae-radar-col">' +
+        '<div class="ae-radar-wrap">' +
+          '<svg id="radar-chart" viewBox="0 0 260 260"></svg>' +
         '</div>' +
-        '<div class="ae-title-right">' +
-          '<span class="ae-updated">最近更新：' + new Date().toLocaleDateString('zh-CN') + '</span>' +
-          '<button class="ae-reload-btn" onclick="loadKbData()">&#37327;&#26032;&#35780;&#20272;</button>' +
+        '<div class="ae-grade-bar">' +
+          '<span class="ae-grade-letter">' + grade + '</span>' +
+          '<span class="ae-grade-text">' + (gradeMsgs[grade] || '') + '</span>' +
         '</div>' +
       '</div>' +
-      '<div class="ae-title-desc">基于已上传知识库，评估 AI 在行业理解、场景拆解、报价建议、Demo 设计和问题清单生成上的可用程度。</div>' +
+      '<div class="ae-list-col">' + dimRows + '</div>' +
     '</div>' +
-    '<div class="ae-overview">' +
-      '<div class="ae-grade-card">' +
-        '<div class="ae-grade-label">&#32508;&#21512;&#35780;&#32423;</div>' +
-        '<div class="ae-grade-val">' + grade + '</div>' +
-        '<div class="ae-grade-msg">' + (gradeMsgs[grade] || '') + '</div>' +
-      '</div>' +
-      '<div class="ae-dims-row">' + miniCards + '</div>' +
-    '</div>' +
-    '<div class="ae-details">' + detailCards + '</div>' +
   '</div>';
+
+  renderRadarChart(scores);
 }
 
 function loadAgentEval() {
