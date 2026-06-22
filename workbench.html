@@ -217,6 +217,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .step-action-bar .btn.primary:disabled{background:#dde2eb;color:#98a2b3;box-shadow:none;cursor:not-allowed;transform:none}
 .step-action-bar .btn.ghost{background:#fff;color:#667085;border:1.5px solid #e2e8f0}
 .step-action-bar .btn.ghost:hover{background:#f0f7ff;border-color:#b9d8ff;color:#1263e6}
+.btn.danger{background:#fff;color:#dc2626;border:1.5px solid #fca5a5}
+.btn.danger:hover{background:#fef2f2}
+.sheet-name-input{font-size:18px;font-weight:700;border:none;border-bottom:2px solid #1263e6;outline:none;padding:4px 0;background:transparent;min-width:200px}
 
 /* Step 2 */
 .s2-header{margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e6ebf2}
@@ -1062,7 +1065,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	          <button class="btn primary" id="s4-next-btn" onclick="doStep4Next()">下一步 →</button>
 	        </div>
 	      </section>
-<!-- Step 5: Demo生成 -->
+<!-- Step 5: Demo设计 -->
       <section class="page" id="page5">
         <div class="ctx-bar">
           <span class="ctx-name" id="s5-ctx-name">-</span>
@@ -1071,66 +1074,87 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
           <span class="ctx-dot">·</span>
           <span class="ctx-summary" id="s5-ctx-summary">-</span>
         </div>
-        <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
-          <button class="small-btn" onclick="doRegenerateStep5()">重新生成</button>
-        </div>
-        <div class="demo-card">
-          <div class="demo-card-head">
-            <div><h3>选择项目类型</h3><span>点击切换不同 Demo 产物</span></div>
-          </div>
-          <div class="demo-type-grid">
-            <div class="demo-type active" data-demo="custom" onclick="switchDemoType(this)">
-              <b>定制开发项目</b>
-              <p>企业微信智能表格 Demo：字段、流程、权限、审批和看板。</p>
-            </div>
-            <div class="demo-type" data-demo="agent" onclick="switchDemoType(this)">
-              <b>AI 服务项目</b>
-              <p>Agent 小 Demo：对话入口、知识问答、任务处理和人工转接。</p>
-            </div>
-          </div>
-        </div>
-        <div class="demo-card demo-output active" id="customDemo">
-          <div class="demo-card-head">
-            <div><h3>企业微信智能表格 Demo</h3><span>左侧选择演示场景，右侧实时切换演示内容</span></div>
-            <div style="display:flex;gap:8px">
-              <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
-              <button class="edit-btn success" style="background:#ecfdf5;color:#047857;border-color:#bbf7d0" onclick="createSmartSheet()">创建企微智能表格</button>
-            </div>
-          </div>
-          <div class="demo-workspace">
-            <div class="demo-nav" data-demo-tabs="sheet">
-              <button class="demo-nav-item active" data-target="ledger" onclick="switchDemoScene(this,'sheet')"><b>客户台账</b><span>客户资料、审核状态、下一步动作</span></button>
-              <button class="demo-nav-item" data-target="approval" onclick="switchDemoScene(this,'sheet')"><b>合规审批</b><span>表单提交、审批流转、上下文联动</span></button>
-              <button class="demo-nav-item" data-target="record" onclick="switchDemoScene(this,'sheet')"><b>审批记录</b><span>时间线、操作人、审批意见</span></button>
-              <button class="demo-nav-item" data-target="dashboard" onclick="switchDemoScene(this,'sheet')"><b>数据看板</b><span>待审批、已归档、超时与运营进展</span></button>
-              <button class="demo-nav-item" data-target="chatsearch" onclick="switchDemoScene(this,'sheet')"><b>会话检索</b><span>按客户、关键词和业务标签查询</span></button>
-            </div>
-            <div class="demo-canvas" id="sheet-canvas"></div>
-          </div>
-        </div>
-        <div class="demo-card demo-output" id="agentDemo">
-          <div class="demo-card-head">
-            <div><h3>Agent Demo</h3><span>左侧选择 Agent 能力，右侧自动切换对话演示</span></div>
-            <div style="display:flex;gap:8px">
-              <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
-              <button class="edit-btn success" style="background:#ecfdf5;color:#047857;border-color:#bbf7d0" onclick="createAgentDemo()">创建 Agent Demo</button>
-            </div>
-          </div>
-          <div class="agent-workspace">
-            <div class="demo-nav" data-demo-tabs="agent">
-              <button class="demo-nav-item active" data-target="profile" onclick="switchDemoScene(this,'agent')"><b>客户资料查询</b><span>查询客户画像、负责人和历史记录</span></button>
-              <button class="demo-nav-item" data-target="material" onclick="switchDemoScene(this,'agent')"><b>审核材料检查</b><span>自动判断缺失附件和补充动作</span></button>
-              <button class="demo-nav-item" data-target="conversation" onclick="switchDemoScene(this,'agent')"><b>会话记录检索</b><span>检索客户原话和关键证据</span></button>
-              <button class="demo-nav-item" data-target="qa" onclick="switchDemoScene(this,'agent')"><b>知识问答</b><span>回答流程、权限、合规规则</span></button>
-              <button class="demo-nav-item" data-target="handoff" onclick="switchDemoScene(this,'agent')"><b>人工转接</b><span>复杂问题转交对应服务商人员</span></button>
-            </div>
-            <div class="agent-canvas" id="agent-canvas"></div>
-          </div>
-        </div>
 
-        <div class="step-action-bar">
-          <button class="btn secondary" id="s5-gen-btn" onclick="doRegenerateStep5()">重新生成Demo方案</button>
-          <button class="btn ghost" id="s5-done-btn" onclick="markClientDone()">已完成</button>
+        <!-- 智能表格设计器 -->
+        <div id="s5-editor" style="display:flex;flex-direction:column;gap:0;flex:1;overflow:hidden">
+          <!-- 工具栏 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#fff;border-bottom:1px solid #e5e7eb;gap:12px;flex-shrink:0">
+            <div style="display:flex;align-items:center;gap:10px">
+              <b style="font-size:15px;color:#111827">智能表格设计器</b>
+              <span id="s5-sheet-count" style="font-size:12px;color:#98a2b3;background:#f3f4f6;padding:2px 8px;border-radius:10px">0 个子表</span>
+              <span id="s5-schema-status" style="font-size:12px;color:#98a2b3"></span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn secondary" id="s5-regen-btn" onclick="doRegenerateStep5()" style="height:34px;font-size:13px">重新生成</button>
+              <button class="btn primary" id="s5-save-btn" onclick="doSaveStep5Schema()" style="height:34px;font-size:13px">保存修改</button>
+            </div>
+          </div>
+
+          <!-- 表选择Tab -->
+          <div id="s5-sheet-tabs" style="display:flex;gap:2px;padding:10px 20px 0;background:#fff;border-bottom:1px solid #e5e7eb;overflow-x:auto;flex-shrink:0;align-items:flex-end"></div>
+
+          <!-- 编辑区（可滚动） -->
+          <div id="s5-edit-area" style="flex:1;overflow-y:auto;padding:20px;background:#f8fafc">
+            <div id="s5-empty-state" style="text-align:center;padding:80px 0;color:#98a2b3">
+              <div style="font-size:48px;margin-bottom:16px">📊</div>
+              <div style="font-size:15px;margin-bottom:8px">暂无智能表格方案</div>
+              <div style="font-size:13px">点击右上角「重新生成」生成 Demo 数据</div>
+            </div>
+            <div id="s5-sheet-editor" style="display:none">
+              <!-- 当前编辑的子表 -->
+              <div style="margin-bottom:24px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <input id="s5-sheet-name" class="sheet-name-input" placeholder="表名称" oninput="onSheetNameChange(this.value)" style="font-size:18px;font-weight:700;border:none;border-bottom:2px solid #1263e6;outline:none;padding:4px 0;background:transparent;min-width:200px">
+                    <span style="font-size:12px;color:#667085">点击表名可直接编辑</span>
+                  </div>
+                  <button class="btn danger" onclick="doDeleteCurrentSheet()" style="height:32px;font-size:12px">删除此表</button>
+                </div>
+
+                <!-- 字段列表 -->
+                <div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;margin-bottom:16px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb">
+                    <b style="font-size:13px;color:#374151">字段设计</b>
+                    <button class="btn secondary" onclick="doAddField()" style="height:28px;font-size:12px;padding:0 10px">+ 添加字段</button>
+                  </div>
+                  <table style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead>
+                      <tr style="background:#f9fafb">
+                        <th style="padding:10px 16px;text-align:left;color:#667085;font-weight:500;width:40px">#</th>
+                        <th style="padding:10px 16px;text-align:left;color:#667085;font-weight:500">字段名称</th>
+                        <th style="padding:10px 16px;text-align:left;color:#667085;font-weight:500;width:140px">字段类型</th>
+                        <th style="padding:10px 16px;text-align:center;color:#667085;font-weight:500;width:80px">必填</th>
+                        <th style="padding:10px 16px;text-align:center;color:#667085;font-weight:500;width:60px">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="s5-fields-tbody"></tbody>
+                  </table>
+                </div>
+
+                <!-- 样例数据 -->
+                <div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb">
+                    <b style="font-size:13px;color:#374151">样例数据 <span style="font-weight:400;color:#98a2b3;margin-left:6px" id="s5-record-count">0 条</span></b>
+                    <button class="btn secondary" onclick="doAddRecord()" style="height:28px;font-size:12px;padding:0 10px">+ 添加行</button>
+                  </div>
+                  <div id="s5-records-grid" style="overflow-x:auto">
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:600px">
+                      <thead id="s5-records-header"></thead>
+                      <tbody id="s5-records-body"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 底部操作栏 -->
+          <div class="step-action-bar" style="border-top:1px solid #e5e7eb;padding:12px 20px;background:#fff;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+            <div style="display:flex;gap:8px;align-items:center">
+              <!-- 左侧留空或显示状态 -->
+            </div>
+            <button class="btn ghost" id="s5-done-btn" onclick="markClientDone()" style="background:#1263e6;color:#fff;border:none">已完成</button>
+          </div>
         </div>
       </section>
 
@@ -2191,1125 +2215,16 @@ function doStep4Next() {
 }
 
 // ==================== STEP 5 HANDLER ====================
-async function doRegenerateStep5() {
-  if (!confirm('重新生成会覆盖当前的Demo方案，确定要重新生成吗？')) return;
-  const c = getClient(currentClientId);
-  if (!c.step4_presales && !c.step4_report && !c.transcript) {
-    alert('请先生成售前方案（Step4）再生成 Demo'); return;
-  }
-  const btn = document.getElementById('s5-gen-btn');
-  btn.classList.add('loading');
-  btn.disabled = true;
-  showFullscreenLoading('正在生成智能表格 Demo…');
-  try {
-    const schema = await generateDemoSchema(c);
-    window._demoSchema = schema;
-    updateClient(currentClientId, { step5_schema: schema });
-    renderSchemaPreview(schema);
-    renderSheetDemo(schema);
-    renderAgentCanvas();
-    showToast('Demo 生成完成');
-  } catch(e) {
-    alert('Demo 生成失败: ' + e.message);
-  } finally {
-    btn.classList.remove('loading');
-    btn.disabled = false;
-    hideFullscreenLoading();
-  }
-}
 
-// primaryAction and saveCurrentStep are deprecated - use the step-specific handlers instead
-async function primaryAction() {
-  // Redirect to appropriate next button handler
-  if (currentStep === 1) doStep1Next();
-  else if (currentStep === 2) doStep2Next();
-  else if (currentStep === 3) doStep3Next();
-  else if (currentStep === 4) doStep4Next();
-}
+// ==================== STEP 5: Smart Sheet Editor ====================
 
-function saveCurrentStep() {
-  if (currentStep === 1) saveStep1();
-  else if (currentStep === 2) saveStep2ToClient();
-  else if (currentStep === 3) saveStep3();
-  else if (currentStep === 4) saveStep4Input();
-  else if (currentStep === 5) saveStep5ToClient();
-  showToast('已保存');
-}
+// Current in-memory schema for the editor
+let _s5Schema = null;
+let _s5CurrentSheet = 0;
 
-// ==================== STEP 2 ====================
-function loadStep2(c) {
-  if (!c.step1_result) return;
-  const data = c.step1_result;
-  document.getElementById('s2-profile-text').textContent = data.part1?.company_background || '-';
-  // 动态渲染 pain_points，不再依赖静态 4 个元素
-  const painGrid = document.getElementById('s2-pains');
-  const pains = data.part1?.pain_points || [];
-  painGrid.innerHTML = pains.length > 0
-    ? pains.map(p => `<div class="pain" contenteditable="false">${p}</div>`).join('')
-    : '<div class="pain" contenteditable="false">-</div>';
-  renderGaps(data.part2 || []);
-  // 先清空容器再渲染，避免 innerHTML+= 导致按钮叠加
-  document.getElementById('s2-must-questions').innerHTML = '';
-  document.getElementById('s2-deep-questions').innerHTML = '';
-  document.getElementById('s2-industry-notes').innerHTML = '';
-  renderQuestions(data.part3 || {});
-  updateCtxBar(c);
-}
-
-function renderGaps(gaps) {
-  const container = document.getElementById('s2-gaps');
-  const total = gaps.length;
-  document.getElementById('s2-gaps-total').textContent = total;
-  const btn = document.getElementById('s2-gaps-more-btn');
-  const showCount = 5;
-  container.innerHTML = gaps.map((g, i) => `
-    <div class="gap sortable-item${i >= showCount ? ' hidden-gaps' : ''}" draggable="true" data-idx="${i}" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)">
-      <span class="check"></span>
-      <span class="gap-text" contenteditable="false">${g.gap}</span>
-      <select class="priority-select" onchange="updateGapPriority(this)">
-        <option value="高" ${g.priority === '高' ? 'selected' : ''}>高</option>
-        <option value="中" ${g.priority === '中' ? 'selected' : ''}>中</option>
-        <option value="低" ${g.priority === '低' ? 'selected' : ''}>低</option>
-      </select>
-      <span class="drag-handle" title="拖拽排序"></span>
-    </div>
-  `).join('');
-  btn.style.display = total > showCount ? 'block' : 'none';
-  container.classList.remove('gaps-expanded');
-  btn.classList.remove('is-open');
-  btn.innerHTML = `查看更多问题（<span id="s2-gaps-total">${total}</span>）`;
-}
-
-function updateGapPriority(select) {
-  const priority = select.value;
-  // Visual feedback - the select itself shows the priority color via CSS
-}
-
-function toggleMoreGaps() {
-  const container = document.getElementById('s2-gaps');
-  const btn = document.getElementById('s2-gaps-more-btn');
-  const isOpen = container.classList.toggle('gaps-expanded');
-  btn.classList.toggle('is-open', isOpen);
-  btn.innerHTML = isOpen ? '收起问题' : `查看更多问题（<span id="s2-gaps-total">${container.querySelectorAll('.gap').length}</span>）`;
-}
-
-function renderQuestions(q) {
-  const mustList = document.getElementById('s2-must-questions');
-  mustList.innerHTML = (q.must_ask || []).map((item, i) => `
-    <div class="q-card sortable-item" draggable="true" data-idx="${i}" data-type="must" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)">
-      <div class="q-card-main">
-        <div class="q-top">
-          <span class="dim">${item.dimension || '信息收集'}</span>
-        </div>
-        <h3 class="q-title" contenteditable="false">${item.question}</h3>
-        ${item.note ? `<p class="q-purpose"><em class="q-note">${item.note}</em></p>` : ''}
-      </div>
-      <div class="q-actions">
-        <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
-        <span class="drag-handle" title="拖拽排序"></span>
-      </div>
-    </div>
-  `).join('');
-  mustList.innerHTML += '<button class="add-q-btn" onclick="addQuestion(\'must\')">+ 添加问题</button>';
-
-  const deepList = document.getElementById('s2-deep-questions');
-  deepList.innerHTML = (q.deep_dive || []).map((item, i) => `
-    <div class="q-card sortable-item" draggable="true" data-idx="${i}" data-type="deep" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)">
-      <div class="q-card-main">
-        <div class="q-top"><span class="dim">${item.dimension || '深度挖掘'}</span></div>
-        <h3 class="q-title" contenteditable="false">${item.question}</h3>
-        ${item.note ? `<p class="q-purpose"><em class="q-note">${item.note}</em></p>` : ''}
-      </div>
-      <div class="q-actions">
-        <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
-        <span class="drag-handle" title="拖拽排序"></span>
-      </div>
-    </div>
-  `).join('');
-  deepList.innerHTML += '<button class="add-q-btn" onclick="addQuestion(\'deep\')">+ 添加问题</button>';
-
-  const industryNotes = document.getElementById('s2-industry-notes');
-  industryNotes.innerHTML = (q.industry_experience || []).map((item, i) => `
-    <div class="q-card sortable-item" draggable="true" data-idx="${i}" data-type="industry" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)">
-      <div class="q-card-main">
-        <div class="q-top"><span class="dim">${item.dimension || '行业经验'}</span></div>
-        <h3 class="q-title" contenteditable="false">${item.question}</h3>
-        ${item.note ? `<p class="q-purpose"><em class="q-note">${item.note}</em></p>` : ''}
-      </div>
-      <div class="q-actions">
-        <button class="edit-btn" onclick="toggleEditStep2(this)">编辑</button>
-        <span class="drag-handle" title="拖拽排序"></span>
-      </div>
-    </div>
-  `).join('');
-  industryNotes.innerHTML += '<button class="add-q-btn" onclick="addQuestion(\'industry\')">+ 添加问题</button>';
-
-  const mustCount = (q.must_ask || []).length;
-  const deepCount = (q.deep_dive || []).length;
-  const industryCount = (q.industry_experience || []).length;
-  document.getElementById('s2-must-count').textContent = mustCount;
-  document.getElementById('s2-deep-count').textContent = deepCount;
-  document.getElementById('s2-industry-count').textContent = industryCount;
-  document.getElementById('s2-deep-total').textContent = deepCount + industryCount;
-}
-
-function switchTab(btn) {
-  const target = btn.dataset.target;
-  btn.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
-  btn.classList.add('on');
-  document.getElementById('s2-must-questions').style.display = target === 'must' ? '' : 'none';
-  document.getElementById('s2-deep-questions').style.display = target === 'deep' ? '' : 'none';
-  document.getElementById('s2-industry-notes').style.display = target === 'industry' ? '' : 'none';
-  document.getElementById('s2-more-btn').style.display = target !== 'must' ? 'none' : '';
-}
-
-function toggleMoreQuestions() {
-  const btn = document.getElementById('s2-more-btn');
-  const deepList = document.getElementById('s2-deep-questions');
-  const industryNotes = document.getElementById('s2-industry-notes');
-  const isOpen = btn.classList.toggle('is-open');
-  deepList.style.display = isOpen ? '' : 'none';
-  industryNotes.style.display = isOpen ? '' : 'none';
-  btn.innerHTML = isOpen ? '收起问题' : `查看更多问题（<span id="s2-deep-total">${deepList.querySelectorAll('.q-card').length + industryNotes.querySelectorAll('.q-card').length}</span>）`;
-}
-
-function togglePartEdit(btn, part) {
-  const isEditing = btn.textContent === '完成';
-  const card = btn.closest('.prep-card');
-
-  if (part === 'part1') {
-    // 客户画像
-    const profile = card.querySelector('#s2-profile-text');
-    const pains = card.querySelectorAll('#s2-pains .pain');
-    if (isEditing) {
-      profile.contentEditable = 'false';
-      pains.forEach(p => p.contentEditable = 'false');
-      btn.textContent = '编辑';
-    } else {
-      profile.contentEditable = 'true';
-      pains.forEach(p => p.contentEditable = 'true');
-      profile.focus();
-      btn.textContent = '完成';
-    }
-  } else if (part === 'part2') {
-    // 待确认信息清单 - 切换所有 gap 内容的编辑状态
-    const gaps = card.querySelectorAll('.gap b');
-    if (isEditing) {
-      gaps.forEach(g => g.contentEditable = 'false');
-      btn.textContent = '编辑';
-    } else {
-      gaps.forEach(g => g.contentEditable = 'true');
-      btn.textContent = '完成';
-    }
-  }
-}
-
-function addGap() {
-  const container = document.getElementById('s2-gaps');
-  const total = container.querySelectorAll('.gap').length;
-  const newGap = document.createElement('div');
-  newGap.className = 'gap sortable-item';
-  newGap.draggable = true;
-  newGap.dataset.idx = total;
-  newGap.innerHTML = `
-    <span class="check"></span>
-    <span class="gap-text"><b contenteditable="true">请输入缺失的关键信息</b></span>
-    <select class="priority-select" onchange="updateGapPriority(this)">
-      <option value="高" selected>高</option>
-      <option value="中">中</option>
-      <option value="低">低</option>
-    </select>
-    <span class="drag-handle" title="拖拽排序"></span>
-  `;
-  container.appendChild(newGap);
-  newGap.querySelector('b').focus();
-  document.getElementById('s2-gaps-total').textContent = container.querySelectorAll('.gap').length;
-}
-
-function toggleEditStep2(btn) {
-  const card = btn.closest('.q-card');
-  const title = card.querySelector('.q-title');
-  const note = card.querySelector('.q-note');
-  const dim = card.querySelector('.dim');
-  const isEditing = btn.textContent === '完成';
-
-  if (isEditing) {
-    // Save - make non-editable
-    title.contentEditable = 'false';
-    if (note) note.contentEditable = 'false';
-    if (dim) dim.contentEditable = 'false';
-    btn.textContent = '编辑';
-    btn.style.background = '#f3f6fa';
-    btn.style.color = '#667085';
-  } else {
-    // Edit - make editable
-    title.contentEditable = 'true';
-    if (note) note.contentEditable = 'true';
-    if (dim) dim.contentEditable = 'true';
-    title.focus();
-    btn.textContent = '完成';
-    btn.style.background = '#1263e6';
-    btn.style.color = '#fff';
-  }
-}
-
-function addQuestion(type) {
-  const listMap = { must: 's2-must-questions', deep: 's2-deep-questions', industry: 's2-industry-notes' };
-  const container = document.getElementById(listMap[type]);
-  const newCard = document.createElement('div');
-  newCard.className = 'q-card sortable-item';
-  newCard.dataset.type = type;
-  newCard.draggable = true;
-  newCard.innerHTML = `
-    <div class="q-card-main">
-      <div class="q-top"><span class="dim">新增</span></div>
-      <h3 class="q-title" contenteditable="true">请输入问题</h3>
-      <p class="q-purpose"><em class="q-note">请输入备注说明</em></p>
-    </div>
-    <div class="q-actions">
-      <button class="edit-btn" onclick="toggleEditStep2(this)">完成</button>
-      <span class="drag-handle" title="拖拽排序"></span>
-    </div>
-  `;
-  container.insertBefore(newCard, container.querySelector('.add-q-btn'));
-  newCard.querySelector('.q-title').focus();
-}
-
-// ==================== DRAG AND DROP ====================
-let _dragSrcEl = null;
-function onDragStart(e) {
-  _dragSrcEl = e.currentTarget;
-  e.currentTarget.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', e.currentTarget.dataset.idx || '');
-}
-function onDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  const target = e.currentTarget;
-  if (target === _dragSrcEl) return;
-  target.style.opacity = '0.5';
-}
-function onDrop(e) {
-  e.preventDefault();
-  const target = e.currentTarget;
-  if (target === _dragSrcEl) return;
-  target.style.opacity = '';
-  const container = _dragSrcEl.parentElement;
-  if (container.contains(target)) {
-    const srcIdx = [...container.children].indexOf(_dragSrcEl);
-    const tgtIdx = [...container.children].indexOf(target);
-    if (srcIdx < tgtIdx) {
-      container.insertBefore(_dragSrcEl, target.nextSibling);
-    } else {
-      container.insertBefore(_dragSrcEl, target);
-    }
-  }
-}
-function onDragEnd(e) {
-  e.currentTarget.classList.remove('dragging');
-  document.querySelectorAll('.sortable-item').forEach(el => el.style.opacity = '');
-}
-
-function saveStep2ToClient() {
-  const c = getClient(currentClientId);
-  const data = c.step1_result || {};
-  data.part1 = data.part1 || {};
-  data.part1.company_background = document.getElementById('s2-profile-text').textContent || '';
-  data.part1.pain_points = Array.from(document.querySelectorAll('#s2-pains .pain')).map(el => el.textContent);
-  data.part2 = Array.from(document.querySelectorAll('#s2-gaps .gap')).map(el => ({
-    gap: el.querySelector('.gap-text')?.textContent || el.querySelector('b')?.textContent || '',
-    priority: el.querySelector('.priority-select')?.value || el.querySelector('.priority')?.textContent?.replace('优先级', '').trim() || '高'
-  }));
-  data.part3 = data.part3 || {};
-  data.part3.must_ask = Array.from(document.querySelectorAll('#s2-must-questions .q-card')).map(card => ({
-    dimension: card.querySelector('.dim')?.textContent || '',
-    question: card.querySelector('h3')?.textContent || '',
-    note: card.querySelector('.q-purpose')?.textContent.replace(/<[^>]+>/g, '').replace(/<\/?em>/g, '') || ''
-  }));
-  data.part3.deep_dive = Array.from(document.querySelectorAll('#s2-deep-questions .q-card')).map(card => ({
-    dimension: card.querySelector('.dim')?.textContent || '',
-    question: card.querySelector('h3')?.textContent || '',
-    note: card.querySelector('.q-purpose')?.textContent.replace(/<[^>]+>/g, '').replace(/<\/?em>/g, '') || ''
-  }));
-  data.part3.industry_experience = Array.from(document.querySelectorAll('#s2-industry-notes .q-card')).map(card => ({
-    dimension: card.querySelector('.dim')?.textContent || '',
-    question: card.querySelector('h3')?.textContent || '',
-    note: card.querySelector('.q-purpose')?.textContent.replace(/<[^>]+>/g, '').replace(/<\/?em>/g, '') || ''
-  }));
-  updateClient(currentClientId, { step1_result: data });
-}
-
-function regenerateStep2() {
-  const name = document.getElementById('s1-name').value.trim();
-  const industry = document.getElementById('s1-industry').value;
-  const demand = document.getElementById('s1-demand').value.trim();
-  if (!name || !industry) { alert('请先填写客户名称和行业'); return; }
-  showFullscreenLoading('正在重新生成…');
-  fetch(API_BASE + '/api/question_list', {
-    method: 'POST', headers: getAuthHeaders(),
-    body: JSON.stringify({ industry, initial_demand: demand, company_name: name, company_intro: getClient(currentClientId)?.company_intro || '' })
-  }).then(r => r.json()).then(data => {
-    if (data.result) {
-      updateClient(currentClientId, { step1_result: data.result });
-      loadStep2(getClient(currentClientId));
-    } else {
-      alert('生成失败');
-    }
-  }).catch(e => alert('失败: ' + e.message)).finally(() => {
-    hideFullscreenLoading();
-  });
-}
-
-// ==================== STEP 3 ====================
-function loadStep3(c) {
-  updateCtxBar(c);
-  renderNoteList(c);
-  renderStep3Summary(c);
-  updateStep3NextBtn(c);
-}
-
-// ==================== Step3 AI Summary ====================
-function renderStep3Summary(c) {
-  const summary = c.step3_summary;
-  const empty = document.getElementById('s3-summary-empty');
-  const loading = document.getElementById('s3-summary-loading');
-  const result = document.getElementById('s3-summary-result');
-  const status = document.getElementById('s3-summary-status');
-
-  if (!c.uploaded_files || c.uploaded_files.length === 0) {
-    // 无记录
-    empty.style.display = '';
-    loading.style.display = 'none';
-    result.style.display = 'none';
-    status.textContent = '添加记录后自动生成';
-    return;
-  }
-
-  if (!summary) {
-    // 有记录但没有摘要，显示空状态
-    empty.style.display = '';
-    loading.style.display = 'none';
-    result.style.display = 'none';
-    status.textContent = '正在生成摘要…';
-    return;
-  }
-
-  // 有摘要，显示结果
-  empty.style.display = 'none';
-  loading.style.display = 'none';
-  result.style.display = '';
-
-  // 填充内容
-  const kr = summary.key_requirements || [];
-  document.getElementById('s3-key-requirements').innerHTML = kr.map(r => `<li>${r}</li>`).join('') || '<li>暂无</li>';
-
-  const roles = summary.roles_and_responsibilities || [];
-  document.getElementById('s3-roles').innerHTML = roles.map(r => `<div>• <b>${r.role}</b>：${r.responsibility}（关心：${r.concern || '未知'}）</div>`).join('') || '暂无';
-
-  const dc = summary.decision_chain || {};
-  document.getElementById('s3-decision-chain').innerHTML =
-    `<div>• 拍板人：${dc.decision_maker || '未知'}</div>` +
-    `<div>• 影响者：${dc.influencer || '未知'}</div>` +
-    `<div>• 执行者：${dc.executor || '未知'}</div>`;
-
-  const ps = summary.progress_and_stages || {};
-  document.getElementById('s3-progress').innerHTML =
-    `<div>• 当前阶段：${ps.current_stage || '未知'}</div>` +
-    `<div>• 下一步：${(ps.next_steps || []).join('、') || '未知'}</div>` +
-    `<div>• 里程碑：${(ps.milestones || []).join('、') || '暂无'}</div>`;
-
-  const risks = summary.risk_points || [];
-  document.getElementById('s3-risk-points').innerHTML = risks.map(r =>
-    `<div>• ${r.risk} <span style="color:${r.status === '已明确' ? '#13b96f' : '#ff8a00'};font-size:12px">[${r.status || '待确认'}]</span></div>`
-  ).join('') || '暂无';
-
-  status.textContent = '摘要已生成';
-}
-
-async function autoGenerateSummary() {
-  const c = getClient(currentClientId);
-  const records = c.uploaded_files || [];
-  if (records.length === 0) return;
-
-  // 显示加载状态
-  document.getElementById('s3-summary-empty').style.display = 'none';
-  document.getElementById('s3-summary-loading').style.display = '';
-  document.getElementById('s3-summary-result').style.display = 'none';
-  document.getElementById('s3-summary-status').textContent = '正在生成摘要…';
-  document.getElementById('s3-next-btn').disabled = true;
-
-  try {
-    const resp = await fetch(API_BASE + '/api/summary/generate', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ records })
-    });
-    const data = await resp.json();
-    if (data.success && data.summary) {
-      updateClient(currentClientId, { step3_summary: data.summary });
-      renderStep3Summary(getClient(currentClientId));
-      updateStep3NextBtn(getClient(currentClientId));
-      // 更新右侧制品区
-      renderArtifacts();
-    } else {
-      throw new Error(data.error || '生成失败');
-    }
-  } catch(e) {
-    document.getElementById('s3-summary-status').textContent = '生成失败，点击重试';
-    document.getElementById('s3-summary-empty').style.display = '';
-    document.getElementById('s3-summary-loading').style.display = 'none';
-    showToast('摘要生成失败: ' + e.message);
-  }
-}
-
-function updateStep3NextBtn(c) {
-  const btn = document.getElementById('s3-next-btn');
-  const hasRecords = c.uploaded_files && c.uploaded_files.length > 0;
-  const hasSummary = !!c.step3_summary;
-  btn.disabled = !(hasRecords && hasSummary);
-  btn.style.opacity = btn.disabled ? '0.5' : '';
-  btn.style.cursor = btn.disabled ? 'not-allowed' : '';
-}
-
-function renderNoteList(c) {
-  const files = c.uploaded_files || [];
-  const list = document.getElementById('s3-note-list');
-  if (files.length === 0) { list.innerHTML = '<div style="color:#98a2b3;font-size:12px;text-align:center;padding:20px">暂无沟通记录</div>'; return; }
-  list.innerHTML = files.map((f, i) => `
-    <div class="saved-note">
-      <div class="saved-note-top">
-        <h4>${f.name || '沟通记录'+(i+1)}</h4>
-        <span class="note-pill">${f.source||'沟通记录'}</span>
-        ${f.stage ? `<span class="note-pill" style="background:#eef6ff;color:#1263e6">${f.stage}</span>` : ''}
-      </div>
-      <div class="note-meta"><span>${f.date||new Date().toLocaleDateString()}</span>${f.type==='file'?'<span class="note-pill">文件</span>':''}</div>
-      <p>${(f.text||'').substring(0,120)}${(f.text||'').length>120?'…':''}</p>
-      <div class="artifact-actions">
-        <button class="art-btn" onclick="editNote(${i})">编辑</button>
-        <button class="art-btn danger" onclick="deleteNote(${i})">删除</button>
-      </div>
-    </div>
-  `).join('');
-  document.getElementById('s3-saved-count').textContent = `已沉淀 ${files.length} 次沟通记录`;
-}
-
-// Dual-mode file upload handlers
-function handleFileUpload(files) {
-  if (!files || files.length === 0) return;
-  showSelectedFiles(files);
-}
-
-function handleFileDrop(e) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('drag-over');
-  const files = e.dataTransfer.files;
-  if (files && files.length > 0) showSelectedFiles(files);
-}
-
-function showSelectedFiles(files) {
-  const zone = document.getElementById('s3-drop-zone');
-  const hint = document.getElementById('s3-dz-hint');
-  const nameDisplay = document.getElementById('s3-file-name-display');
-  const actions = document.getElementById('s3-dz-actions');
-  const countSpan = document.getElementById('s3-file-count');
-  hint.style.display = 'none';
-  nameDisplay.style.display = 'block';
-  nameDisplay.textContent = files.length === 1 ? files[0].name : `已选择 ${files.length} 个文件`;
-  actions.style.display = 'flex';
-  if (countSpan) countSpan.textContent = files.length;
-  zone.classList.add('has-file');
-}
-
-function clearFileUpload() {
-  const zone = document.getElementById('s3-drop-zone');
-  const hint = document.getElementById('s3-dz-hint');
-  const nameDisplay = document.getElementById('s3-file-name-display');
-  const actions = document.getElementById('s3-dz-actions');
-  hint.style.display = '';
-  nameDisplay.style.display = 'none';
-  actions.style.display = 'none';
-  zone.classList.remove('has-file');
-  document.getElementById('s3-file-input').value = '';
-}
-
-function doConfirmFileUpload() {
-  const files = document.getElementById('s3-file-input').files;
-  if (!files || files.length === 0) { showToast('请先选择文件'); return; }
-  if (files.length === 1) {
-    doAddFileRecord(files[0]);
-    return;
-  }
-  // 多个文件：显示确认框
-  const list = Array.from(files).map(f => `<li style="text-align:left;margin-bottom:4px">📄 ${f.name}</li>`).join('');
-  if (!confirm(`确认上传 ${files.length} 个文件？\n\n${list}`)) return;
-  // 批量上传
-  showFullscreenLoading(`正在上传 ${files.length} 个文件…`);
-  let processed = 0;
-  let successCount = 0;
-  const c = getClient(currentClientId);
-  const allFiles = c.uploaded_files ? [...c.uploaded_files] : [];
-
-  function uploadNext(idx) {
-    if (idx >= files.length) {
-      updateClient(currentClientId, { uploaded_files: allFiles, transcript: allFiles.map(f=>f.text).join('\n\n---\n\n') });
-      clearFileUpload();
-      renderNoteList(getClient(currentClientId));
-      hideFullscreenLoading();
-      showToast(`已添加 ${successCount} 个文件到沟通记录`);
-      autoGenerateSummary();
-      return;
-    }
-    const file = files[idx];
-    const formData = new FormData();
-    formData.append('file', file);
-    fetch(API_BASE + '/api/upload', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + getToken() },
-      body: formData
-    }).then(r => r.json()).then(data => {
-      const extracted = data.text || data.content || '';
-      allFiles.push({
-        name: file.name,
-        text: extracted || '(文件内容提取失败，请手动粘贴)',
-        source: document.getElementById('s3-source').value,
-        stage: document.getElementById('s3-stage').value,
-        date: new Date().toLocaleDateString(),
-        type: 'file'
-      });
-      successCount++;
-    }).catch(() => {}).finally(() => {
-      processed++;
-      if (processed % 5 === 0 || processed === files.length) {
-        showFullscreenLoading(`正在上传 ${files.length} 个文件…（${processed}/${files.length}）`);
-      }
-      uploadNext(processed);
-    });
-  }
-  uploadNext(0);
-}
-
-function doAddFileRecord(file) {
-  if (!file) { showToast('请先选择文件'); return; }
-  const c = getClient(currentClientId);
-  const files = c.uploaded_files || [];
-  showFullscreenLoading('正在上传并提取文件内容…');
-  fetch(API_BASE + '/api/upload', {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + getToken() },
-    body: (() => { const fd = new FormData(); fd.append('file', file); return fd; })()
-  }).then(r => r.json()).then(data => {
-    const extracted = data.text || data.content || '';
-    files.push({
-      name: file.name,
-      text: extracted || '(文件内容提取失败，请手动粘贴)',
-      source: document.getElementById('s3-source').value,
-      stage: document.getElementById('s3-stage').value,
-      date: new Date().toLocaleDateString(),
-      type: 'file'
-    });
-    updateClient(currentClientId, { uploaded_files: files, transcript: files.map(f=>f.text).join('\n\n---\n\n') });
-    clearFileUpload();
-    renderNoteList(getClient(currentClientId));
-    hideFullscreenLoading();
-    showToast('文件已添加到沟通记录');
-    autoGenerateSummary();
-  }).catch(() => {
-    hideFullscreenLoading();
-    showToast('上传失败，请重试');
-  });
-}
-
-function saveStep3() {
-  const noteText = document.getElementById('s3-note-text').value.trim();
-  const fileInput = document.getElementById('s3-file-input');
-  const file = fileInput?.files?.[0];
-  const c = getClient(currentClientId);
-  const files = c.uploaded_files || [];
-
-  if (!noteText && !file) { alert('请上传文件或粘贴文字'); return; }
-
-  if (editingNoteIndex >= 0) {
-    files[editingNoteIndex] = {
-      ...files[editingNoteIndex],
-      source: document.getElementById('s3-source').value,
-      stage: document.getElementById('s3-stage').value,
-      text: noteText || files[editingNoteIndex].text
-    };
-    finalizeSave(files);
-    return;
-  }
-
-  if (file) {
-    const formData = new FormData();
-    formData.append('file', file);
-    showFullscreenLoading('正在上传并提取文件内容…');
-    fetch(API_BASE + '/api/upload', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + getToken() },
-      body: formData
-    }).then(r => r.json()).then(data => {
-      const extracted = data.text || data.content || '';
-      files.push({
-        name: file.name,
-        text: extracted || '(文件内容提取失败，请手动粘贴)',
-        source: document.getElementById('s3-source').value,
-        stage: document.getElementById('s3-stage').value,
-        date: new Date().toLocaleDateString(),
-        type: 'file'
-      });
-      finalizeSave(files);
-    }).catch(() => {
-      files.push({ name: file.name, text: '(上传失败)', source: document.getElementById('s3-source').value, date: new Date().toLocaleDateString(), type: 'file' });
-      finalizeSave(files);
-    });
-  } else {
-    files.push({ name: `粘贴文字 (${new Date().toLocaleTimeString()})`, text: noteText, source: document.getElementById('s3-source').value, stage: document.getElementById('s3-stage').value, date: new Date().toLocaleDateString(), type: 'text' });
-    finalizeSave(files);
-  }
-
-  function finalizeSave(files) {
-    updateClient(currentClientId, { uploaded_files: files, transcript: files.map(f=>f.text).join('\n\n---\n\n') });
-    document.getElementById('s3-note-text').value = '';
-    clearFileUpload();
-    editingNoteIndex = -1;
-    renderNoteList(getClient(currentClientId));
-    showToast('沟通记录已保存');
-    hideFullscreenLoading();
-    // 自动触发生成摘要
-    autoGenerateSummary();
-  }
-}
-
-function clearNoteForm() {
-  document.getElementById('s3-note-text').value = '';
-  clearFileUpload();
-  editingNoteIndex = -1;
-}
-
-let editingNoteIndex = -1;
-function editNote(i) {
-  const c = getClient(currentClientId);
-  const files = c.uploaded_files || [];
-  const note = files[i];
-  if (!note) return;
-  editingNoteIndex = i;
-  document.getElementById('s3-source').value = note.source || '会议转写';
-  document.getElementById('s3-stage').value = note.stage || '首次需求沟通';
-  if (note.type === 'text') {
-    document.getElementById('s3-note-text').value = note.text || '';
-  }
-  showToast(`正在编辑: ${note.name}`);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-function deleteNote(i) {
-  const c = getClient(currentClientId);
-  const files = c.uploaded_files || [];
-  files.splice(i, 1);
-  updateClient(currentClientId, { uploaded_files: files, transcript: files.map(f=>f.text).join('\n\n---\n\n') });
-  renderNoteList(getClient(currentClientId));
-  autoGenerateSummary();
-}
-function loadAllNotes() {
-  const c = getClient(currentClientId);
-  const files = c.uploaded_files || [];
-  if (files.length === 0) { alert('暂无沟通记录'); return; }
-  let html = '<div style="max-height:60vh;overflow:auto;padding:4px">';
-  files.forEach((f, i) => {
-    html += `<div style="margin-bottom:16px;border:1px solid #e8edf5;border-radius:16px;padding:14px;background:#fff">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <b style="font-size:14px">${f.name || '记录'+(i+1)}</b>
-        <span style="font-size:12px;color:#98a2b3">${f.source||''} · ${f.date||''}</span>
-      </div>
-      <p style="font-size:12px;color:#344054;line-height:1.7;white-space:pre-wrap">${f.text||'(无内容)'}</p>
-      <div style="margin-top:8px;display:flex;gap:8px">
-        <button class="art-btn" onclick="editNote(${i})">编辑</button>
-        <button class="art-btn danger" onclick="deleteNote(${i})">删除</button>
-      </div>
-    </div>`;
-  });
-  html += '</div>';
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px';
-  overlay.innerHTML = `<div style="background:#fff;border-radius:20px;padding:24px;width:100%;max-width:700px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <b style="font-size:16px">全部沟通记录（${files.length}条）</b>
-      <button onclick="this.closest('[style]').remove()" style="background:#eef2f7;border:0;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:13px">关闭</button>
-    </div>
-    ${html}
-  </div>`;
-  document.body.appendChild(overlay);
-}
-
-// ==================== STEP 4 ====================
-// 方案输入确认 - 输入编辑状态
-let s4InputEditing = false;
-
-function toggleStep4InputEdit() {
-  s4InputEditing = !s4InputEditing;
-  const btn = document.getElementById('s4-input-edit-btn');
-  const fields = document.querySelectorAll('#s4-input-grid [contenteditable]');
-  if (s4InputEditing) {
-    btn.textContent = '完成编辑';
-    btn.style.background = '#13b96f';
-    fields.forEach(f => f.contentEditable = 'true');
-  } else {
-    btn.textContent = '编辑摘要';
-    btn.style.background = '';
-    fields.forEach(f => f.contentEditable = 'false');
-  }
-}
-
-function saveStep4Input() {
-  const c = getClient(currentClientId);
-  if (!c.step4_report) c.step4_report = {};
-  c.step4_report.inputSummary = {
-    current: document.getElementById('s4-current').textContent || '',
-    pain: document.getElementById('s4-pain').textContent || '',
-    roles: document.getElementById('s4-roles').textContent || '',
-    goals: document.getElementById('s4-goals').textContent || ''
-  };
-  updateClient(currentClientId, { step4_report: c.step4_report });
-  showToast('输入摘要已保存');
-}
-
-function loadStep4(c) {
-  updateCtxBar(c);
-  // 加载方案输入确认
-  const inputSummary = c.step4_report?.inputSummary;
-  if (inputSummary) {
-    document.getElementById('s4-current').textContent = inputSummary.current || '-';
-    document.getElementById('s4-pain').textContent = inputSummary.pain || '-';
-    document.getElementById('s4-roles').textContent = inputSummary.roles || '-';
-    document.getElementById('s4-goals').textContent = inputSummary.goals || '-';
-  } else {
-    // 从 step1_result 和 step3 自动生成摘要
-    autoGenerateStep4Input(c);
-  }
-  // 加载售前方案
-  if (c.step4_presales) {
-    renderStep4Presales(c.step4_presales);
-  }
-  // 加载技术方案
-  if (c.step4_technical) {
-    renderStep4Technical(c.step4_technical);
-  }
-}
-
-function autoGenerateStep4Input(c) {
-  const step1 = c.step1_result || {};
-  const part1 = step1.part1 || {};
-  // 客户现状 - 基于公司背景
-  const current = part1.company_background?.replace(/^- /gm, '').split('\n')[0] || '-';
-  document.getElementById('s4-current').textContent = current;
-  // 核心问题 - 基于痛点
-  const pains = (part1.pain_points || []).slice(0, 3).join('、') || '-';
-  document.getElementById('s4-pain').textContent = pains;
-  // 涉及角色 - 从提问清单推断
-  const roles = (step1.part3?.must_ask || []).map(q => q.dimension).filter(Boolean);
-  document.getElementById('s4-roles').textContent = roles.length ? [...new Set(roles)].join('、') : '-';
-  // 建设目标 - 基于初始需求
-  document.getElementById('s4-goals').textContent = c.initial_demand || '-';
-}
-
-// 生成售前方案
-async function generateStep4Presales() {
-  const c = getClient(currentClientId);
-  if (!c.uploaded_files || c.uploaded_files.length === 0) {
-    showToast('请先在 Step3 添加沟通记录');
-    return;
-  }
-  const btn = document.getElementById('s4-presales-btn');
-  btn.disabled = true;
-  btn.textContent = '生成中...';
-  showFullscreenLoading('正在生成售前方案...');
-  try {
-    const resp = await fetch(API_BASE + '/api/step4/generate', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ client_id: currentClientId, type: 'presales' })
-    });
-    const data = await resp.json();
-    hideFullscreenLoading();
-    if (data.presales) {
-      updateClient(currentClientId, { step4_presales: data.presales });
-      renderStep4Presales(data.presales);
-      showToast('售前方案生成成功');
-    } else {
-      throw new Error(data.detail || '生成失败');
-    }
-  } catch(e) {
-    hideFullscreenLoading();
-    showToast('生成失败: ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '重新生成';
-  }
-}
-
-// 生成技术方案
-async function generateStep4Technical() {
-  const c = getClient(currentClientId);
-  if (!c.uploaded_files || c.uploaded_files.length === 0) {
-    showToast('请先在 Step3 添加沟通记录');
-    return;
-  }
-  const btn = document.getElementById('s4-technical-btn');
-  btn.disabled = true;
-  btn.textContent = '生成中...';
-  showFullscreenLoading('正在生成技术方案...');
-  try {
-    const resp = await fetch(API_BASE + '/api/step4/generate', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ client_id: currentClientId, type: 'technical' })
-    });
-    const data = await resp.json();
-    hideFullscreenLoading();
-    if (data.technical) {
-      updateClient(currentClientId, { step4_technical: data.technical });
-      renderStep4Technical(data.technical);
-      showToast('技术方案生成成功');
-    } else {
-      throw new Error(data.detail || '生成失败');
-    }
-  } catch(e) {
-    hideFullscreenLoading();
-    showToast('生成失败: ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '重新生成';
-  }
-}
-
-// ==================== Step4 Card Renderers ====================
-
-function _s4get(obj, ...keys) {
-  for (const k of keys) {
-    if (obj && typeof obj === 'object' && k in obj) {
-      obj = obj[k];
-    } else {
-      return null;
-    }
-  }
-  return obj || null;
-}
-
-function _s4esc(str) {
-  if (str == null) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function _s4renderInserts(data, key, renderer) {
-  const items = _s4get(data, key) || [];
-  if (!Array.isArray(items) || !items.length) return '';
-  return items.slice(0, 6).map(renderer).join('');
-}
-
-function renderStep4Presales(data) {
-  const preview = document.getElementById('s4-presales-preview');
-  const empty = document.getElementById('s4-presales-empty');
-  const status = document.getElementById('s4-presales-status');
-  if (!data) return;
-  empty.style.display = 'none';
-  preview.style.display = 'block';
-  status.textContent = '已生成';
-  status.style.background = '#ecfdf5';
-  status.style.color = '#059669';
-
-  const positioning = _s4get(data, '方案定位') || _s4get(data, '核心判断') || '-';
-  const insightList = _s4get(data, '需求洞察') || _s4get(data, '核心判断列表') || [];
-  const painPoints = _s4get(data, '核心痛点') || [];
-  const tables = _s4get(data, '建议建设的智能表') || _s4get(data, '智能表格总览') || [];
-  const permissions = _s4get(data, '权限设计矩阵') || _s4get(data, '权限设计') || [];
-  const confirms = _s4get(data, '待确认问题') || [];
-  const phases = _s4get(data, '实施计划') || _s4get(data, '实施路径') || [];
-  const phase1 = _s4get(data, '一期边界') || _s4get(data, '一期明确覆盖') || [];
-  const phase2 = _s4get(data, '二期边界') || _s4get(data, '二期可扩展') || [];
-  const notIncluded = _s4get(data, '暂不纳入') || _s4get(data, '不建议纳入') || [];
-
-  // Hero insight
-  const insightHtml = insightList.slice(0, 4).map((it, i) => {
-    const title = _s4get(it, '标题') || `洞察 ${i+1}`;
-    const desc = _s4get(it, '详细说明') || String(it);
-    return `<div class="s4-insight-item"><div class="s4-insight-num">${i+1}</div><div><b>${_s4esc(title)}</b><span>${_s4esc(desc)}</span></div></div>`;
-  }).join('');
-
-  // Pain points
-  const painHtml = painPoints.slice(0, 4).map((it, i) => {
-    const title = _s4get(it, '问题标题') || `P-${String(i+1).padStart(2,'0')}`;
-    const 现状 = _s4get(it, '现状') || '-';
-    const 方案 = _s4get(it, '方案') || '-';
-    const 价值 = _s4get(it, '价值') || '-';
-    const prio = _s4get(it, '优先级') || 'P0';
-    const prioCls = prio.includes('P0') ? 'p0' : prio.includes('P1') ? 'p1' : 'p2';
-    return `<div class="s4-pain-item">
-      <div class="s4-pain-side"><div class="s4-pain-num">${String(i+1).padStart(2,'0')}</div><b>${_s4esc(title)}</b><span class="s4-badge ${prioCls}">${_s4esc(prio)}</span></div>
-      <div class="s4-pain-body"><div class="s4-point"><b>现状</b>${_s4esc(现状)}</div><div class="s4-point"><b>方案</b>${_s4esc(方案)}</div><div class="s4-point"><b>价值</b>${_s4esc(价值)}</div></div>
-    </div>`;
-  }).join('');
-
-  // Tables
-  const tableHtml = tables.slice(0, 7).map(it => {
-    const name = _s4get(it, '表名') || '-';
-    const type = _s4get(it, '类型') || '-';
-    const usage = _s4get(it, '用途') || '-';
-    const users = _s4get(it, '使用对象') || '-';
-    const phase1flag = _s4get(it, '一期必做') || '-';
-    const cls = phase1flag === '是' || phase1flag === 'Yes' ? 'green' : phase1flag === '待确认' ? 'orange' : '';
-    return `<tr><td><b>${_s4esc(name)}</b></td><td>${_s4esc(type)}</td><td>${_s4esc(usage)}</td><td>${_s4esc(users)}</td><td><span class="s4-tagmini ${cls}">${_s4esc(phase1flag)}</span></td></tr>`;
-  }).join('');
-
-  // Permissions
-  const permHtml = permissions.slice(0, 6).map(it => {
-    const role = _s4get(it, '角色') || '-';
-    const access = _s4get(it, '可查看') || '-';
-    const edit = _s4get(it, '可编辑') || '-';
-    const hidden = _s4get(it, '隐藏字段') || '-';
-    return `<tr><td><b>${_s4esc(role)}</b></td><td>${_s4esc(access)}</td><td>${_s4esc(edit)}</td><td>${_s4esc(hidden)}</td></tr>`;
-  }).join('');
-
-  // Boundary
-  const b1 = phase1.slice(0, 4).map(it => `<div class="s4-qa-card"><b class="tag-p0">一期</b><span>${_s4esc(_s4get(it,'具体范围') || _s4get(it,'范围') || (typeof it === 'object' ? JSON.stringify(it) : it))}</span></div>`).join('');
-  const b2 = phase2.slice(0, 4).map(it => `<div class="s4-qa-card"><b class="tag-p1">二期</b><span>${_s4esc(_s4get(it,'具体范围') || _s4get(it,'范围') || (typeof it === 'object' ? JSON.stringify(it) : it))}</span></div>`).join('');
-
-  // Phases
-  const phasesHtml = phases.slice(0, 5).map((it, i) => {
-    const name = _s4get(it, '阶段名称') || `第${i+1}阶段`;
-    const work = _s4get(it, '主要工作内容') || '-';
-    const coop = _s4get(it, '客户配合') || '-';
-    const output = _s4get(it, '输出物') || '-';
-    return `<div class="s4-phase"><div class="s4-phase-num">${i+1}</div><b>${_s4esc(name)}</b><p><b>工作：</b>${_s4esc(work)}</p><p><b>配合：</b>${_s4esc(coop)}</p><p><b>输出：</b>${_s4esc(output)}</p></div>`;
-  }).join('');
-
-  // Confirms
-  const confirmHtml = confirms.slice(0, 6).map((it, i) => {
-    const q = _s4get(it, '问题') || String(it);
-    const impact = _s4get(it, '影响范围') || '-';
-    const owner = _s4get(it, '建议确认负责人') || '-';
-    const timing = _s4get(it, '建议确认时间') || '-';
-    return `<tr><td><b>Q${i+1}</b></td><td>${_s4esc(q)}</td><td>${_s4esc(impact)}</td><td>${_s4esc(owner)}</td><td>${_s4esc(timing)}</td></tr>`;
-  }).join('');
-
-  preview.innerHTML = `
-    <div class="s4-card-inner">
-      ${positioning && positioning !== '-' ? `<div class="s4-hero-insight"><div class="s4-insight-main"><b>核心判断</b><p>${_s4esc(positioning)}</p></div><div class="s4-insight-list">${insightHtml}</div></div>` : ''}
-      ${painHtml ? `<div class="s4-section"><div class="s4-section-head"><b>核心痛点</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body">${painHtml}</div></div>` : ''}
-      ${tableHtml ? `<div class="s4-section"><div class="s4-section-head"><b>智能表格总览</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><table class="s4-table"><thead><tr><th>表名</th><th>类型</th><th>用途</th><th>使用对象</th><th>一期</th></tr></thead><tbody>${tableHtml}</tbody></table></div></div>` : ''}
-      ${permHtml ? `<div class="s4-section"><div class="s4-section-head"><b>权限设计</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><table class="s4-table"><thead><tr><th>角色</th><th>可查看</th><th>可编辑</th><th>隐藏字段</th></tr></thead><tbody>${permHtml}</tbody></table></div></div>` : ''}
-      ${(b1 || b2) ? `<div class="s4-section"><div class="s4-section-head"><b>一期/二期边界</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><div class="s4-qa">${b1}${b2}</div></div></div>` : ''}
-      ${phasesHtml ? `<div class="s4-section"><div class="s4-section-head"><b>实施路径</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><div class="s4-timeline">${phasesHtml}</div></div></div>` : ''}
-      ${confirmHtml ? `<div class="s4-section"><div class="s4-section-head"><b>待确认问题</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><table class="s4-table"><thead><tr><th>编号</th><th>问题</th><th>影响</th><th>负责人</th><th>时间</th></tr></thead><tbody>${confirmHtml}</tbody></table></div></div>` : ''}
-      <div class="s4-actions">
-        <button class="btn secondary" onclick="previewStep4HTML()">预览 HTML</button>
-        <button class="btn secondary" onclick="downloadStep4HTML()">下载 HTML</button>
-      </div>
-    </div>
-  `;
-}
-
-function renderStep4Technical(data) {
-  const preview = document.getElementById('s4-technical-preview');
-  const empty = document.getElementById('s4-technical-empty');
-  const status = document.getElementById('s4-technical-status');
-  if (!data) return;
-  empty.style.display = 'none';
-  preview.style.display = 'block';
-  status.textContent = '已生成';
-  status.style.background = '#ecfdf5';
-  status.style.color = '#059669';
-
-  const positioning = _s4get(data, '技术定位') || _s4get(data, '核心判断') || '-';
-  const tableDesign = _s4get(data, '表格设计') || [];
-  const approvalDesign = _s4get(data, '审批设计') || [];
-  const autoDesign = _s4get(data, '自动化设计') || [];
-  const phases = _s4get(data, '实施计划') || _s4get(data, '实施路径') || [];
-  const risks = _s4get(data, '风险点') || [];
-  const scope = _s4get(data, '交付范围') || [];
-
-  const tableHtml = tableDesign.slice(0, 7).map(it => {
-    const name = _s4get(it, '表名') || _s4get(it, '名称') || '-';
-    const fields = _s4get(it, '字段数') || _s4get(it, '核心字段') || '-';
-    const prio = _s4get(it, '优先级') || _s4get(it, '一期') || '-';
-    return `<tr><td><b>${_s4esc(name)}</b></td><td>${_s4esc(fields)}</td><td>${_s4esc(prio)}</td></tr>`;
-  }).join('');
-
-  const approvalHtml = approvalDesign.slice(0, 4).map(it => {
-    const name = _s4get(it, '流程名称') || _s4get(it, '名称') || '-';
-    const nodes = _s4get(it, '节点数') || _s4get(it, '审批节点') || '-';
-    return `<div class="s4-qa-card"><b>${_s4esc(name)}</b><span>${_s4esc(nodes)} 个节点</span></div>`;
-  }).join('');
-
-  const autoHtml = autoDesign.slice(0, 4).map(it => {
-    const name = _s4get(it, '规则名称') || _s4get(it, '名称') || '-';
-    const trigger = _s4get(it, '触发条件') || '-';
-    return `<div class="s4-qa-card"><b>${_s4esc(name)}</b><span>触发：${_s4esc(trigger)}</span></div>`;
-  }).join('');
-
-  const phasesHtml = phases.slice(0, 4).map((it, i) => {
-    const name = _s4get(it, '阶段名称') || `阶段${i+1}`;
-    const work = _s4get(it, '主要工作内容') || '-';
-    return `<div class="s4-phase"><div class="s4-phase-num">${i+1}</div><b>${_s4esc(name)}</b><p>${_s4esc(work)}</p></div>`;
-  }).join('');
-
-  preview.innerHTML = `
-    <div class="s4-card-inner">
-      ${positioning && positioning !== '-' ? `<div class="s4-tech-pos"><b>技术定位</b><p>${_s4esc(positioning)}</p></div>` : ''}
-      ${tableHtml ? `<div class="s4-section"><div class="s4-section-head"><b>表格设计（${tableDesign.length} 张）</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><table class="s4-table"><thead><tr><th>表名</th><th>核心字段</th><th>优先级</th></tr></thead><tbody>${tableHtml}</tbody></table></div></div>` : ''}
-      ${approvalHtml ? `<div class="s4-section"><div class="s4-section-head"><b>审批流程（${approvalDesign.length} 个）</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><div class="s4-qa">${approvalHtml}</div></div></div>` : ''}
-      ${autoHtml ? `<div class="s4-section"><div class="s4-section-head"><b>自动化规则（${autoDesign.length} 条）</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><div class="s4-qa">${autoHtml}</div></div></div>` : ''}
-      ${phasesHtml ? `<div class="s4-section"><div class="s4-section-head"><b>实施阶段</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><div class="s4-timeline">${phasesHtml}</div></div></div>` : ''}
-      ${risks.length ? `<div class="s4-section"><div class="s4-section-head"><b>风险点</b><span class="s4-expand-btn" onclick="toggleS4Section(this)">展开 ▾</span></div><div class="s4-section-body"><div class="s4-qa">${risks.slice(0,4).map(it => `<div class="s4-qa-card"><b>风险</b><span>${_s4esc(String(it))}</span></div>`).join('')}</div></div>` : ''}
-    </div>
-  `;
-}
-
-function toggleS4Section(btn) {
-  const body = btn.closest('.s4-section').querySelector('.s4-section-body');
-  const isOpen = body.style.display !== 'none';
-  body.style.display = isOpen ? 'none' : '';
-  btn.textContent = isOpen ? '收起 ▸' : '展开 ▾';
-}
-
-async function previewStep4HTML() {
-  if (!currentClientId) return;
-  showFullscreenLoading('正在生成 HTML...');
-  try {
-    const resp = await fetch(API_BASE + '/api/step4/preview-html', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ client_id: currentClientId })
-    });
-    const respData = await resp.json();
-    hideFullscreenLoading();
-    if (respData.success && respData.url) {
-      window._lastStep4HtmlFile = respData.filename;
-      window.open(API_BASE + respData.url, '_blank');
-    } else {
-      throw new Error(respData.detail || '生成失败');
-    }
-  } catch(e) {
-    hideFullscreenLoading();
-    showToast('生成失败: ' + e.message);
-  }
-}
-
-async function downloadStep4HTML() {
-  const filename = window._lastStep4HtmlFile;
-  if (filename) {
-    window.open(API_BASE + '/api/step4/download-html?filename=' + encodeURIComponent(filename), '_blank');
-  } else {
-    showToast('请先生成 HTML 方案');
-  }
-}
-
+// ---- Load Step5 ----
 function loadStep5(c) {
   updateCtxBar(c);
-  // 更新已完成按钮状态
   const doneBtn = document.getElementById('s5-done-btn');
   if (doneBtn) {
     if (c._completed) {
@@ -3320,68 +2235,246 @@ function loadStep5(c) {
       doneBtn.disabled = true;
     } else {
       doneBtn.textContent = '已完成';
-      doneBtn.style.background = '';
-      doneBtn.style.color = '';
-      doneBtn.style.borderColor = '';
+      doneBtn.style.background = '#1263e6';
+      doneBtn.style.color = '#fff';
+      doneBtn.style.borderColor = 'transparent';
       doneBtn.disabled = false;
     }
-    doneBtn.style.display = c.step5_schema ? '' : 'none';
   }
   if (c.step5_schema) {
-    window._demoSchema = c.step5_schema;
-    renderSchemaPreview(c.step5_schema);
-    renderSheetDemo(c.step5_schema);
+    initS5Editor(c.step5_schema);
   } else {
-    renderSheetCanvas();
+    initS5Editor(null);
   }
-  renderAgentCanvas();
 }
 
-function markClientDone() {
-  const clients = getClients();
-  const idx = clients.findIndex(c => c.id === currentClientId);
-  if (idx === -1) return;
-  clients[idx]._completed = true;
-  clients[idx].updated_at = new Date().toISOString();
-  saveClients(clients);
-  const c = clients[idx];
-  const doneBtn = document.getElementById('s5-done-btn');
-  if (doneBtn) {
-    doneBtn.textContent = '已完成 ✓';
-    doneBtn.style.background = '#ecfdf3';
-    doneBtn.style.color = '#059669';
-    doneBtn.style.borderColor = '#bbf7d0';
-    doneBtn.disabled = true;
-  }
-  showToast('已标记为完成');
+// ---- Initialize Editor ----
+function initS5Editor(schema) {
+  _s5Schema = schema ? (typeof schema === 'string' ? JSON.parse(schema) : schema) : {
+    doc_name: getClient(currentClientId)?.name + '智能表格',
+    sheets: [],
+    agent_scenarios: []
+  };
+  _s5CurrentSheet = 0;
+  renderS5Editor();
 }
 
-function saveStep5ToClient() {}
+// ---- Render Full Editor ----
+function renderS5Editor() {
+  const schema = _s5Schema;
+  const sheets = schema?.sheets || [];
+  const hasData = sheets.length > 0;
 
-function saveStep5ToClient() {}
+  // Update toolbar
+  document.getElementById('s5-sheet-count').textContent = (sheets.length || 0) + ' 个子表';
+  document.getElementById('s5-schema-status').textContent = hasData ? '· 已生成' : '· 未生成';
 
-function regenerateStep5() {
+  // Render sheet tabs
+  const tabsEl = document.getElementById('s5-sheet-tabs');
+  if (!hasData) {
+    tabsEl.innerHTML = '<span style="color:#98a2b3;font-size:13px;padding-bottom:6px">暂无子表，请先生成 Demo 方案</span>';
+  } else {
+    tabsEl.innerHTML = sheets.map((s, i) =>
+      `<button class="demo-nav-item${i === _s5CurrentSheet ? ' active' : ''}" onclick="selectSheet(${i})" style="flex-shrink:0">
+        <b>${escapeHtml(s.sheet_name || '未命名表')}</b><span>${s.fields?.length || 0}字段 · ${s.sample_records?.length || 0}条</span>
+      </button>`
+    ).join('') + `<button class="btn secondary" onclick="doAddSheet()" style="height:30px;font-size:12px;padding:0 12px;flex-shrink:0">+ 新增子表</button>`;
+  }
+
+  // Show/hide editor
+  document.getElementById('s5-empty-state').style.display = hasData ? 'none' : '';
+  document.getElementById('s5-sheet-editor').style.display = hasData ? '' : 'none';
+
+  if (hasData) {
+    renderCurrentSheet();
+  }
+}
+
+// ---- Select Sheet ----
+function selectSheet(idx) {
+  _s5CurrentSheet = idx;
+  renderS5Editor();
+}
+
+// ---- Render Current Sheet ----
+function renderCurrentSheet() {
+  const schema = _s5Schema;
+  const sheets = schema?.sheets || [];
+  if (!sheets.length) return;
+  const sheet = sheets[_s5CurrentSheet];
+  if (!sheet) return;
+
+  // Sheet name
+  document.getElementById('s5-sheet-name').value = sheet.sheet_name || '';
+
+  // Fields
+  const fields = sheet.fields || [];
+  const tbody = document.getElementById('s5-fields-tbody');
+  tbody.innerHTML = fields.map((f, i) => `
+    <tr style="${i % 2 === 0 ? '' : 'background:#f9fafb'}">
+      <td style="padding:8px 16px;color:#98a2b3;font-size:12px">${i + 1}</td>
+      <td style="padding:8px 16px">
+        <input value="${escapeHtml(f.field_title || '')}" oninput="onFieldChange(${i}, 'field_title', this.value)"
+          style="border:none;outline:none;font-size:13px;width:100%;background:transparent" placeholder="字段名称">
+      </td>
+      <td style="padding:8px 16px">
+        <select onchange="onFieldChange(${i}, 'field_type', this.value)" style="border:none;outline:none;font-size:13px;background:transparent">
+          ${['text','number','date','select','percent','phone'].map(t => `<option value="${t}" ${f.field_type === t ? 'selected' : ''}>${t}</option>`).join('')}
+        </select>
+      </td>
+      <td style="padding:8px 16px;text-align:center">
+        <input type="checkbox" ${f.required ? 'checked' : ''} onchange="onFieldChange(${i}, 'required', this.checked)">
+      </td>
+      <td style="padding:8px 16px;text-align:center">
+        <button class="btn danger" onclick="doDeleteField(${i})" style="height:24px;font-size:11px;padding:0 8px">删除</button>
+      </td>
+    </tr>
+  `).join('');
+
+  // Records
+  const records = sheet.sample_records || [];
+  document.getElementById('s5-record-count').textContent = (records.length || 0) + ' 条';
+
+  // Record header (field titles)
+  const recHeader = document.getElementById('s5-records-header');
+  recHeader.innerHTML = '<tr style="background:#f3f4f6">' + fields.map((f, i) =>
+    `<th style="padding:8px 12px;text-align:left;font-size:12px;color:#667085;white-space:nowrap;border-bottom:1px solid #e5e7eb">${escapeHtml(f.field_title || '字段' + (i+1))}</th>`
+  ).join('') + '<th style="padding:8px 12px;width:50px;border-bottom:1px solid #e5e7eb"></th>';
+
+  // Record body
+  const recBody = document.getElementById('s5-records-body');
+  recBody.innerHTML = records.map((rec, ri) => `
+    <tr style="${ri % 2 === 0 ? '' : 'background:#f9fafb'}">
+      ${fields.map((f, fi) => {
+        const val = rec[f.field_title] ?? '';
+        if (f.field_type === 'select') {
+          return `<td style="padding:6px 12px">
+            <select onchange="onRecordChange(${ri}, ${fi}, this.value)" style="border:none;outline:none;font-size:12px;background:transparent;min-width:80px">
+              <option value="">-</option>
+              ${(f.options || []).map(o => `<option value="${escapeHtml(o)}" ${val === o ? 'selected' : ''}>${escapeHtml(o)}</option>`).join('')}
+            </select>
+          </td>`;
+        } else if (f.field_type === 'number' || f.field_type === 'percent') {
+          return `<td style="padding:6px 12px">
+            <input type="number" value="${escapeHtml(val)}" oninput="onRecordChange(${ri}, ${fi}, this.value)"
+              style="border:none;outline:none;font-size:12px;background:transparent;width:80px" placeholder="0">
+          </td>`;
+        } else if (f.field_type === 'date') {
+          return `<td style="padding:6px 12px">
+            <input type="date" value="${escapeHtml(val)}" onchange="onRecordChange(${ri}, ${fi}, this.value)"
+              style="border:none;outline:none;font-size:12px;background:transparent">
+          </td>`;
+        } else {
+          return `<td style="padding:6px 12px">
+            <input value="${escapeHtml(val)}" oninput="onRecordChange(${ri}, ${fi}, this.value)"
+              style="border:none;outline:none;font-size:12px;background:transparent;min-width:100px" placeholder="-">
+          </td>`;
+        }
+      }).join('')}
+      <td style="padding:6px 12px;text-align:center">
+        <button class="btn danger" onclick="doDeleteRecord(${ri})" style="height:22px;font-size:11px;padding:0 6px">×</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ---- Sheet/Field/Record Mutations ----
+function onSheetNameChange(name) {
+  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  _s5Schema.sheets[_s5CurrentSheet].sheet_name = name;
+}
+
+function onFieldChange(idx, prop, val) {
+  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  _s5Schema.sheets[_s5CurrentSheet].fields[idx][prop] = val;
+  if (prop === 'field_title') renderCurrentSheet(); // header changes
+}
+
+function doAddField() {
+  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  _s5Schema.sheets[_s5CurrentSheet].fields.push({ field_title: '新字段', field_type: 'text', required: false });
+  renderCurrentSheet();
+}
+
+function doDeleteField(idx) {
+  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  _s5Schema.sheets[_s5CurrentSheet].fields.splice(idx, 1);
+  renderCurrentSheet();
+}
+
+function onRecordChange(ri, fi, val) {
+  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  const sheet = _s5Schema.sheets[_s5CurrentSheet];
+  const field = sheet.fields[fi];
+  if (!field) return;
+  if (!sheet.sample_records[ri]) sheet.sample_records[ri] = {};
+  sheet.sample_records[ri][field.field_title] = val;
+}
+
+function doAddRecord() {
+  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  _s5Schema.sheets[_s5CurrentSheet].sample_records.push({});
+  renderCurrentSheet();
+}
+
+function doDeleteRecord(idx) {
+  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  _s5Schema.sheets[_s5CurrentSheet].sample_records.splice(idx, 1);
+  renderCurrentSheet();
+}
+
+function doAddSheet() {
+  if (!_s5Schema) return;
+  _s5Schema.sheets.push({ sheet_name: '新子表', fields: [{ field_title: '字段1', field_type: 'text', required: false }], sample_records: [] });
+  _s5CurrentSheet = _s5Schema.sheets.length - 1;
+  renderS5Editor();
+}
+
+function doDeleteCurrentSheet() {
+  if (!_s5Schema?.sheets?.[_s5CurrentSheet]) return;
+  if (_s5Schema.sheets.length <= 1) { alert('至少保留一个子表'); return; }
+  if (!confirm('确定删除此子表？')) return;
+  _s5Schema.sheets.splice(_s5CurrentSheet, 1);
+  _s5CurrentSheet = Math.max(0, _s5CurrentSheet - 1);
+  renderS5Editor();
+}
+
+// ---- Save ----
+function doSaveStep5Schema() {
+  if (!_s5Schema) return;
+  const schemaObj = _s5Schema;
+  updateClient(currentClientId, { step5_schema: schemaObj });
+  showToast('已保存');
+  renderS5Editor(); // refresh state
+}
+
+// ---- Regenerate from backend ----
+async function doRegenerateStep5() {
+  if (!confirm('重新生成会覆盖当前的 Demo 方案，确定要重新生成吗？')) return;
   const c = getClient(currentClientId);
-  if (!c.step4_report && !c.transcript) {
-    alert('请先生成需求分析报告'); return;
+  if (!c.step4_presales && !c.step4_report && !c.transcript) {
+    alert('请先生成售前方案（Step4）再生成 Demo'); return;
   }
+  const btn = document.getElementById('s5-regen-btn');
+  if (btn) { btn.classList.add('loading'); btn.disabled = true; }
   showFullscreenLoading('正在生成智能表格 Demo…');
-  generateDemoSchema(c).then(schema => {
-    if (schema) {
-      window._demoSchema = schema;
-      renderSchemaPreview(schema);
-      renderSheetDemo(schema);
-      updateClient(currentClientId, { step5_schema: schema });
-    }
-  }).catch(e => alert('Demo生成失败: ' + e.message)).finally(() => {
+  try {
+    const schema = await generateDemoSchema(c);
+    window._demoSchema = schema;
+    _s5Schema = schema;
+    updateClient(currentClientId, { step5_schema: schema });
+    renderS5Editor();
+    showToast('Demo 生成完成');
+  } catch(e) {
+    alert('Demo 生成失败: ' + e.message);
+  } finally {
+    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
     hideFullscreenLoading();
-  });
+  }
 }
 
-// ==================== Step5 Demo Generation ====================
-
+// ---- Backend call ----
 async function generateDemoSchema(c) {
-  // 调用新的后端端点，基于Step4方案生成真实Demo数据
   const resp = await fetch(API_BASE + '/api/step5/generate-demo', {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -3393,178 +2486,17 @@ async function generateDemoSchema(c) {
   return data.demo;
 }
 
-function renderSheetDemo(schema) {
-  const canvas = document.getElementById('sheet-canvas');
-  if (!schema?.sheets?.length) {
-    canvas.innerHTML = '<div style="color:#667085;font-size:13px;text-align:center;padding:40px">暂无表格数据，请先生成 Demo</div>';
-    return;
-  }
-
-  // 构建动态 Tab 导航
-  const navItems = schema.sheets.map((sheet, idx) => {
-    const isActive = idx === 0 ? ' active' : '';
-    const label = sheet.sheet_name || `表格${idx+1}`;
-    return `<button class="demo-nav-item${isActive}" data-target="sheet${idx}" onclick="switchSheetTab(this,'sheet${idx}')"><b>${escapeHtml(label)}</b><span>${sheet.sample_records?.length || 0} 条记录</span></button>`;
-  }).join('');
-
-  // 构建每个表格的 Panel
-  const sheetPanels = schema.sheets.map((sheet, idx) => {
-    const isActive = idx === 0 ? ' active' : '';
-    const fields = sheet.fields || [];
-    const records = sheet.sample_records || [];
-
-    // 表头
-    const headers = fields.map(f => `<span>${escapeHtml(f.field_title)}</span>`).join('');
-
-    // 数据行（最多显示10条，超出可滚动）
-    const rows = records.slice(0, 15).map(rec => {
-      const cells = fields.map(f => {
-        let val = rec[f.field_title] ?? '';
-        // 超载标识着色
-        if (f.field_title === '超载标识' && val === '超载') {
-          return `<span style="color:#b42318;font-weight:700">${escapeHtml(String(val))}</span>`;
-        }
-        if (f.field_title === '回款状态' && val === '逾期') {
-          return `<span style="color:#b42318;font-weight:700">${escapeHtml(String(val))}</span>`;
-        }
-        if (f.field_title === '风险等级' && val === '高') {
-          return `<span style="color:#b42318;font-weight:700">${escapeHtml(String(val))}</span>`;
-        }
-        if (f.field_title === '任务状态' && val === '进行中') {
-          return `<span style="color:#1263e6;font-weight:700">${escapeHtml(String(val))}</span>`;
-        }
-        return escapeHtml(String(val));
-      }).join('');
-      return `<div class="fake-row">${cells}</div>`;
-    }).join('');
-
-    return `<div class="sheet-panel${isActive}" id="sheet${idx}">
-      <div class="sheet-demo refined">
-        <div class="sheet-top"><b>${escapeHtml(sheet.sheet_name || 'Demo')}</b><span>企业微信智能表格 · ${records.length} 条记录</span></div>
-        <div class="fake-table compact-table">
-          <div class="fake-row head">${headers}</div>
-          ${rows}
-        </div>
-        ${records.length > 15 ? `<div style="text-align:center;color:#667085;font-size:12px;padding:8px;background:#f8fbff;border-top:1px solid #e6edf7">只显示前 15 条，共 ${records.length} 条</div>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-
-  // 更新 Tab 导航
-  const nav = document.querySelector('#customDemo .demo-nav[data-demo-tabs="sheet"]');
-  if (nav) nav.innerHTML = navItems;
-
-  // 更新 Canvas
-  canvas.innerHTML = sheetPanels;
-}
-
-function switchSheetTab(el, targetId) {
-  const nav = el.closest('.demo-nav');
-  nav.querySelectorAll('.demo-nav-item').forEach(i => i.classList.remove('active'));
-  el.classList.add('active');
-  document.querySelectorAll('#customDemo .sheet-panel').forEach(p => p.classList.remove('active'));
-  const panel = document.getElementById(targetId);
-  if (panel) panel.classList.add('active');
-}
-
-function renderAgentCanvas() {
-  const c = getClient(currentClientId);
-  const schema = window._demoSchema;
-  const scenarios = schema?.agent_scenarios || [];
-  const name = c?.name || '该客户';
-
-  const navItems = scenarios.map((s, idx) => {
-    const isActive = idx === 0 ? ' active' : '';
-    const typeLabel = s.type === 'qa' ? '问答' : '自动任务';
-    const label = s.type === 'qa' ? (s.question?.substring(0, 20) + '…') : (s.task || `任务${idx+1}`);
-    return `<button class="demo-nav-item${isActive}" data-target="agent${idx}" onclick="switchSheetTab(this,'agent${idx}')"><b>${escapeHtml(label)}</b><span>${typeLabel}</span></button>`;
-  }).join('');
-
-  const agentPanels = scenarios.map((s, idx) => {
-    const isActive = idx === 0 ? ' active' : '';
-    if (s.type === 'qa') {
-      return `<div class="agent-chat-panel${isActive}" id="agent${idx}">
-        <div class="agent-head"><b>${escapeHtml(name)}</b><span>AI 问答</span></div>
-        <div class="msg bot">您好，我是您的 AI 售前助手，可以帮您查询项目状态、分析回款风险、生成周报等。</div>
-        <div class="msg user">${escapeHtml(s.question)}</div>
-        <div class="msg bot">${escapeHtml(s.answer)}</div>
-        <div class="agent-input">输入问题… <span>发送</span></div>
-      </div>`;
-    } else {
-      return `<div class="agent-chat-panel${isActive}" id="agent${idx}">
-        <div class="agent-head"><b>自动任务</b><span>${escapeHtml(s.task || '')}</span></div>
-        <div class="msg bot">自动任务已配置，当触发条件满足时将自动执行。</div>
-        <div class="msg bot"><b>任务名称：</b>${escapeHtml(s.task || '')}</div>
-        <div class="msg bot"><b>任务描述：</b>${escapeHtml(s.description || '')}</div>
-        <div class="msg bot"><b>触发条件：</b>${escapeHtml(s.trigger || '')}</div>
-        <div class="agent-input">等待触发…</div>
-      </div>`;
-    }
-  }).join('');
-
-  // 如果没有场景，显示默认
-  if (!scenarios.length) {
-    const nav = document.querySelector('#agentDemo .demo-nav[data-demo-tabs="agent"]');
-    if (nav) nav.innerHTML = `<div style="padding:12px;color:#667085;font-size:12px">暂无 Agent 场景</div>`;
-    document.getElementById('agent-canvas').innerHTML = '<div style="color:#667085;font-size:13px;text-align:center;padding:40px">暂无 Agent 场景数据</div>';
-    return;
-  }
-
-  const nav = document.querySelector('#agentDemo .demo-nav[data-demo-tabs="agent"]');
-  if (nav) nav.innerHTML = navItems;
-  document.getElementById('agent-canvas').innerHTML = agentPanels;
-}
-
-function escapeHtml(str) {
-  if (str == null) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function renderSchemaPreview(schema) {
-  const previewCard = document.createElement('div');
-  previewCard.className = 'demo-card';
-  previewCard.style.marginBottom = '16px';
-  previewCard.innerHTML = `
-    <div class="demo-card-head">
-      <div><h3>智能表格 Demo</h3><span>基于 Step4 方案生成真实数据</span></div>
-      <div style="display:flex;gap:8px">
-        <button class="edit-btn" onclick="copySchema()">复制 JSON</button>
-        <button class="edit-btn success" style="background:#ecfdf5;color:#047857;border-color:#bbf7d0" onclick="createSmartSheet()">创建企微智能表格</button>
-      </div>
-    </div>
-    <div id="schema-preview-content" style="max-height:200px;overflow:auto;background:#f8fafc;border-radius:12px;padding:14px;font-size:12px;font-family:monospace;white-space:pre-wrap;margin-top:10px"></div>
-  `;
-  const existing = document.querySelector('#page5 .demo-card');
-  if (existing) existing.remove();
-  const target = document.querySelector('#page5 .demo-card');
-  if (target) target.before(previewCard);
-  document.getElementById('schema-preview-content').textContent = JSON.stringify(schema, null, 2);
-  window._demoSchema = schema;
-}
-
-function renderSheetCanvas() {
-  const canvas = document.getElementById('sheet-canvas');
-  canvas.innerHTML = '<div style="color:#667085;font-size:13px;text-align:center;padding:40px">请先生成 Demo 方案</div>';
-}
-
-function copySchema() {
-  const schema = window._demoSchema;
-  if (!schema) return;
-  navigator.clipboard.writeText(JSON.stringify(schema, null, 2)).then(() => showToast('JSON 已复制'));
-}
-
+// ---- Create Smart Sheet (Wecom) ----
 async function createSmartSheet() {
-  const schema = window._demoSchema;
+  const schema = _s5Schema || getClient(currentClientId)?.step5_schema;
   if (!schema) { alert('请先生成 Demo'); return; }
   const schemaObj = typeof schema === 'string' ? JSON.parse(schema) : schema;
   const total = schemaObj.sheets ? schemaObj.sheets.length : 0;
-  const btn = document.querySelector('[onclick="createSmartSheet()"]');
-  if (btn) { btn.disabled = true; btn.textContent = '创建中…'; }
-  showFullscreenLoading(`正在创建 ${total} 个子表…`);
+
+  const btn = document.getElementById('create-smart-sheet-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '生成智能表格中…'; }
+
+  showFullscreenLoading(total > 0 ? `正在创建 ${total} 个子表…` : '正在创建智能表格…');
   try {
     const resp = await fetch(API_BASE + '/api/create', {
       method: 'POST', headers: getAuthHeaders(),
@@ -3579,16 +2511,33 @@ async function createSmartSheet() {
         body: JSON.stringify({ docid, sheet: schemaObj.sheets[i] })
       });
     }
+    // 保存 demo_url
+    updateClient(currentClientId, { demo_url: data.url });
     showToast('创建成功！' + total + ' 个子表');
-    addArtifact({ type: 'doc', title: schemaObj.doc_name || 'Demo智能表格', url: data.url, docid });
-    window.open(API_BASE + data.url, '_blank');
+    renderArtifacts(); // refresh artifact panel to show "查看智能表格" button
+    window.open(data.url, '_blank');
   } catch(e) {
     alert('创建失败: ' + e.message);
+    renderArtifacts();
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '创建企微智能表格'; }
     hideFullscreenLoading();
   }
 }
+
+function doCopyDemoUrl() {
+  const c = getClient(currentClientId);
+  if (!c?.demo_url) return;
+  navigator.clipboard.writeText(c.demo_url).then(() => showToast('链接已复制'));
+  const btn = document.getElementById('copy-demo-url-btn');
+  if (btn) { const orig = btn.textContent; btn.textContent = '已复制'; setTimeout(() => btn.textContent = orig, 1500); }
+}
+
+// ---- Escape HTML helper ----
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 
 // ==================== CONTEXT BAR ====================
 function updateCtxBar(c) {
@@ -3694,8 +2643,10 @@ function renderArtifacts() {
   // 技术路线及报价方案
   items.push({ name: '技术路线及报价方案', tag: hasTechnical ? '已生成' : '待生成', tagCls: hasTechnical ? '' : 'todo', pct: hasTechnical ? 100 : 0, dataKey: 'step4_technical', desc: '面向内部评估，拆解技术路径、交付范围与报价口径。' });
 
-  // Demo Schema
-  items.push({ name: 'Demo Schema', tag: c.step5_schema ? '已生成' : '待生成', tagCls: c.step5_schema ? '' : 'todo', pct: c.step5_schema ? 100 : 0, dataKey: 'step5_schema', desc: '智能表格 Schema，可直接创建企微智能表格。' });
+  // 智能表格Demo
+  const hasDemoSchema = !!(c.step5_schema);
+  const hasDemoUrl = !!(c.demo_url);
+  items.push({ name: '智能表格Demo', tag: hasDemoSchema ? '已生成' : '待生成', tagCls: hasDemoSchema ? '' : 'todo', pct: hasDemoSchema ? (hasDemoUrl ? 100 : 60) : 0, dataKey: 'step5_schema', desc: '智能表格 Demo 数据，可编辑字段和样例内容。' });
 
   list.innerHTML = items.map((item, i) => {
     let actions = '';
@@ -3727,18 +2678,24 @@ function renderArtifacts() {
         actions += '<button class="art-btn" onclick="copyArtifactData(\'' + item.dataKey + '\')">复制</button>';
       }
     }
-    if (item.dataKey === 'step5_schema' && c.step5_schema) actions += '<button class="art-btn success" onclick="createSmartSheet()">创建表格</button>';
+    // 智能表格Demo的制品区按钮
+    if (item.dataKey === 'step5_schema') {
+      if (hasDemoUrl) {
+        actions += '<a class="art-btn success" href="' + escapeHtml(c.demo_url) + '" target="_blank">查看智能表格</a>';
+        actions += '<button class="art-btn" id="copy-demo-url-btn" onclick="doCopyDemoUrl()">复制链接</button>';
+      } else if (hasDemoSchema) {
+        actions += '<button class="art-btn success" id="create-smart-sheet-btn" onclick="createSmartSheet()">生成企微智能表格</button>';
+      } else {
+        actions += '<button class="art-btn" disabled style="opacity:0.4">生成企微智能表格</button>';
+      }
+    }
     return '<div class="artifact"><div class="artifact-top"><h4>' + item.name + '</h4><span class="tag ' + item.tagCls + '">' + item.tag + '</span></div><p>' + (item.desc || '') + '</p><div class="barbox"><div class="bar" style="width:' + item.pct + '%"></div></div><div class="artifact-actions">' + actions + '</div></div>';
   }).join('');
 
-  // 企微已创建表格
-  const extra = (c._artifacts || []).map((a, i) => {
-    let actions = '';
-    if (a.url) actions += '<button class="art-btn" onclick="window.open(\'' + a.url + '\',\'_blank\')">打开</button>';
-    actions += '<button class="art-btn danger" onclick="deleteArtifact(' + i + ')">删除</button>';
-    return '<div class="artifact"><div class="artifact-top"><h4>' + (a.title || '企微智能表格') + '</h4><span class="tag">已创建</span></div><p>' + (a.type === 'doc' ? 'DocID: ' + (a.docid || '-') : '') + '</p>' + (a.url ? '<div style="margin-top:8px"><a href="' + API_BASE + '" + a.url target="_blank" style="font-size:12px;color:#1263e6">打开链接 →</a></div>' : '') + '<div class="barbox"><div class="bar" style="width:100%"></div></div><div class="artifact-actions">' + actions + '</div></div>';
-  }).join('');
-  list.innerHTML += extra;
+  // 企微已创建表格（从 demo_url 迁移过来的独立条目，显示在底部）
+  if (hasDemoUrl) {
+    // 已经用上面的按钮形式展示了，不需要重复
+  }
 }
 
 function doPreviewProfile() {
