@@ -1474,8 +1474,7 @@ function updateFloatingAction(n) {
 
 function toggleClientDropdown() {
   const dd = document.getElementById('client-dropdown');
-  if (!dd) { console.error('[dropdown] element not found'); return; }
-  console.log('[dropdown] toggle, display:', dd.style.display, 'classList:', dd.className);
+  if (!dd) return;
   if (dd.style.display === 'none' || dd.classList.contains('hidden')) {
     dd.style.display = 'block';
     dd.classList.remove('hidden');
@@ -1500,25 +1499,25 @@ function closeClientDropdownOutside(e) {
 function renderClientDropdownList() {
   const list = document.getElementById('client-dropdown-list');
   if (!list) return;
-  // 先显示本地缓存的客户（快速）
   const localClients = getClients();
-  console.log('[dropdown] localClients:', localClients, 'count:', localClients.length);
   renderDropdownClients(localClients, list);
-  // 再异步拉后端完整列表（最新）
   fetch(API_BASE + '/api/clients', { headers: getAuthHeaders() })
-    .then(r => { console.log('[dropdown] /api/clients status:', r.status); return r.json(); })
+    .then(r => r.json())
     .then(data => {
-      console.log('[dropdown] api data:', data && data.length ? data.length + ' clients' : data);
       const clients = Array.isArray(data) ? data : (data.clients || []);
       if (clients.length > 0) renderDropdownClients(clients, list);
     })
-    .catch(e => console.error('[dropdown] fetch error:', e));
+    .catch(() => {});
 }
 
 function renderDropdownClients(clients, list) {
   if (!clients || clients.length === 0) {
     list.innerHTML = '<div class="client-dropdown-item" style="color:#98a2b3;cursor:default">暂无客户</div>';
     return;
+  }
+  function e(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
   // 去重：以 id 为 key，后面出现的覆盖前面的
   const seen = {};
@@ -1528,9 +1527,9 @@ function renderDropdownClients(clients, list) {
   }
   list.innerHTML = ordered.map(c => {
     const isActive = String(c.id) === String(currentClientId);
-    const name = escapeHtml(c.name || '未命名');
-    const meta = escapeHtml(c.industry || '未定义行业');
-    const done = c._completed ? ' ✅' : '';
+    const name = e(c.name || '未命名');
+    const meta = e(c.industry || '未定义行业');
+    const done = c._completed ? ' &#x2705;' : '';
     return '<div class="client-dropdown-item' + (isActive ? ' active' : '') + '" onclick="switchToClient(\'' + c.id + '\')">' +
       '<div class="cdi-name">' + name + done + '</div>' +
       '<div class="cdi-meta">' + meta + '</div>' +
