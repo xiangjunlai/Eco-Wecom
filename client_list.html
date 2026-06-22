@@ -220,22 +220,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .ae-body{display:flex;gap:28px;align-items:flex-start}
 
 /* Left column: radar + grade bar */
-.ae-radar-col{width:260px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0}
-.ae-radar-wrap{width:260px;height:260px;position:relative}
+.ae-radar-col{width:280px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:0}
+.ae-radar-wrap{width:280px;height:280px;position:relative}
 .ae-radar-wrap svg{width:100%!important;height:100%!important;display:block}
 .ae-grade-bar{
   width:100%;margin-top:10px;
   background:linear-gradient(90deg,#f0f7ff,#eef6ff);
   border:1px solid #ddeeff;border-radius:10px;
-  padding:8px 14px;display:flex;align-items:center;gap:10px;
+  padding:10px 16px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;
 }
 .ae-grade-letter{
-  font-size:28px;font-weight:900;line-height:1;
+  font-size:36px;font-weight:900;line-height:1;
   background:linear-gradient(135deg,#1263e6,#13b96f);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;flex-shrink:0;
+  background-clip:text;
 }
-.ae-grade-text{font-size:11px;color:#667085;line-height:1.5}
+.ae-grade-text{font-size:12px;color:#667085;line-height:1.5}
 
 /* Right column: 5 dim rows */
 .ae-list-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
@@ -481,21 +481,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   </div>
 
   <div id="kb-content" style="display:none">
-    <div class="ae-comp-card" style="margin-bottom:16px">
-      <div class="ae-comp-left">
-        <div class="ae-comp-title">知识库完成度</div>
-        <div class="ae-comp-pct"><span id="kb-progress-pct">0</span><span>%</span></div>
-        <div class="ae-comp-desc" id="kb-progress-desc">正在解析知识库&hellip;</div>
-      </div>
-      <div class="ae-comp-right">
-        <div class="ae-comp-cats" id="kb-comp-cats"></div>
-        <div class="ae-comp-actions">
-          <button class="ae-btn-primary" onclick="openUploadModal()">+ 上传知识库</button>
-          <button class="ae-btn-ghost" id="btn-view-kb-files" onclick="document.getElementById('kb-files-section').scrollIntoView({behavior:'smooth'})">查看已上传文件</button>
-        </div>
-      </div>
-    </div>
-
     <!-- ===== 调研助手能力评估 ===== -->
     <div id="agent-eval-wrap"></div>
 
@@ -1132,9 +1117,9 @@ function getDimDesc(dim, score) {
 function renderRadarChart(scores) {
   var svg = document.getElementById('radar-chart');
   if (!svg) return;
-  var size = 260, cx = size/2, cy = size/2, r = 90, labelR = 118;
+  // Use 320x320 viewBox to prevent label clipping
+  var size = 320, cx = size/2, cy = size/2, r = 95, labelR = 128;
   var keys = ['industry','scenario','pricing','demo','question'];
-  // Short names: 去掉"能力"后取前2字
   var shortNames = ['行业','场景','报价','Demo','问题'];
   var n = 5;
   var toXY = function(i, val) {
@@ -1173,14 +1158,14 @@ function renderRadarChart(scores) {
     return '<circle cx="' + pt.x + '" cy="' + pt.y + '" r="4" fill="#1263e6" stroke="#fff" stroke-width="1.5"/>';
   }).join('');
 
-  // Labels: icon + short name
+  // Labels: icon + short name — avoid edge clipping with tighter spacing
   var labels = keys.map(function(k, i) {
     var angle = (Math.PI * 2 * i / n) - Math.PI / 2;
     var lx = cx + labelR * Math.cos(angle);
     var ly = cy + labelR * Math.sin(angle);
-    var anchor = Math.cos(angle) > 0.3 ? 'start' : Math.cos(angle) < -0.3 ? 'end' : 'middle';
+    var anchor = Math.cos(angle) > 0.35 ? 'start' : Math.cos(angle) < -0.35 ? 'end' : 'middle';
     var icon = AGENT_DIMS[i].icon;
-    return '<text x="' + lx + '" y="' + ly + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="10" fill="#667085" font-weight="600">' + icon + ' ' + shortNames[i] + '</text>';
+    return '<text x="' + lx + '" y="' + ly + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="11" fill="#374151" font-weight="600">' + icon + ' ' + shortNames[i] + '</text>';
   }).join('');
 
   svg.innerHTML = '<defs><linearGradient id="radarGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1263e6" stop-opacity="0.35"/><stop offset="100%" stop-color="#13b96f" stop-opacity="0.2"/></linearGradient></defs>' + gridLines + axisLines + poly + dots + labels;
