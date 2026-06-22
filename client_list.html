@@ -643,9 +643,8 @@ function timeAgo(dateStr) {
   var days = Math.floor(diff / 86400000);
   if (days === 0) return '今天';
   if (days === 1) return '昨天';
-  if (days < 7) return days + '天前';
-  if (days < 30) return Math.floor(days / 7) + '周前';
-  return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+  if (days < 5) return days + '天前';
+  return d.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' });
 }
 
 function safeDate(dateStr) {
@@ -783,8 +782,8 @@ function renderClientCard(c) {
     ? '<div class="c-demand">' + escapeHtml(demandShort) + '</div>'
     : '<div class="c-demand" style="color:#c0c8d4;font-style:italic">暂未录入需求</div>';
 
-  return '<div class="client-card" id="' + cardId + '">' +
-    '<div class="client-card-header">' +
+  return '<div class="client-card" id="' + cardId + '" onclick="openClient(\'' + c.id + '\')" style="cursor:pointer">' +
+    '<div class="client-card-header" onclick="event.stopPropagation();toggleCardMenu(\'' + cardId + '\', event)">' +
       '<div class="client-card-header-left">' +
         '<div class="c-name">' + escapeHtml(c.name || '未命名') + '</div>' +
         '<div class="c-meta">' + escapeHtml(c.industry || '未定义行业') + metaDate + '</div>' +
@@ -792,7 +791,7 @@ function renderClientCard(c) {
       '<div class="client-card-header-right">' +
         (c._completed ? '<span style="font-size:16px;color:#13b96f;font-weight:900" title="已完成">✅</span>' : '') +
         '<span class="stage-badge ' + badgeCls + '">' + stageLabel + '</span>' +
-        '<button class="more-btn" onclick="toggleCardMenu(\'' + cardId + '\', event)" title="更多">⋮</button>' +
+        '<button class="more-btn" onclick="event.stopPropagation();toggleCardMenu(\'' + cardId + '\', event)" title="更多">⋮</button>' +
         '<div class="client-card-dropdown" id="menu-' + cardId + '">' +
           '<button onclick="event.stopPropagation();showRenameModal(\'' + c.id + '\')">重命名客户</button>' +
           '<button class="danger" onclick="event.stopPropagation();deleteClient(\'' + c.id + '\')">删除客户</button>' +
@@ -802,16 +801,8 @@ function renderClientCard(c) {
     '<div class="client-card-body">' +
       demandHtml +
     '</div>' +
-    '<div class="client-card-footer">' +
-      '<div class="client-card-footer-left">' +
-        '<div class="c-progress">' + dots + '<span class="c-level">' + progress + '/5</span></div>' +
-        '<span>' + noteText + '</span>' +
-        '<span class="sep">·</span>' +
-        '<span>' + updateText + '</span>' +
-      '</div>' +
-      '<div class="client-card-footer-right">' +
-        '<button class="btn-view" onclick="event.stopPropagation();openClient(\'' + c.id + '\')">查看</button>' +
-      '</div>' +
+    '<div class="client-card-footer" style="justify-content:flex-end">' +
+      '<span style="font-size:12px;color:#98a2b3">' + updateText + '</span>' +
     '</div>' +
   '</div>';
 }
@@ -835,8 +826,7 @@ function renderClientTableRow(c) {
     '<td>' + noteCount + '</td>' +
     '<td class="td-demand">' + demandShort + '</td>' +
     '<td style="color:#98a2b3;font-size:12px;white-space:nowrap">' + updateText + '</td>' +
-    '<td class="td-actions">' +
-      '<button class="c-next-btn" onclick="event.stopPropagation();openClient(\'' + c.id + '\')">查看</button>' +
+    '<td class="td-actions" style="position:relative">' +
       '<button class="more-btn" style="width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:#f3f4f6;color:#667085;cursor:pointer;border:none;font-size:14px" onclick="event.stopPropagation();showTableMenu(\'' + c.id + '\', this)" title="更多">⋮</button>' +
       '<div class="client-card-dropdown table-menu" id="table-menu-' + c.id + '" style="right:0;left:auto;top:36px;position:absolute">' +
         '<button onclick="event.stopPropagation();showRenameModal(\'' + c.id + '\')">重命名客户</button>' +
