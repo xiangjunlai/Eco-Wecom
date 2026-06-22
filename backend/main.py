@@ -1302,8 +1302,15 @@ async def download_step4_html(filename: str, user: dict = Depends(require_auth))
 
 @app.post("/api/step5/generate-demo")
 async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
-    """基于 Step4 售前方案生成真实 Demo 数据"""
+    """基于 Step4 售前方案生成真实 Demo 数据
+    - 若 body.schema 有值：保留表名和字段，只重新生成 sample_records
+    - 若 body.schema 无值：全新生成
+    """
+    import logging
     client_id = body.get("client_id")
+    existing_schema = body.get("schema")  # 现有 schema，只重新生成 sample_records
+    logging.warning(f"[/api/step5/generate-demo] existing_schema type={type(existing_schema).__name__}, "
+                    f"sheets={len(existing_schema.get('sheets',[])) if isinstance(existing_schema,dict) else 'N/A'}")
 
     if not client_id:
         raise HTTPException(status_code=400, detail="client_id is required")
@@ -1319,7 +1326,7 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
 
     client = dict(row)
     for field in ("step1_result", "step4_presales", "step4_technical"):
-        if client.get(field) and isinstance(client[field, str]):
+        if client.get(field) and isinstance(client[field], str):
             try:
                 client[field] = json.loads(client[field])
             except:
@@ -1330,12 +1337,55 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
     presales = client.get("step4_presales") or {}
     step1 = client.get("step1_result") or {}
 
-    # 从 step4_presales 提取表格设计
-    tables = presales.get("建议建设的智能表") or presales.get("智能表格总览") or []
-    pain_points = presales.get("核心痛点") or []
-    phases = presales.get("实施计划") or presales.get("实施路径") or []
+    # 已有 schema → 只生成 sample_records
+    if existing_schema:
+        if isinstance(existing_schema, str):
+            try:
+                existing_schema = json.loads(existing_schema)
+            except:
+                pass
+        doc_name = existing_schema.get("doc_name", f"{customer_name} - 智能表格Demo")
+        sheets = existing_schema.get("sheets", [])
+        tables_info = json.dumps(sheets, ensure_ascii=False, indent=2)
+        system_prompt = """你是一个企业微信智能表格 Demo 数据生成专家。你的任务是根据已有的表结构，生成真实可信的样例数据。
 
-    system_prompt = """你是一个企业微信智能表格 Demo 数据生成专家。你的任务是根据客户的需求分析，生成真实可信的 Demo 数据。
+## 输出要求
+直接输出 JSON，不要任何 markdown 代码块包裹。JSON 结构如下：
+{
+  "doc_name": "文档名",
+  "sheets": [
+    {
+      "sheet_name": "表名（保持不变）",
+      "fields": [{"field_title": "字段名", "field_type": "text|number|date|select|percent"}],
+      "sample_records": [
+        {"字段名": "值", ...}
+      ]
+    }
+  ]
+}
+
+## 关键要求
+1. 每个 sheet 至少 10 条 sample_records
+2. 数据要真实可信，字段值要符合业务逻辑
+3. 项目编号使用规范命名（如 LND-2024-001）
+4. 日期使用 YYYY-MM-DD 格式
+5. 金额使用数字，不要带货币符号
+6. select 类型字段从已有字段类型推断合理选项
+
+直接输出 JSON。"""
+        user_prompt = f"""## 客户信息
+客户名称：{customer_name}
+行业：{industry}
+
+## 已有表结构（表名和字段必须保持不变，只需填充 sample_records）
+{tables_info}
+
+请只生成 sample_records，保持表名和字段不变。"""
+    else:
+        # 全新生成
+        tables = presales.get("建议建设的智能表") or presales.get("智能表格总览") or []
+        pain_points = presales.get("核心痛点") or []
+        system_prompt = """你是一个企业微信智能表格 Demo 数据生成专家。你的任务是根据客户的需求分析，生成真实可信的 Demo 数据。
 
 ## 输出要求
 直接输出 JSON，不要任何 markdown 代码块包裹。JSON 结构如下：
@@ -1351,10 +1401,6 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
         {"字段名": "值", ...}
       ]
     }
-  ],
-  "agent_scenarios": [
-    {"type": "qa", "question": "用户问题", "answer": "AI回答", "screenshot_hint": "截图提示"},
-    {"type": "auto", "task": "任务名称", "description": "任务描述", "trigger": "触发条件"}
   ]
 }
 
@@ -1366,22 +1412,15 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
 5. 金额使用数字，不要带货币符号
 6. select 类型字段提供 2-5 个选项
 
-## 贝尔高林案例参考字段（实际按需选用）
-- Project Master: 项目编号/项目名称/项目阶段/项目状态/所属区域/负责人/合同金额/已开票/已回款/风险等级
-- Task Schedule: 任务名称/负责人/所属项目/计划小时/实际小时/开始日期/截止日期/任务状态/超载标识
-- Payment Tracker: 项目名称/发票号码/开票日期/合同金额/已开票/已回款/回款日期/逾期天数/回款状态
-- Team Roster: 姓名/职级/团队/办公室/角色/人力来源/是否组长
-
 直接输出 JSON。"""
-
-    user_prompt = f"""## 客户信息
+        user_prompt = f"""## 客户信息
 客户名称：{customer_name}
 行业：{industry}
 
 ## 售前方案 - 建议建设的智能表
 {json.dumps(tables, ensure_ascii=False, indent=2) if tables else "暂无具体方案，请根据行业惯例生成合适的数据"}
 
-## 核心痛点（了解客户关注什么）
+## 核心痛点
 {json.dumps(pain_points, ensure_ascii=False, indent=2) if pain_points else "暂无"}
 
 ## 客户画像
@@ -1391,7 +1430,6 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
 
     result = call_deepseek(system_prompt, user_prompt, max_tokens=8000)
 
-    # 解析 JSON
     demo_data = None
     try:
         json_match = re.search(r'\{[\s\S]*\}', result)
@@ -1401,10 +1439,41 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
         demo_data = None
 
     if not demo_data:
-        # 生成 fallback 数据
         demo_data = _generate_fallback_demo(customer_name, industry)
 
+    # 刷新模式：只替换 sample_records，不改表名和字段
+    if existing_schema:
+        demo_data = _merge_sample_records_only(existing_schema, demo_data)
+
     return {"success": True, "demo": demo_data}
+
+
+def _merge_sample_records_only(existing, ai_result):
+    """保留 existing 的表名和字段，只替换 ai_result 中的 sample_records"""
+    import logging
+    existing_sheets = existing.get("sheets", []) if isinstance(existing, dict) else []
+    ai_sheets = ai_result.get("sheets", []) if isinstance(ai_result, dict) else []
+    logging.warning(f"[_merge] existing sheets: {[s.get('sheet_name') for s in existing_sheets]}")
+    logging.warning(f"[_merge] AI sheets: {[s.get('sheet_name') for s in ai_sheets]}")
+
+    # 按 sheet_name 匹配，只替换 records
+    ai_records_map = {}
+    for s in ai_sheets:
+        name = s.get("sheet_name", "")
+        recs = s.get("sample_records", [])
+        if name and recs:
+            ai_records_map[name] = recs
+
+    for sheet in existing_sheets:
+        name = sheet.get("sheet_name", "")
+        if name in ai_records_map:
+            sheet["sample_records"] = ai_records_map[name]
+        # 如果 AI 没有返回这个表的数据，保留原 sample_records（可能有用户手动添加的）
+
+    return {
+        "doc_name": existing.get("doc_name", ai_result.get("doc_name", "智能表格Demo")),
+        "sheets": existing_sheets
+    }
 
 
 def _generate_fallback_demo(customer_name, industry):
@@ -1718,37 +1787,148 @@ SCRIPT_DIR = Path(__file__).parent
 
 @app.post("/api/wecom/create_smarttable")
 async def create_wecom_smarttable(body: dict, user: dict = Depends(require_auth)):
-    """创建企业微信智能表格"""
+    """创建企业微信智能表格（doc_type=10）"""
     doc_name = body.get("doc_name", "智能表格Demo")
     sheets = body.get("sheets", [])
-    need_dashboard = body.get("need_dashboard", False)
-    need_gantt = body.get("need_gantt", False)
+    docid = body.get("docid")
+    sheet_to_add = body.get("sheet")
+
+    def _setup_one_sheet(docid, sid, sheet_name, fields, records):
+        """配置单个子表的名称+字段+数据"""
+        # 重命名子表
+        extract_mcp(call_mcp("smartsheet_update_sheet", {
+            "docid": docid,
+            "properties": {"sheet_id": sid, "title": sheet_name}
+        }))
+        # 配置字段
+        _setup_sheet_fields(docid, sid, fields)
+        # 填充数据
+        if records:
+            _add_sheet_records(docid, sid, fields, records)
 
     try:
-        # 构建方案JSON
-        schema = {
-            "doc_name": doc_name,
-            "sheets": sheets,
-            "need_dashboard": need_dashboard,
-            "need_gantt": need_gantt
-        }
+        if sheet_to_add and docid:
+            # 追加单个子表：先创建再配置
+            sname = sheet_to_add.get("sheet_name", "子表")
+            fields = sheet_to_add.get("fields", [])
+            records = sheet_to_add.get("sample_records", [])
+            sr = extract_mcp(call_mcp("smartsheet_add_sheet", {"docid": docid, "title": sname}))
+            sid = None
+            if isinstance(sr, dict):
+                sid = sr.get("sheet_id") or (sr.get("properties", {}).get("sheet_id"))
+            if not sid:
+                return {"success": False, "error": f"子表「{sname}」创建失败"}
+            _setup_one_sheet(docid, sid, sname, fields, records)
+            return {"success": True, "docid": docid, "sheet_id": sid}
 
-        # 调用Node.js脚本
-        result = subprocess.run(
-            ["node", str(SCRIPT_DIR / "wecom_creator.mjs"), json.dumps(schema, ensure_ascii=False)],
-            capture_output=True, text=True, timeout=120
-        )
+        if not docid:
+            # ===== 创建文档 =====
+            r = extract_mcp(call_mcp("create_doc", {"doc_type": 10, "doc_name": doc_name}))
+            if not r or (isinstance(r, dict) and r.get("errcode", 0) != 0):
+                return {"success": False, "error": "创建智能表格失败", "detail": str(r)}
+            docid = r.get("docid") if isinstance(r, dict) else None
+            url = r.get("url") if isinstance(r, dict) else None
+            if not docid:
+                return {"success": False, "error": "未获取 docid"}
 
-        if result.returncode != 0:
-            return {"success": False, "error": result.stderr or "创建失败"}
+            # ===== 获取默认子表 ID =====
+            sr = extract_mcp(call_mcp("smartsheet_get_sheet", {"docid": docid}))
+            default_sid = None
+            if isinstance(sr, dict):
+                content = sr.get("content", [])
+                if content and isinstance(content[0], dict):
+                    sl = content[0].get("sheet_list", [])
+                    if sl:
+                        default_sid = sl[0].get("sheet_id")
 
-        output = json.loads(result.stdout)
-        return output
+            # ===== 串行创建（等每步完成），但不计结果延迟返回 =====
+            if sheets:
+                # 第一张用默认子表
+                first = sheets[0]
+                _setup_one_sheet(docid, default_sid, first.get("sheet_name", "Sheet1"),
+                                  first.get("fields", []), first.get("sample_records", []))
+                # 后续新建子表
+                for i, s in enumerate(sheets[1:], 2):
+                    sname = s.get("sheet_name", f"子表{i}")
+                    fields = s.get("fields", [])
+                    records = s.get("sample_records", [])
+                    sr2 = extract_mcp(call_mcp("smartsheet_add_sheet", {"docid": docid, "title": sname}))
+                    sid = None
+                    if isinstance(sr2, dict):
+                        sid = sr2.get("sheet_id") or (sr2.get("properties", {}).get("sheet_id"))
+                    if sid:
+                        _setup_one_sheet(docid, sid, sname, fields, records)
 
-    except subprocess.TimeoutExpired:
-        return {"success": False, "error": "创建超时，请重试"}
+            return {"success": True, "docid": docid, "url": url}
+
     except Exception as e:
+        import logging
+        logging.exception("[create_wecom_smarttable]")
         return {"success": False, "error": str(e)}
+
+
+def _setup_sheet_fields(docid: str, sheet_id: str, fields: list):
+    """配置子表字段：先重命名默认字段，再添加其余字段"""
+    if not fields:
+        return
+    # 获取现有字段（含默认字段）
+    fr = extract_mcp(call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": sheet_id}))
+    existing = []
+    if isinstance(fr, dict):
+        existing = fr.get("fields", [])
+    # 重命名默认字段为第一个
+    if existing:
+        dfid = existing[0].get("field_id")
+        first_ft = _normalize_field_type(fields[0].get("field_type", "text"))
+        call_mcp("smartsheet_update_fields", {
+            "docid": docid, "sheet_id": sheet_id,
+            "fields": [{"field_id": dfid, "field_title": fields[0]["field_title"], "field_type": first_ft}]
+        })
+    # 添加剩余字段
+    remaining = fields[1:]
+    if remaining:
+        call_mcp("smartsheet_add_fields", {
+            "docid": docid, "sheet_id": sheet_id,
+            "fields": [{"field_title": f["field_title"], "field_type": _normalize_field_type(f.get("field_type", "TEXT"))} for f in remaining]
+        })
+
+
+def _add_sheet_records(docid: str, sheet_id: str, fields: list, records: list):
+    """向子表添加样例数据"""
+    if not records:
+        return
+    # 获取字段类型映射
+    cf = extract_mcp(call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": sheet_id}))
+    fmap = {}
+    if isinstance(cf, dict):
+        for f in cf.get("fields", []):
+            fmap[f["field_title"]] = f
+    # 构建记录
+    fmtd = []
+    for rec in records:
+        vals = {}
+        for k, v in rec.items():
+            if k not in fmap:
+                continue
+            ft = fmap[k].get("field_type", "FIELD_TYPE_TEXT")
+            if ft == "FIELD_TYPE_TEXT":
+                vals[k] = [{"type": "text", "text": str(v)}]
+            elif ft in ("FIELD_TYPE_NUMBER", "FIELD_TYPE_CURRENCY", "FIELD_TYPE_PERCENTAGE", "FIELD_TYPE_PROGRESS"):
+                try:
+                    vals[k] = float(v)
+                except:
+                    vals[k] = [{"type": "text", "text": str(v)}]
+            elif ft == "FIELD_TYPE_SINGLE_SELECT":
+                vals[k] = [{"text": str(v)}]
+            elif ft == "FIELD_TYPE_DATE_TIME":
+                vals[k] = str(v)
+            elif ft == "FIELD_TYPE_CHECKBOX":
+                vals[k] = bool(v)
+            else:
+                vals[k] = [{"type": "text", "text": str(v)}]
+        fmtd.append({"values": vals})
+    if fmtd:
+        call_mcp("smartsheet_add_records", {"docid": docid, "sheet_id": sheet_id, "records": fmtd})
 
 # ==================== 智能提问清单生成 ====================
 
@@ -2769,7 +2949,7 @@ async def create_wecom_doc(body: dict, user: dict = Depends(require_auth)):
                         row_vals = []
                         for f in fields:
                             val = rec.get(f.get("field_title", ""), "-")
-                            row_vals.append(val)
+                            row_vals.append(str(val))
                         content_lines.append("| " + " | ".join(row_vals) + " |")
             content = "\n\n".join(content_lines)
 

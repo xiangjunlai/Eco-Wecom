@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>服务商需求调研助手</title>
+<title>服务商售前助手</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='10' fill='%231263e6'/><rect x='10' y='12' width='16' height='13' rx='3' fill='white' fill-opacity='.95'/><circle cx='15' cy='17.5' r='2' fill='%231263e6'/><circle cx='21' cy='17.5' r='2' fill='%231263e6'/><rect x='14' y='21' width='8' height='1.5' rx='.75' fill='%231263e6' fill-opacity='.5'/></svg>">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -382,30 +382,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 <div class="header">
   <div class="header-left">
     <a class="logo-wrap" href="client_list.html">
-      <!-- Logo: Robot icon with gradient -->
-      <svg class="logo-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="logoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#1263e6"/>
-            <stop offset="100%" stop-color="#13b96f"/>
-          </linearGradient>
-        </defs>
-        <rect width="36" height="36" rx="10" fill="url(#logoGrad)"/>
-        <!-- Robot head -->
-        <rect x="10" y="12" width="16" height="13" rx="3" fill="white" fill-opacity="0.95"/>
-        <!-- Robot eyes -->
-        <circle cx="15" cy="17.5" r="2" fill="#1263e6"/>
-        <circle cx="21" cy="17.5" r="2" fill="#1263e6"/>
-        <!-- Robot antenna -->
-        <line x1="18" y1="9" x2="18" y2="12" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-        <circle cx="18" cy="8" r="1.5" fill="#13b96f"/>
-        <!-- Robot mouth -->
-        <rect x="14" y="21" width="8" height="1.5" rx="0.75" fill="#1263e6" fill-opacity="0.5"/>
-        <!-- Robot body hint -->
-        <rect x="13" y="26" width="10" height="4" rx="2" fill="white" fill-opacity="0.6"/>
-      </svg>
+      <img class="logo-icon" src="/logo.jpg" style="border-radius:10px;object-fit:cover;width:36px;height:36px">
     </a>
-    <div class="header-title">服务商需求调研助手</div>
+    <div class="header-title">服务商售前助手</div>
   </div>
   <div class="header-right">
     <span class="user-greet" id="user-greet">你好！加载中…</span>
@@ -811,6 +790,7 @@ function renderClientCard(c) {
         '<div class="c-meta">' + escapeHtml(c.industry || '未定义行业') + metaDate + '</div>' +
       '</div>' +
       '<div class="client-card-header-right">' +
+        (c._completed ? '<span style="font-size:16px;color:#13b96f;font-weight:900" title="已完成">✅</span>' : '') +
         '<span class="stage-badge ' + badgeCls + '">' + stageLabel + '</span>' +
         '<button class="more-btn" onclick="toggleCardMenu(\'' + cardId + '\', event)" title="更多">⋮</button>' +
         '<div class="client-card-dropdown" id="menu-' + cardId + '">' +
@@ -851,7 +831,7 @@ function renderClientTableRow(c) {
   return '<tr onclick="openClient(\'' + c.id + '\')" style="cursor:pointer">' +
     '<td><div class="c-name-wrap">' + escapeHtml(c.name || '未命名') + '</div></td>' +
     '<td>' + industry + '</td>' +
-    '<td><span class="stage-badge ' + badgeCls + '">' + stageLabel + '</span></td>' +
+    '<td>' + (c._completed ? '<span style="font-size:14px;color:#13b96f">✅</span>' : '') + '<span class="stage-badge ' + badgeCls + '">' + stageLabel + '</span></td>' +
     '<td>' + noteCount + '</td>' +
     '<td class="td-demand">' + demandShort + '</td>' +
     '<td style="color:#98a2b3;font-size:12px;white-space:nowrap">' + updateText + '</td>' +

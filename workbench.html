@@ -23,20 +23,24 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .brand-sub{color:var(--muted);font-size:12px;margin-top:4px;line-height:1.45;max-width:150px}
 .flow{position:relative;margin-top:6px;padding-left:3px}
 .flow:before{content:"";position:absolute;left:25px;top:24px;bottom:24px;width:2px;background:linear-gradient(#1263e6 0 28%,#dfe6ef 28% 100%)}
-.step{position:relative;display:grid;grid-template-columns:50px 1fr;gap:10px;align-items:start;padding:12px 8px;border-radius:18px;cursor:pointer;transition:.18s;margin:4px 0}
-.step:hover{background:#f7faff}
-.num{position:relative;z-index:2;width:34px;height:34px;margin-left:5px;border-radius:50%;display:grid;place-items:center;background:#eef2f7;color:#98a2b3;font-weight:900;border:4px solid #fff;box-shadow:0 3px 10px rgba(16,24,40,.08)}
-.step.done .num{background:var(--green);color:#fff}
-.step.active{background:linear-gradient(135deg,#eef6ff,#f8fbff);box-shadow:inset 0 0 0 1px #d7eaff}
-.step.active .num{background:var(--blue);color:#fff;box-shadow:0 0 0 6px #e8f2ff}
-.step h3{margin:2px 0 4px;font-size:14px}
+.step{position:relative;display:flex;flex-direction:row;align-items:center;gap:12px;padding:12px 10px;border-radius:14px;cursor:pointer;transition:background .15s,transform .15s;margin:5px 0}
+.step:hover{background:#f0f6ff;transform:translateX(3px)}
+.step:hover h3{color:#1263e6}
+.step:hover .num{transform:scale(1.12);box-shadow:0 4px 16px rgba(18,99,230,.25)}
+.num{flex-shrink:0;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#eef2f7;color:#98a2b3;font-weight:800;font-size:14px;border:3px solid #fff;box-shadow:0 2px 8px rgba(16,24,40,.1);transition:transform .15s,box-shadow .15s,background .15s}
+.step.done .num{background:linear-gradient(135deg,#13b96f,#10a85c);color:#fff;border-color:#e8faf2;font-size:15px}
+.step.active{background:linear-gradient(135deg,#eef3ff,#f5faff);box-shadow:inset 3px 0 0 #1263e6}
+.step.active .num{background:#1263e6;color:#fff;box-shadow:0 0 0 6px rgba(18,99,230,.15)}
+.step h3{margin:0;font-size:15px;color:#111827;transition:color .15s;font-weight:700}
+.step>div:last-child{min-width:0}
 .step p{margin:0;color:var(--muted);font-size:12px;line-height:1.45}
-.side-stat{margin-top:auto;border-radius:20px;padding:15px;background:linear-gradient(135deg,#f6fbff,#ffffff);border:1px solid #e5eefb}
-.side-stat b{font-size:13px}
-.side-stat .stat-num{font-size:22px;font-weight:950;color:#182235;margin-top:8px;letter-spacing:-.4px}
-.side-stat .meter{height:7px;background:#edf2f7;border-radius:99px;overflow:hidden;margin:12px 0 8px}
-.side-stat .meter i{display:block;width:48%;height:100%;background:linear-gradient(90deg,#1263e6,#13b96f)}
-.side-stat span{color:var(--muted);font-size:12px}
+.user-info{margin-top:auto;padding-top:16px}
+.user-info-card{background:linear-gradient(135deg,#eef6ff 0%,#f0faf6 100%);border:1px solid #d5e8fa;border-radius:18px;padding:14px 16px;margin-bottom:12px;box-shadow:0 2px 12px rgba(18,99,230,.06)}
+.user-info-company{font-size:11px;color:#1263e6;font-weight:600;margin-bottom:5px;letter-spacing:.3px}
+.user-info-name{font-size:16px;font-weight:800;color:#111827;margin-bottom:6px;letter-spacing:.3px}
+.user-info-greeting{font-size:12px;color:#13b96f;font-weight:600}
+.btn-ghost{width:100%;height:36px;border:none;background:#f0f4ff;border-radius:12px;color:#374151;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,color .15s,transform .15s}
+.btn-ghost:hover{background:#1263e6;color:#fff;transform:translateY(-1px)}
 
 /* ==== MAIN AREA ==== */
 .main{display:flex;flex-direction:column;min-width:0;height:100%}
@@ -453,6 +457,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .artifact p{margin:9px 0 0;color:#667085;font-size:12px;line-height:1.62}
 .barbox{height:6px;background:#eef2f7;border-radius:99px;overflow:hidden;margin-top:12px}
 .bar{height:100%;background:linear-gradient(90deg,#1263e6,#13b96f);transition:width .5s cubic-bezier(.4,0,.2,1)}
+@keyframes genBar{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.bar.generating{background:linear-gradient(90deg,#1263e6,#7c3aed,#13b96f);background-size:200% 100%;animation:genBar 1.5s ease infinite}
 .artifact-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
 .art-btn{border:1px solid #d8dee8;background:#fff;border-radius:10px;padding:6px 10px;color:#475467;font-size:11px;font-weight:800;cursor:pointer}
 .art-btn:hover{background:#f7faff}
@@ -597,7 +603,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
   <aside class="panel sidebar" id="sidebar">
     <!-- Brand / current client -->
     <div class="brand" id="sidebar-brand" onclick="goToList()">
-      <div class="logo" id="sidebar-logo">客</div>
+      <img class="logo" id="sidebar-logo" src="/logo.jpg">
       <div>
         <div class="brand-title" id="sidebar-client-name">当前客户</div>
         <div class="brand-sub" id="sidebar-client-meta">点击选择客户</div>
@@ -613,12 +619,17 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
       <div class="step" data-page="5" onclick="safeGo(5)"><div class="num">5</div><div><h3>Demo生成</h3><p>智能表格 · Agent小样</p></div></div>
     </div>
 
-    <!-- Completion stat -->
-    <div class="side-stat">
-      <b>完成度</b>
-      <div class="stat-num" id="completion-pct">0%</div>
-      <div class="meter"><i id="completion-bar"></i></div>
-      <span id="completion-label">Step 1 / 5 · 客户录入</span>
+    <!-- User info block -->
+    <div class="user-info">
+      <div class="user-info-card">
+        <div class="user-info-company" id="sidebar-provider-name">-</div>
+        <div class="user-info-name" id="sidebar-username">-</div>
+        <div class="user-info-greeting">你好！</div>
+      </div>
+      <button class="btn-ghost" onclick="goToList()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+        返回客户列表
+      </button>
     </div>
   </aside>
 
@@ -1152,7 +1163,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
           <!-- 底部操作栏 -->
           <div class="step-action-bar" style="border-top:1px solid #e5e7eb;padding:12px 20px;background:#fff;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
             <div style="display:flex;gap:8px;align-items:center"></div>
-            <button class="btn ghost" id="s5-done-btn" onclick="markClientDone()" style="background:#1263e6;color:#fff;border:none">已完成</button>
+            <button class="btn ghost" id="s5-done-btn" onclick="markClientDone()" style="background:#1263e6;color:#fff;border:none;border-radius:12px">已完成</button>
           </div>
         </div>
       </section>
@@ -1391,25 +1402,18 @@ function go(n) {
   document.getElementById('page'+n).classList.add('active');
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   document.querySelector('.step[data-page="'+n+'"]').classList.add('active');
-  // Save current step to localStorage and client data
   localStorage.setItem('lastStep_' + currentClientId, String(n));
   if (currentClientId) {
     const clients = getClients();
     const idx = clients.findIndex(c => c.id === currentClientId);
-    if (idx >= 0) {
-      clients[idx]._lastStep = n;
-      saveClients(clients);
-    }
+    if (idx >= 0) { clients[idx]._lastStep = n; saveClients(clients); }
   }
   currentStep = n;
-  updateCompletion(n);
-  loadStepData(n);
+  try { loadStepData(n); } catch(e) { console.error('loadStepData('+n+') error:', e.message); }
   const c = getClient(currentClientId);
   updateStepLocks(c);
-  console.log('go('+n+') took ' + Math.round(performance.now()-t0) + 'ms');
 }
 function updateStepLocks(c) {
-  // 定义每步的完成条件：该步的产物是否存在
   const isCompleted = {
     1: !!(c && c.step1_result),
     2: !!(c && c.step1_result),
@@ -1419,21 +1423,19 @@ function updateStepLocks(c) {
   };
   document.querySelectorAll('.step').forEach(s => {
     const n = parseInt(s.dataset.page);
-    if (n === currentStep) return; // 当前Step永远可点
-    if (isCompleted[n]) return; // 已完成Step可点
-    // 未完成Step锁定
-    s.style.opacity = '0.45';
-    s.style.pointerEvents = 'none';
-    s.classList.remove('done');
-  });
-  // 已完成Step显示绿色
-  document.querySelectorAll('.step').forEach(s => {
-    const n = parseInt(s.dataset.page);
     if (n === currentStep) return;
     if (isCompleted[n]) {
       s.style.opacity = '';
       s.style.pointerEvents = '';
       s.classList.add('done');
+      const numEl = s.querySelector('.num');
+      if (numEl) numEl.textContent = '✓';
+    } else {
+      s.style.opacity = '0.45';
+      s.style.pointerEvents = 'none';
+      s.classList.remove('done');
+      const numEl = s.querySelector('.num');
+      if (numEl) numEl.textContent = n;
     }
   });
 }
@@ -1451,7 +1453,6 @@ function updateFloatingAction(n) {
   } else {
     fp.textContent = labels[n] || '下一步';
   }
-  // Enable/disable based on prerequisites
   fp.disabled = false;
   if (n === 5 && !hasSchema) {
     fp.disabled = true;
@@ -1459,14 +1460,6 @@ function updateFloatingAction(n) {
   } else {
     fp.style.opacity = '';
   }
-}
-
-
-function updateCompletion(n) {
-  const pct = Math.round((n-1)/4*100);
-  document.getElementById('completion-pct').textContent = pct+'%';
-  document.getElementById('completion-bar').style.width = pct+'%';
-  document.getElementById('completion-label').textContent = LABELS[n];
 }
 
 function goToList() {
@@ -2212,10 +2205,192 @@ function doStep4Next() {
   go(5);
 }
 
+// ==================== STEP 4 HANDLERS ====================
+let _s4EditingInput = false;
+
+function toggleStep4InputEdit() {
+  _s4EditingInput = !_s4EditingInput;
+  const boxes = document.querySelectorAll('#s4-input-grid [contenteditable]');
+  boxes.forEach(b => b.contentEditable = _s4EditingInput);
+  const btn = document.getElementById('s4-input-edit-btn');
+  if (btn) btn.textContent = _s4EditingInput ? '完成编辑' : '编辑摘要';
+  if (!_s4EditingInput) saveStep4Input();
+}
+
+function saveStep4Input() {
+  const c = getClient(currentClientId);
+  if (!c) return;
+  const report = c.step4_report || {};
+  report.inputSummary = {
+    current: document.getElementById('s4-current').textContent.trim() || '-',
+    pain: document.getElementById('s4-pain').textContent.trim() || '-',
+    roles: document.getElementById('s4-roles').textContent.trim() || '-',
+    goals: document.getElementById('s4-goals').textContent.trim() || '-'
+  };
+  updateClient(currentClientId, { step4_report: report });
+  showToast('摘要已保存');
+}
+
+function autoGenerateStep4Input(c) {
+  if (!c) return;
+  const s1 = c.step1_result || {};
+  const part1 = s1.part1 || {};
+  const current = part1.company_background || '-';
+  const pain = (part1.pain_points || []).slice(0, 3).join('\n') || '-';
+  const roles = s1.part3 ? ((s1.part3.must_ask || []).map(q => q.need_role || '').filter(Boolean).join('、') || '-') : '-';
+  const goals = c.initial_demand || '-';
+  document.getElementById('s4-current').textContent = current;
+  document.getElementById('s4-pain').textContent = pain;
+  document.getElementById('s4-roles').textContent = roles;
+  document.getElementById('s4-goals').textContent = goals;
+}
+
+async function generateStep4Presales() {
+  const c = getClient(currentClientId);
+  if (!c) return;
+  const btn = document.getElementById('s4-presales-btn');
+  if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+  window._generatingPresales = true;
+  renderArtifacts();
+  let pct = 10;
+  const tick = setInterval(() => {
+    pct = Math.min(pct + Math.random() * 15, 85);
+    window._presalesPct = pct;
+    renderArtifacts();
+  }, 300);
+  try {
+    const resp = await fetch(API_BASE + '/api/step4/generate', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: currentClientId, type: 'presales' })
+    });
+    const data = await resp.json();
+    if (data.presales) {
+      updateClient(currentClientId, { step4_presales: data.presales });
+      renderStep4Presales(data.presales);
+      window._presalesPct = 100;
+      renderArtifacts();
+      showToast('售前方案生成完成');
+    } else {
+      showToast('生成失败：' + (data.detail || '未知错误'));
+    }
+  } catch(e) {
+    showToast('生成失败：' + e.message);
+  } finally {
+    clearInterval(tick);
+    window._generatingPresales = false;
+    window._presalesPct = c.step4_presales ? 100 : 0;
+    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    renderArtifacts();
+  }
+}
+
+function renderStep4Presales(presales) {
+  if (!presales) return;
+  const preview = document.getElementById('s4-presales-preview');
+  const empty = document.getElementById('s4-presales-empty');
+  const status = document.getElementById('s4-presales-status');
+  if (!preview) return;
+  // Render as formatted text
+  let html = '';
+  if (typeof presales === 'object') {
+    html = '<div style="padding:12px;font-size:13px;line-height:1.7;color:#374151">';
+    for (const [k, v] of Object.entries(presales)) {
+      if (k === 'raw') continue;
+      html += '<div style="margin-bottom:10px"><b style="color:#1263e6">' + k + '</b><p style="margin:4px 0 0">' + (typeof v === 'string' ? v : JSON.stringify(v)) + '</p></div>';
+    }
+    html += '</div>';
+  } else {
+    html = '<div style="padding:12px;font-size:13px;line-height:1.7">' + presales + '</div>';
+  }
+  preview.innerHTML = html;
+  preview.style.display = '';
+  if (empty) empty.style.display = 'none';
+  if (status) { status.textContent = '已生成'; status.style.background = '#ecfdf5'; status.style.color = '#047857'; }
+}
+
+async function generateStep4Technical() {
+  const c = getClient(currentClientId);
+  if (!c) return;
+  const btn = document.getElementById('s4-technical-btn');
+  if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+  window._generatingTechnical = true;
+  renderArtifacts();
+  let pct = 10;
+  const tick = setInterval(() => {
+    pct = Math.min(pct + Math.random() * 15, 85);
+    window._technicalPct = pct;
+    renderArtifacts();
+  }, 300);
+  try {
+    const resp = await fetch(API_BASE + '/api/step4/generate', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: currentClientId, type: 'technical' })
+    });
+    const data = await resp.json();
+    if (data.technical) {
+      updateClient(currentClientId, { step4_technical: data.technical });
+      renderStep4Technical(data.technical);
+      window._technicalPct = 100;
+      renderArtifacts();
+      showToast('技术方案生成完成');
+    } else {
+      showToast('生成失败：' + (data.detail || '未知错误'));
+    }
+  } catch(e) {
+    showToast('生成失败：' + e.message);
+  } finally {
+    clearInterval(tick);
+    window._generatingTechnical = false;
+    window._technicalPct = c.step4_technical ? 100 : 0;
+    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    renderArtifacts();
+  }
+}
+
+function renderStep4Technical(technical) {
+  if (!technical) return;
+  const preview = document.getElementById('s4-technical-preview');
+  const empty = document.getElementById('s4-technical-empty');
+  const status = document.getElementById('s4-technical-status');
+  if (!preview) return;
+  let html = '';
+  if (typeof technical === 'object') {
+    html = '<div style="padding:12px;font-size:13px;line-height:1.7;color:#374151">';
+    for (const [k, v] of Object.entries(technical)) {
+      if (k === 'raw') continue;
+      html += '<div style="margin-bottom:10px"><b style="color:#1263e6">' + k + '</b><p style="margin:4px 0 0">' + (typeof v === 'string' ? v : JSON.stringify(v)) + '</p></div>';
+    }
+    html += '</div>';
+  } else {
+    html = '<div style="padding:12px;font-size:13px;line-height:1.7">' + technical + '</div>';
+  }
+  preview.innerHTML = html;
+  preview.style.display = '';
+  if (empty) empty.style.display = 'none';
+  if (status) { status.textContent = '已生成'; status.style.background = '#ecfdf5'; status.style.color = '#047857'; }
+}
+
 // ==================== STEP 5: Smart Sheet Editor ====================
 
 let _s5Schema = null;
 let _s5CurrentSheet = 0;
+
+function markClientDone() {
+  if (!confirm('确认将该客户标记为已完成？完成后可在客户列表查看。')) return;
+  updateClient(currentClientId, { _completed: true });
+  var btn = document.getElementById('s5-done-btn');
+  if (btn) {
+    btn.textContent = '已完成 ✓';
+    btn.style.background = '#ecfdf3';
+    btn.style.color = '#059669';
+    btn.style.borderColor = '#bbf7d0';
+    btn.disabled = true;
+  }
+  renderClientList();
+  showToast('已标记为完成');
+}
 
 function loadStep5(c) {
   updateCtxBar(c);
@@ -2425,8 +2600,9 @@ function doDeleteCurrentSheet() {
 function doSaveStep5Schema() {
   if (!_s5Schema) return;
   updateClient(currentClientId, { step5_schema: _s5Schema });
-  showToast('已保存');
+  showToast('已保存，正在创建企微智能表格…');
   renderS5Editor();
+  createSmartSheet();
 }
 
 async function doRegenerateStep5() {
@@ -2435,21 +2611,29 @@ async function doRegenerateStep5() {
   if (!c.step4_presales && !c.step4_report && !c.transcript) {
     alert('请先生成售前方案（Step4）再生成 Demo'); return;
   }
-  var btn = document.getElementById('s5-regen-btn');
-  if (btn) { btn.classList.add('loading'); btn.disabled = true; }
-  showFullscreenLoading('正在生成智能表格 Demo…');
+  window._generatingStep5 = true;
+  renderArtifacts();
+  let pct = 10;
+  const tick = setInterval(() => {
+    pct = Math.min(pct + Math.random() * 15, 85);
+    window._step5Pct = pct;
+    renderArtifacts();
+  }, 300);
   try {
     var schema = await generateDemoSchema(c);
     window._demoSchema = schema;
     _s5Schema = schema;
     updateClient(currentClientId, { step5_schema: schema });
     renderS5Editor();
+    window._step5Pct = 100;
+    renderArtifacts();
     showToast('Demo 生成完成');
   } catch(e) {
     alert('Demo 生成失败: ' + e.message);
   } finally {
-    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
-    hideFullscreenLoading();
+    clearInterval(tick);
+    window._generatingStep5 = false;
+    renderArtifacts();
   }
 }
 
@@ -2470,9 +2654,9 @@ async function createSmartSheet() {
   if (!schema) { alert('请先生成 Demo'); return; }
   var schemaObj = typeof schema === 'string' ? JSON.parse(schema) : schema;
   var total = schemaObj.sheets ? schemaObj.sheets.length : 0;
-  var btn = document.getElementById('create-smart-sheet-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '生成智能表格中…'; }
-  showFullscreenLoading(total > 0 ? '正在创建 ' + total + ' 个子表…' : '正在创建智能表格…');
+  window._creatingSheet = true;
+  renderArtifacts();
+  showToast('正在创建智能表格…');
   try {
     var resp = await fetch(API_BASE + '/api/create', {
       method: 'POST', headers: getAuthHeaders(),
@@ -2495,7 +2679,8 @@ async function createSmartSheet() {
     alert('创建失败: ' + e.message);
     renderArtifacts();
   } finally {
-    hideFullscreenLoading();
+    window._creatingSheet = false;
+    renderArtifacts();
   }
 }
 
@@ -2559,16 +2744,13 @@ function loadStep4(c) {
 // ==================== CONTEXT BAR ====================
 function updateCtxBar(c) {
   if (!c) return;
-  const name = c.name || '-';
-  const meta = `${c.industry||'未知行业'} · ${(c.tags||'').split(',').filter(Boolean).join('、')}`;
-  const summary = c.initial_demand ? `当前关注：${c.initial_demand.substring(0,20)}` : '-';
+  const sbName = document.getElementById('sidebar-client-name');
+  const sbMeta = document.getElementById('sidebar-client-meta');
+  if (sbName) sbName.textContent = c.name || '当前客户';
+  if (sbMeta) sbMeta.textContent = c.industry || '点击选择客户';
   ['s2','s3','s4','s5'].forEach(s => {
-    const el = document.getElementById(s+'-ctx-name');
-    if (el) el.textContent = name;
-    const m = document.getElementById(s+'-ctx-meta');
-    if (m) m.textContent = meta;
     const ss = document.getElementById(s+'-ctx-summary');
-    if (ss) ss.textContent = summary;
+    if (ss) ss.textContent = '';
   });
 }
 
@@ -2654,14 +2836,22 @@ function renderArtifacts() {
 
   // 售前解决方案
   const hasPresales = !!(c.step4_presales);
-  const hasTechnical = !!(c.step4_technical);
-  items.push({ name: '售前解决方案', tag: hasPresales ? '已生成' : '待生成', tagCls: hasPresales ? '' : 'todo', pct: hasPresales ? 100 : 0, dataKey: 'step4_presales', desc: '面向客户汇报，包含痛点诊断、解决思路、建设模块与实施阶段。' });
+  const isGenPresales = window._generatingPresales;
+  const presalesPct = isGenPresales ? (window._presalesPct || 10) : (hasPresales ? 100 : 0);
+  items.push({ name: '售前解决方案', tag: isGenPresales ? '生成中' : (hasPresales ? '已生成' : '待生成'), tagCls: isGenPresales ? 'editing' : (hasPresales ? '' : 'todo'), pct: presalesPct, dataKey: 'step4_presales', desc: '面向客户汇报，包含痛点诊断、解决思路、建设模块与实施阶段。', isGen: isGenPresales });
 
   // 技术路线及报价方案
-  items.push({ name: '技术路线及报价方案', tag: hasTechnical ? '已生成' : '待生成', tagCls: hasTechnical ? '' : 'todo', pct: hasTechnical ? 100 : 0, dataKey: 'step4_technical', desc: '面向内部评估，拆解技术路径、交付范围与报价口径。' });
+  const hasTechnical = !!(c.step4_technical);
+  const isGenTechnical = window._generatingTechnical;
+  const technicalPct = isGenTechnical ? (window._technicalPct || 10) : (hasTechnical ? 100 : 0);
+  items.push({ name: '技术路线及报价方案', tag: isGenTechnical ? '生成中' : (hasTechnical ? '已生成' : '待生成'), tagCls: isGenTechnical ? 'editing' : (hasTechnical ? '' : 'todo'), pct: technicalPct, dataKey: 'step4_technical', desc: '面向内部评估，拆解技术路径、交付范围与报价口径。', isGen: isGenTechnical });
 
-  // Demo Schema
-  items.push({ name: 'Demo Schema', tag: c.step5_schema ? '已生成' : '待生成', tagCls: c.step5_schema ? '' : 'todo', pct: c.step5_schema ? 100 : 0, dataKey: 'step5_schema', desc: '智能表格 Schema，可直接创建企微智能表格。' });
+  // 智能表格 Demo
+  const isGen5 = window._generatingStep5;
+  const isCreating = window._creatingSheet;
+  const schemaPct = isGen5 ? (window._step5Pct || 10) : (c.step5_schema ? 100 : 0);
+  const isActive = isGen5 || isCreating;
+  items.push({ name: '智能表格 Demo', tag: isCreating ? '创建中' : (isGen5 ? '生成中' : (c.step5_schema ? '已生成' : '待生成')), tagCls: isCreating ? 'editing' : (isGen5 ? 'editing' : (c.step5_schema ? '' : 'todo')), pct: isCreating ? 50 : schemaPct, dataKey: 'step5_schema', desc: '根据编辑区内容生成企微智能表格', isGen5: isActive });
 
   list.innerHTML = items.map((item, i) => {
     let actions = '';
@@ -2681,20 +2871,26 @@ function renderArtifacts() {
       }
     }
     else if (item.dataKey && item.dataKey !== 'step1_result') {
-      if (item.pct === 0) {
-        actions += '<button class="art-btn" disabled style="opacity:0.4">预览</button>';
-        actions += '<button class="art-btn" disabled style="opacity:0.4">复制</button>';
-      } else if (item.dataKey === 'step4_presales') {
-        actions += '<button class="art-btn" onclick="previewStep4HTML()">预览 HTML</button>';
-        actions += '<button class="art-btn" onclick="downloadStep4HTML()">下载</button>';
-        actions += '<button class="art-btn" onclick="copyArtifactData(\'step4_presales\')">复制</button>';
+      if (item.isGen) {
+        actions += '<button class="art-btn" disabled style="opacity:0.6">生成中…</button>';
+      } else if (item.pct === 0) {
+        // no buttons when nothing
       } else {
-        actions += '<button class="art-btn" onclick="doPreview(' + i + ')">预览</button>';
-        actions += '<button class="art-btn" onclick="copyArtifactData(\'' + item.dataKey + '\')">复制</button>';
+        // step4/5 artifacts: no preview/copy buttons
       }
     }
-    if (item.dataKey === 'step5_schema' && c.step5_schema) actions += '<button class="art-btn success" onclick="createSmartSheet()">创建表格</button>';
-    return '<div class="artifact"><div class="artifact-top"><h4>' + item.name + '</h4><span class="tag ' + item.tagCls + '">' + item.tag + '</span></div><p>' + (item.desc || '') + '</p><div class="barbox"><div class="bar" style="width:' + item.pct + '%"></div></div><div class="artifact-actions">' + actions + '</div></div>';
+    if (item.isGen5) {
+      actions += '<button class="art-btn" disabled style="opacity:0.6">生成中…</button>';
+    } else if (item.dataKey === 'step5_schema' && c.step5_schema) {
+      if (c.demo_url) {
+        actions += '<a class="art-btn success" href="' + c.demo_url + '" target="_blank">查看表格</a>';
+        actions += '<button class="art-btn" onclick="doCopyDemoUrl()">复制链接</button>';
+        actions += '<button class="art-btn" onclick="doRegenerateStep5()">再次生成</button>';
+      } else {
+        actions += '<button class="art-btn success" onclick="createSmartSheet()">创建表格</button>';
+      }
+    }
+    return '<div class="artifact"><div class="artifact-top"><h4>' + item.name + '</h4><span class="tag ' + item.tagCls + '">' + item.tag + ((item.isGen5 || item.isGen) && item.pct < 100 ? ' ' + Math.round(item.pct) + '%' : '') + '</span></div><p>' + (item.desc || '') + '</p><div class="barbox"><div class="bar' + ((item.isGen5 || item.isGen) ? ' generating' : '') + '" style="width:' + item.pct + '%"></div></div><div class="artifact-actions">' + actions + '</div></div>';
   }).join('');
 
   // 企微已创建表格
@@ -3142,7 +3338,7 @@ function doPreview(idx) {
     2: { name: '沟通记录库', data: (c.uploaded_files || []).map(f => '[' + (f.date||'') + '] ' + (f.source||'') + '\n' + (f.text||'')).join('\n\n---\n\n') },
     3: { name: '售前解决方案', data: c.step4_presales },
     4: { name: '技术路线及报价方案', data: c.step4_technical },
-    5: { name: 'Demo Schema', data: c.step5_schema }
+    5: { name: '智能表格Demo', data: c.step5_schema }
   };
   const item = map[idx];
   if (!item || !item.data) { showToast('暂无内容可预览'); return; }
@@ -3202,6 +3398,13 @@ function logout() {
     const testData = await testResp.json();
     if (testData.access_token) {
       localStorage.setItem(TOKEN_KEY, testData.access_token);
+      if (testData.user) {
+        window._currentUser = testData.user;
+        const sbProvider = document.getElementById('sidebar-provider-name');
+        const sbUser = document.getElementById('sidebar-username');
+        if (sbProvider) sbProvider.textContent = testData.user.provider_name || '-';
+        if (sbUser) sbUser.textContent = testData.user.username || '-';
+      }
       await finishInit(testData.access_token);
       return;
     }
@@ -3219,6 +3422,7 @@ function logout() {
     const params = new URLSearchParams(location.search);
     const clientId = params.get('client_id');
     const isNew = params.get('new') === '1';
+    const stepParam = params.get('step'); // e.g. 'step5' -> 5
 
   if (isNew) {
     try {
@@ -3250,9 +3454,14 @@ function logout() {
     if (r.ok && bc && bc.id) {
       _backendClientCache[clientId] = bc;
       currentClientId = clientId;
-      // Restore last step from localStorage or default to 1
-      const lastStep = parseInt(localStorage.getItem('lastStep_' + clientId) || '1');
-      go(lastStep);
+      let targetStep = 1;
+      if (stepParam) {
+        const n = parseInt(stepParam.replace('step', ''));
+        if (n >= 1 && n <= 5) targetStep = n;
+      } else {
+        targetStep = parseInt(localStorage.getItem('lastStep_' + clientId) || '1');
+      }
+      go(targetStep);
       return;
     }
     // 后端没有该客户（可能是旧版 localStorage 客户），从 localStorage 恢复
@@ -3261,8 +3470,14 @@ function logout() {
     if (localClient) {
       currentClientId = clientId;
       _backendClientCache[clientId] = localClient;
-      const lastStep = parseInt(localStorage.getItem('lastStep_' + clientId) || '1');
-      go(lastStep);
+      let targetStep = 1;
+      if (stepParam) {
+        const n = parseInt(stepParam.replace('step', ''));
+        if (n >= 1 && n <= 5) targetStep = n;
+      } else {
+        targetStep = parseInt(localStorage.getItem('lastStep_' + clientId) || '1');
+      }
+      go(targetStep);
       return;
     }
     alert('客户不存在');
