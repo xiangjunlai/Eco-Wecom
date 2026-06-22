@@ -1255,30 +1255,9 @@ function loadAgentEval() {
 }
 
 function loadEnhancement() {
-  var cats = ['case', 'template', 'knowledge', 'qa', 'sales'];
-  var counts = {};
-  cats.forEach(function(c) {
-    counts[c] = (_kbFiles || []).filter(function(f) { return f.category === c; }).length;
-  });
-  var total = (_kbFiles || []).length;
-  var pct = Math.min(Math.round(total / 10 * 100), 100);
-
-  document.getElementById('kb-progress-pct').textContent = pct;
-  var descMap = {case:'案例库',template:'模板库',knowledge:'行业知识',qa:'QA',sales:'销售工具'};
-  var catsHtml = cats.map(function(c) {
-    var done = counts[c] > 0;
-    var cls = done ? 'done' : 'empty';
-    return '<span class="ae-comp-cat ' + cls + '">' + (done ? '\u2713 ' : '') + ' ' + descMap[c] + ' (' + counts[c] + ')</span>';
-  }).join('');
-  document.getElementById('kb-comp-cats').innerHTML = catsHtml;
-  document.getElementById('kb-progress-desc').textContent = total === 0
-    ? '暂未上传任何知识库，请开始上传'
-    : '已上传 ' + total + ' 个文件，可支撑 Agent ' + pct + '% 能力';
-
   var scores = computeAgentScores(_kbFiles);
   renderAgentEval(scores.scores, scores.grade);
 }
-
 // ===== UPLOAD MODAL =====
 function openUploadModal() {
   window._selectedFiles = null;
