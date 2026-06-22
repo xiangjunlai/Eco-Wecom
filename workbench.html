@@ -1539,12 +1539,21 @@ function renderDropdownClients(clients, list) {
 
 function switchToClient(id) {
   const dd = document.getElementById('client-dropdown');
-  if (dd) dd.style.display = 'none';
+  if (dd) { dd.style.display = 'none'; dd.classList.add('hidden'); }
   document.removeEventListener('click', closeClientDropdownOutside);
   if (String(id) === String(currentClientId)) return;
   currentClientId = String(id);
-  _backendClientCache[id] = getClient(id);
-  go(1);
+  // 从后端拉最新数据
+  fetch(API_BASE + '/api/clients/' + id, { headers: getAuthHeaders() })
+    .then(r => r.json())
+    .then(data => {
+      _backendClientCache[id] = data;
+      go(1);
+    })
+    .catch(() => {
+      _backendClientCache[id] = { id };
+      go(1);
+    });
 }
 
 function goToList() {
