@@ -214,6 +214,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   cursor:pointer;border:none;background:#1263e6;color:#fff;transition:.15s;
 }
 .ae-upload-btn:hover{background:#0c55cd}
+.ae-reload-btn.is-loading{opacity:.6;cursor:not-allowed;pointer-events:none}
+.ae-reload-btn.is-loading::after{content:'';display:inline-block;width:10px;height:10px;border:2px solid #1263e6;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;margin-left:4px;vertical-align:middle}
+@keyframes radar-loading{0%{opacity:.3}50%{opacity:1}100%{opacity:.3}}
+.radar-loading .ae-dim-fill{animation:radar-loading 1s ease-in-out infinite}
 .ae-title-desc{font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:18px}
 
 /* Body: left radar + right dim list */
@@ -504,7 +508,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
             <th>文件名</th>
             <th>行业</th>
             <th>分类</th>
-            <th style="width:120px">状态</th>
+            <th style="width:130px">进度条</th>
+            <th>上传时间</th>
             <th style="width:50px"></th>
           </tr>
         </thead>
@@ -1010,11 +1015,10 @@ function renderKbUI() {
     document.getElementById('kb-files-section').style.display = 'block';
     var sorted = filtered.sort(function(a, b) { return new Date(b.created_at || b.date) - new Date(a.created_at || b.date); });
     document.getElementById('kb-files-body').innerHTML = sorted.map(function(f) {
-      var statusText = {uploading:'上传中',parsing:'解析中',indexing:'向量化中',generating:'生成中',completed:'完成',failed:'失败'}[f.status] || '未知';
-      var statusColor = {uploading:'color:#f59e0b',parsing:'color:#f59e0b',indexing:'color:#f59e0b',generating:'color:#f59e0b',completed:'color:#13b96f',failed:'color:#ef4444'}[f.status] || '';
       var progress = f.progress || 0;
       var industryTag = f.industry ? '<span style="background:#f5f5f5;color:#666;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800;margin-left:4px">' + f.industry + '</span>' : '';
-      return '<tr><td class="kb-file-name" title="' + (f.original_filename || f.name) + '"><span style="font-weight:800">' + (f.display_name || f.name) + '</span>' + industryTag + '</td><td><span class="kb-file-tag" style="background:' + (CAT_TAG_COLORS[f.category] || '#888') + '20;color:' + (CAT_TAG_COLORS[f.category] || '#888') + '">' + CAT_NAMES[f.category] + '</span></td><td><span style="' + statusColor + ';font-size:12px;font-weight:800">' + statusText + '</span> <span style="font-size:11px;color:#98a2b3">' + progress + '%</span><div class="kb-file-progress" style="margin-top:4px"><div class="kb-file-progress-bar" style="width:' + progress + '%' + (f.status === 'failed' ? ';background:#ef4444' : f.status === 'completed' ? ';background:#13b96f' : '') + '"></div></div></td><td><button class="kb-delete-btn" onclick="deleteKbFile(\'' + f.id + '\')" title="删除">🗑️</button></td></tr>';
+      var createdAt = f.created_at ? new Date(f.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) : '-';
+      return '<tr><td class="kb-file-name" title="' + (f.original_filename || f.name) + '"><span style="font-weight:800">' + (f.display_name || f.name) + '</span>' + industryTag + '</td><td><span class="kb-file-tag" style="background:' + (CAT_TAG_COLORS[f.category] || '#888') + '20;color:' + (CAT_TAG_COLORS[f.category] || '#888') + '">' + CAT_NAMES[f.category] + '</span></td><td><span style="font-size:11px;color:#98a2b3;margin-right:6px">' + progress + '%</span><div class="kb-file-progress" style="margin-top:2px"><div class="kb-file-progress-bar" style="width:' + progress + '%' + (f.status === 'failed' ? ';background:#ef4444' : f.status === 'completed' ? ';background:#13b96f' : '') + '"></div></div></td><td style="font-size:12px;color:#667085;white-space:nowrap">' + createdAt + '</td><td><button class="kb-delete-btn" onclick="deleteKbFile(\'' + f.id + '\')" title="删除">🗑️</button></td></tr>';
     }).join('');
     document.querySelectorAll('.kb-filter-tab').forEach(function(el) {
       el.classList.toggle('active', el.dataset.cat === filterCat);
@@ -1227,7 +1231,7 @@ function renderAgentEval(scores, grade) {
         '<span class="ae-icon">&#127919;</span>' +
         '<span class="ae-title">调研助手能力评估</span>' +
         '<span class="ae-updated">最近更新：' + new Date().toLocaleDateString('zh-CN') + '</span>' +
-        '<button class="ae-reload-btn" onclick="loadKbData()">重新评估</button>' +
+        '<button class="ae-reload-btn" id="ae-reload-btn" onclick="doReloadEval()">重新评估</button>' +
       '</div>' +
       '<button class="ae-upload-btn" onclick="openUploadModal()">+ 上传知识库</button>' +
     '</div>' +
@@ -1247,6 +1251,31 @@ function renderAgentEval(scores, grade) {
   '</div>';
 
   renderRadarChart(scores);
+}
+
+function doReloadEval() {
+  var btn = document.getElementById('ae-reload-btn');
+  if (!btn) return;
+  btn.classList.add('is-loading');
+  btn.textContent = '评估中…';
+  // Add radar loading animation class to all dim bars
+  var wrap = document.getElementById('agent-eval-wrap');
+  if (wrap) wrap.classList.add('radar-loading');
+  fetch(API_BASE + '/api/kb/files', {
+    headers: { 'Authorization': 'Bearer ' + getToken() }
+  }).then(function(res) { return res.json(); })
+    .then(function(data) {
+      _kbFiles = data.files || [];
+      renderKbUI();
+      var scores = computeAgentScores(_kbFiles);
+      renderAgentEval(scores.scores, scores.grade);
+      if (btn) { btn.classList.remove('is-loading'); btn.textContent = '重新评估'; }
+      if (wrap) wrap.classList.remove('radar-loading');
+    })
+    .catch(function() {
+      if (btn) { btn.classList.remove('is-loading'); btn.textContent = '重新评估'; }
+      if (wrap) wrap.classList.remove('radar-loading');
+    });
 }
 
 function loadAgentEval() {
