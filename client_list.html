@@ -772,6 +772,7 @@ function renderClientCard(c) {
     var color = i < progress ? '#1263e6' : (i === progress ? '#b9d8ff' : '#e5e7eb');
     dots += '<div class="c-dot" style="background:' + color + '"></div>';
   }
+  var noteText = noteCount === 0 ? '暂无沟通' : noteCount + ' 次沟通';
 
   var noteText = noteCount === 0 ? '暂无沟通' : noteCount + ' 次沟通';
   var updateText = timeAgo(c.updated_at || c.created_at);
@@ -801,8 +802,13 @@ function renderClientCard(c) {
     '<div class="client-card-body">' +
       demandHtml +
     '</div>' +
-    '<div class="client-card-footer" style="justify-content:flex-end">' +
-      '<span style="font-size:12px;color:#98a2b3">' + updateText + '</span>' +
+    '<div class="client-card-footer">' +
+      '<div class="client-card-footer-left">' +
+        '<div class="c-progress">' + dots + '<span class="c-level">' + progress + '/5</span></div>' +
+        '<span>' + noteText + '</span>' +
+        '<span class="sep">·</span>' +
+        '<span>' + updateText + '</span>' +
+      '</div>' +
     '</div>' +
   '</div>';
 }
