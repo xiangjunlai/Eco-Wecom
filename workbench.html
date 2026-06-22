@@ -27,6 +27,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .client-dropdown-item .cdi-name{font-weight:600;overflow:hidden;text-overflow:ellipsis}
 .client-dropdown-item .cdi-meta{font-size:11px;color:#98a2b3;margin-top:2px}
 .client-dropdown-divider{height:1px;background:#f0f2f5;margin:4px 0}
+.hidden{display:none!important}
 .flow{position:relative;margin-top:6px;padding-left:3px}
 .flow:before{content:"";position:absolute;left:25px;top:24px;bottom:24px;width:2px;background:linear-gradient(#1263e6 0 28%,#dfe6ef 28% 100%)}
 .step{position:relative;display:flex;flex-direction:row;align-items:center;gap:12px;padding:12px 10px;border-radius:14px;cursor:pointer;transition:background .15s,transform .15s;margin:5px 0}
@@ -613,7 +614,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
       <div class="brand-client-select" style="flex:1;min-width:0">
         <div class="brand-title" id="sidebar-client-name" onclick="toggleClientDropdown()" style="cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap"><span id="sidebar-client-name-text" style="overflow:hidden;text-overflow:ellipsis;max-width:130px">当前客户</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M6 9l6 6 6-6"/></svg></div>
         <div class="brand-sub" id="sidebar-client-meta" onclick="toggleClientDropdown()" style="cursor:pointer;display:flex;align-items:center;gap:4px"><span id="sidebar-client-meta-text" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px">点击选择客户</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M6 9l6 6 6-6"/></svg></div>
-        <div id="client-dropdown" style="display:none;position:absolute;top:68px;left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 24px rgba(18,24,40,.15);z-index:200;overflow:hidden;max-height:280px;overflow-y:auto">
+        <div id="client-dropdown" class="hidden" style="display:none;position:absolute;top:68px;left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 24px rgba(18,24,40,.15);z-index:200;overflow:hidden;max-height:280px;overflow-y:auto">
           <div id="client-dropdown-list"></div>
         </div>
       </div>
@@ -1474,13 +1475,15 @@ function updateFloatingAction(n) {
 function toggleClientDropdown() {
   const dd = document.getElementById('client-dropdown');
   if (!dd) { console.error('[dropdown] element not found'); return; }
-  console.log('[dropdown] toggle, current display:', dd.style.display, 'list el:', document.getElementById('client-dropdown-list'));
-  if (dd.style.display === 'none') {
-    dd.style.display = '';
+  console.log('[dropdown] toggle, display:', dd.style.display, 'classList:', dd.className);
+  if (dd.style.display === 'none' || dd.classList.contains('hidden')) {
+    dd.style.display = 'block';
+    dd.classList.remove('hidden');
     document.addEventListener('click', closeClientDropdownOutside);
     renderClientDropdownList();
   } else {
     dd.style.display = 'none';
+    dd.classList.add('hidden');
     document.removeEventListener('click', closeClientDropdownOutside);
   }
 }
