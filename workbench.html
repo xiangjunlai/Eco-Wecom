@@ -1226,15 +1226,27 @@ function isLoggedIn() { return !!getToken(); }
 function getClients() {
   try {
     let data = localStorage.getItem(STORAGE_KEY);
-    let arr = JSON.parse(data || '[]');
-    return Array.isArray(arr) ? arr : [];
+    if (!data) return [];
+    let arr = JSON.parse(data);
+    if (!Array.isArray(arr)) throw new Error('not array');
+    return arr;
   } catch(e) {
-    console.error('[getClients] error:', e.message);
+    console.error('[getClients] corrupt, recovering:', e.message);
+    try { localStorage.setItem(STORAGE_KEY + '_backup', data || ''); } catch(e2){}
+    try { localStorage.setItem(STORAGE_KEY, '[]'); } catch(e2){}
     return [];
   }
 }
 function saveClients(clients) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
+  try {
+    var s = JSON.stringify(clients);
+    localStorage.setItem(STORAGE_KEY, s);
+    var verify = localStorage.getItem(STORAGE_KEY);
+    if (verify !== s) throw new Error('verification failed');
+  } catch(e) {
+    console.error('[saveClients] error:', e.message);
+    try { localStorage.setItem(STORAGE_KEY, '[]'); } catch(e2){}
+  }
 }
 function getClient(id) { var cid = String(id); var local = getClients().find(function(c){ return String(c.id) === cid; }); if (_backendClientCache[id]) return Object.assign({}, local || {}, _backendClientCache[id]); return local; }
 function updateClient(id, updates, silent) {
@@ -1594,7 +1606,6 @@ function loadStepData(n) {
   updateCtxBar(c);
   if (n === 1) setTimeout(bindStep1Inputs, 50);
   setTimeout(enableAutoSave, 100);
-  console.log('loadStepData('+n+') took ' + Math.round(performance.now()-t0) + 'ms');
 }
 
 // ==================== CLIENT LIST ====================
@@ -2023,14 +2034,12 @@ async function doAISearch() {
       body: JSON.stringify({ company_name: name, industry: industry || '' })
     });
 
-    console.log('Response status:', response.status);
 
     if (!response.ok) {
       throw new Error('请求失败: ' + response.status);
     }
 
     const data = await response.json();
-    console.log('Response data:', data);
 
     if (data.detail) {
       throw new Error(data.detail);
@@ -2061,7 +2070,6 @@ async function doAISearch() {
 }
 
 function renderAIResult(data) {
-  console.log('renderAIResult received:', data);
   const btn = document.getElementById('aiSearchBtn');
   const body = document.getElementById('s1-ai-body');
   const indicator = document.getElementById('s1-ai-indicator');
@@ -2210,17 +2218,13 @@ function saveStep1Local() {
 
 // ==================== STEP 1 HANDLERS ====================
 async function doGenerateCustomerProfile() {
-  console.log('[gen-btn] clicked, currentClientId:', currentClientId);
   const btn = document.getElementById('s1-gen-btn');
-  if (!btn) { console.error('[gen-btn] button not found'); return; }
   btn.classList.add('loading');
   btn.disabled = true;
   const name = document.getElementById('s1-name').value.trim();
   const industry = document.getElementById('s1-industry').value;
   const demand = document.getElementById('s1-demand').value.trim();
-  console.log('[gen-btn] name:', name, 'industry:', industry, 'demand:', demand);
   if (!name || !industry || !demand) { showToast('请填写完整客户信息'); btn.classList.remove('loading'); btn.disabled = false; return; }
-  console.log('[gen-btn] calling API...');
   saveStep1Local();
   // Start artifact progress animation
   let genPct = 0;
@@ -2235,19 +2239,12 @@ async function doGenerateCustomerProfile() {
     method: 'POST', headers: getAuthHeaders(),
     body: JSON.stringify({ industry, initial_demand: demand, company_name: name, company_intro: getClient(currentClientId)?.company_intro || '' })
   }).then(r => r.json()).then(data => {
-    console.log('[gen-api] response:', JSON.stringify(data).substring(0, 200));
     clearInterval(interval);
     if (data.result) {
-      console.log('[gen-api] before updateClient, _profileDone will be set to true');
       updateClient(currentClientId, { step1_result: data.result, _isGeneratingProfile: false, _profileGenPct: null, _profileDone: true });
-      console.log('[gen-api] after updateClient, checking localStorage...');
-      var afterClients = getClients();
-      var cid = String(currentClientId);
-      var afterC = afterClients.find(function(x){ return String(x.id) === cid; });
-      console.log('[gen-api] afterClients.length:', afterClients.length, 'cid:', cid, 'afterC found:', !!afterC, '_profileDone:', afterC && afterC._profileDone);
       renderArtifacts();
       showToast('客户画像生成完成');
-      setTimeout(function() { go(2); }, 500);
+      setTimeout(function() { go(2); }, 800);
     } else {
       updateClient(currentClientId, { _isGeneratingProfile: false, _profileGenPct: null }, true);
       renderArtifacts();
@@ -2255,7 +2252,6 @@ async function doGenerateCustomerProfile() {
     }
   }).catch(e => {
     clearInterval(interval);
-    console.error('[gen-api] error:', e);
     updateClient(currentClientId, { _isGeneratingProfile: false, _profileGenPct: null }, true);
     renderArtifacts();
     showToast('网络错误，请检查连接');
@@ -2305,7 +2301,7 @@ async function doRegenerateStep2() {
   showGenerateModal('正在重新生成调研准备材料', 'AI 正在分析客户信息并生成调研问题', 2);
   setGenStep(1);
   genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时，请重试', true); }, 30000);
-  setTimeout(() => { if (genReady) return; setGenStep(2); }, 500);
+  setTimeout(() => { if (genReady) return; setGenStep(2); }, 800);
   setTimeout(() => { if (genReady) return; setGenStep(3); }, 1500);
   setTimeout(() => { if (genReady) return; setGenStep(4); }, 5000);
   setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
@@ -2351,7 +2347,7 @@ async function doRegenerateStep3() {
   showGenerateModal('正在生成售前报告', 'AI 正在分析沟通记录并生成需求报告', 4);
   setGenStep(1);
   genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时', true); }, 30000);
-  setTimeout(() => { if (genReady) return; setGenStep(2); }, 500);
+  setTimeout(() => { if (genReady) return; setGenStep(2); }, 800);
   setTimeout(() => { if (genReady) return; setGenStep(3); }, 1500);
   setTimeout(() => { if (genReady) return; setGenStep(4); }, 5000);
   setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
@@ -3179,7 +3175,6 @@ function renderArtifacts() {
   const c = getClient(currentClientId);
   const list = document.getElementById('art-list');
   if (!c) { list.innerHTML = ''; return; }
-  console.log('[renderArtifacts] _saved:', c._saved, '_profileDone:', c._profileDone, 'step1_result:', !!c.step1_result);
 
   const isGenProfile = !!(c._isGeneratingProfile);
   const profilePct = isGenProfile ? (c._profileGenPct || 10) : calcProfilePct(c);
