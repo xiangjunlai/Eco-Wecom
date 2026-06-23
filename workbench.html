@@ -1248,8 +1248,17 @@ function updateClient(id, updates, silent) {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(updates)
-    }).catch(() => {});
+    }).catch(function(){});
   }
+  // Force sync re-render of artifacts from localStorage
+  try {
+    var freshClients = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    var freshC = freshClients.find(function(c){ return String(c.id) === cid; });
+    if (freshC) {
+      _backendClientCache[id] = Object.assign({}, _backendClientCache[id] || {}, freshC);
+      if (document.getElementById('art-list')) renderArtifacts();
+    }
+  } catch(e){}
 }
 
 // ==================== GENERATE MODAL (Step1→Step2) ====================
