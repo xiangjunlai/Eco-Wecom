@@ -1202,7 +1202,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 </div>
 
 <!-- CREATE CLIENT MODAL -->
-<script>console.log("[workbench] v0.4.10 loaded at", new Date().toISOString());
+<script>window.addEventListener("error",function(e){console.error("[JS ERROR]",e.message,"at",e.filename+":"+e.lineno)});console.log("[workbench] v0.4.10 loaded at", new Date().toISOString());
 // ==================== CONSTANTS ====================
 const API_BASE = 'http://localhost:8000';
 const STORAGE_KEY = 'provider-assist-clients';
