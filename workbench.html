@@ -2205,13 +2205,6 @@ async function doGenerateCustomerProfile() {
   if (!name || !industry || !demand) { showToast('请填写完整客户信息'); btn.classList.remove('loading'); btn.disabled = false; return; }
   console.log('[gen-btn] calling API...');
   saveStep1Local();
-  btn.classList.add('loading');
-  btn.disabled = true;
-  const name = document.getElementById('s1-name').value.trim();
-  const industry = document.getElementById('s1-industry').value;
-  const demand = document.getElementById('s1-demand').value.trim();
-  if (!name || !industry || !demand) { showToast('请填写完整客户信息'); btn.classList.remove('loading'); btn.disabled = false; return; }
-  saveStep1Local();
   // Start artifact progress animation
   let genPct = 0;
   updateClient(currentClientId, { _isGeneratingProfile: true, _profileGenPct: 0 });
