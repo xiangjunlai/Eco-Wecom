@@ -1229,7 +1229,7 @@ function getClients() {
 function saveClients(clients) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 }
-function getClient(id) { if (_backendClientCache[id]) return _backendClientCache[id]; return getClients().find(c => c.id === id); }
+function getClient(id) { var local = getClients().find(function(c){ return c.id === id; }); if (_backendClientCache[id]) return Object.assign({}, local || {}, _backendClientCache[id]); return local; }
 function updateClient(id, updates, silent) {
   const clients = getClients();
   const idx = clients.findIndex(c => c.id === id);
@@ -1839,14 +1839,44 @@ function loadStep1(c) {
     const tag = chip.dataset.tag;
     chip.classList.toggle('active', (c.tags||'').split(',').includes(tag));
   });
-  if (c.company_intro || c.company_type) {
-    document.getElementById('s1-ai-result').classList.remove('is-hidden');
-    document.getElementById('s1-ai-type').textContent = c.company_type || '-';
-    document.getElementById('s1-ai-main').textContent = c.main_customers || '-';
-    document.getElementById('s1-ai-focus').textContent = c.possible_focus || '-';
-    document.getElementById('s1-ai-intro').textContent = c.company_intro || '-';
+  // Restore AI search state from localStorage or client data
+  var aiData = null;
+  try { aiData = JSON.parse(localStorage.getItem('kb_ai_' + currentClientId)); } catch(e){}
+  if (!aiData && (c.company_intro || c.company_type)) {
+    aiData = { company_type: c.company_type || '', main_customers: c.main_customers || '', possible_focus: c.possible_focus || '', company_intro: c.company_intro || '' };
   }
-  // 绑定实时进度更新
+  if (aiData && (aiData.company_type || aiData.company_intro)) {
+    window._aiSearchDone = true;
+    var panel = document.getElementById('s1-ai-panel');
+    var btn = document.getElementById('aiSearchBtn');
+    panel.classList.remove('is-hidden');
+    if (btn) {
+      btn.classList.remove('loading');
+      btn.innerHTML = '<span class="ai-icon">✨</span><span>AI 智搜</span>';
+    }
+    var body = panel.querySelector('.ai-panel-body');
+    var indicator = document.getElementById('s1-ai-indicator');
+    if (indicator) indicator.innerHTML = '<span class="check-icon">✓</span><span style="color:#13b96f;font-size:12px">已完成</span>';
+    var focusTags = (aiData.possible_focus || '').split(/[\/\s]+/).filter(function(t){ return t.length > 1; });
+    var companyType = aiData.company_type || '-';
+    var mainCustomers = aiData.main_customers || '-';
+    var companyIntro = aiData.company_intro || '-';
+    body.innerHTML = '<div style="padding:16px 18px">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px">' +
+        '<div><h3 style="margin:0 0 3px;font-size:15px;font-weight:900;color:#182235">AI 智搜结果</h3><span style="font-size:11px;color:#98a2b3">基于公开信息辅助生成</span></div>' +
+        '<div style="display:flex;gap:8px;flex-shrink:0">' +
+          '<button onclick="doAISearch()" class="btn ghost" style="padding:8px 14px;font-size:12px;border-radius:11px">重新生成</button>' +
+          '<button onclick="adoptAIResult()" class="btn primary" style="padding:8px 18px;font-size:12px;border-radius:11px">采用</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="insights" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px">' +
+        '<div class="insight" style="border:1px solid #e6ebf2;border-radius:16px;background:#fff;padding:14px"><b style="font-size:13px;color:#182235;display:block;margin-bottom:6px">' + companyType + '</b><span style="font-size:11px;color:#98a2b3">客户类型</span></div>' +
+        '<div class="insight" style="border:1px solid #e6ebf2;border-radius:16px;background:#fff;padding:14px"><b style="font-size:13px;color:#182235;display:block;margin-bottom:6px">' + mainCustomers + '</b><span style="font-size:11px;color:#98a2b3">主要客户</span></div>' +
+        '<div class="insight" style="border:1px solid #e6ebf2;border-radius:16px;background:#fff;padding:14px"><div style="display:flex;gap:6px;flex-wrap:wrap">' + (focusTags.length ? focusTags.map(function(t){ return '<span style="background:#eef6ff;color:#1263e6;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:800">'+t+'</span>'; }).join('') : '<span style="color:#98a2b3;font-size:12px">暂无</span>') + '</div><span style="font-size:11px;color:#98a2b3;margin-top:6px;display:block">可能关注</span></div>' +
+      '</div>' +
+      (companyIntro !== '-' ? '<div class="insight" style="border:1px solid #e6ebf2;border-radius:16px;background:#fff;padding:14px"><b style="font-size:13px;color:#182235;display:block;margin-bottom:6px">公司简介</b><p style="margin:0;font-size:12px;color:#667085;line-height:1.7">'+companyIntro+'</p></div>' : '') +
+    '</div>';
+  }
   bindStep1Inputs();
 }
 
@@ -1991,6 +2021,14 @@ async function doAISearch() {
 
     renderAIResult(data);
     window._aiSearchDone = true;
+    // Persist AI search state to localStorage
+    try {
+      var aiData = { company_type: data.company_type || '', main_customers: data.main_customers || '', possible_focus: data.possible_focus || '', company_intro: data.company_intro || '' };
+      var clients = getClients();
+      var c = clients.find(function(x){ return x.id === currentClientId; });
+      if (c) { Object.assign(c, aiData); saveClients(clients); }
+      localStorage.setItem('kb_ai_' + currentClientId, JSON.stringify(aiData));
+    } catch(e){}
 
     updateClient(currentClientId, {
       company_type: data.company_type || '',
