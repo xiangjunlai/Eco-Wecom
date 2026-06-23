@@ -2856,6 +2856,94 @@ function doCopyDemoUrl() {
 }
 
 
+// ==================== STEP 2 EDIT FUNCTIONS ====================
+function togglePartEdit(btn, part) {
+  var card = btn.closest('.prep-card');
+  var editableEls = card.querySelectorAll('[contenteditable]');
+  var isEditing = btn.classList.contains('editing');
+  if (isEditing) {
+    // Save
+    btn.classList.remove('editing');
+    btn.textContent = '编辑';
+    editableEls.forEach(function(el) { el.contentEditable = 'false'; el.classList.remove('editing'); });
+    if (part === 'part1') saveStep2Part1(card);
+    if (part === 'part2') saveStep2Part2();
+    if (part === 'part3') saveStep2Part3();
+  } else {
+    // Start editing
+    btn.classList.add('editing');
+    btn.textContent = '保存';
+    editableEls.forEach(function(el) { el.contentEditable = 'true'; el.classList.add('editing'); el.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); el.blur(); } }); });
+  }
+}
+
+function saveStep2Part1(card) {
+  var profileText = card.querySelector('#s2-profile-text');
+  var pains = card.querySelectorAll('#s2-pains .pain');
+  var c = getClient(currentClientId);
+  if (!c || !c.step1_result) return;
+  c.step1_result.part1 = c.step1_result.part1 || {};
+  if (profileText) c.step1_result.part1.company_background = profileText.textContent;
+  if (pains.length) c.step1_result.part1.pain_points = Array.from(pains).map(function(p){ return p.textContent; });
+  updateClient(currentClientId, { step1_result: c.step1_result });
+}
+
+function saveStep2Part2() {
+  var gaps = [];
+  document.querySelectorAll('#s2-gaps .gap').forEach(function(g) {
+    var textEl = g.querySelector('.gap-text b');
+    if (textEl) gaps.push({ text: textEl.textContent, priority: 'high' });
+  });
+  var c = getClient(currentClientId);
+  if (!c || !c.step1_result) return;
+  c.step1_result.part2 = gaps;
+  updateClient(currentClientId, { step1_result: c.step1_result });
+}
+
+function saveStep2Part3() {
+  // Questions are read-only in UI, no save needed
+}
+
+function addGap() {
+  var container = document.getElementById('s2-gaps');
+  if (!container) return;
+  var newGap = document.createElement('div');
+  newGap.className = 'gap';
+  newGap.innerHTML = '<div class="check"></div><div class="gap-text" contenteditable="true" style="outline:none;border:1px dashed #ddeeff;border-radius:8px;padding:4px 8px"><b>新信息项...</b></div><div class="priority">高优</div><div style="color:#98a2b3;font-size:12px;cursor:pointer" onclick="this.parentElement.remove()">×</div>';
+  container.appendChild(newGap);
+  newGap.querySelector('.gap-text').focus();
+  saveStep2Part2();
+}
+
+function toggleMoreGaps() {
+  var el = document.getElementById('s2-gaps');
+  var btn = document.getElementById('s2-gaps-more-btn');
+  if (!el || !btn) return;
+  var expanded = el.classList.toggle('gaps-expanded');
+  btn.textContent = expanded ? '收起问题 ▲' : '查看更多问题（' + (document.querySelectorAll('#s2-gaps .gap').length) + '）';
+}
+
+// ==================== STEP 2 SAVE ====================
+function saveStep2ToClient() {
+  var c = getClient(currentClientId);
+  if (!c) return;
+  // Save gaps from UI
+  var gaps = [];
+  document.querySelectorAll('#s2-gaps .gap').forEach(function(g) {
+    var textEl = g.querySelector('.gap-text b');
+    if (textEl && textEl.textContent.trim()) {
+      var priEl = g.querySelector('.priority');
+      gaps.push({ text: textEl.textContent, priority: priEl ? priEl.textContent : 'high' });
+    }
+  });
+  if (c.step1_result) {
+    c.step1_result.part2 = gaps;
+    updateClient(currentClientId, { step1_result: c.step1_result });
+  }
+}
+
+
+
 // ==================== STEP 2 RENDER FUNCTIONS ====================
 function renderGaps(gaps) {
   var container = document.getElementById('s2-gaps');
