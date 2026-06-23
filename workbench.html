@@ -2852,6 +2852,95 @@ function doCopyDemoUrl() {
 }
 
 
+// ==================== STEP 2 RENDER FUNCTIONS ====================
+function renderGaps(gaps) {
+  var container = document.getElementById('s2-gaps');
+  var totalEl = document.getElementById('s2-gaps-total');
+  if (!container) return;
+  if (!gaps || gaps.length === 0) {
+    container.innerHTML = '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">暂无信息缺口</div>';
+    if (totalEl) totalEl.textContent = '0';
+    return;
+  }
+  if (totalEl) totalEl.textContent = gaps.length;
+  container.innerHTML = gaps.map(function(g, i) {
+    var priority = g.priority || 'high';
+    var priorityLabel = {high:'高优',mid:'中优',low:'低优'}[priority] || '高优';
+    var priorityClass = priority === 'mid' ? ' mid' : (priority === 'low' ? ' low' : '');
+    return '<div class="gap' + (i >= 5 ? ' hidden-gaps' : '') + '">' +
+      '<div class="check"></div>' +
+      '<div class="gap-text"><b>' + (g.text || g.question || g.item || '-') + '</b></div>' +
+      '<div class="priority' + priorityClass + '">' + priorityLabel + '</div>' +
+      '<div style="color:#98a2b3;font-size:12px;cursor:pointer" onclick="this.parentElement.remove()">×</div>' +
+    '</div>';
+  }).join('');
+  var moreBtn = document.getElementById('s2-gaps-more-btn');
+  if (moreBtn) {
+    moreBtn.style.display = gaps.length > 5 ? '' : 'none';
+    moreBtn.onclick = function() {
+      var el = document.getElementById('s2-gaps');
+      var expanded = el.classList.toggle('gaps-expanded');
+      moreBtn.textContent = expanded ? '收起问题 ▲' : '查看更多问题（' + gaps.length + '）';
+    };
+  }
+}
+
+function renderQuestions(questions) {
+  var must = questions.must || questions.mandatory || [];
+  var deep = questions.deep || questions.followup || [];
+  var industry = questions.industry || [];
+  var mustEl = document.getElementById('s2-must-questions');
+  var deepEl = document.getElementById('s2-deep-questions');
+  var indEl = document.getElementById('s2-industry-notes');
+  var mustCount = document.getElementById('s2-must-count');
+  var deepCount = document.getElementById('s2-deep-count');
+  var indCount = document.getElementById('s2-industry-count');
+  var moreBtn = document.getElementById('s2-more-btn');
+  var moreTotal = document.getElementById('s2-deep-total');
+  if (mustCount) mustCount.textContent = must.length;
+  if (deepCount) deepCount.textContent = deep.length;
+  if (indCount) indCount.textContent = industry.length;
+  if (moreTotal) moreTotal.textContent = deep.length;
+  if (moreBtn) moreBtn.style.display = deep.length > 3 ? '' : 'none';
+  function renderQ(qs) {
+    if (!qs || qs.length === 0) return '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">暂无问题</div>';
+    return qs.map(function(q) {
+      return '<div class="q-card"><div class="q-card-main"><b style="font-size:14px;color:#182235">' + (q.question || q.text || '-') + '</b></div></div>';
+    }).join('');
+  }
+  if (mustEl) mustEl.innerHTML = renderQ(must);
+  if (deepEl) deepEl.innerHTML = renderQ(deep);
+  if (indEl) indEl.innerHTML = industry.length ? industry.map(function(n){ return '<div style="padding:10px 0;border-bottom:1px solid #f0f2f5;font-size:13px;color:#667085">'+n+'</div>'; }).join('') : '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">暂无行业经验</div>';
+}
+
+// ==================== STEP 3 RENDER FUNCTIONS ====================
+function renderNoteList(c) {
+  var list = document.getElementById('s3-note-list');
+  if (!list) return;
+  var notes = c.uploaded_files || [];
+  if (notes.length === 0) {
+    list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = notes.map(function(n) {
+    var date = n.date || n.created_at || '';
+    var dateStr = date ? new Date(date).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) : '';
+    var sourceMap = {meeting:'会议纪要',call:'电话沟通',email:'邮件往来',other:'其他'};
+    var source = sourceMap[n.source] || n.source || '其他';
+    return '<div class="saved-note">' +
+      '<div class="saved-note-top">' +
+        '<h4>' + (n.name || '沟通记录') + '</h4>' +
+        '<div class="note-meta">' +
+          '<span class="note-pill">' + source + '</span>' +
+          '<span style="color:#98a2b3;font-size:11px">' + dateStr + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<p>' + (n.content || n.note || n.text || '-') + '</p>' +
+    '</div>';
+  }).join('');
+}
+
+
 function loadStep2(c) {
   if (!c.step1_result) return;
   const data = c.step1_result;
