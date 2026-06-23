@@ -2221,8 +2221,12 @@ async function doGenerateCustomerProfile() {
     console.log('[gen-api] response:', JSON.stringify(data).substring(0, 200));
     clearInterval(interval);
     if (data.result) {
+      console.log('[gen-api] before updateClient, _profileDone will be set to true');
       updateClient(currentClientId, { step1_result: data.result, _isGeneratingProfile: false, _profileGenPct: null, _profileDone: true });
-      console.log('[gen-api] updated, _profileDone set, calling renderArtifacts');
+      console.log('[gen-api] after updateClient, checking localStorage...');
+      var afterClients = getClients();
+      var afterC = afterClients.find(function(x){ return x.id === currentClientId; });
+      console.log('[gen-api] localStorage._profileDone:', afterC && afterC._profileDone, 'step1_result:', !!afterC.step1_result);
       renderArtifacts();
       showToast('客户画像生成完成');
       setTimeout(function() { go(2); }, 500);
