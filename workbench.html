@@ -2170,26 +2170,35 @@ async function doGenerateCustomerProfile() {
   const demand = document.getElementById('s1-demand').value.trim();
   if (!name || !industry || !demand) { showToast('请填写完整客户信息'); btn.classList.remove('loading'); btn.disabled = false; return; }
   saveStep1Local();
-  showGenerateModal('正在生成客户画像', 'AI 正在分析客户信息并生成调研问题', 2);
-  setGenStep(1);
-  genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时，请重试', true); }, 30000);
-  setTimeout(() => { if (genReady) return; setGenStep(2); }, 500);
-  setTimeout(() => { if (genReady) return; setGenStep(3); }, 1500);
-  setTimeout(() => { if (genReady) return; setGenStep(4); }, 5000);
-  setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
+  // Start artifact progress animation
+  let genPct = 0;
+  updateClient(currentClientId, { _isGeneratingProfile: true, _profileGenPct: 0 });
+  renderArtifacts();
+  const interval = setInterval(() => {
+    genPct = Math.min(genPct + Math.random() * 15 + 5, 88);
+    updateClient(currentClientId, { _profileGenPct: Math.round(genPct) }, true);
+    renderArtifacts();
+  }, 400);
   fetch(API_BASE + '/api/question_list', {
     method: 'POST', headers: getAuthHeaders(),
     body: JSON.stringify({ industry, initial_demand: demand, company_name: name, company_intro: getClient(currentClientId)?.company_intro || '' })
   }).then(r => r.json()).then(data => {
-    clearTimeout(genTimeout);
-    if (genReady) return;
+    clearInterval(interval);
     if (data.result) {
-      updateClient(currentClientId, { step1_result: data.result, _profileDone: true });
-      showGenSuccess('客户画像生成完成', '客户画像已生成<br>调研问题已生成<br>信息缺口已生成');
+      updateClient(currentClientId, { step1_result: data.result, _isGeneratingProfile: false, _profileGenPct: null, _profileDone: true });
+      renderArtifacts();
+      showToast('客户画像生成完成');
     } else {
-      showGenError2(data.error || '生成客户画像失败', true);
+      updateClient(currentClientId, { _isGeneratingProfile: false, _profileGenPct: null }, true);
+      renderArtifacts();
+      showToast(data.error || '生成客户画像失败');
     }
-  }).catch(e => { clearTimeout(genTimeout); if (genReady) return; showGenError2('网络错误，请检查连接', true); }).finally(() => {
+  }).catch(e => {
+    clearInterval(interval);
+    updateClient(currentClientId, { _isGeneratingProfile: false, _profileGenPct: null }, true);
+    renderArtifacts();
+    showToast('网络错误，请检查连接');
+  }).finally(() => {
     btn.classList.remove('loading');
     btn.disabled = false;
   });
@@ -2933,7 +2942,8 @@ function renderArtifacts() {
   const list = document.getElementById('art-list');
   if (!c) { list.innerHTML = ''; return; }
 
-  const profilePct = calcProfilePct(c);
+  const isGenProfile = !!(c._isGeneratingProfile);
+  const profilePct = isGenProfile ? (c._profileGenPct || 10) : calcProfilePct(c);
   const isProfileSaved = !!(c._saved && c.name && c.industry);
   const noteCount = (c.uploaded_files || []).length;
 
@@ -2944,7 +2954,7 @@ function renderArtifacts() {
 
   // 客户画像卡：始终显示，进度实时计算
   const hasWecomDoc = !!(c._wecom_docid && c._wecom_url);
-  items.push({ name: '客户画像卡', tag: isProfileSaved ? '已完成' : '进行中', tagCls: isProfileSaved ? '' : 'todo', pct: profilePct, isProfile: true, hasWecomDoc, wecomUrl: c._wecom_url, wecomDocid: c._wecom_docid });
+  items.push({ name: '客户画像卡', tag: isGenProfile ? '生成中' : (isProfileSaved ? '已完成' : '进行中'), tagCls: isGenProfile ? 'editing' : (isProfileSaved ? '' : 'todo'), pct: profilePct, isProfile: true, hasWecomDoc, wecomUrl: c._wecom_url, wecomDocid: c._wecom_docid });
 
   // 调研问题清单
   const hasStep1WecomDoc = !!(c._step1_wecom_docid && c._step1_wecom_url);
