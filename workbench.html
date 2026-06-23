@@ -1224,16 +1224,23 @@ function isLoggedIn() { return !!getToken(); }
 
 // ==================== STORAGE ====================
 function getClients() {
-  let data = localStorage.getItem(STORAGE_KEY);
-  return JSON.parse(data || '[]');
+  try {
+    let data = localStorage.getItem(STORAGE_KEY);
+    let arr = JSON.parse(data || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch(e) {
+    console.error('[getClients] error:', e.message);
+    return [];
+  }
 }
 function saveClients(clients) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 }
-function getClient(id) { var local = getClients().find(function(c){ return c.id === id; }); if (_backendClientCache[id]) return Object.assign({}, local || {}, _backendClientCache[id]); return local; }
+function getClient(id) { var cid = String(id); var local = getClients().find(function(c){ return String(c.id) === cid; }); if (_backendClientCache[id]) return Object.assign({}, local || {}, _backendClientCache[id]); return local; }
 function updateClient(id, updates, silent) {
-  const clients = getClients();
-  const idx = clients.findIndex(c => c.id === id);
+  const clients = getClients() || [];
+  const cid = String(id);
+  const idx = clients.findIndex(function(c){ return String(c.id) === cid; });
   if (idx >= 0) { Object.assign(clients[idx], updates, { updated_at: new Date().toISOString() }); saveClients(clients); }
   _backendClientCache[id] = Object.assign({}, _backendClientCache[id] || {}, updates);
   if (!silent) {
@@ -2226,8 +2233,9 @@ async function doGenerateCustomerProfile() {
       updateClient(currentClientId, { step1_result: data.result, _isGeneratingProfile: false, _profileGenPct: null, _profileDone: true });
       console.log('[gen-api] after updateClient, checking localStorage...');
       var afterClients = getClients();
-      var afterC = afterClients.find(function(x){ return x.id === currentClientId; });
-      console.log('[gen-api] localStorage._profileDone:', afterC && afterC._profileDone, 'step1_result:', !!afterC.step1_result);
+      var cid = String(currentClientId);
+      var afterC = afterClients.find(function(x){ return String(x.id) === cid; });
+      console.log('[gen-api] afterClients.length:', afterClients.length, 'cid:', cid, 'afterC found:', !!afterC, '_profileDone:', afterC && afterC._profileDone);
       renderArtifacts();
       showToast('客户画像生成完成');
       setTimeout(function() { go(2); }, 500);
