@@ -1230,11 +1230,11 @@ function saveClients(clients) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 }
 function getClient(id) { var local = getClients().find(function(c){ return c.id === id; }); if (_backendClientCache[id]) return Object.assign({}, local || {}, _backendClientCache[id]); return local; }
-function updateClient(id, updates, silent) { console.log('[updateClient] id:', id, 'updates:', JSON.stringify(updates), 'silent:', silent);
+function updateClient(id, updates, silent) {
   const clients = getClients();
   const idx = clients.findIndex(c => c.id === id);
   if (idx >= 0) { Object.assign(clients[idx], updates, { updated_at: new Date().toISOString() }); saveClients(clients); }
-  _backendClientCache[id] = { ...(_backendClientCache[id] || {}), ...updates };
+  _backendClientCache[id] = Object.assign({}, _backendClientCache[id] || {}, updates);
   if (!silent) {
     fetch(API_BASE + '/api/clients/' + id, {
       method: 'PUT',
@@ -3157,7 +3157,7 @@ function renderArtifacts() {
   const c = getClient(currentClientId);
   const list = document.getElementById('art-list');
   if (!c) { list.innerHTML = ''; return; }
-  console.log('[renderArtifacts] c._saved:', c._saved, 'c._profileDone:', c._profileDone, 'c.name:', c.name, 'c.step1_result:', !!c.step1_result);
+  console.log('[renderArtifacts] _saved:', c._saved, '_profileDone:', c._profileDone, 'step1_result:', !!c.step1_result);
 
   const isGenProfile = !!(c._isGeneratingProfile);
   const profilePct = isGenProfile ? (c._profileGenPct || 10) : calcProfilePct(c);
