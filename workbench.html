@@ -848,7 +848,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
         </div>
 
         <div class="step-action-bar">
-          <button class="btn secondary" id="s1-gen-btn" onclick="doGenerateCustomerProfile()">生成客户画像</button>
+          <button class="btn secondary" id="s1-gen-btn" onclick="(function(){doGenerateCustomerProfile()})()">生成客户画像</button>
           <button class="btn primary" id="s1-next-btn" onclick="doStep1Next()">下一步 →</button>
         </div>
       </section>
@@ -2193,7 +2193,18 @@ function saveStep1Local() {
 
 // ==================== STEP 1 HANDLERS ====================
 async function doGenerateCustomerProfile() {
+  console.log('[gen-btn] clicked, currentClientId:', currentClientId);
   const btn = document.getElementById('s1-gen-btn');
+  if (!btn) { console.error('[gen-btn] button not found'); return; }
+  btn.classList.add('loading');
+  btn.disabled = true;
+  const name = document.getElementById('s1-name').value.trim();
+  const industry = document.getElementById('s1-industry').value;
+  const demand = document.getElementById('s1-demand').value.trim();
+  console.log('[gen-btn] name:', name, 'industry:', industry, 'demand:', demand);
+  if (!name || !industry || !demand) { showToast('请填写完整客户信息'); btn.classList.remove('loading'); btn.disabled = false; return; }
+  console.log('[gen-btn] calling API...');
+  saveStep1Local();
   btn.classList.add('loading');
   btn.disabled = true;
   const name = document.getElementById('s1-name').value.trim();
