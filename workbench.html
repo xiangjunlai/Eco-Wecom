@@ -113,9 +113,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .textarea{min-height:140px;line-height:1.78;resize:vertical}
 
 /* Section card */
-.s1-block{border:1px solid #e8edf5;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(18,34,64,.06)}
-.s1-block-header{padding:10px 18px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.3px}
-.s1-block-body{padding:16px 18px}
+#s1-ai-panel{margin-top:12px}
 #s1-ai-panel{margin-top:12px;border-radius:10px;border:1px solid #e8edf5}
 .field{margin-bottom:20px}
 .label{display:flex;justify-content:space-between;align-items:center;font-weight:850;font-size:13px;margin-bottom:8px}
@@ -773,84 +771,80 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
       <!-- Step 1: 客户录入 -->
       <section class="page" id="page1">
         <!-- 块1：客户名称 -->
-        <div class="s1-block" style="margin-bottom:16px">
-          <div class="s1-block-header" style="background:linear-gradient(90deg,#1263e6,#3b82f6)">
-            <span>客户名称</span>
+        <div class="prep-card" style="margin-bottom:16px">
+          <div class="card-accent accent-blue"></div>
+          <div class="prep-card-head">
+            <div><h3>客户名称</h3></div>
           </div>
-          <div class="s1-block-body">
-            <div class="search-row">
-              <input class="input" id="s1-name" placeholder="输入客户名称">
-              <button class="ai-search-btn" id="aiSearchBtn" onclick="toggleAISearch()">
-                <span class="ai-icon">✨</span>
-                <span>AI 智搜</span>
-              </button>
-            </div>
-            <!-- AI Search Panel -->
-            <div class="ai-search-panel" id="s1-ai-panel">
-              <div class="ai-panel-header" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-                <div class="ai-panel-indicator" id="s1-ai-indicator" style="display:flex;align-items:center;gap:10px">
-                  <span class="pulse"></span>
-                  <span id="s1-ai-status-text">AI 智搜中...</span>
-                </div>
-                <button id="s1-ai-retry" style="display:none;background:#f5f7fb;border:1px solid #d9e0ea;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer" onclick="doAISearch()">重试</button>
+          <div class="search-row" style="margin-bottom:14px">
+            <input class="input" id="s1-name" placeholder="输入客户名称">
+            <button class="ai-search-btn" id="aiSearchBtn" onclick="toggleAISearch()">
+              <span class="ai-icon">✨</span>
+              <span>AI 智搜</span>
+            </button>
+          </div>
+          <div class="ai-search-panel" id="s1-ai-panel">
+            <div class="ai-panel-header" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <div class="ai-panel-indicator" id="s1-ai-indicator" style="display:flex;align-items:center;gap:10px">
+                <span class="pulse"></span>
+                <span id="s1-ai-status-text">AI 智搜中...</span>
               </div>
-              <div class="ai-panel-body" id="s1-ai-body"></div>
+              <button id="s1-ai-retry" style="display:none;background:#f5f7fb;border:1px solid #d9e0ea;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer" onclick="doAISearch()">重试</button>
             </div>
+            <div class="ai-panel-body" id="s1-ai-body"></div>
           </div>
         </div>
 
         <!-- 块2：行业规模标签 -->
-        <div class="s1-block" style="margin-bottom:16px">
-          <div class="s1-block-header" style="background:linear-gradient(90deg,#13b96f,#34d399)">
-            <span>行业规模标签</span>
+        <div class="prep-card" style="margin-bottom:16px">
+          <div class="card-accent accent-green"></div>
+          <div class="prep-card-head">
+            <div><h3>行业规模标签</h3></div>
           </div>
-          <div class="s1-block-body">
-            <div class="row">
-              <div class="field">
-                <div class="label">客户行业</div>
-                <select class="select" id="s1-industry">
-                  <option value="">请选择行业</option>
-                  <option>金融</option><option>制造业</option><option>服装生产</option>
-                  <option>服装外贸</option><option>家居定制装修</option><option>B2B工业品</option>
-                  <option>工业品生产销售</option><option>互联网教育</option><option>设计行业</option>
-                  <option>企业行政</option><option>化工行业</option><option>医疗医药</option>
-                  <option>餐饮</option><option>零售分销</option><option>物业</option>
-                  <option>其他</option>
-                </select>
-              </div>
-              <div class="field">
-                <div class="label">公司规模</div>
-                <select class="select" id="s1-scale">
-                  <option value="">暂不明确</option>
-                  <option>1-50人</option><option>50-200人</option><option>200-1000人</option><option>1000人以上</option>
-                </select>
-              </div>
+          <div class="row">
+            <div class="field">
+              <div class="label">客户行业</div>
+              <select class="select" id="s1-industry">
+                <option value="">请选择行业</option>
+                <option>金融</option><option>制造业</option><option>服装生产</option>
+                <option>服装外贸</option><option>家居定制装修</option><option>B2B工业品</option>
+                <option>工业品生产销售</option><option>互联网教育</option><option>设计行业</option>
+                <option>企业行政</option><option>化工行业</option><option>医疗医药</option>
+                <option>餐饮</option><option>零售分销</option><option>物业</option>
+                <option>其他</option>
+              </select>
             </div>
-            <div class="field" style="margin-top:12px">
-              <div class="label">需求标签 <span class="hint">可多选，直接输入自定义标签后回车</span></div>
-              <div class="chips" id="s1-chips">
-                <span class="chip" data-tag="合规风控">合规风控</span>
-                <span class="chip" data-tag="客户运营">客户运营</span>
-                <span class="chip" data-tag="审批流程">审批流程</span>
-                <span class="chip" data-tag="销售管理">销售管理</span>
-                <span class="chip" data-tag="系统集成">系统集成</span>
-                <span class="chip" data-tag="项目交付">项目交付</span>
-                <span class="chip" data-tag="生产管理">生产管理</span>
-                <span class="chip" data-tag="人力资源">人力资源</span>
-                <input class="chip-input" id="s1-custom-tag" placeholder="+ 自定义" onkeydown="handleCustomTag(event)">
-              </div>
+            <div class="field">
+              <div class="label">公司规模</div>
+              <select class="select" id="s1-scale">
+                <option value="">暂不明确</option>
+                <option>1-50人</option><option>50-200人</option><option>200-1000人</option><option>1000人以上</option>
+              </select>
+            </div>
+          </div>
+          <div class="field" style="margin-top:12px">
+            <div class="label">需求标签 <span class="hint">可多选，直接输入自定义标签后回车</span></div>
+            <div class="chips" id="s1-chips">
+              <span class="chip" data-tag="合规风控">合规风控</span>
+              <span class="chip" data-tag="客户运营">客户运营</span>
+              <span class="chip" data-tag="审批流程">审批流程</span>
+              <span class="chip" data-tag="销售管理">销售管理</span>
+              <span class="chip" data-tag="系统集成">系统集成</span>
+              <span class="chip" data-tag="项目交付">项目交付</span>
+              <span class="chip" data-tag="生产管理">生产管理</span>
+              <span class="chip" data-tag="人力资源">人力资源</span>
+              <input class="chip-input" id="s1-custom-tag" placeholder="+ 自定义" onkeydown="handleCustomTag(event)">
             </div>
           </div>
         </div>
 
         <!-- 块3：需求表达 -->
-        <div class="s1-block" style="margin-bottom:16px">
-          <div class="s1-block-header" style="background:linear-gradient(90deg,#f59e0b,#fbbf24)">
-            <span>需求表达</span>
+        <div class="prep-card" style="margin-bottom:16px">
+          <div class="card-accent accent-orange"></div>
+          <div class="prep-card-head">
+            <div><h3>需求表达</h3></div>
           </div>
-          <div class="s1-block-body">
-            <textarea class="textarea" id="s1-demand" style="min-height:108px" placeholder="粘贴客户的原始表达，或销售整理后的补充描述…"></textarea>
-          </div>
+          <textarea class="textarea" id="s1-demand" style="min-height:108px" placeholder="粘贴客户的原始表达，或销售整理后的补充描述…"></textarea>
         </div>
 
         <div class="step-action-bar">
