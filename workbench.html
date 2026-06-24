@@ -361,12 +361,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .s4-row{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f5f7ff;font-size:13px}
 .s4-row:last-of-type{border-bottom:none}
 .s4-label{min-width:72px;color:#667085;font-weight:500;flex-shrink:0;padding-top:2px}
-.s4-val{color:#182235;line-height:1.6;flex:1}
-.s4-val:empty::before{content:'（未填写）';color:#d0d7e0}
-.s4-txta{display:none;width:100%;border:1px solid #dce3f0;border-radius:8px;padding:9px 11px;font-size:13px;color:#182235;line-height:1.7;resize:vertical;background:#fafbff;outline:none;font-family:inherit;box-sizing:border-box;min-height:52px;margin-top:10px;transition:box-shadow .2s,border-color .2s}
-.s4-txta:focus{border-color:#1263e6;background:#fff;box-shadow:0 0 0 3px rgba(18,99,230,.18)}
-.s4-txta.on{display:block}
-.s4-txta.glow{border-color:#1263e6;box-shadow:0 0 0 3px rgba(18,99,230,.18)}
+.s4-val{color:#182235;line-height:1.6;flex:1;min-height:24px;border-radius:6px;padding:2px 6px;outline:none;white-space:pre-wrap;word-break:break-all;transition:background .15s,box-shadow .15s,border-color .15s}
+.s4-val:empty::before{content:attr(data-placeholder);color:#d0d7e0}
+.s4-val.editing{background:#fff;border:1px solid #d0e0ff;box-shadow:0 0 0 3px rgba(18,99,230,.12);cursor:text}
+.s4-val.editing:empty::before{content:attr(data-placeholder);color:#b0c0e0}
 .req-box p{margin:0;color:#344054;font-size:13px;line-height:1.8;min-height:48px;outline:none}
 .flow-line{color:#344054;font-size:12px;line-height:1.8;outline:none}
 .flow-line span{display:inline-block;border:1px solid #dce8f8;background:#f8fbff;border-radius:999px;padding:5px 8px;margin:3px 2px}
@@ -1031,7 +1029,6 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	            <h3>方案输入确认</h3>
 	            <div style="display:flex;gap:8px">
 	              <button class="small-btn" id="s4-regen-btn" onclick="doRegenerateStep4Input()">重新生成</button>
-	              <button class="btn primary" id="s4-save-btn" onclick="doSaveStep4Input()" style="height:30px;font-size:12px;padding:0 14px;border-radius:8px;display:none">保存</button>
 	              <button class="btn secondary" id="s4-input-edit-btn" onclick="toggleS4InputEdit()" style="height:30px;font-size:12px;padding:0 14px;border-radius:8px">编辑</button>
 	            </div>
 	          </div>
@@ -1044,13 +1041,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	              </div>
 	              <span class="s4-arrow" id="s4-arrow-status">▼</span>
 	            </div>
-	            <div class="s4-gbody" id="s4-body-status">
-	              <div class="s4-row"><span class="s4-label">客户现状</span><span class="s4-val" id="s4-val-current"></span></div>
-	              <div class="s4-row"><span class="s4-label">核心问题</span><span class="s4-val" id="s4-val-pain"></span></div>
-	              <div class="s4-row"><span class="s4-label">涉及角色</span><span class="s4-val" id="s4-val-roles"></span></div>
-	              <textarea id="s4-current" class="s4-txta" placeholder="客户当前业务状态、规模、已有系统…"></textarea>
-	              <textarea id="s4-pain" class="s4-txta" placeholder="核心痛点（每行一条）…"></textarea>
-	              <textarea id="s4-roles" class="s4-txta" placeholder="涉及角色（每行一条）…"></textarea>
+	            <div class="s4-gbody open" id="s4-body-status">
+	              <div class="s4-row"><span class="s4-label">客户现状</span><span class="s4-val" id="s4-val-current" contenteditable="false" data-placeholder="点击编辑填入…" data-field="customerCurrentState"></span></div>
+	              <div class="s4-row"><span class="s4-label">核心问题</span><span class="s4-val" id="s4-val-pain" contenteditable="false" data-placeholder="点击编辑填入…" data-field="painPoints"></span></div>
+	              <div class="s4-row"><span class="s4-label">涉及角色</span><span class="s4-val" id="s4-val-roles" contenteditable="false" data-placeholder="点击编辑填入…" data-field="involvedRoles"></span></div>
 	            </div>
 	          </div>
 
@@ -1062,11 +1056,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	              </div>
 	              <span class="s4-arrow" id="s4-arrow-needs">▼</span>
 	            </div>
-	            <div class="s4-gbody" id="s4-body-needs">
-	              <div class="s4-row"><span class="s4-label">已确认需求</span><span class="s4-val" id="s4-val-needs"></span></div>
-	              <div class="s4-row"><span class="s4-label">期望效果</span><span class="s4-val" id="s4-val-outcome"></span></div>
-	              <textarea id="s4-needs" class="s4-txta" placeholder="已确认需求（每行一条）…"></textarea>
-	              <textarea id="s4-outcome" class="s4-txta" placeholder="期望效果（每行一条）…"></textarea>
+	            <div class="s4-gbody open" id="s4-body-needs">
+	              <div class="s4-row"><span class="s4-label">已确认需求</span><span class="s4-val" id="s4-val-needs" contenteditable="false" data-placeholder="点击编辑填入…" data-field="confirmedNeeds"></span></div>
+	              <div class="s4-row"><span class="s4-label">期望效果</span><span class="s4-val" id="s4-val-outcome" contenteditable="false" data-placeholder="点击编辑填入…" data-field="expectedOutcome"></span></div>
 	            </div>
 	          </div>
 
@@ -1078,11 +1070,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	              </div>
 	              <span class="s4-arrow" id="s4-arrow-scope">▼</span>
 	            </div>
-	            <div class="s4-gbody" id="s4-body-scope">
-	              <div class="s4-row"><span class="s4-label">一期范围</span><span class="s4-val" id="s4-val-phase1"></span></div>
-	              <div class="s4-row"><span class="s4-label">二期评估</span><span class="s4-val" id="s4-val-phase2"></span></div>
-	              <textarea id="s4-phase1" class="s4-txta" placeholder="一期交付范围（每行一条）…"></textarea>
-	              <textarea id="s4-phase2" class="s4-txta" placeholder="二期评估内容（每行一条）…"></textarea>
+	            <div class="s4-gbody open" id="s4-body-scope">
+	              <div class="s4-row"><span class="s4-label">一期范围</span><span class="s4-val" id="s4-val-phase1" contenteditable="false" data-placeholder="点击编辑填入…" data-field="phaseOneScope"></span></div>
+	              <div class="s4-row"><span class="s4-label">二期评估</span><span class="s4-val" id="s4-val-phase2" contenteditable="false" data-placeholder="点击编辑填入…" data-field="phaseTwoScope"></span></div>
 	            </div>
 	          </div>
 
@@ -1094,9 +1084,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	              </div>
 	              <span class="s4-arrow" id="s4-arrow-questions">▼</span>
 	            </div>
-	            <div class="s4-gbody" id="s4-body-questions">
-	              <div class="s4-row"><span class="s4-label">待确认</span><span class="s4-val" id="s4-val-questions"></span></div>
-	              <textarea id="s4-questions" class="s4-txta" placeholder="待确认问题（每行一条）…"></textarea>
+	            <div class="s4-gbody open" id="s4-body-questions">
+	              <div class="s4-row"><span class="s4-label">待确认</span><span class="s4-val" id="s4-val-questions" contenteditable="false" data-placeholder="点击编辑填入…" data-field="pendingQuestions"></span></div>
 	            </div>
 	          </div>
 	        </div>
@@ -2634,41 +2623,21 @@ function autoGenerateStep4Input(c) {
     if (Array.isArray(val)) return val.join('\n');
     return String(val);
   }
-  function setText(id, val) {
+  function setVal(id, val) {
     var el = document.getElementById(id);
-    if (el) el.textContent = valToText(val) || '（未填写）';
-  }
-  function setTA(id, val) {
-    var el = document.getElementById(id);
-    if (el) el.value = valToText(val);
+    if (el) el.textContent = valToText(val);
   }
 
-  setText('s4-val-current', d.customerCurrentState);
-  setText('s4-val-pain', d.painPoints);
-  setText('s4-val-roles', d.involvedRoles);
-  setText('s4-val-needs', d.confirmedNeeds);
-  setText('s4-val-outcome', d.expectedOutcome);
-  setText('s4-val-phase1', d.phaseOneScope);
-  setText('s4-val-phase2', d.phaseTwoScope);
-  setText('s4-val-questions', d.pendingQuestions);
-
-  setTA('s4-current', d.customerCurrentState);
-  setTA('s4-pain', d.painPoints);
-  setTA('s4-roles', d.involvedRoles);
-  setTA('s4-needs', d.confirmedNeeds);
-  setTA('s4-outcome', d.expectedOutcome);
-  setTA('s4-phase1', d.phaseOneScope);
-  setTA('s4-phase2', d.phaseTwoScope);
-  setTA('s4-questions', d.pendingQuestions);
+  setVal('s4-val-current', d.customerCurrentState);
+  setVal('s4-val-pain', d.painPoints);
+  setVal('s4-val-roles', d.involvedRoles);
+  setVal('s4-val-needs', d.confirmedNeeds);
+  setVal('s4-val-outcome', d.expectedOutcome);
+  setVal('s4-val-phase1', d.phaseOneScope);
+  setVal('s4-val-phase2', d.phaseTwoScope);
+  setVal('s4-val-questions', d.pendingQuestions);
 
   // 展开所有组，默认非编辑模式
-  var groups = ['status','needs','scope','questions'];
-  groups.forEach(function(g) {
-    var body = document.getElementById('s4-body-' + g);
-    var arrow = document.getElementById('s4-arrow-' + g);
-    if (body) body.classList.add('open');
-    if (arrow) arrow.textContent = '▼';
-  });
   setEditMode(false);
 }
 
@@ -2677,20 +2646,21 @@ function saveStep4Input() {
   if (!c) return;
   function getVal(id) {
     var el = document.getElementById(id);
-    return el ? el.value.trim() : '';
+    // contentEditable 用 textContent，textarea 用 value
+    return el ? (el.value !== undefined ? el.value.trim() : el.textContent.trim()) : '';
   }
   var draft = {
-    customerCurrentState: getVal('s4-current'),
-    painPoints: getVal('s4-pain').split('\n').filter(Boolean),
-    confirmedNeeds: getVal('s4-needs').split('\n').filter(Boolean),
-    involvedRoles: getVal('s4-roles').split('\n').filter(Boolean),
-    expectedOutcome: getVal('s4-outcome').split('\n').filter(Boolean),
-    phaseOneScope: getVal('s4-phase1').split('\n').filter(Boolean),
-    phaseTwoScope: getVal('s4-phase2').split('\n').filter(Boolean),
-    pendingQuestions: getVal('s4-questions').split('\n').filter(Boolean)
+    customerCurrentState: getVal('s4-val-current'),
+    painPoints: getVal('s4-val-pain').split('\n').filter(Boolean),
+    confirmedNeeds: getVal('s4-val-needs').split('\n').filter(Boolean),
+    involvedRoles: getVal('s4-val-roles').split('\n').filter(Boolean),
+    expectedOutcome: getVal('s4-val-outcome').split('\n').filter(Boolean),
+    phaseOneScope: getVal('s4-val-phase1').split('\n').filter(Boolean),
+    phaseTwoScope: getVal('s4-val-phase2').split('\n').filter(Boolean),
+    pendingQuestions: getVal('s4-val-questions').split('\n').filter(Boolean)
   };
   updateClient(currentClientId, { step4_input_draft: draft });
-  showToast('输入已保存');
+  showToast('已保存');
 }
 
 function doRegenerateStep4Input() {
@@ -2719,19 +2689,14 @@ function toggleS4Group(group) {
 }
 
 function setEditMode(editing) {
-  var txta = document.querySelectorAll('.s4-txta');
   var vals = document.querySelectorAll('.s4-val');
   var btn = document.getElementById('s4-input-edit-btn');
-  var saveBtn = document.getElementById('s4-save-btn');
-  txta.forEach(function(el) {
-    if (editing) el.classList.add('on');
-    else el.classList.remove('on');
-  });
   vals.forEach(function(el) {
-    el.style.display = editing ? 'none' : '';
+    el.contentEditable = editing ? 'true' : 'false';
+    if (editing) el.classList.add('editing');
+    else el.classList.remove('editing');
   });
   if (btn) btn.textContent = editing ? '完成' : '编辑';
-  if (saveBtn) saveBtn.style.display = editing ? '' : 'none';
 }
 
 function toggleS4InputEdit() {
@@ -2739,31 +2704,16 @@ function toggleS4InputEdit() {
   var isEditing = btn && btn.textContent === '完成';
   if (isEditing) {
     saveStep4Input();
-    showToast('已保存');
   }
   setEditMode(!isEditing);
 }
 
 function doSaveStep4Input() {
   saveStep4Input();
-  showToast('已保存');
-  // 退出编辑模式
   setEditMode(false);
   var btn = document.getElementById('s4-input-edit-btn');
   if (btn) btn.textContent = '编辑';
 }
-
-// 每个 textarea 点击时发光，移开时取消（loadStep4 时绑定一次）
-function bindS4TextareaGlow() {
-  document.querySelectorAll('.s4-txta').forEach(function(el) {
-    el.removeEventListener('focus', _s4GlowOn);
-    el.removeEventListener('blur', _s4GlowOff);
-    el.addEventListener('focus', _s4GlowOn);
-    el.addEventListener('blur', _s4GlowOff);
-  });
-}
-function _s4GlowOn() { this.classList.add('glow'); }
-function _s4GlowOff() { this.classList.remove('glow'); }
 
 
 async function generateStep4Presales() {
@@ -4443,7 +4393,6 @@ function loadStep3(c) {
 }
 function loadStep4(c) {
   autoGenerateStep4Input(c);
-  bindS4TextareaGlow();
   var presalesVersions = c.step4_presales_versions || [];
   if (presalesVersions.length > 0) {
     renderStep4LatestPresales(presalesVersions[presalesVersions.length - 1], presalesVersions.length);
