@@ -2739,7 +2739,9 @@ async function generateStep4Presales() {
     var data = await resp.json();
     if (data.success && data.requirementData) {
       var now = new Date().toISOString();
-      var versions = c.step4_presales_versions || [];
+      // 重新读取最新数据，避免缓存过时导致覆盖
+      var c2 = getClient(currentClientId);
+      var versions = (c2.step4_presales_versions || []).slice();
       var version = versions.length + 1;
       versions.push({
         content: { requirementData: data.requirementData, wordContent: data.wordContent, htmlContent: data.htmlContent },
@@ -2747,8 +2749,8 @@ async function generateStep4Presales() {
         version: version
       });
       updateClient(currentClientId, { step4_presales_versions: versions });
-      if (data.htmlContent) doPreviewStep4Html(data.htmlContent);
-      if (data.wordContent) doDownloadStep4Word(data.wordContent, c.name || '客户');
+      if (data.htmlContent) doPreviewStep4Html(data.htmlContent, c2.name || c.name || '客户');
+      if (data.wordContent) doDownloadStep4Word(data.wordContent, c2.name || c.name || '客户');
       renderStep4LatestPresales(versions[versions.length - 1], versions.length);
       renderStep4History('presales', versions);
       window._presalesPct = 100;
@@ -2802,7 +2804,9 @@ async function generateStep4Technical() {
     var data = await resp.json();
     if (data.success) {
       var now = new Date().toISOString();
-      var versions = c.step4_technical_versions || [];
+      // 重新读取最新数据，避免缓存过时导致覆盖
+      var c2 = getClient(currentClientId);
+      var versions = (c2.step4_technical_versions || []).slice();
       var version = versions.length + 1;
       versions.push({
         content: { requirementData: data.requirementData, htmlContent: data.htmlContent },
@@ -2810,7 +2814,7 @@ async function generateStep4Technical() {
         version: version
       });
       updateClient(currentClientId, { step4_technical_versions: versions });
-      if (data.htmlContent) doPreviewStep4Html(data.htmlContent);
+      if (data.htmlContent) doPreviewStep4Html(data.htmlContent, c2.name || c.name || '客户');
       renderStep4LatestTechnical(versions[versions.length - 1]);
       renderStep4History('technical', versions);
       window._technicalPct = 100;
@@ -2835,7 +2839,7 @@ async function generateStep4Technical() {
   }
 }
 
-function doPreviewStep4Html(htmlContent) {
+function doPreviewStep4Html(htmlContent, customerName) {
   var html = buildStep4HtmlPage(htmlContent);
   var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   var url = URL.createObjectURL(blob);
