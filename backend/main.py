@@ -1748,20 +1748,48 @@ def validate_requirement_doc(word_content, requirement_data=None):
 
 # ==================== Step1 调研问题生成 ====================
 
-STEP1_SYSTEM_PROMPT = """你是一个企业微信智能表格售前调研助手，擅长通过提问快速把握客户需求背景。
+STEP1_SYSTEM_PROMPT = """你是一个售前调研顾问。根据客户背景信息，生成结构化的售前准备材料 JSON。"""
 
-请基于客户提供的信息，生成结构化的调研问题 JSON。"""
-
-STEP1_USER_PROMPT = """客户基本信息：
+STEP1_USER_PROMPT = """## 客户基本信息
 - 客户名称：{company_name}
 - 行业：{industry}
-- 业务需求：{initial_demand}
-- 公司简介：{company_intro}
+- 规模：{scale}
+- 需求标签：{tags}
+- 原始需求：{initial_demand}
+- AI 补充简介：{company_intro}
 
-请生成结构化 JSON，包含三个部分：
-1. part1（客户画像）：company_background（公司背景）、pain_points（3个核心痛点，每个50字以内）
-2. part2（信息缺口）：gaps 数组，每项包含 gap（缺口描述）
-3. part3（调研问题）：must_ask 数组，每项包含 question（问题）、need_role（回答角色）、whyAsk（为什么问）、impactIfUnknown（不知道的影响）
+## 生成要求
+
+请生成结构化 JSON，直接输出 JSON，不要 markdown 代码块。
+
+### part1（客户画像）
+在客户填写的背景信息基础上，AI 扩展推理，生成：
+- company_background：公司背景描述，150字以内，条理清晰
+- pain_points：核心痛点数组，精确 5 条，每条 30 字以内
+- customer_type：客户类型描述，如"制造业民营中小企业"
+- main_customers：主要客户群体，1 句话
+
+### part2（待确认信息清单）
+在客户需求和痛点基础上，推理出 5-8 条最关键的信息缺口：
+- gaps：数组，每项包含：
+  - gap：缺口描述，40 字以内，表述清晰
+  - priority：高/中/低
+  - whyNeed：为什么需要知道这条信息，30 字以内
+
+### part3（访谈提纲）
+
+**must_ask（必问问题）：生成 10-12 条**
+每条包含：
+- question：问题正文
+- dimension：所属维度（如：痛点收敛/业务流转+角色/现状工具链/数据现状/自动化诉求）
+- note：提问提示和背景说明，帮助销售更好理解和追问，50字以内
+- needRole：谁来回答这个问题
+
+**deep_dive（深挖问题）：生成 5-8 条**
+在 must_ask 基础上继续深挖，每条包含 question/dimension/note/needRole。
+
+**industry_experience（行业经验）：生成 2-3 条**
+基于该行业知识，给出 2-3 条行业常见坑或经验，每条包含 question 和 note。
 
 直接输出 JSON，不要 markdown 代码块。"""
 
@@ -1771,17 +1799,21 @@ async def question_list(body: dict, user: dict = Depends(require_auth)):
     """生成 Step1 调研问题（客户画像 + 信息缺口 + 调研清单）"""
     company_name = body.get("company_name", "")
     industry = body.get("industry", "")
+    scale = body.get("scale", "")
+    tags = body.get("tags", "")
     initial_demand = body.get("initial_demand", "")
     company_intro = body.get("company_intro", "")
 
     user_prompt = STEP1_USER_PROMPT.format(
         company_name=company_name,
         industry=industry,
-        initial_demand=initial_demand,
+        scale=scale or "未填写",
+        tags=tags or "未填写",
+        initial_demand=initial_demand or "未填写",
         company_intro=company_intro or "暂无"
     )
 
-    raw = call_minimax(STEP1_SYSTEM_PROMPT, user_prompt, max_tokens=4000)
+    raw = call_minimax(STEP1_SYSTEM_PROMPT, user_prompt, max_tokens=6000)
     if raw.startswith("Error:"):
         return {"success": False, "error": raw}
 

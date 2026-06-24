@@ -627,7 +627,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .hidden-q{display:none}
 .q-card-check{width:20px;height:20px;border:2px solid #d1d5db;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .2s}
 .q-card.hidden-q{display:none}
+#s2-must-questions.show-all .q-card.hidden-q{display:grid}
 #s2-deep-questions.show-all .q-card.hidden-q{display:grid}
+#s2-industry-notes.show-all .q-card.hidden-q{display:block}
 
 /* Responsive */
 @media(max-width:1200px){.app{grid-template-columns:226px 1fr 280px}.row,.insights,.mini-grid,.profile-lines{grid-template-columns:1fr}}
@@ -916,13 +918,11 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             <button class="edit-btn" onclick="togglePartEdit(this, 'part1')">编辑</button>
           </div>
           <div class="s2-profile-summary" id="s2-profile-text" contenteditable="false">-</div>
-          <div class="subhead">行业常见痛点</div>
-          <div class="pain-grid" id="s2-pains">
-            <div class="pain" contenteditable="false">-</div>
-            <div class="pain" contenteditable="false">-</div>
-            <div class="pain" contenteditable="false">-</div>
-            <div class="pain" contenteditable="false">-</div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div class="subhead">行业常见痛点</div>
+            <button class="more" id="s2-pains-more-btn" onclick="toggleMorePains()" style="display:none">查看更多（<span id="s2-pains-total">0</span>）</button>
           </div>
+          <div class="pain-grid" id="s2-pains"></div>
         </div>
 
         <!-- PART 2: 待确认信息清单 - 核心工作层 -->
@@ -2377,7 +2377,7 @@ function doStep1Next() {
     fetch(API_BASE + '/api/question_list', {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ industry, initial_demand: demand, company_name: name, company_intro: getClient(currentClientId)?.company_intro || '' })
+      body: JSON.stringify({ industry, initial_demand: demand, company_name: name, scale: document.getElementById('s1-scale')?.value || '', tags: [...document.querySelectorAll('#s1-chips .chip.active')].map(c => c.dataset.tag).join(','), company_intro: getClient(currentClientId)?.company_intro || '' })
     }).then(r => r.json()).then(data => {
       clearTimeout(genTimeout);
       if (genReady) return;
@@ -2412,7 +2412,7 @@ async function doRegenerateStep2() {
   setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
   fetch(API_BASE + '/api/question_list', {
     method: 'POST', headers: getAuthHeaders(),
-    body: JSON.stringify({ industry, initial_demand: demand, company_name: name, company_intro: c.company_intro || '' })
+    body: JSON.stringify({ industry, initial_demand: demand, company_name: name, scale: c.scale || '', tags: c.tags || '', company_intro: c.company_intro || '' })
   }).then(r => r.json()).then(data => {
     clearTimeout(genTimeout);
     if (genReady) return;
@@ -3844,7 +3844,7 @@ function renderGaps(gaps) {
   container.innerHTML = gaps.map(function(g, i) {
     var priority = g.priority || '高';
     var priColor = {high:'#ff6b6b',中:'#ffa94d',低:'#69db7c'}[priority] || '#ff6b6b';
-    return '<div class="gap sortable-item' + (i >= 5 ? ' hidden-gaps' : '') + '" draggable="true">' +
+    return '<div class="gap sortable-item' + (i >= 8 ? ' hidden-gaps' : '') + '" draggable="true">' +
       '<div class="check" style="cursor:grab"></div>' +
       '<div class="gap-text"><b>' + (g.gap || g.text || g.question || g.item || '-') + '</b></div>' +
       '<select class="priority-select" onchange="onGapPriorityChange(this)" style="border:none;background:transparent;font-size:12px;font-weight:700;cursor:pointer;color:'+priColor+';outline:none">' +
@@ -3857,11 +3857,12 @@ function renderGaps(gaps) {
   }).join('');
   var moreBtn = document.getElementById('s2-gaps-more-btn');
   if (moreBtn) {
-    moreBtn.style.display = gaps.length > 5 ? '' : 'none';
+    var hiddenCount = gaps.length - 8;
+    moreBtn.style.display = hiddenCount > 0 ? '' : 'none';
     moreBtn.onclick = function() {
       var el = document.getElementById('s2-gaps');
       var expanded = el.classList.toggle('gaps-expanded');
-      moreBtn.textContent = expanded ? '收起问题 ▲' : '查看更多问题（' + gaps.length + '）';
+      moreBtn.textContent = expanded ? '收起 ▲' : '查看更多（' + hiddenCount + '）';
     };
   }
   // Setup drag-and-drop for gaps
@@ -3951,22 +3952,28 @@ function renderQuestions(questions) {
       '</div>';
     }).join('');
   }
-  if (mustEl) mustEl.innerHTML = renderQ(must);
+  if (mustEl) {
+    var mustWithHidden = must.map(function(q, i) { return Object.assign({}, q, {_hidden: i >= 8}); });
+    mustEl.innerHTML = renderQ(mustWithHidden);
+  }
   if (deepEl) {
-    var deepWithHidden = deep.map(function(q, i) { return Object.assign({}, q, {_hidden: i >= 8}); });
+    var deepWithHidden = deep.map(function(q, i) { return Object.assign({}, q, {_hidden: i >= 5}); });
     deepEl.innerHTML = renderQ(deepWithHidden);
   }
   if (indEl) indEl.innerHTML = industry.length ? industry.map(function(n){ return '<div style="padding:10px 0;border-bottom:1px solid #f0f2f5;font-size:13px;color:#667085">'+n+'</div>'; }).join('') : '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">暂无行业经验知识库，添加更多案例可丰富此模块</div>';
   // Update "查看更多问题" button based on current active tab
   var moreBtn = document.getElementById('s2-more-btn');
+  var totalEl = document.getElementById('s2-deep-total');
   var activeTab = document.querySelector('.tabs .tab.on');
   var target = activeTab ? activeTab.dataset.target : 'must';
-  var activeEl = target === 'must' ? mustEl : target === 'deep' ? deepEl : indEl;
-  var total = activeEl ? activeEl.querySelectorAll('.q-card').length : 0;
+  var threshold = target === 'must' ? 8 : target === 'deep' ? 5 : 3;
+  var list = target === 'must' ? must : target === 'deep' ? deep : industry;
+  var shownCount = target === 'must' ? Math.min(must.length, 8) : target === 'deep' ? Math.min(deep.length, 5) : Math.min(industry.length, 3);
+  var hiddenCount = list.length - shownCount;
   if (moreBtn) {
-    moreBtn.style.display = total > 8 ? 'block' : 'none';
-    var totalEl = document.getElementById('s2-deep-total');
-    if (totalEl) totalEl.textContent = total;
+    moreBtn.style.display = hiddenCount > 0 ? 'block' : 'none';
+    if (totalEl) totalEl.textContent = hiddenCount;
+    moreBtn.textContent = hiddenCount > 0 ? `查看更多（${hiddenCount}）` : '收起 ▲';
   }
 }
 
@@ -4043,13 +4050,13 @@ function switchTab(btn) {
   var moreBtn = document.getElementById('s2-more-btn');
   if (moreBtn) {
     var currentEl = target === 'must' ? mustEl : target === 'deep' ? deepEl : indEl;
+    var threshold = target === 'must' ? 8 : target === 'deep' ? 5 : 3;
     var count = currentEl ? currentEl.querySelectorAll('.q-card').length : 0;
-    moreBtn.style.display = count > 8 ? 'block' : 'none';
     var totalEl = document.getElementById('s2-deep-total');
-    if (totalEl) totalEl.textContent = count;
-    // Collapse by default when switching
-    if (count > 8 && currentEl) currentEl.classList.remove('show-all');
-    moreBtn.textContent = '查看更多问题（' + count + '）';
+    var hiddenCount = Math.max(0, count - threshold);
+    moreBtn.style.display = hiddenCount > 0 ? 'block' : 'none';
+    if (totalEl) totalEl.textContent = hiddenCount;
+    moreBtn.textContent = hiddenCount > 0 ? '查看更多（' + hiddenCount + '）' : '收起 ▲';
   }
 }
 
@@ -4058,12 +4065,12 @@ function toggleMoreQuestions() {
   if (!btn) return;
   var activeTab = document.querySelector('.tabs .tab.on');
   var target = activeTab ? activeTab.dataset.target : 'must';
-  var tabMap = {must: 'must-questions', deep: 'deep-questions', industry: 'industry-notes'};
-  var activeEl = document.getElementById('s2-' + tabMap[target]);
+  var tabMap = {must: 's2-must-questions', deep: 's2-deep-questions', industry: 's2-industry-notes'};
+  var activeEl = document.getElementById(tabMap[target]);
   if (!activeEl) return;
-  var expanded = activeEl.classList.toggle('show-all');
-  var count = activeEl.querySelectorAll('.q-card').length;
-  btn.textContent = expanded ? '收起问题 ▲' : '查看更多问题（' + count + '）';
+  activeEl.classList.toggle('show-all');
+  var isExpanded = activeEl.classList.contains('show-all');
+  btn.textContent = isExpanded ? '收起 ▲' : '查看更多（' + (document.getElementById('s2-deep-total').textContent || '0') + '）';
 }
 
 // ==================== STEP 3 RENDER FUNCTIONS ====================
@@ -4338,12 +4345,24 @@ function loadStep2(c) {
   if (!c.step1_result) return;
   const data = c.step1_result;
   document.getElementById('s2-profile-text').textContent = data.part1?.company_background || '-';
-  // 动态渲染 pain_points，不再依赖静态 4 个元素
-  const painGrid = document.getElementById('s2-pains');
+  // pain_points：最多显示 5 条，其余折叠
   const pains = data.part1?.pain_points || [];
-  painGrid.innerHTML = pains.length > 0
-    ? pains.map(p => `<div class="pain" contenteditable="false">${p}</div>`).join('')
-    : '<div class="pain" contenteditable="false">-</div>';
+  const painGrid = document.getElementById('s2-pains');
+  const showPains = pains.slice(0, 5);
+  const hiddenCount = pains.length - 5;
+  if (pains.length > 0) {
+    painGrid.innerHTML = showPains.map(p => `<div class="pain" contenteditable="false">${p}</div>`).join('');
+  } else {
+    painGrid.innerHTML = '<div class="pain" contenteditable="false">-</div>';
+  }
+  const moreBtn = document.getElementById('s2-pains-more-btn');
+  const totalEl = document.getElementById('s2-pains-total');
+  if (moreBtn) {
+    moreBtn.style.display = hiddenCount > 0 ? '' : 'none';
+    if (totalEl) totalEl.textContent = hiddenCount > 0 ? hiddenCount : 0;
+    moreBtn.textContent = hiddenCount > 0 ? `查看更多（${hiddenCount}）` : '收起 ▲';
+    moreBtn.dataset.expanded = 'false';
+  }
   renderGaps(data.part2 || []);
   // 先清空容器再渲染，避免 innerHTML+= 导致按钮叠加
   document.getElementById('s2-must-questions').innerHTML = '';
@@ -4351,6 +4370,27 @@ function loadStep2(c) {
   document.getElementById('s2-industry-notes').innerHTML = '';
   renderQuestions(data.part3 || {});
   updateCtxBar(c);
+}
+
+function toggleMorePains() {
+  const btn = document.getElementById('s2-pains-more-btn');
+  const c = getClient(currentClientId);
+  if (!btn || !c?.step1_result) return;
+  const pains = c.step1_result.part1?.pain_points || [];
+  const expanded = btn.dataset.expanded === 'true';
+  const painGrid = document.getElementById('s2-pains');
+  if (!expanded) {
+    // 展开全部
+    painGrid.innerHTML = pains.map(p => `<div class="pain" contenteditable="false">${p}</div>`).join('');
+    btn.textContent = '收起 ▲';
+    btn.dataset.expanded = 'true';
+  } else {
+    // 收起只显示前5条
+    painGrid.innerHTML = pains.slice(0, 5).map(p => `<div class="pain" contenteditable="false">${p}</div>`).join('');
+    const hidden = pains.length - 5;
+    btn.textContent = hidden > 0 ? `查看更多（${hidden}）` : '收起 ▲';
+    btn.dataset.expanded = 'false';
+  }
 }
 
 function renderStep3Summary(c) {
@@ -5026,8 +5066,9 @@ function doCreateStep1WecomDoc() {
   if (mustAsk.length > 0) {
     content += `### 必问问题\n\n`;
     mustAsk.forEach(function(q, i) {
-      content += `${i + 1}. **${q.dimension || ''}** ${q.question || ''}\n`;
-      if (q.note) content += `   *${q.note}*\n`;
+      content += `${i + 1}. **【${q.dimension || '综合'}】** ${q.question || ''}\n`;
+      if (q.needRole) content += `   回答角色：${q.needRole}\n`;
+      if (q.note) content += `   提示：${q.note}\n`;
       content += '\n';
     });
   }
@@ -5035,8 +5076,9 @@ function doCreateStep1WecomDoc() {
   if (deepDive.length > 0) {
     content += `### 深挖问题\n\n`;
     deepDive.forEach(function(q, i) {
-      content += `${i + 1}. **${q.dimension || ''}** ${q.question || ''}\n`;
-      if (q.note) content += `   *${q.note}*\n`;
+      content += `${i + 1}. **【${q.dimension || '综合'}】** ${q.question || ''}\n`;
+      if (q.needRole) content += `   回答角色：${q.needRole}\n`;
+      if (q.note) content += `   提示：${q.note}\n`;
       content += '\n';
     });
   }
@@ -5044,8 +5086,8 @@ function doCreateStep1WecomDoc() {
   if (industryExp.length > 0) {
     content += `### 行业经验\n\n`;
     industryExp.forEach(function(q, i) {
-      content += `${i + 1}. **${q.dimension || ''}** ${q.question || ''}\n`;
-      if (q.note) content += `   *${q.note}*\n`;
+      content += `${i + 1}. **【行业经验】** ${q.question || ''}\n`;
+      if (q.note) content += `   提示：${q.note}\n`;
       content += '\n';
     });
   }
