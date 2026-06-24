@@ -363,9 +363,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .s4-label{min-width:72px;color:#667085;font-weight:500;flex-shrink:0;padding-top:2px}
 .s4-val{color:#182235;line-height:1.6;flex:1}
 .s4-val:empty::before{content:'（未填写）';color:#d0d7e0}
-.s4-txta{display:none;width:100%;border:1px solid #dce3f0;border-radius:8px;padding:9px 11px;font-size:13px;color:#182235;line-height:1.7;resize:vertical;background:#fafbff;outline:none;font-family:inherit;box-sizing:border-box;min-height:52px;margin-top:10px}
-.s4-txta:focus{border-color:#1263e6;background:#fff}
+.s4-txta{display:none;width:100%;border:1px solid #dce3f0;border-radius:8px;padding:9px 11px;font-size:13px;color:#182235;line-height:1.7;resize:vertical;background:#fafbff;outline:none;font-family:inherit;box-sizing:border-box;min-height:52px;margin-top:10px;transition:box-shadow .2s,border-color .2s}
+.s4-txta:focus{border-color:#1263e6;background:#fff;box-shadow:0 0 0 3px rgba(18,99,230,.18)}
 .s4-txta.on{display:block}
+.s4-txta.glow{border-color:#1263e6;box-shadow:0 0 0 3px rgba(18,99,230,.18)}
 .req-box p{margin:0;color:#344054;font-size:13px;line-height:1.8;min-height:48px;outline:none}
 .flow-line{color:#344054;font-size:12px;line-height:1.8;outline:none}
 .flow-line span{display:inline-block;border:1px solid #dce8f8;background:#f8fbff;border-radius:999px;padding:5px 8px;margin:3px 2px}
@@ -1030,6 +1031,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	            <h3>方案输入确认</h3>
 	            <div style="display:flex;gap:8px">
 	              <button class="small-btn" id="s4-regen-btn" onclick="doRegenerateStep4Input()">重新生成</button>
+	              <button class="btn primary" id="s4-save-btn" onclick="doSaveStep4Input()" style="height:30px;font-size:12px;padding:0 14px;border-radius:8px;display:none">保存</button>
 	              <button class="btn secondary" id="s4-input-edit-btn" onclick="toggleS4InputEdit()" style="height:30px;font-size:12px;padding:0 14px;border-radius:8px">编辑</button>
 	            </div>
 	          </div>
@@ -2720,6 +2722,7 @@ function setEditMode(editing) {
   var txta = document.querySelectorAll('.s4-txta');
   var vals = document.querySelectorAll('.s4-val');
   var btn = document.getElementById('s4-input-edit-btn');
+  var saveBtn = document.getElementById('s4-save-btn');
   txta.forEach(function(el) {
     if (editing) el.classList.add('on');
     else el.classList.remove('on');
@@ -2728,6 +2731,7 @@ function setEditMode(editing) {
     el.style.display = editing ? 'none' : '';
   });
   if (btn) btn.textContent = editing ? '完成' : '编辑';
+  if (saveBtn) saveBtn.style.display = editing ? '' : 'none';
 }
 
 function toggleS4InputEdit() {
@@ -2735,9 +2739,31 @@ function toggleS4InputEdit() {
   var isEditing = btn && btn.textContent === '完成';
   if (isEditing) {
     saveStep4Input();
+    showToast('已保存');
   }
   setEditMode(!isEditing);
 }
+
+function doSaveStep4Input() {
+  saveStep4Input();
+  showToast('已保存');
+  // 退出编辑模式
+  setEditMode(false);
+  var btn = document.getElementById('s4-input-edit-btn');
+  if (btn) btn.textContent = '编辑';
+}
+
+// 每个 textarea 点击时发光，移开时取消（loadStep4 时绑定一次）
+function bindS4TextareaGlow() {
+  document.querySelectorAll('.s4-txta').forEach(function(el) {
+    el.removeEventListener('focus', _s4GlowOn);
+    el.removeEventListener('blur', _s4GlowOff);
+    el.addEventListener('focus', _s4GlowOn);
+    el.addEventListener('blur', _s4GlowOff);
+  });
+}
+function _s4GlowOn() { this.classList.add('glow'); }
+function _s4GlowOff() { this.classList.remove('glow'); }
 
 
 async function generateStep4Presales() {
@@ -4417,6 +4443,7 @@ function loadStep3(c) {
 }
 function loadStep4(c) {
   autoGenerateStep4Input(c);
+  bindS4TextareaGlow();
   var presalesVersions = c.step4_presales_versions || [];
   if (presalesVersions.length > 0) {
     renderStep4LatestPresales(presalesVersions[presalesVersions.length - 1], presalesVersions.length);
