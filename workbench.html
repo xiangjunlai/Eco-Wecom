@@ -950,8 +950,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             <button class="tab" data-target="industry" onclick="switchTab(this)">行业经验 <span class="tab-count" id="s2-industry-count">0</span></button>
           </div>
           <div class="q-list" id="s2-must-questions"></div>
-          <div id="s2-deep-questions" style="display:none"></div>
-          <div id="s2-industry-notes" style="display:none"></div>
+          <div class="q-list" id="s2-deep-questions" style="display:none"></div>
+          <div class="q-list" id="s2-industry-notes" style="display:none"></div>
           <button class="more" id="s2-more-btn" onclick="toggleMoreQuestions()" style="display:none">查看更多（<span id="s2-deep-total">0</span>）</button>
           <div style="margin-top:10px">
             <button class="add-q-btn" id="s2-add-btn" onclick="addQuestionByTab()" style="width:100%">+ 添加问题</button>
@@ -3963,7 +3963,7 @@ function renderQuestions(questions) {
     var deepWithHidden = deep.map(function(q, i) { return Object.assign({}, q, {_hidden: i >= 5}); });
     deepEl.innerHTML = renderQ(deepWithHidden);
   }
-  if (indEl) indEl.innerHTML = industry.length ? industry.map(function(n){ return '<div style="padding:10px 0;border-bottom:1px solid #f0f2f5;font-size:13px;color:#667085">'+n+'</div>'; }).join('') : '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">暂无行业经验知识库，添加更多案例可丰富此模块</div>';
+  if (indEl) indEl.innerHTML = industry.length ? industry.map(function(n){ var q = typeof n === 'string' ? n : (n.question || ''); var note = (n.note || ''); return '<div class="q-card">' + (note ? '<div style="font-size:14px;color:#182235;line-height:1.6;margin-bottom:6px">'+q+'</div><div style="font-size:12px;color:#98a2b3;line-height:1.5">'+note+'</div>' : '<div style="font-size:14px;color:#182235;line-height:1.6">'+q+'</div>') + '</div>'; }).join('') : '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">暂无行业经验知识库，添加更多案例可丰富此模块</div>';
   // Update "查看更多问题" button based on current active tab
   var moreBtn = document.getElementById('s2-more-btn');
   var totalEl = document.getElementById('s2-deep-total');
