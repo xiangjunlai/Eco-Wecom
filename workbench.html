@@ -2730,11 +2730,14 @@ async function generateStep4Presales() {
     renderArtifacts();
   }, 300);
   try {
-    var resp = await fetch(API_BASE + '/api/step4/generate', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ client_id: currentClientId, type: 'presales' })
-    });
+    var resp = await Promise.race([
+      fetch(API_BASE + '/api/step4/generate', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ client_id: currentClientId, type: 'presales' })
+      }),
+      new Promise(function(_, reject) { setTimeout(function() { reject(new Error('请求超时120秒，请重试')); }, 120000); })
+    ]);
     var data = await resp.json();
     if (data.success && data.requirementData) {
       var now = new Date().toISOString();
@@ -2786,11 +2789,14 @@ async function generateStep4Technical() {
     renderArtifacts();
   }, 300);
   try {
-    var resp = await fetch(API_BASE + '/api/step4/generate', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ client_id: currentClientId, type: 'technical' })
-    });
+    var resp = await Promise.race([
+      fetch(API_BASE + '/api/step4/generate', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ client_id: currentClientId, type: 'technical' })
+      }),
+      new Promise(function(_, reject) { setTimeout(function() { reject(new Error('请求超时120秒，请重试')); }, 120000); })
+    ]);
     var data = await resp.json();
     if (data.success && data.requirementData) {
       var now = new Date().toISOString();
