@@ -1084,6 +1084,7 @@ Step3 AI 摘要：
 注意：
 - **行业和场景（mainScenario）必须优先从 step4_input_draft 或 step3_summary 的对应字段读取，不得被 step1 industry 覆盖。**例如：客户是"设计/景观建筑-跨国多区域项目管理"，不得识别为"家居定制装修"。
 - **xlsx sheet 名和字段摘要必须完整进入 smartTableSpec.confirmedTables，不得遗漏。**
+- **如果 step3_summary 中的字段为空（如 confirmedNeeds、phaseOneScope 等），必须从 transcript 原始沟通记录中自行推理提取并填入，不得留空。**
 - 知识库只能补充，不得覆盖客户事实。
 - 客户没明确说过的内容，不得写成"客户已确认"。
 - 多轮沟通中，如果后续收敛了范围，以后续范围为准。
@@ -1866,7 +1867,8 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
             .replace("{input_summary}", input_summary or "暂无用户已确认输入")
             .replace("{step4_input_draft}", step4_input_draft_str)
             .replace("{step4_report}", step4_report_str or "暂无Step4历史草稿")
-            .replace("{step3_summary}", step3_summary_text or "暂无Step3 AI摘要")
+            # 传 JSON 字符串，让 Prompt 3 的 AI 自己推理填充空字段
+            .replace("{step3_summary}", json.dumps(step3_summary, ensure_ascii=False, indent=2) if step3_summary else "暂无Step3 AI摘要")
             .replace("{kb_match_result}", kb_match_result or "暂无知识库匹配结果")
             .replace("{xlsx_sheet_summary}", xlsx_sheet_summary or "暂无xlsx交付物摘要")
             .replace("{service_provider_summary}", service_provider_summary or "暂无服务商需求总结")

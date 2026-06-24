@@ -1048,11 +1048,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	              <div class="s4-row"><span class="s4-label">客户现状</span><span class="s4-val" id="s4-val-current"></span></div>
 	              <div class="s4-row"><span class="s4-label">核心问题</span><span class="s4-val" id="s4-val-pain"></span></div>
 	              <div class="s4-row"><span class="s4-label">涉及角色</span><span class="s4-val" id="s4-val-roles"></span></div>
-	              <div class="s4-row"><span class="s4-label">当前流程</span><span class="s4-val" id="s4-val-process"></span></div>
 	              <textarea id="s4-current" class="s4-txta" placeholder="客户当前业务状态、规模、已有系统…"></textarea>
 	              <textarea id="s4-pain" class="s4-txta" placeholder="核心痛点（每行一条）…"></textarea>
 	              <textarea id="s4-roles" class="s4-txta" placeholder="涉及角色（每行一条）…"></textarea>
-	              <textarea id="s4-process" class="s4-txta" placeholder="当前业务流程…"></textarea>
 	            </div>
 	          </div>
 
@@ -2635,7 +2633,6 @@ function autoGenerateStep4Input(c) {
   setText('s4-val-current', d.customerCurrentState);
   setText('s4-val-pain', d.painPoints);
   setText('s4-val-roles', d.involvedRoles);
-  setText('s4-val-process', d.currentProcess);
   setText('s4-val-needs', d.confirmedNeeds);
   setText('s4-val-outcome', d.expectedOutcome);
   setText('s4-val-phase1', d.phaseOneScope);
@@ -2645,7 +2642,6 @@ function autoGenerateStep4Input(c) {
   setTA('s4-current', d.customerCurrentState);
   setTA('s4-pain', d.painPoints);
   setTA('s4-roles', d.involvedRoles);
-  setTA('s4-process', d.currentProcess);
   setTA('s4-needs', d.confirmedNeeds);
   setTA('s4-outcome', d.expectedOutcome);
   setTA('s4-phase1', d.phaseOneScope);
@@ -2675,7 +2671,6 @@ function saveStep4Input() {
     painPoints: getVal('s4-pain').split('\n').filter(Boolean),
     confirmedNeeds: getVal('s4-needs').split('\n').filter(Boolean),
     involvedRoles: getVal('s4-roles').split('\n').filter(Boolean),
-    currentProcess: getVal('s4-process').split('\n').filter(Boolean),
     expectedOutcome: getVal('s4-outcome').split('\n').filter(Boolean),
     phaseOneScope: getVal('s4-phase1').split('\n').filter(Boolean),
     phaseTwoScope: getVal('s4-phase2').split('\n').filter(Boolean),
