@@ -1027,14 +1027,12 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	        <!-- 方案输入确认 -->
 	        <div class="analysis-card s3-sec-blue" style="margin-bottom:16px">
 	          <div class="analysis-card-head" style="margin-bottom:12px">
-	            <div style="display:flex;align-items:center;gap:10px">
-	              <h3>方案输入确认</h3>
-	              <span id="s4-draft-source" style="font-size:11px;color:#98a2b3;background:#f3f4f6;padding:2px 8px;border-radius:10px;display:inline-block"></span>
+	            <h3>方案输入确认</h3>
+	            <div style="display:flex;gap:8px">
+	              <button class="small-btn" id="s4-regen-btn" onclick="doRegenerateStep4Input()">重新生成</button>
+	              <button class="btn secondary" id="s4-input-edit-btn" onclick="toggleS4InputEdit()" style="height:30px;font-size:12px;padding:0 14px;border-radius:8px">编辑</button>
 	            </div>
-	            <button class="btn secondary" id="s4-input-edit-btn" onclick="toggleS4InputEdit()" style="height:30px;font-size:12px;padding:0 14px;border-radius:8px">编辑</button>
 	          </div>
-	          <p style="color:#667085;font-size:12px;margin:0 0 14px">基于 Step3 AI 摘要预填，点击编辑可修改</p>
-
 	          <!-- 4个折叠组 -->
 	          <div class="s4-group" id="s4-group-status">
 	            <div class="s4-ghead" onclick="toggleS4Group('status')">
@@ -2677,9 +2675,18 @@ function saveStep4Input() {
     pendingQuestions: getVal('s4-questions').split('\n').filter(Boolean)
   };
   updateClient(currentClientId, { step4_input_draft: draft });
-  var sourceEl = document.getElementById('s4-draft-source');
-  if (sourceEl) sourceEl.textContent = '（用户已编辑）';
   showToast('输入已保存');
+}
+
+function doRegenerateStep4Input() {
+  var c = getClient(currentClientId);
+  if (!c) return;
+  // 清除 step4_input_draft，强制从 step3_summary 重新提取
+  updateClient(currentClientId, { step4_input_draft: null });
+  // 重新读取（updateClient 已写入 localStorage）
+  c = getClient(currentClientId);
+  autoGenerateStep4Input(c);
+  showToast('已从 Step3 摘要重新生成');
 }
 
 function toggleS4Group(group) {
