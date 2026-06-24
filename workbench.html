@@ -3125,6 +3125,52 @@ function buildStep4WordHtml(data, customerName) {
 
 // ==================== STEP 4: History & WeCom ====================
 
+function renderStep4LatestPresales(version, count) {
+  var previewEl = document.getElementById('s4-presales-preview');
+  var emptyEl = document.getElementById('s4-presales-empty');
+  var statusEl = document.getElementById('s4-presales-status');
+  var tsEl = document.getElementById('s4-presales-ts');
+  var wecomBtn = document.getElementById('s4-presales-wecom-btn');
+  if (!previewEl) return;
+  var content = version && version.content;
+  if (!content) return;
+  var wc = content.wordContent || '';
+  if (wc) {
+    previewEl.innerHTML = '<div style="padding:12px 0">' + wc + '</div>';
+    previewEl.style.display = '';
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (statusEl) { statusEl.textContent = '已生成'; statusEl.style.background='#e6f4ea'; statusEl.style.color='#1677ff'; }
+    if (wecomBtn) wecomBtn.style.display = '';
+    if (tsEl) {
+      var d = new Date(version.created_at);
+      tsEl.textContent = d.toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}) + ' ' + d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+    }
+  }
+}
+
+function renderStep4LatestTechnical(version) {
+  var previewEl = document.getElementById('s4-technical-preview');
+  var emptyEl = document.getElementById('s4-technical-empty');
+  var statusEl = document.getElementById('s4-technical-status');
+  var tsEl = document.getElementById('s4-technical-ts');
+  var wecomBtn = document.getElementById('s4-technical-wecom-btn');
+  if (!previewEl) return;
+  var content = version && version.content;
+  if (!content) return;
+  var wc = content.wordContent || '';
+  if (wc) {
+    previewEl.innerHTML = '<div style="padding:12px 0">' + wc + '</div>';
+    previewEl.style.display = '';
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (statusEl) { statusEl.textContent = '已生成'; statusEl.style.background='#e6f4ea'; statusEl.style.color='#1677ff'; }
+    if (wecomBtn) wecomBtn.style.display = '';
+    if (tsEl) {
+      var d = new Date(version.created_at);
+      tsEl.textContent = d.toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}) + ' ' + d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+    }
+  }
+}
+
 function renderStep4History(type, versions) {
   var histEl = document.getElementById('s4-' + type + '-history');
   var countEl = document.getElementById('s4-' + type + '-history-count');
