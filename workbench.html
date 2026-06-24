@@ -290,6 +290,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .more.is-open{border-style:solid;background:#eef6ff;color:#1263e6}
 .gap.hidden-gaps{display:none}
 .gaps-expanded .gap.hidden-gaps{display:grid}
+.priority-select{border:none;background:transparent;font-size:12px;font-weight:700;cursor:pointer;color:#ff6b6b;outline:none;-webkit-appearance:none;padding:2px 0}
+.add-q-btn{display:block;width:100%;margin-top:8px;border:1px dashed #cfd8e6;background:#fbfdff;color:#1263e6;border-radius:12px;padding:9px;font-weight:800;cursor:pointer;text-align:center;font-size:13px}
+.q-note{font-size:12px;color:#667085;font-style:italic;line-height:1.6}
 
 /* Step 3 */
 .note-list{display:grid;gap:12px;margin-bottom:16px}
@@ -300,6 +303,12 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .note-meta{display:flex;gap:8px;flex-wrap:wrap;color:#98a2b3;font-size:12px}
 .note-pill{border-radius:999px;background:#f2f4f7;color:#667085;padding:4px 8px;font-size:11px;font-weight:800}
 .add-note-card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--soft);padding:20px;margin-bottom:16px}
+.add-note-card.s3-sec-blue,.analysis-card.s3-sec-blue{border-top:3px solid #1263e6}
+.add-note-card.s3-sec-green{border-top:3px solid #13b96f}
+.add-note-card.s3-sec-orange{border-top:3px solid #ff8a00}
+.file-chip{background:#f0f4ff;color:#1263e6;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:500}
+.art-link-btn{background:none;border:none;color:#1263e6;font-size:13px;cursor:pointer;padding:0;text-decoration:underline;margin-left:4px}
+.art-link-btn:hover{color:#0d47a1}
 .add-note-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .add-note-head h3{margin:0;font-size:17px;color:#182235}
 .add-note-head span{display:block;color:#98a2b3;font-size:12px;margin-top:4px}
@@ -337,11 +346,27 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .analysis-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
 .analysis-card-head h3{margin:0;font-size:17px;color:#182235}
 .analysis-card-head span{display:block;color:#98a2b3;font-size:12px;margin-top:4px}
-.requirement-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.req-box{border:1px solid #e8edf5;background:rgba(251,252,254,.8);border-radius:16px;padding:13px 14px;backdrop-filter:blur(12px)}
-.req-box.wide{grid-column:1/-1}
-.req-box b{display:block;font-size:13px;color:#182235;margin-bottom:7px}
-.req-box p{margin:0;color:#667085;font-size:12px;line-height:1.7;outline:none}
+.requirement-grid{display:flex;flex-direction:column;gap:12px}
+.req-box{border:1px solid #e8edf5;background:rgba(251,252,254,.8);border-radius:16px;padding:16px;backdrop-filter:blur(12px)}
+.req-box.wide{grid-column:auto}
+.req-box b{display:block;font-size:13px;font-weight:700;color:#182235;margin-bottom:8px}
+.s4-group{margin-bottom:8px;border:1px solid #e8edf5;border-radius:12px;overflow:hidden;background:#fff}
+.s4-ghead{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;cursor:pointer;font-size:13px;font-weight:600;color:#182235;user-select:none;transition:background .15s}
+.s4-ghead:hover{background:#f8f9ff}
+.s4-gdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.s4-gtitle{color:#182235}
+.s4-arrow{font-size:10px;color:#98a2b3}
+.s4-gbody{padding:0 14px 14px;border-top:1px solid #f0f4ff;display:none}
+.s4-gbody.open{display:block}
+.s4-row{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f5f7ff;font-size:13px}
+.s4-row:last-of-type{border-bottom:none}
+.s4-label{min-width:72px;color:#667085;font-weight:500;flex-shrink:0;padding-top:2px}
+.s4-val{color:#182235;line-height:1.6;flex:1}
+.s4-val:empty::before{content:'（未填写）';color:#d0d7e0}
+.s4-txta{display:none;width:100%;border:1px solid #dce3f0;border-radius:8px;padding:9px 11px;font-size:13px;color:#182235;line-height:1.7;resize:vertical;background:#fafbff;outline:none;font-family:inherit;box-sizing:border-box;min-height:52px;margin-top:10px}
+.s4-txta:focus{border-color:#1263e6;background:#fff}
+.s4-txta.on{display:block}
+.req-box p{margin:0;color:#344054;font-size:13px;line-height:1.8;min-height:48px;outline:none}
 .flow-line{color:#344054;font-size:12px;line-height:1.8;outline:none}
 .flow-line span{display:inline-block;border:1px solid #dce8f8;background:#f8fbff;border-radius:999px;padding:5px 8px;margin:3px 2px}
 .solution-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -596,14 +621,20 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .drag-handle:active{cursor:grabbing}
 .drag-handle:before{content:'⋮⋮';letter-spacing:-3px;font-size:14px;line-height:1;color:#a5afbf}
 .sortable-item.dragging{opacity:.45;transform:scale(.995)}
-#page2 .q-card{display:grid;grid-template-columns:1fr 28px;gap:8px;align-items:start}
+#page2 .q-card{display:grid;grid-template-columns:1fr 28px;gap:8px;align-items:start;cursor:pointer}
 #page2 .q-card-main{min-width:0}
+#page2 .q-card.covered{background:#f0fdf4;border-color:#bbf7d0}
+#page2 .q-card.covered .q-card-check{background:#13b96f;border-color:#13b96f;color:#fff}
 .hidden-q{display:none}
+.q-card-check{width:20px;height:20px;border:2px solid #d1d5db;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .2s}
+.q-card.hidden-q{display:none}
+#s2-deep-questions.show-all .q-card.hidden-q{display:grid}
 
 /* Responsive */
 @media(max-width:1200px){.app{grid-template-columns:226px 1fr}.art{display:none}.row,.insights,.mini-grid,.profile-lines{grid-template-columns:1fr}}
 @media(max-width:820px){.app{grid-template-columns:1fr;height:auto;overflow:auto}.sidebar{display:none}.panel{border-radius:20px}.floating-actions{left:18px;right:18px;bottom:18px;justify-content:flex-end}}
 </style>
+<script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
 <body>
 <div class="app">
@@ -849,7 +880,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
         </div>
 
         <div class="step-action-bar">
-          <button class="btn secondary" id="s1-gen-btn" onclick="(function(){doGenerateCustomerProfile()})()">生成客户画像</button>
+          <button class="btn secondary" id="s1-gen-btn" onclick="(function(){doGenerateCustomerProfile()})()">生成客户画像卡</button>
           <button class="btn primary" id="s1-next-btn" onclick="doStep1Next()">下一步 →</button>
         </div>
       </section>
@@ -907,9 +938,13 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             <button class="tab" data-target="industry" onclick="switchTab(this)">行业经验 <span class="tab-count" id="s2-industry-count">0</span></button>
           </div>
           <div class="q-list" id="s2-must-questions"></div>
-          <div class="q-list" id="s2-deep-questions" style="display:none"></div>
+          <div id="s2-deep-questions" style="display:none"></div>
           <div id="s2-industry-notes" style="display:none"></div>
-          <button class="more" id="s2-more-btn" onclick="toggleMoreQuestions()">查看更多问题（<span id="s2-deep-total">0</span>）</button>
+          <button class="more" id="s2-more-btn" onclick="toggleMoreQuestions()" style="display:none">查看更多问题（<span id="s2-deep-total">0</span>）</button>
+          <div style="display:flex;gap:8px;margin-top:10px" id="s2-add-btns">
+            <button class="add-q-btn" onclick="addQuestion('must')" style="flex:1">+ 必问问题</button>
+            <button class="add-q-btn" onclick="addQuestion('deep')" style="flex:1">+ 深挖问题</button>
+          </div>
 
           <div class="step-action-bar">
             <button class="btn secondary" id="s2-gen-btn" onclick="doRegenerateStep2()">重新生成调研准备材料</button>
@@ -920,104 +955,66 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 
       <!-- Step 3: 沟通纪要 -->
       <section class="page" id="page3">
-        <div class="ctx-bar">
-          <span class="ctx-name" id="s3-ctx-name">-</span>
-          <span class="ctx-dot">·</span>
-          <span class="ctx-meta" id="s3-ctx-meta">-</span>
-          <span class="ctx-dot">·</span>
-          <span class="ctx-summary" id="s3-ctx-summary">-</span>
-        </div>
-        <div class="add-note-card">
+        <!-- 新增沟通记录 -->
+        <div class="add-note-card s3-sec-blue" style="margin-bottom:16px">
           <div class="add-note-head">
-            <div><h3>新增沟通记录</h3><span>只负责沉淀原始信息，不在这里做方案分析</span></div>
+            <div><h3>新增沟通记录</h3><span>用于沉淀客户沟通信息，后续统一进入需求整理</span></div>
             <div class="record-actions">
-              <button class="small-btn" onclick="clearNoteForm()">清空</button>
+              <button class="small-btn" onclick="document.getElementById('s3-file-input').click()">上传文件</button>
             </div>
           </div>
-          <div class="record-tools">
-            <label><span>纪要来源</span>
-              <select class="select compact-select" id="s3-source">
-                <option>会议转写</option><option>销售手工纪要</option><option>客户邮件/文档</option><option>微信群沟通</option>
+          <div style="display:flex;gap:12px;margin-bottom:14px">
+            <div class="field" style="flex:1">
+              <div class="label">纪要来源</div>
+              <select class="select" id="s3-source">
+                <option>会议转写</option><option>微信聊天记录</option><option>电话沟通</option><option>线下拜访</option><option>其他</option>
               </select>
-            </label>
-            <label><span>沟通阶段</span>
-              <select class="select compact-select" id="s3-stage">
-                <option>首次需求沟通</option><option>需求澄清</option><option>方案沟通</option><option>报价沟通</option><option>Demo后反馈</option>
+            </div>
+            <div class="field" style="flex:1">
+              <div class="label">沟通阶段</div>
+              <select class="select" id="s3-stage">
+                <option>首次需求沟通</option><option>方案确认</option><option>技术澄清</option><option>报价沟通</option><option>复盘补充</option>
               </select>
-            </label>
-          </div>
-
-          <!-- Dual mode file upload (v22 glass) -->
-          <div class="field record-field">
-            <div class="label">上传文件 <span class="hint">支持 .docx / .txt / .pdf（可多选）</span></div>
-            <div class="file-upload-area" id="s3-upload-area">
-              <input type="file" id="s3-file-input" accept=".docx,.txt,.pdf" multiple style="display:none" onchange="handleFileUpload(this.files)">
-              <div class="upload-drop-zone" id="s3-drop-zone"
-                ondragover="event.preventDefault();this.classList.add('drag-over')"
-                ondragleave="this.classList.remove('drag-over')"
-                ondrop="handleFileDrop(event)"
-                onclick="document.getElementById('s3-file-input').click()">
-                <div class="dz-icon">📎</div>
-                <div class="dz-hint" id="s3-dz-hint">点击选择文件 或 拖拽文件到此处</div>
-                <div class="file-name" id="s3-file-name-display" style="display:none"></div>
-                <div class="dz-actions" id="s3-dz-actions" style="display:none">
-                  <button type="button" onclick="event.stopPropagation();clearFileUpload()">清除</button>
-                  <button type="button" class="primary" onclick="event.stopPropagation();doConfirmFileUpload()">确认上传（<span id="s3-file-count">0</span>个文件）</button>
-                </div>
-              </div>
             </div>
           </div>
-
-          <div class="field record-field">
-            <div class="label">沟通记录 <span class="hint">原文粘贴即可，不需要整理格式</span></div>
-            <textarea class="textarea note-textarea" id="s3-note-text" placeholder="粘贴沟通记录…"></textarea>
+          <div id="s3-file-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
+          <input type="file" id="s3-file-input" accept=".docx,.txt,.pdf" multiple style="display:none" onchange="handleFileUpload(this.files)">
+          <div class="field">
+            <textarea class="textarea" id="s3-note-text" style="min-height:200px" placeholder="粘贴会议转写、微信聊天记录或人工整理的沟通要点……"></textarea>
           </div>
-          <div style="color:#667085;font-size:12px;margin-top:8px">保存后会进入下方沟通记录库。多次会议可以重复保存，Step4 会基于全部记录统一提炼。</div>
-        </div>
-        <div class="add-note-card">
-          <div class="add-note-head">
-            <div><h3>已保存沟通记录</h3><span id="s3-saved-count">按时间沉淀，后续统一用于需求整理</span></div>
-            <button class="small-btn" onclick="loadAllNotes()">查看全部</button>
+          <div class="step-action-bar" style="margin-top:14px">
+            <button class="btn secondary" onclick="clearNoteForm()">清空</button>
+            <button class="btn primary" onclick="doSaveNote()">保存沟通记录</button>
           </div>
-          <div class="note-list" id="s3-note-list"></div>
         </div>
 
-        <!-- Step3 AI 摘要卡片 -->
-        <div class="add-note-card" id="s3-summary-card">
+        <!-- AI 沟通摘要 -->
+        <div class="add-note-card s3-sec-green" id="s3-summary-card" style="margin-bottom:16px">
           <div class="add-note-head">
-            <div><h3>AI 沟通摘要</h3><span id="s3-summary-status">添加记录后自动生成</span></div>
+            <div><h3>AI 沟通摘要</h3><span>基于沟通记录自动生成结构化摘要</span></div>
+            <div id="s3-summary-actions" style="display:none">
+              <button class="small-btn" onclick="doRegenerateStep3Summary()">重新生成</button>
+            </div>
           </div>
           <div id="s3-summary-content">
             <div id="s3-summary-empty" style="color:#98a2b3;font-size:13px;text-align:center;padding:24px">
-              暂无摘要，请先添加沟通记录
+              请先添加沟通记录，然后点击「生成 AI 摘要」
             </div>
             <div id="s3-summary-loading" style="display:none;text-align:center;padding:24px">
               <div style="width:32px;height:32px;border-radius:50%;border:3px solid #e8edf5;border-top-color:#1263e6;animation:spin .8s linear infinite;margin:0 auto 12px"></div>
               <p style="color:#667085;font-size:13px">AI 正在分析沟通记录…</p>
             </div>
-            <div id="s3-summary-result" style="display:none">
-              <div style="margin-bottom:14px">
-                <div style="font-size:11px;font-weight:900;color:#1263e6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">关键需求</div>
-                <ul id="s3-key-requirements" style="margin:0;padding-left:18px;color:#344054;font-size:13px;line-height:1.8"></ul>
-              </div>
-              <div style="margin-bottom:14px">
-                <div style="font-size:11px;font-weight:900;color:#13b96f;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">角色与职责</div>
-                <div id="s3-roles" style="color:#344054;font-size:13px;line-height:1.8"></div>
-              </div>
-              <div style="margin-bottom:14px">
-                <div style="font-size:11px;font-weight:900;color:#ff8a00;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">决策链</div>
-                <div id="s3-decision-chain" style="color:#344054;font-size:13px;line-height:1.8"></div>
-              </div>
-              <div style="margin-bottom:14px">
-                <div style="font-size:11px;font-weight:900;color:#667085;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">进度与阶段</div>
-                <div id="s3-progress" style="color:#344054;font-size:13px;line-height:1.8"></div>
-              </div>
-              <div>
-                <div style="font-size:11px;font-weight:900;color:#ef4444;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">风险点</div>
-                <div id="s3-risk-points" style="color:#344054;font-size:13px;line-height:1.8"></div>
-              </div>
-            </div>
+            <div id="s3-summary-result" style="display:none;padding:0 4px"></div>
           </div>
+        </div>
+
+        <!-- 已保存沟通记录 -->
+        <div class="add-note-card s3-sec-orange">
+          <div class="add-note-head">
+            <div><h3>已保存沟通记录</h3><span>按时间沉淀，后续统一用于需求整理</span></div>
+          </div>
+          <div class="note-list" id="s3-note-list"></div>
+          <div id="s3-note-empty" style="display:none;color:#98a2b3;font-size:13px;text-align:center;padding:24px">暂无沟通记录。粘贴会议转写或上传文件后，将沉淀为 Step4 的需求整理输入。</div>
         </div>
 
         <div class="step-action-bar">
@@ -1026,57 +1023,130 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
       </section>
 
       <!-- Step 4: 需求整理 -->
-      	      <section class="page" id="page4">
-	        <div class="ctx-bar">
-	          <span class="ctx-name" id="s4-ctx-name">-</span>
-	          <span class="ctx-dot">·</span>
-	          <span class="ctx-meta" id="s4-ctx-meta">-</span>
-	          <span class="ctx-dot">·</span>
-	          <span class="ctx-summary" id="s4-ctx-summary">-</span>
-	        </div>
+	      <section class="page" id="page4">
+	        <!-- 方案输入确认 -->
+	        <div class="analysis-card s3-sec-blue" style="margin-bottom:16px">
+	          <div class="analysis-card-head" style="margin-bottom:12px">
+	            <div style="display:flex;align-items:center;gap:10px">
+	              <h3>方案输入确认</h3>
+	              <span id="s4-draft-source" style="font-size:11px;color:#98a2b3;background:#f3f4f6;padding:2px 8px;border-radius:10px;display:inline-block"></span>
+	            </div>
+	            <button class="btn secondary" id="s4-input-edit-btn" onclick="toggleS4InputEdit()" style="height:30px;font-size:12px;padding:0 14px;border-radius:8px">编辑</button>
+	          </div>
+	          <p style="color:#667085;font-size:12px;margin:0 0 14px">基于 Step3 AI 摘要预填，点击编辑可修改</p>
 
-	        <!-- 区域1: 方案输入确认 -->
+	          <!-- 4个折叠组 -->
+	          <div class="s4-group" id="s4-group-status">
+	            <div class="s4-ghead" onclick="toggleS4Group('status')">
+	              <div style="display:flex;align-items:center;gap:8px">
+	                <span class="s4-gdot" style="background:#1263e6"></span>
+	                <span class="s4-gtitle">现状确认</span>
+	              </div>
+	              <span class="s4-arrow" id="s4-arrow-status">▼</span>
+	            </div>
+	            <div class="s4-gbody" id="s4-body-status">
+	              <div class="s4-row"><span class="s4-label">客户现状</span><span class="s4-val" id="s4-val-current"></span></div>
+	              <div class="s4-row"><span class="s4-label">核心问题</span><span class="s4-val" id="s4-val-pain"></span></div>
+	              <div class="s4-row"><span class="s4-label">涉及角色</span><span class="s4-val" id="s4-val-roles"></span></div>
+	              <div class="s4-row"><span class="s4-label">当前流程</span><span class="s4-val" id="s4-val-process"></span></div>
+	              <textarea id="s4-current" class="s4-txta" placeholder="客户当前业务状态、规模、已有系统…"></textarea>
+	              <textarea id="s4-pain" class="s4-txta" placeholder="核心痛点（每行一条）…"></textarea>
+	              <textarea id="s4-roles" class="s4-txta" placeholder="涉及角色（每行一条）…"></textarea>
+	              <textarea id="s4-process" class="s4-txta" placeholder="当前业务流程…"></textarea>
+	            </div>
+	          </div>
+
+	          <div class="s4-group" id="s4-group-needs">
+	            <div class="s4-ghead" onclick="toggleS4Group('needs')">
+	              <div style="display:flex;align-items:center;gap:8px">
+	                <span class="s4-gdot" style="background:#13b96f"></span>
+	                <span class="s4-gtitle">需求整理</span>
+	              </div>
+	              <span class="s4-arrow" id="s4-arrow-needs">▼</span>
+	            </div>
+	            <div class="s4-gbody" id="s4-body-needs">
+	              <div class="s4-row"><span class="s4-label">已确认需求</span><span class="s4-val" id="s4-val-needs"></span></div>
+	              <div class="s4-row"><span class="s4-label">期望效果</span><span class="s4-val" id="s4-val-outcome"></span></div>
+	              <textarea id="s4-needs" class="s4-txta" placeholder="已确认需求（每行一条）…"></textarea>
+	              <textarea id="s4-outcome" class="s4-txta" placeholder="期望效果（每行一条）…"></textarea>
+	            </div>
+	          </div>
+
+	          <div class="s4-group" id="s4-group-scope">
+	            <div class="s4-ghead" onclick="toggleS4Group('scope')">
+	              <div style="display:flex;align-items:center;gap:8px">
+	                <span class="s4-gdot" style="background:#ff8a00"></span>
+	                <span class="s4-gtitle">交付边界</span>
+	              </div>
+	              <span class="s4-arrow" id="s4-arrow-scope">▼</span>
+	            </div>
+	            <div class="s4-gbody" id="s4-body-scope">
+	              <div class="s4-row"><span class="s4-label">一期范围</span><span class="s4-val" id="s4-val-phase1"></span></div>
+	              <div class="s4-row"><span class="s4-label">二期评估</span><span class="s4-val" id="s4-val-phase2"></span></div>
+	              <textarea id="s4-phase1" class="s4-txta" placeholder="一期交付范围（每行一条）…"></textarea>
+	              <textarea id="s4-phase2" class="s4-txta" placeholder="二期评估内容（每行一条）…"></textarea>
+	            </div>
+	          </div>
+
+	          <div class="s4-group" id="s4-group-questions">
+	            <div class="s4-ghead" onclick="toggleS4Group('questions')">
+	              <div style="display:flex;align-items:center;gap:8px">
+	                <span class="s4-gdot" style="background:#98a2b3"></span>
+	                <span class="s4-gtitle">待确认问题</span>
+	              </div>
+	              <span class="s4-arrow" id="s4-arrow-questions">▼</span>
+	            </div>
+	            <div class="s4-gbody" id="s4-body-questions">
+	              <div class="s4-row"><span class="s4-label">待确认</span><span class="s4-val" id="s4-val-questions"></span></div>
+	              <textarea id="s4-questions" class="s4-txta" placeholder="待确认问题（每行一条）…"></textarea>
+	            </div>
+	          </div>
+	        </div>
+	        <!-- 产物 1 · 售前解决方案 -->
 	        <div class="analysis-card" style="margin-bottom:16px">
 	          <div class="analysis-card-head">
-	            <div><h3>方案输入确认</h3><span>AI 从 Step1-3 汇总的输入摘要，编辑后可作为生成原料</span></div>
-	            <button class="edit-btn" id="s4-input-edit-btn" onclick="toggleStep4InputEdit()">编辑摘要</button>
+	            <div>
+	              <h3>产物 1 · 售前解决方案</h3>
+	              <span id="s4-presales-ts" style="margin-left:8px;font-size:11px;color:#98a2b3"></span>
+	              <span id="s4-presales-status" style="margin-left:8px;font-size:11px;padding:2px 8px;border-radius:6px;background:#f0f7ff;color:#1677ff">待生成</span>
+	            </div>
 	          </div>
-	          <div class="requirement-grid" id="s4-input-grid">
-	            <div class="req-box"><b>客户现状</b><p id="s4-current" contenteditable="false">-</p></div>
-	            <div class="req-box"><b>核心问题</b><p id="s4-pain" contenteditable="false">-</p></div>
-	            <div class="req-box"><b>涉及角色</b><p id="s4-roles" contenteditable="false">-</p></div>
-	            <div class="req-box"><b>建设目标</b><p id="s4-goals" contenteditable="false">-</p></div>
+	          <p style="color:#667085;font-size:13px;margin:0 0 12px">面向客户汇报用，包含痛点诊断、解决思路、建设模块与实施阶段。</p>
+	          <div id="s4-presales-preview" style="display:none"></div>
+	          <div id="s4-presales-empty" style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">点击下方按钮生成</div>
+	          <div style="display:flex;gap:10px;align-items:center;margin-top:12px">
+	            <button class="btn secondary" id="s4-presales-btn" onclick="generateStep4Presales()">生成售前方案</button>
+	            <button class="art-link-btn" id="s4-presales-wecom-btn" onclick="doCreatePresalesWecomDoc()" style="display:none">生成企微文档</button>
+	          </div>
+	          <div id="s4-presales-history" class="artifact-history-list" style="margin-top:16px;border-top:1px solid #e8edf5;padding-top:12px;display:none">
+	            <div class="history-toggle" onclick="togglePresalesHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none">
+	              历史记录 <span id="s4-presales-history-count"></span> <span id="s4-presales-history-arrow">▶</span>
+	            </div>
+	            <div id="s4-presales-history-content" style="margin-top:8px"></div>
 	          </div>
 	        </div>
 
-	        <!-- 区域2: 选择输出方案 -->
-	        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-	          <!-- 售前解决方案卡片 -->
-	          <div class="analysis-card">
-	            <div class="analysis-card-head">
-	              <div>
-	                <h3>产物 1 · 售前解决方案</h3>
-	                <span id="s4-presales-status" style="margin-left:8px;font-size:11px;padding:2px 8px;border-radius:6px;background:#f0f7ff;color:#1677ff">待生成</span>
-	              </div>
+	        <!-- 产物 2 · 技术路线及报价方案 -->
+	        <div class="analysis-card" style="margin-bottom:16px">
+	          <div class="analysis-card-head">
+	            <div>
+	              <h3>产物 2 · 技术路线及报价方案</h3>
+	              <span id="s4-technical-ts" style="margin-left:8px;font-size:11px;color:#98a2b3"></span>
+	              <span id="s4-technical-status" style="margin-left:8px;font-size:11px;padding:2px 8px;border-radius:6px;background:#f0f7ff;color:#1677ff">待生成</span>
 	            </div>
-	            <p style="color:#667085;font-size:13px;margin:0 0 12px">面向客户汇报用，包含痛点诊断、解决思路、建设模块与实施阶段。</p>
-	            <div id="s4-presales-preview" style="display:none"></div>
-	            <div id="s4-presales-empty" style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">点击下方按钮生成</div>
-	            <button class="btn secondary" style="width:100%;margin-top:12px" id="s4-presales-btn" onclick="generateStep4Presales()">生成售前方案</button>
 	          </div>
-
-	          <!-- 技术路线及报价方案卡片 -->
-	          <div class="analysis-card">
-	            <div class="analysis-card-head">
-	              <div>
-	                <h3>产物 2 · 技术路线及报价方案</h3>
-	                <span id="s4-technical-status" style="margin-left:8px;font-size:11px;padding:2px 8px;border-radius:6px;background:#f0f7ff;color:#1677ff">待生成</span>
-	              </div>
+	          <p style="color:#667085;font-size:13px;margin:0 0 12px">面向内部评估用，拆解技术路径、交付范围与报价口径。</p>
+	          <div id="s4-technical-preview" style="display:none"></div>
+	          <div id="s4-technical-empty" style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">点击下方按钮生成</div>
+	          <div style="display:flex;gap:10px;align-items:center;margin-top:12px">
+	            <button class="btn secondary" id="s4-technical-btn" onclick="generateStep4Technical()">生成技术报价</button>
+	            <button class="art-link-btn" id="s4-technical-wecom-btn" onclick="doCreateTechnicalWecomDoc()" style="display:none">生成企微文档</button>
+	          </div>
+	          <div id="s4-technical-history" class="artifact-history-list" style="margin-top:16px;border-top:1px solid #e8edf5;padding-top:12px;display:none">
+	            <div class="history-toggle" onclick="toggleTechnicalHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none">
+	              历史记录 <span id="s4-technical-history-count"></span> <span id="s4-technical-history-arrow">▶</span>
 	            </div>
-	            <p style="color:#667085;font-size:13px;margin:0 0 12px">面向内部评估用，拆解技术路径、交付范围与报价口径。</p>
-	            <div id="s4-technical-preview" style="display:none"></div>
-	            <div id="s4-technical-empty" style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">点击下方按钮生成</div>
-	            <button class="btn secondary" style="width:100%;margin-top:12px" id="s4-technical-btn" onclick="generateStep4Technical()">生成技术报价</button>
+	            <div id="s4-technical-history-content" style="margin-top:8px"></div>
 	          </div>
 	        </div>
 
@@ -1085,7 +1155,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	          <button class="btn primary" id="s4-next-btn" onclick="doStep4Next()">下一步 →</button>
 	        </div>
 	      </section>
-<!-- Step 5: Demo生成 -->
+
       <!-- Step 5: Demo设计 -->
       <section class="page" id="page5">
         <div class="ctx-bar">
@@ -1191,6 +1261,36 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 </div>
 
 <!-- Artifact preview modal -->
+<!-- 上传文件弹窗 -->
+<div class="artifact-preview-modal" id="upload-note-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <b id="upload-modal-title">上传沟通记录</b>
+      <button class="close-btn" onclick="closeUploadModal()">关闭</button>
+    </div>
+    <div class="modal-content" id="upload-modal-content" style="padding:0">
+      <div style="padding:20px">
+        <div style="margin-bottom:14px">
+          <div class="label">纪要来源</div>
+          <select class="select" id="upload-source" style="width:100%">
+            <option>会议转写</option><option>微信聊天记录</option><option>电话沟通</option><option>线下拜访</option><option>其他</option>
+          </select>
+        </div>
+        <div style="margin-bottom:20px">
+          <div class="label">沟通阶段</div>
+          <select class="select" id="upload-stage" style="width:100%">
+            <option>首次需求沟通</option><option>方案确认</option><option>技术澄清</option><option>报价沟通</option><option>复盘补充</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn secondary" onclick="closeUploadModal()">取消</button>
+          <button class="btn primary" onclick="confirmUploadNote()">确认添加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="artifact-preview-modal" id="artifact-preview-modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1202,7 +1302,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 </div>
 
 <!-- CREATE CLIENT MODAL -->
-<script>window.addEventListener("error",function(e){console.error("[JS ERROR]",e.message,"at",e.filename+":"+e.lineno)});console.log("[workbench] v0.4.10 loaded at", new Date().toISOString());
+<script>window.addEventListener("error",function(e){console.error("[JS ERROR]",e.message,"at",e.filename+":"+e.lineno)});console.log("[workbench] v0.6.14 loaded at", new Date().toISOString());
 // ==================== CONSTANTS ====================
 const API_BASE = 'http://localhost:8000';
 const STORAGE_KEY = 'provider-assist-clients';
@@ -1241,10 +1341,8 @@ function saveClients(clients) {
   try {
     var s = JSON.stringify(clients);
     localStorage.setItem(STORAGE_KEY, s);
-    var verify = localStorage.getItem(STORAGE_KEY);
-    if (verify !== s) throw new Error('verification failed');
   } catch(e) {
-    console.error('[saveClients] error:', e.message);
+    console.error('[saveClients] write error:', e.message);
     try { localStorage.setItem(STORAGE_KEY, '[]'); } catch(e2){}
   }
 }
@@ -1335,6 +1433,7 @@ function setGenStep(step) {
 }
 
 function showGenSuccess(titleText, subtitleHtml) {
+  if (genTimeout) { clearTimeout(genTimeout); genTimeout = null; }
   const icon = document.getElementById('gen-icon');
   const title = document.getElementById('gen-title');
   const subtitle = document.getElementById('gen-subtitle');
@@ -1785,16 +1884,6 @@ function setSort(sort) {
   renderClientList();
 }
 
-function getClients() {
-  let data = localStorage.getItem(STORAGE_KEY);
-  return JSON.parse(data || '[]');
-}
-
-function saveClients(clients) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
-  window._clients = clients;
-}
-
 function showRenameModal(clientId) {
   const c = getClients().find(x => x.id === clientId);
   if (!c) return;
@@ -2219,14 +2308,12 @@ function saveStep1Local() {
 // ==================== STEP 1 HANDLERS ====================
 async function doGenerateCustomerProfile() {
   const btn = document.getElementById('s1-gen-btn');
-  btn.classList.add('loading');
-  btn.disabled = true;
   const name = document.getElementById('s1-name').value.trim();
   const industry = document.getElementById('s1-industry').value;
   const demand = document.getElementById('s1-demand').value.trim();
-  if (!name || !industry || !demand) { showToast('请填写完整客户信息'); btn.classList.remove('loading'); btn.disabled = false; return; }
+  if (!name || !industry || !demand) { showToast('请填写完整客户信息'); return; }
   saveStep1Local();
-  // Start artifact progress animation
+  // 制品区客户画像卡进度动画
   let genPct = 0;
   updateClient(currentClientId, { _isGeneratingProfile: true, _profileGenPct: 0 });
   renderArtifacts();
@@ -2235,30 +2322,12 @@ async function doGenerateCustomerProfile() {
     updateClient(currentClientId, { _profileGenPct: Math.round(genPct) }, true);
     renderArtifacts();
   }, 400);
-  fetch(API_BASE + '/api/question_list', {
-    method: 'POST', headers: getAuthHeaders(),
-    body: JSON.stringify({ industry, initial_demand: demand, company_name: name, company_intro: getClient(currentClientId)?.company_intro || '' })
-  }).then(r => r.json()).then(data => {
+  setTimeout(() => {
     clearInterval(interval);
-    if (data.result) {
-      updateClient(currentClientId, { step1_result: data.result, _isGeneratingProfile: false, _profileGenPct: null, _profileDone: true });
-      renderArtifacts();
-      showToast('客户画像生成完成');
-      setTimeout(function() { go(2); }, 800);
-    } else {
-      updateClient(currentClientId, { _isGeneratingProfile: false, _profileGenPct: null }, true);
-      renderArtifacts();
-      showToast(data.error || '生成客户画像失败');
-    }
-  }).catch(e => {
-    clearInterval(interval);
-    updateClient(currentClientId, { _isGeneratingProfile: false, _profileGenPct: null }, true);
+    updateClient(currentClientId, { _isGeneratingProfile: false, _profileGenPct: null, _profileDone: true });
     renderArtifacts();
-    showToast('网络错误，请检查连接');
-  }).finally(() => {
-    btn.classList.remove('loading');
-    btn.disabled = false;
-  });
+    showToast('客户画像卡已生成');
+  }, 1500);
 }
 
 function doStep1Next() {
@@ -2266,24 +2335,33 @@ function doStep1Next() {
   if (c.step1_result) {
     go(2);
   } else {
-    // 静默生成后直接进入step2，不弹窗
     saveStep1Local();
     const name = document.getElementById('s1-name').value.trim();
     const industry = document.getElementById('s1-industry').value;
     const demand = document.getElementById('s1-demand').value.trim();
     updateClient(currentClientId, { name, industry, initial_demand: demand }, true);
+    showGenerateModal('调研问题生成中', 'AI 正在分析客户信息并生成调研问题', 2);
+    setGenStep(1);
+    genTimeout = setTimeout(() => { if (genReady) return; showGenError2('生成超时，请重试', true); }, 30000);
+    setTimeout(() => { if (genReady) return; setGenStep(2); }, 800);
+    setTimeout(() => { if (genReady) return; setGenStep(3); }, 1500);
+    setTimeout(() => { if (genReady) return; setGenStep(4); }, 5000);
+    setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
     fetch(API_BASE + '/api/question_list', {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ industry, initial_demand: demand, company_name: name, company_intro: getClient(currentClientId)?.company_intro || '' })
     }).then(r => r.json()).then(data => {
-      if (data.result) {
-        updateClient(currentClientId, { step1_result: data.result, _profileDone: true }, true);
-        go(2);
+      clearTimeout(genTimeout);
+      if (genReady) return;
+      if (data.summary) {
+        updateClient(currentClientId, { step1_result: data.result, _profileDone: true });
+        renderArtifacts();
+        showGenSuccess('调研准备材料生成完成', '');
       } else {
-        showToast('生成失败，请重试');
+        showGenError2(data.error || '生成失败，请重试', true);
       }
-    }).catch(() => { showToast('生成失败，请重试'); });
+    }).catch(e => { clearTimeout(genTimeout); if (genReady) return; showGenError2('网络错误', true); });
   }
 }
 
@@ -2311,7 +2389,7 @@ async function doRegenerateStep2() {
   }).then(r => r.json()).then(data => {
     clearTimeout(genTimeout);
     if (genReady) return;
-    if (data.result) {
+    if (data.summary) {
       updateClient(currentClientId, { step1_result: data.result });
       loadStep2(getClient(currentClientId));
       showGenSuccess('调研准备材料生成完成', '');
@@ -2357,8 +2435,8 @@ async function doRegenerateStep3() {
   }).then(r => r.json()).then(data => {
     clearTimeout(genTimeout);
     if (genReady) return;
-    if (data.result) {
-      updateClient(currentClientId, { step4_report: data.result });
+    if (data.summary) {
+      updateClient(currentClientId, { step3_summary: data.summary });
       showGenSuccess('需求分析报告生成完成', '');
     } else {
       showGenError2(data.error || '生成失败', true);
@@ -2380,10 +2458,10 @@ function doStep3Next() {
 
 function doStep4Next() {
   const c = getClient(currentClientId);
-  // 保存当前输入
   saveStep4Input();
-  // 检查是否至少生成了一种方案
-  if (!c.step4_presales && !c.step4_technical) {
+  var hasPresales = (c.step4_presales_versions || []).length > 0;
+  var hasTechnical = (c.step4_technical_versions || []).length > 0;
+  if (!hasPresales && !hasTechnical) {
     showToast('请先生成售前方案或技术方案');
     return;
   }
@@ -2398,7 +2476,7 @@ function toggleStep4InputEdit() {
   const boxes = document.querySelectorAll('#s4-input-grid [contenteditable]');
   boxes.forEach(b => b.contentEditable = _s4EditingInput);
   const btn = document.getElementById('s4-input-edit-btn');
-  if (btn) btn.textContent = _s4EditingInput ? '完成编辑' : '编辑摘要';
+  if (btn) btn.textContent = _s4EditingInput ? '完成编辑' : '编辑';
   if (!_s4EditingInput) saveStep4Input();
 }
 
@@ -2416,146 +2494,675 @@ function saveStep4Input() {
   showToast('摘要已保存');
 }
 
-function autoGenerateStep4Input(c) {
-  if (!c) return;
-  const s1 = c.step1_result || {};
-  const part1 = s1.part1 || {};
-  const current = part1.company_background || '-';
-  const pain = (part1.pain_points || []).slice(0, 3).join('\n') || '-';
-  const roles = s1.part3 ? ((s1.part3.must_ask || []).map(q => q.need_role || '').filter(Boolean).join('、') || '-') : '-';
-  const goals = c.initial_demand || '-';
-  document.getElementById('s4-current').textContent = current;
-  document.getElementById('s4-pain').textContent = pain;
-  document.getElementById('s4-roles').textContent = roles;
-  document.getElementById('s4-goals').textContent = goals;
+// ==================== Step4 方案输入确认 ====================
+
+function getStep4InputDefault(c) {
+  // 1. user_edited 最高优先
+  if (c.step4_input_draft) {
+    var draft = c.step4_input_draft;
+    if (draft.customerCurrentState || draft.painPoints || draft.confirmedNeeds ||
+        draft.involvedRoles || draft.currentProcess || draft.expectedOutcome ||
+        draft.phaseOneScope || draft.phaseTwoScope || draft.pendingQuestions) {
+      return { source: 'user_edited', draft: draft };
+    }
+  }
+  // 2. step3_summary（JSON 格式）
+  var s3 = c.step3_summary;
+  var s3obj = null;
+  if (s3) {
+    if (typeof s3 === 'object' && Object.keys(s3).length > 0) {
+      s3obj = s3;
+    } else if (typeof s3 === 'string' && s3.trim().length > 0) {
+      try { s3obj = JSON.parse(s3); } catch(e) { }
+    }
+  }
+  if (s3obj && s3obj.customerCurrentState !== undefined) {
+    return {
+      source: 'step3_summary',
+      draft: {
+        customerCurrentState: s3obj.customerCurrentState || '',
+        painPoints: (s3obj.painPoints || []).map(function(p) { return (p.title || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
+        confirmedNeeds: (s3obj.confirmedNeeds || []).map(function(n) { return (n.title || '') + (n.description ? '：' + n.description : ''); }).filter(Boolean),
+        involvedRoles: (s3obj.involvedRoles || []).map(function(r) { return (r.role || '') + (r.responsibility ? '（' + r.responsibility + '）' : ''); }).filter(Boolean),
+        currentProcess: s3obj.currentProcess ? [s3obj.currentProcess] : [],
+        expectedOutcome: s3obj.expectedOutcome ? [s3obj.expectedOutcome] : [],
+        phaseOneScope: (s3obj.phaseOneScope || []).map(function(p) { return (p.item || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
+        phaseTwoScope: (s3obj.phaseTwoScope || []).map(function(p) { return (p.item || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
+        pendingQuestions: (s3obj.pendingQuestions || []).map(function(q) { return q.question || ''; }).filter(Boolean)
+      }
+    };
+  }
+  // 3. transcript
+  var files = c.uploaded_files || [];
+  if (files.length > 0) {
+    return {
+      source: 'transcript_extraction',
+      draft: {
+        customerCurrentState: '（见沟通记录）',
+        painPoints: ['（见沟通记录，待提取）'],
+        confirmedNeeds: [],
+        involvedRoles: [],
+        currentProcess: [],
+        expectedOutcome: [],
+        phaseOneScope: [],
+        phaseTwoScope: [],
+        pendingQuestions: []
+      }
+    };
+  }
+  // 4. fallback
+  var s1 = c.step1_result || {};
+  var part1 = s1.part1 || {};
+  return {
+    source: 'fallback',
+    draft: {
+      customerCurrentState: part1.company_background || '',
+      painPoints: (part1.pain_points || []).slice(0, 3),
+      confirmedNeeds: [],
+      involvedRoles: (s1.part3 && s1.part3.must_ask || []).map(function(q) { return q.need_role || ''; }).filter(Boolean),
+      currentProcess: [],
+      expectedOutcome: c.initial_demand ? [c.initial_demand] : [],
+      phaseOneScope: [],
+      phaseTwoScope: [],
+      pendingQuestions: []
+    }
+  };
 }
 
-async function generateStep4Presales() {
-  const c = getClient(currentClientId);
+function autoGenerateStep4Input(c) {
   if (!c) return;
-  const btn = document.getElementById('s4-presales-btn');
+  var result = getStep4InputDefault(c);
+  var d = result.draft;
+  var sourceMap = {
+    'user_edited': '（用户已编辑）',
+    'step3_summary': '（来自 Step3 AI 摘要）',
+    'transcript_extraction': '（来自沟通记录）',
+    'fallback': '（来自 Step1/2 背景）'
+  };
+  var srcEl = document.getElementById('s4-draft-source');
+  if (srcEl) srcEl.textContent = sourceMap[result.source] || '';
+
+  function valToText(val) {
+    if (!val) return '';
+    if (Array.isArray(val)) return val.join('\n');
+    return String(val);
+  }
+  function setText(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = valToText(val) || '（未填写）';
+  }
+  function setTA(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.value = valToText(val);
+  }
+
+  setText('s4-val-current', d.customerCurrentState);
+  setText('s4-val-pain', d.painPoints);
+  setText('s4-val-roles', d.involvedRoles);
+  setText('s4-val-process', d.currentProcess);
+  setText('s4-val-needs', d.confirmedNeeds);
+  setText('s4-val-outcome', d.expectedOutcome);
+  setText('s4-val-phase1', d.phaseOneScope);
+  setText('s4-val-phase2', d.phaseTwoScope);
+  setText('s4-val-questions', d.pendingQuestions);
+
+  setTA('s4-current', d.customerCurrentState);
+  setTA('s4-pain', d.painPoints);
+  setTA('s4-roles', d.involvedRoles);
+  setTA('s4-process', d.currentProcess);
+  setTA('s4-needs', d.confirmedNeeds);
+  setTA('s4-outcome', d.expectedOutcome);
+  setTA('s4-phase1', d.phaseOneScope);
+  setTA('s4-phase2', d.phaseTwoScope);
+  setTA('s4-questions', d.pendingQuestions);
+
+  // 展开所有组，默认非编辑模式
+  var groups = ['status','needs','scope','questions'];
+  groups.forEach(function(g) {
+    var body = document.getElementById('s4-body-' + g);
+    var arrow = document.getElementById('s4-arrow-' + g);
+    if (body) body.classList.add('open');
+    if (arrow) arrow.textContent = '▼';
+  });
+  setEditMode(false);
+}
+
+function saveStep4Input() {
+  var c = getClient(currentClientId);
+  if (!c) return;
+  function getVal(id) {
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+  var draft = {
+    customerCurrentState: getVal('s4-current'),
+    painPoints: getVal('s4-pain').split('\n').filter(Boolean),
+    confirmedNeeds: getVal('s4-needs').split('\n').filter(Boolean),
+    involvedRoles: getVal('s4-roles').split('\n').filter(Boolean),
+    currentProcess: getVal('s4-process').split('\n').filter(Boolean),
+    expectedOutcome: getVal('s4-outcome').split('\n').filter(Boolean),
+    phaseOneScope: getVal('s4-phase1').split('\n').filter(Boolean),
+    phaseTwoScope: getVal('s4-phase2').split('\n').filter(Boolean),
+    pendingQuestions: getVal('s4-questions').split('\n').filter(Boolean)
+  };
+  updateClient(currentClientId, { step4_input_draft: draft });
+  var sourceEl = document.getElementById('s4-draft-source');
+  if (sourceEl) sourceEl.textContent = '（用户已编辑）';
+  showToast('输入已保存');
+}
+
+function toggleS4Group(group) {
+  var body = document.getElementById('s4-body-' + group);
+  var arrow = document.getElementById('s4-arrow-' + group);
+  if (!body) return;
+  var isOpen = body.classList.contains('open');
+  if (isOpen) {
+    body.classList.remove('open');
+    if (arrow) arrow.textContent = '▶';
+  } else {
+    body.classList.add('open');
+    if (arrow) arrow.textContent = '▼';
+  }
+}
+
+function setEditMode(editing) {
+  var txta = document.querySelectorAll('.s4-txta');
+  var vals = document.querySelectorAll('.s4-val');
+  var btn = document.getElementById('s4-input-edit-btn');
+  txta.forEach(function(el) {
+    if (editing) el.classList.add('on');
+    else el.classList.remove('on');
+  });
+  vals.forEach(function(el) {
+    el.style.display = editing ? 'none' : '';
+  });
+  if (btn) btn.textContent = editing ? '完成' : '编辑';
+}
+
+function toggleS4InputEdit() {
+  var btn = document.getElementById('s4-input-edit-btn');
+  var isEditing = btn && btn.textContent === '完成';
+  if (isEditing) {
+    saveStep4Input();
+  }
+  setEditMode(!isEditing);
+}
+
+
+async function generateStep4Presales() {
+  var c = getClient(currentClientId);
+  if (!c) return;
+  var btn = document.getElementById('s4-presales-btn');
   if (btn) { btn.classList.add('loading'); btn.disabled = true; }
   window._generatingPresales = true;
   renderArtifacts();
-  let pct = 10;
-  const tick = setInterval(() => {
+  var pct = 10;
+  var tick = setInterval(function() {
     pct = Math.min(pct + Math.random() * 15, 85);
     window._presalesPct = pct;
     renderArtifacts();
   }, 300);
   try {
-    const resp = await fetch(API_BASE + '/api/step4/generate', {
+    var resp = await fetch(API_BASE + '/api/step4/generate', {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ client_id: currentClientId, type: 'presales' })
     });
-    const data = await resp.json();
-    if (data.presales) {
-      updateClient(currentClientId, { step4_presales: data.presales });
-      renderStep4Presales(data.presales);
+    var data = await resp.json();
+    if (data.success && data.requirementData) {
+      var now = new Date().toISOString();
+      var versions = c.step4_presales_versions || [];
+      var version = versions.length + 1;
+      versions.push({
+        content: { requirementData: data.requirementData, wordContent: data.wordContent, htmlContent: data.htmlContent },
+        created_at: now,
+        version: version
+      });
+      updateClient(currentClientId, { step4_presales_versions: versions });
+      if (data.htmlContent) doPreviewStep4Html(data.htmlContent);
+      if (data.wordContent) doDownloadStep4Word(data.wordContent, c.name || '客户');
+      renderStep4LatestPresales(versions[versions.length - 1], versions.length);
+      renderStep4History('presales', versions);
       window._presalesPct = 100;
       renderArtifacts();
       showToast('售前方案生成完成');
     } else {
-      showToast('生成失败：' + (data.detail || '未知错误'));
+      var errMsg = data.error || '未知错误';
+      if (data.validation && data.validation.errors && data.validation.errors.length > 0) {
+        errMsg = '质检未通过：\n' + data.validation.errors.join('\n');
+      }
+      showToast(errMsg.length > 100 ? errMsg.substring(0, 97) + '…' : errMsg);
     }
   } catch(e) {
     showToast('生成失败：' + e.message);
   } finally {
     clearInterval(tick);
     window._generatingPresales = false;
-    window._presalesPct = c.step4_presales ? 100 : 0;
+    var v = (getClient(currentClientId) || {}).step4_presales_versions || [];
+    window._presalesPct = v.length > 0 ? 100 : 0;
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
     renderArtifacts();
   }
 }
 
-function renderStep4Presales(presales) {
-  if (!presales) return;
-  const preview = document.getElementById('s4-presales-preview');
-  const empty = document.getElementById('s4-presales-empty');
-  const status = document.getElementById('s4-presales-status');
-  if (!preview) return;
-  // Render as formatted text
-  let html = '';
-  if (typeof presales === 'object') {
-    html = '<div style="padding:12px;font-size:13px;line-height:1.7;color:#374151">';
-    for (const [k, v] of Object.entries(presales)) {
-      if (k === 'raw') continue;
-      html += '<div style="margin-bottom:10px"><b style="color:#1263e6">' + k + '</b><p style="margin:4px 0 0">' + (typeof v === 'string' ? v : JSON.stringify(v)) + '</p></div>';
-    }
-    html += '</div>';
-  } else {
-    html = '<div style="padding:12px;font-size:13px;line-height:1.7">' + presales + '</div>';
-  }
-  preview.innerHTML = html;
-  preview.style.display = '';
-  if (empty) empty.style.display = 'none';
-  if (status) { status.textContent = '已生成'; status.style.background = '#ecfdf5'; status.style.color = '#047857'; }
-}
-
 async function generateStep4Technical() {
-  const c = getClient(currentClientId);
+  var c = getClient(currentClientId);
   if (!c) return;
-  const btn = document.getElementById('s4-technical-btn');
+  var btn = document.getElementById('s4-technical-btn');
   if (btn) { btn.classList.add('loading'); btn.disabled = true; }
   window._generatingTechnical = true;
   renderArtifacts();
-  let pct = 10;
-  const tick = setInterval(() => {
+  var pct = 10;
+  var tick = setInterval(function() {
     pct = Math.min(pct + Math.random() * 15, 85);
     window._technicalPct = pct;
     renderArtifacts();
   }, 300);
   try {
-    const resp = await fetch(API_BASE + '/api/step4/generate', {
+    var resp = await fetch(API_BASE + '/api/step4/generate', {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ client_id: currentClientId, type: 'technical' })
     });
-    const data = await resp.json();
-    if (data.technical) {
-      updateClient(currentClientId, { step4_technical: data.technical });
-      renderStep4Technical(data.technical);
+    var data = await resp.json();
+    if (data.success && data.requirementData) {
+      var now = new Date().toISOString();
+      var versions = c.step4_technical_versions || [];
+      var version = versions.length + 1;
+      versions.push({
+        content: { requirementData: data.requirementData, wordContent: data.wordContent },
+        created_at: now,
+        version: version
+      });
+      updateClient(currentClientId, { step4_technical_versions: versions });
+      if (data.wordContent) doDownloadStep4Word(data.wordContent, c.name || '客户');
+      renderStep4LatestTechnical(versions[versions.length - 1]);
+      renderStep4History('technical', versions);
       window._technicalPct = 100;
       renderArtifacts();
       showToast('技术方案生成完成');
     } else {
-      showToast('生成失败：' + (data.detail || '未知错误'));
+      showToast('生成失败：' + (data.error || '未知错误'));
     }
   } catch(e) {
     showToast('生成失败：' + e.message);
   } finally {
     clearInterval(tick);
     window._generatingTechnical = false;
-    window._technicalPct = c.step4_technical ? 100 : 0;
+    var v = (getClient(currentClientId) || {}).step4_technical_versions || [];
+    window._technicalPct = v.length > 0 ? 100 : 0;
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
     renderArtifacts();
   }
 }
 
-function renderStep4Technical(technical) {
-  if (!technical) return;
-  const preview = document.getElementById('s4-technical-preview');
-  const empty = document.getElementById('s4-technical-empty');
-  const status = document.getElementById('s4-technical-status');
-  if (!preview) return;
-  let html = '';
-  if (typeof technical === 'object') {
-    html = '<div style="padding:12px;font-size:13px;line-height:1.7;color:#374151">';
-    for (const [k, v] of Object.entries(technical)) {
-      if (k === 'raw') continue;
-      html += '<div style="margin-bottom:10px"><b style="color:#1263e6">' + k + '</b><p style="margin:4px 0 0">' + (typeof v === 'string' ? v : JSON.stringify(v)) + '</p></div>';
+function doPreviewStep4Html(htmlContent) {
+  var html = buildStep4HtmlPage(htmlContent);
+  var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
+
+function buildStep4HtmlPage(data) {
+  if (!data) return '<html><body><p>No content</p></body></html>';
+  var tags = (data.hero && data.hero.tags) || [];
+  var tagsHtml = '';
+  for (var i = 0; i < tags.length; i++) {
+    tagsHtml += '<span style="display:inline-block;background:#eef6ff;color:#1263e6;border-radius:999px;padding:3px 10px;font-size:12px;margin:2px">' + tags[i] + '</span>';
+  }
+  var painCards = (data.insightSection && data.insightSection.painCards) || [];
+  var painCardsHtml = '';
+  for (var i = 0; i < painCards.length; i++) {
+    painCardsHtml += '<div style="background:#fff;border:1px solid #e8edf5;border-radius:16px;padding:20px;margin-bottom:12px">';
+    painCardsHtml += '<div style="font-weight:700;color:#182235;margin-bottom:8px">' + (painCards[i].title || '') + '</div>';
+    painCardsHtml += '<div style="color:#667085;font-size:14px;line-height:1.7">' + (painCards[i].description || '') + '</div>';
+    if (painCards[i].impact) painCardsHtml += '<div style="color:#1263e6;font-size:12px;margin-top:8px">影响：' + painCards[i].impact + '</div>';
+    painCardsHtml += '</div>';
+  }
+  var modules = data.recommendedModules || [];
+  var modulesHtml = '';
+  for (var i = 0; i < modules.length; i++) {
+    var phaseColor = modules[i].phase === '一期' ? '#13b96f' : (modules[i].phase === '二期评估' ? '#ff8a00' : '#98a2b3');
+    modulesHtml += '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #f0f4ff">';
+    modulesHtml += '<div style="flex:1">';
+    modulesHtml += '<div style="font-weight:600;color:#182235;margin-bottom:4px">' + (modules[i].moduleName || '') + '</div>';
+    modulesHtml += '<div style="color:#667085;font-size:13px;line-height:1.6">' + (modules[i].description || '') + '</div>';
+    modulesHtml += '</div>';
+    modulesHtml += '<span style="background:' + phaseColor + '22;color:' + phaseColor + ';border-radius:6px;padding:2px 8px;font-size:11px;white-space:nowrap;flex-shrink:0">' + (modules[i].phase || '') + '</span>';
+    modulesHtml += '</div>';
+  }
+  var roadmap = data.roadmap || [];
+  var roadmapHtml = '';
+  for (var i = 0; i < roadmap.length; i++) {
+    roadmapHtml += '<div style="display:flex;gap:16px;margin-bottom:20px">';
+    roadmapHtml += '<div style="width:32px;height:32px;border-radius:50%;background:#1263e6;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">' + (i + 1) + '</div>';
+    roadmapHtml += '<div style="flex:1;padding-top:4px">';
+    roadmapHtml += '<div style="font-weight:600;color:#182235;margin-bottom:6px">' + (roadmap[i].phaseName || '') + '</div>';
+    roadmapHtml += '<div style="color:#667085;font-size:13px;line-height:1.7">' + (roadmap[i].workContent || '') + '</div>';
+    if (roadmap[i].customerCooperation) roadmapHtml += '<div style="color:#98a2b3;font-size:12px;margin-top:4px">客户配合事项：' + roadmap[i].customerCooperation + '</div>';
+    roadmapHtml += '</div></div>';
+  }
+  var valuePoints = data.valuePoints || [];
+  var valueHtml = '';
+  for (var i = 0; i < valuePoints.length; i++) {
+    valueHtml += '<div style="display:flex;gap:12px;margin-bottom:12px">';
+    valueHtml += '<div style="width:6px;height:6px;border-radius:50%;background:#13b96f;margin-top:7px;flex-shrink:0"></div>';
+    valueHtml += '<div><div style="font-weight:600;color:#182235;margin-bottom:2px">' + (valuePoints[i].title || '') + '</div>';
+    valueHtml += '<div style="color:#667085;font-size:13px">' + (valuePoints[i].description || '') + '</div></div></div>';
+  }
+  return '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>' + (data.pageTitle || '售前方案') + '</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f7ff;margin:0;padding:40px 20px;color:#182235}.container{max-width:860px;margin:0 auto}.hero{background:linear-gradient(135deg,#1263e6,#0d47a1);border-radius:24px;padding:40px;color:#fff;margin-bottom:32px}.hero h1{font-size:28px;margin:0 0 12px}.hero p{opacity:0.9;font-size:15px;margin:0 0 16px;line-height:1.6}.tags{margin-top:16px}.section{background:#fff;border-radius:20px;padding:24px;margin-bottom:20px}.section h2{font-size:17px;color:#182235;margin:0 0 16px;padding-bottom:12px;border-bottom:1px solid #f0f4ff}.value-item{display:flex;gap:12px;margin-bottom:12px}</style></head><body><div class="container"><div class="hero"><h1>' + (data.hero && data.hero.title || '') + '</h1><p>' + (data.hero && data.hero.subtitle || '') + '</p><div class="tags">' + tagsHtml + '</div></div><div class="section"><h2>客户现状判断</h2><p>' + (data.customerStageJudgement && data.customerStageJudgement.description || '') + '</p></div><div class="section"><h2>核心痛点</h2>' + painCardsHtml + '</div><div class="section"><h2>推荐方案模块</h2>' + modulesHtml + '</div><div class="section"><h2>价值点</h2>' + valueHtml + '</div><div class="section"><h2>实施路线图</h2>' + roadmapHtml + '</div></div></body></html>';
+}
+
+function doDownloadStep4Word(wordContent, customerName) {
+  var html = buildStep4WordHtml(wordContent, customerName);
+  var blob = new Blob([html], { type: 'application/msword' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (customerName || '客户') + '_需求确认方案.doc';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function buildStep4WordHtml(data, customerName) {
+  if (!data) return '<html><body><p>No content</p></body></html>';
+
+  function safe(v) {
+    if (v === null || v === undefined || v === '') return '';
+    if (typeof v === 'string') return v;
+    if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+    if (Array.isArray(v)) return v.map(safe).join('、');
+    if (typeof v === 'object') {
+      return v.question || v.title || v.name || v.requirement || v.item || v.reason || JSON.stringify(v);
+    }
+    return String(v);
+  }
+
+  function tbl(rows, cols) {
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return '<p style="color:#98a2b3;font-size:13px">（未提供）</p>';
+    }
+    var th = cols.map(function(c) { return '<th style="background:#f0f7ff;font-weight:600;border:1px solid #ccc;padding:8px;text-align:left">' + safe(c) + '</th>'; }).join('');
+    var html = '<table style="border-collapse:collapse;width:100%;margin:8px 0"><thead><tr>' + th + '</tr></thead><tbody>';
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      if (typeof row === 'string') {
+        html += '<tr><td colspan="' + cols.length + '" style="border:1px solid #ccc;padding:8px">' + safe(row) + '</td></tr>';
+      } else {
+        var tds = cols.map(function(c) {
+          return '<td style="border:1px solid #ccc;padding:8px;vertical-align:top">' + safe(row[c]) + '</td>';
+        }).join('');
+        html += '<tr>' + tds + '</tr>';
+      }
+    }
+    html += '</tbody></table>';
+    return html;
+  }
+
+  function listSection(items, title) {
+    if (!Array.isArray(items) || items.length === 0) return '<p style="color:#98a2b3;font-size:13px">（未提供）</p>';
+    var html = '<ul style="margin:8px 0;padding-left:20px">';
+    for (var i = 0; i < items.length; i++) {
+      html += '<li style="margin-bottom:6px;line-height:1.7">' + safe(items[i]) + '</li>';
+    }
+    html += '</ul>';
+    return html;
+  }
+
+  function phaseBox(items, color) {
+    if (!Array.isArray(items) || items.length === 0) return '';
+    var html = '<div style="margin:6px 0;padding:10px 14px;background:' + color + '11;border-left:3px solid ' + color + ';border-radius:4px">';
+    html += '<div style="font-size:12px;font-weight:600;color:' + color + ';margin-bottom:6px">' + title + '</div>';
+    html += '<ul style="margin:0;padding-left:18px">';
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      if (typeof item === 'string') {
+        html += '<li style="font-size:13px;line-height:1.7;margin-bottom:4px">' + safe(item) + '</li>';
+      } else {
+        html += '<li style="font-size:13px;line-height:1.7;margin-bottom:4px"><b>' + safe(item.item || item.title || '') + '</b>';
+        if (item.reason) html += '：' + safe(item.reason);
+        if (item.description) html += '：' + safe(item.description);
+        html += '</li>';
+      }
+    }
+    html += '</ul></div>';
+    return html;
+  }
+
+  var css = 'body{font-family:SimSun;font-size:14px;color:#111;line-height:1.8;padding:40px;background:#fff}'
+    + 'h1{font-size:20px;text-align:center;color:#1263e6;border-bottom:2px solid #1263e6;padding-bottom:12px;margin:0 0 8px}'
+    + '.subtitle{text-align:center;color:#667085;font-size:13px;margin-bottom:4px}'
+    + '.ver{text-align:center;color:#98a2b3;font-size:11px;margin-bottom:20px}'
+    + '.notice{background:#fffbe6;border:1px solid #ffe58f;border-radius:6px;padding:12px 16px;font-size:12px;color:#7c5914;line-height:1.7;margin-bottom:24px}'
+    + 'h2{font-size:15px;color:#1263e6;border-left:4px solid #1263e6;padding-left:10px;margin-top:28px;margin-bottom:10px}'
+    + 'h3{font-size:13px;color:#182235;font-weight:700;margin:20px 0 8px}'
+    + 'table{border-collapse:collapse;width:100%;margin:8px 0}'
+    + 'td,th{border:1px solid #d0d7e0;padding:8px;font-size:13px;line-height:1.7}'
+    + 'th{background:#f5f7ff;font-weight:600}'
+    + 'ul{padding-left:20px;margin:8px 0} li{line-height:1.8;margin-bottom:4px}'
+    + '.confirm-box{border:1px solid #d0d7e0;border-radius:8px;padding:16px;margin-top:12px}'
+    + '.confirm-item{font-size:13px;line-height:2.2}';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + safe(data.docTitle || '需求确认 & 方案设计表') + '</title><style>' + css + '</style></head><body>';
+
+  // 顶部标题区
+  html += '<h1>' + safe(data.docTitle || '需求确认 & 方案设计表') + '</h1>';
+  html += '<p class="subtitle">' + safe(data.subtitle || '企业微信定制开发') + '</p>';
+  html += '<p class="ver">版本：' + safe(data.version || 'v1.0') + '</p>';
+  html += '<div class="notice">' + safe(data.introNotice || '本文件用于服务商与客户共同确认需求范围、一期边界、智能表格搭建口径、权限与待确认问题。客户未确认内容不得写入一期交付承诺。') + '</div>';
+
+  // 章节一：客户基础信息
+  html += '<h2>一、客户基础信息与当前现状</h2>';
+  var custRows = data.customerInfoTable || [];
+  if (custRows.length > 0) {
+    var fields = custRows.map(function(r) { return safe(r.field); });
+    html += tbl(custRows, fields);
+  } else {
+    html += '<p style="color:#98a2b3">（未提供）</p>';
+  }
+
+  // 当前业务运转方式与痛点
+  html += '<h3>当前业务运转方式与痛点</h3>';
+  var painRows = data.currentPainTable || [];
+  if (painRows.length > 0) {
+    html += tbl(painRows, ['业务面', '当前现状 / 痛点']);
+  } else {
+    html += '<p style="color:#98a2b3">（未提供）</p>';
+  }
+
+  // 章节二：场景类型判断
+  html += '<h2>二、场景类型判断与方案边界</h2>';
+  var sb = data.scenarioBoundary || {};
+  html += '<h3>场景判断</h3><p style="font-size:13px;background:#f5f7ff;padding:10px 14px;border-radius:6px;margin:8px 0">' + safe(sb.scenarioJudgement || '（未判断）') + '</p>';
+  html += phaseBox(sb.phaseOne || [], '#13b96f').replace('一期建议范围', '■ 一期建议范围');
+  html += phaseBox(sb.phaseTwo || [], '#ff8a00').replace('二期 / 试点评估', '□ 二期 / 试点评估');
+  html += phaseBox(sb.notRecommended || [], '#98a2b3').replace('暂不建议写入一期承诺', '× 暂不建议写入一期承诺');
+
+  // 章节三：需求优先级
+  html += '<h2>三、需求理解与优先级确认</h2>';
+  var reqRows = data.requirementPriorityTable || [];
+  if (reqRows.length === 0) {
+    html += '<p style="color:#ff4d4f;font-size:13px">【需求列表为空，请返回 Step3 补充沟通记录后重新生成】</p>';
+  } else {
+    html += tbl(reqRows, ['需求', '优先级', '阶段', '实现口径']);
+  }
+
+  // 章节四：业务流程设计
+  html += '<h2>四、业务流程设计</h2>';
+  var procRows = data.processDesignTable || [];
+  if (procRows.length > 0) {
+    html += tbl(procRows, ['当前流程', '目标流程', '关键角色', '关键输出']);
+  } else {
+    html += '<p style="color:#98a2b3">（未提供）</p>';
+  }
+
+  // 章节五：企业微信方案总览
+  html += '<h2>五、企业微信方案总览</h2>';
+  var wecomRows = data.wecomArchitectureTable || [];
+  if (wecomRows.length > 0) {
+    html += tbl(wecomRows, ['分层', '设计说明']);
+  } else {
+    html += '<p>企业微信入口 + 智能表格数据底座 + 审批 / 自动化 / 权限 / 看板 的轻量定制方案。</p>';
+  }
+
+  // 章节六：智能表格交付设计
+  html += '<h2>六、智能表格交付设计</h2>';
+  var dlvr = data.smartTableDeliveryTable || [];
+  if (dlvr.length > 0) {
+    html += tbl(dlvr, ['表名', '类型', '用途', '使用角色', '一期']);
+  } else {
+    html += '<p style="color:#98a2b3">（未提供）</p>';
+  }
+  var keyFields = data.keyFieldsByTable || [];
+  for (var kf = 0; kf < keyFields.length; kf++) {
+    var kft = keyFields[kf];
+    var flds = (kft.fields || []).join('、');
+    html += '<div style="margin:10px 0;padding:10px 14px;background:#f9fafb;border-radius:8px;font-size:13px">';
+    html += '<b>' + safe(kft.tableName || '') + '</b> 关键字段：' + (flds || '（未提供）');
+    html += '</div>';
+  }
+
+  // 章节七：审批与自动化
+  html += '<h2>七、审批与自动化设计</h2>';
+  var autoRows = data.automationTable || [];
+  if (autoRows.length > 0) {
+    html += tbl(autoRows, ['规则名称', '触发条件', '动作', '优先级']);
+  } else {
+    html += '<p style="color:#98a2b3">（未提供）</p>';
+  }
+
+  // 章节八：权限与看板
+  html += '<h2>八、权限与数据看板设计</h2>';
+  var permRows = data.permissionTable || [];
+  if (permRows.length > 0) {
+    html += '<h3>权限设计</h3>' + tbl(permRows, ['角色', '查看范围', '可操作内容', '敏感字段']);
+  }
+  var dashRows = data.dashboardTable || [];
+  if (dashRows.length > 0) {
+    html += '<h3>看板设计</h3>' + tbl(dashRows, ['看板', '使用对象', '核心指标', '筛选维度']);
+  }
+  if (permRows.length === 0 && dashRows.length === 0) {
+    html += '<p style="color:#98a2b3">（未提供）</p>';
+  }
+
+  // 章节九：数据边界
+  html += '<h2>九、数据来源、系统对接与交付边界</h2>';
+  var dataRows = data.dataBoundaryTable || [];
+  if (dataRows.length > 0) {
+    html += tbl(dataRows, ['数据对象', '一期方式', '二期评估', '边界说明']);
+  } else {
+    html += '<p style="color:#98a2b3">（未提供）</p>';
+  }
+
+  // 章节十：实施计划
+  html += '<h2>十、实施计划、报价口径与变更机制</h2>';
+  var planRows = data.implementationPlanTable || [];
+  if (planRows.length > 0) {
+    html += tbl(planRows, ['阶段', '工作内容', '客户配合', '输出物']);
+  } else {
+    html += '<p style="color:#98a2b3">（未提供）</p>';
+  }
+
+  // 章节十一：待确认问题
+  html += '<h2>十一、待客户确认问题与签署</h2>';
+  var pq = data.pendingQuestions || [];
+  if (pq.length > 0) {
+    for (var qi = 0; qi < pq.length; qi++) {
+      html += '<p style="font-size:13px;margin:6px 0"><b>Q' + (qi + 1) + '：</b>' + safe(pq[qi]) + '</p>';
+    }
+  } else {
+    html += '<p style="color:#98a2b3">（无待确认问题）</p>';
+  }
+  var confirmItems = data.confirmationItems || [];
+  if (confirmItems.length > 0) {
+    html += '<div class="confirm-box">';
+    for (var ci = 0; ci < confirmItems.length; ci++) {
+      html += '<div class="confirm-item">' + safe(confirmItems[ci]) + '</div>';
     }
     html += '</div>';
-  } else {
-    html = '<div style="padding:12px;font-size:13px;line-height:1.7">' + technical + '</div>';
   }
-  preview.innerHTML = html;
-  preview.style.display = '';
-  if (empty) empty.style.display = 'none';
-  if (status) { status.textContent = '已生成'; status.style.background = '#ecfdf5'; status.style.color = '#047857'; }
+
+  html += '</body></html>';
+  return html;
 }
+
+// ==================== STEP 4: History & WeCom ====================
+
+function renderStep4History(type, versions) {
+  var histEl = document.getElementById('s4-' + type + '-history');
+  var countEl = document.getElementById('s4-' + type + '-history-count');
+  if (!histEl) return;
+  if (!versions || versions.length <= 1) {
+    histEl.style.display = 'none';
+    return;
+  }
+  histEl.style.display = '';
+  if (countEl) countEl.textContent = '(' + (versions.length - 1) + ' 条历史)';
+  var contentEl = document.getElementById('s4-' + type + '-history-content');
+  if (!contentEl) return;
+  var html = '';
+  // Show all but the last (latest) - newest first
+  for (var i = versions.length - 2; i >= 0; i--) {
+    var v = versions[i];
+    var date = new Date(v.created_at);
+    var dateStr = date.toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'});
+    var timeStr = date.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+    var content = v.content;
+    var preview = '';
+    if (typeof content === 'object') {
+      var keys = Object.keys(content).filter(function(k){ return k !== 'raw'; });
+      preview = keys.slice(0, 3).join('、');
+      if (keys.length > 3) preview += '…';
+    } else {
+      preview = String(content).substring(0, 60);
+    }
+    html += '<div style="margin-bottom:8px;padding:8px 10px;background:#f8f9fc;border-radius:8px;font-size:12px">';
+    html += '<div style="color:#667085;margin-bottom:4px">v' + v.version + ' · ' + dateStr + ' ' + timeStr + '</div>';
+    html += '<div style="color:#344054">' + preview + '</div>';
+    html += '</div>';
+  }
+  contentEl.innerHTML = html;
+}
+
+function togglePresalesHistory() {
+  var contentEl = document.getElementById('s4-presales-history-content');
+  var arrowEl = document.getElementById('s4-presales-history-arrow');
+  if (!contentEl) return;
+  var isHidden = contentEl.style.display === 'none';
+  contentEl.style.display = isHidden ? '' : 'none';
+  if (arrowEl) arrowEl.textContent = isHidden ? '▼' : '▶';
+}
+
+function toggleTechnicalHistory() {
+  var contentEl = document.getElementById('s4-technical-history-content');
+  var arrowEl = document.getElementById('s4-technical-history-arrow');
+  if (!contentEl) return;
+  var isHidden = contentEl.style.display === 'none';
+  contentEl.style.display = isHidden ? '' : 'none';
+  if (arrowEl) arrowEl.textContent = isHidden ? '▼' : '▶';
+}
+
+function doCreatePresalesWecomDoc() {
+  var c = getClient(currentClientId);
+  var versions = c.step4_presales_versions || [];
+  var latest = versions[versions.length - 1];
+  if (!latest) { showToast('无售前方案内容'); return; }
+  var content = latest.content;
+  var text = typeof content === 'object' ? JSON.stringify(content, null, 2) : String(content);
+  var name = (c.name || '客户') + '售前方案';
+  doCreateWecomDoc(name, text);
+}
+
+function doCreateTechnicalWecomDoc() {
+  var c = getClient(currentClientId);
+  var versions = c.step4_technical_versions || [];
+  var latest = versions[versions.length - 1];
+  if (!latest) { showToast('无技术方案内容'); return; }
+  var content = latest.content;
+  var text = typeof content === 'object' ? JSON.stringify(content, null, 2) : String(content);
+  var name = (c.name || '客户') + '技术报价方案';
+  doCreateWecomDoc(name, text);
+}
+
 
 // ==================== STEP 5: Smart Sheet Editor ====================
 
@@ -2831,35 +3438,63 @@ async function generateDemoSchema(c) {
   if (!resp.ok) throw new Error('生成失败');
   var data = await resp.json();
   if (!data.success || !data.demo) throw new Error(data.detail || '生成失败');
+  // step5_schema 是 JSON Schema 对象
   return data.demo;
 }
 
 async function createSmartSheet() {
+  // 优先用用户编辑后的 _s5Schema，否则用 step5_schema
   var schema = _s5Schema || (getClient(currentClientId) && getClient(currentClientId).step5_schema);
   if (!schema) { alert('请先生成 Demo'); return; }
   var schemaObj = typeof schema === 'string' ? JSON.parse(schema) : schema;
-  var total = schemaObj.sheets ? schemaObj.sheets.length : 0;
+  var sheets = schemaObj && schemaObj.sheets;
+  if (!sheets || !sheets.length) { alert('Demo 无子表数据'); return; }
+
+  // 将 sheets/fields 结构转换为 smartTableSpec 结构
+  var confirmedTables = sheets.map(function(s) {
+    return {
+      tableName: s.sheet_name || s.name || '未命名',
+      tablePurpose: '',
+      source: '用户编辑',
+      phase: '一期',
+      roles: []
+    };
+  });
+  var fieldsByTable = sheets.map(function(s) {
+    return {
+      tableName: s.sheet_name || s.name || '未命名',
+      fields: (s.fields || []).map(function(f) {
+        return {
+          fieldName: f.field_title || f.fieldName || f.name || '',
+          fieldType: f.field_type || f.fieldType || '文本',
+          required: !!f.required,
+          rule: f.rule || '',
+          source: '用户编辑'
+        };
+      })
+    };
+  });
+  var smartTableSpec = {
+    confirmedTables: confirmedTables,
+    fieldsByTable: fieldsByTable
+  };
+
   window._creatingSheet = true;
   renderArtifacts();
   showToast('正在创建智能表格…');
   try {
     var resp = await fetch(API_BASE + '/api/create', {
       method: 'POST', headers: getAuthHeaders(),
-      body: JSON.stringify(schemaObj)
+      body: JSON.stringify({ client_id: currentClientId, smartTableSpec: smartTableSpec })
     });
     var data = await resp.json();
     if (!data.success) throw new Error(data.error || '创建文档失败');
     var docid = data.docid;
-    for (var i = 1; i < total; i++) {
-      await fetch(API_BASE + '/api/create', {
-        method: 'POST', headers: getAuthHeaders(),
-        body: JSON.stringify({ docid: docid, sheet: schemaObj.sheets[i] })
-      });
-    }
-    updateClient(currentClientId, { demo_url: data.url });
-    showToast('创建成功！' + total + ' 个子表');
+    var url = data.url || ('https://doc.wps.cn/s/' + docid);
+    updateClient(currentClientId, { demo_url: url });
+    showToast('创建成功！' + (data.sheets || []).length + ' 个子表');
     renderArtifacts();
-    window.open(data.url, '_blank');
+    window.open(url, '_blank');
   } catch(e) {
     alert('创建失败: ' + e.message);
     renderArtifacts();
@@ -2890,11 +3525,21 @@ function togglePartEdit(btn, part) {
     editableEls.forEach(function(el) { el.contentEditable = 'false'; el.classList.remove('editing'); });
     if (part === 'part1') saveStep2Part1(card);
     if (part === 'part2') saveStep2Part2();
-    if (part === 'part3') saveStep2Part3();
+    if (part === 'part3') {
+      saveStep2Part3();
+    }
   } else {
     // Start editing
     btn.classList.add('editing');
     btn.textContent = '保存';
+    // For part3, make all q-card question text and notes editable
+    if (part === 'part3') {
+      card.querySelectorAll('.q-card').forEach(function(qc) {
+        qc.contentEditable = 'true';
+        qc.style.cursor = 'text';
+        qc.addEventListener('dblclick', function(e) { e.stopPropagation(); });
+      });
+    }
     editableEls.forEach(function(el) { el.contentEditable = 'true'; el.classList.add('editing'); el.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); el.blur(); } }); });
   }
 }
@@ -2914,7 +3559,8 @@ function saveStep2Part2() {
   var gaps = [];
   document.querySelectorAll('#s2-gaps .gap').forEach(function(g) {
     var textEl = g.querySelector('.gap-text b');
-    if (textEl) gaps.push({ text: textEl.textContent, priority: 'high' });
+    var priEl = g.querySelector('.priority-select');
+    if (textEl) gaps.push({ gap: textEl.textContent, priority: priEl ? priEl.value : '高' });
   });
   var c = getClient(currentClientId);
   if (!c || !c.step1_result) return;
@@ -2923,7 +3569,17 @@ function saveStep2Part2() {
 }
 
 function saveStep2Part3() {
-  // Questions are read-only in UI, no save needed
+  // Collect all q-cards across all tabs and save back to step1_result.part3
+  var c = getClient(currentClientId);
+  if (!c || !c.step1_result) return;
+  var part3 = c.step1_result.part3 || {};
+  var allQ = {};
+  ['must_ask', 'deep_dive', 'industry_experience'].forEach(function(key) {
+    allQ[key] = part3[key] || [];
+  });
+  // For now just re-save existing structure - full edit save would update q.question/q.note
+  c.step1_result.part3 = part3;
+  updateClient(currentClientId, { step1_result: c.step1_result });
 }
 
 function addGap() {
@@ -2935,6 +3591,11 @@ function addGap() {
   container.appendChild(newGap);
   newGap.querySelector('.gap-text').focus();
   saveStep2Part2();
+}
+
+function onGapPriorityChange(sel) {
+  var color = {高:'#ff6b6b',中:'#ffa94d',低:'#69db7c'}[sel.value] || '#ff6b6b';
+  sel.style.color = color;
 }
 
 function toggleMoreGaps() {
@@ -2953,9 +3614,9 @@ function saveStep2ToClient() {
   var gaps = [];
   document.querySelectorAll('#s2-gaps .gap').forEach(function(g) {
     var textEl = g.querySelector('.gap-text b');
+    var priEl = g.querySelector('.priority-select');
     if (textEl && textEl.textContent.trim()) {
-      var priEl = g.querySelector('.priority');
-      gaps.push({ text: textEl.textContent, priority: priEl ? priEl.textContent : 'high' });
+      gaps.push({ gap: textEl.textContent, priority: priEl ? priEl.value : '高' });
     }
   });
   if (c.step1_result) {
@@ -2978,14 +3639,17 @@ function renderGaps(gaps) {
   }
   if (totalEl) totalEl.textContent = gaps.length;
   container.innerHTML = gaps.map(function(g, i) {
-    var priority = g.priority || 'high';
-    var priorityLabel = {high:'高优',mid:'中优',low:'低优'}[priority] || '高优';
-    var priorityClass = priority === 'mid' ? ' mid' : (priority === 'low' ? ' low' : '');
-    return '<div class="gap' + (i >= 5 ? ' hidden-gaps' : '') + '">' +
-      '<div class="check"></div>' +
-      '<div class="gap-text"><b>' + (g.text || g.question || g.item || '-') + '</b></div>' +
-      '<div class="priority' + priorityClass + '">' + priorityLabel + '</div>' +
-      '<div style="color:#98a2b3;font-size:12px;cursor:pointer" onclick="this.parentElement.remove()">×</div>' +
+    var priority = g.priority || '高';
+    var priColor = {high:'#ff6b6b',中:'#ffa94d',低:'#69db7c'}[priority] || '#ff6b6b';
+    return '<div class="gap sortable-item' + (i >= 5 ? ' hidden-gaps' : '') + '" draggable="true">' +
+      '<div class="check" style="cursor:grab"></div>' +
+      '<div class="gap-text"><b>' + (g.gap || g.text || g.question || g.item || '-') + '</b></div>' +
+      '<select class="priority-select" onchange="onGapPriorityChange(this)" style="border:none;background:transparent;font-size:12px;font-weight:700;cursor:pointer;color:'+priColor+';outline:none">' +
+        '<option value="高" '+(priority==='高'?'selected':'')+' style="color:#ff6b6b">高优先级</option>' +
+        '<option value="中" '+(priority==='中'?'selected':'')+' style="color:#ffa94d">中优先级</option>' +
+        '<option value="低" '+(priority==='低'?'selected':'')+' style="color:#69db7c">低优先级</option>' +
+      '</select>' +
+      '<div style="color:#98a2b3;font-size:12px;cursor:pointer;padding:4px" onclick="this.parentElement.remove()">×</div>' +
     '</div>';
   }).join('');
   var moreBtn = document.getElementById('s2-gaps-more-btn');
@@ -2997,12 +3661,48 @@ function renderGaps(gaps) {
       moreBtn.textContent = expanded ? '收起问题 ▲' : '查看更多问题（' + gaps.length + '）';
     };
   }
+  // Setup drag-and-drop for gaps
+  initGapDragDrop();
+}
+
+function initGapDragDrop() {
+  var container = document.getElementById('s2-gaps');
+  if (!container) return;
+  var dragged = null;
+  container.querySelectorAll('.gap').forEach(function(gap) {
+    gap.addEventListener('dragstart', function(e) {
+      dragged = gap;
+      gap.style.opacity = '0.45';
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    gap.addEventListener('dragend', function(e) {
+      gap.style.opacity = '';
+      dragged = null;
+    });
+    gap.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    gap.addEventListener('drop', function(e) {
+      e.preventDefault();
+      if (dragged && dragged !== gap) {
+        var all = Array.from(container.querySelectorAll('.gap'));
+        var fromIdx = all.indexOf(dragged);
+        var toIdx = all.indexOf(gap);
+        if (fromIdx < toIdx) {
+          gap.parentNode.insertBefore(dragged, gap.nextSibling);
+        } else {
+          gap.parentNode.insertBefore(dragged, gap);
+        }
+      }
+    });
+  });
 }
 
 function renderQuestions(questions) {
-  var must = questions.must || questions.mandatory || [];
-  var deep = questions.deep || questions.followup || [];
-  var industry = questions.industry || [];
+  var must = questions.must_ask || questions.must || questions.mandatory || [];
+  var deep = questions.deep_dive || questions.deep || questions.followup || [];
+  var industry = questions.industry_experience || questions.industry || [];
   var mustEl = document.getElementById('s2-must-questions');
   var deepEl = document.getElementById('s2-deep-questions');
   var indEl = document.getElementById('s2-industry-notes');
@@ -3019,39 +3719,415 @@ function renderQuestions(questions) {
   function renderQ(qs) {
     if (!qs || qs.length === 0) return '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">暂无问题</div>';
     return qs.map(function(q) {
-      return '<div class="q-card"><div class="q-card-main"><b style="font-size:14px;color:#182235">' + (q.question || q.text || '-') + '</b></div></div>';
+      var dim = q.dimension || '';
+      var question = q.question || q.text || '-';
+      var note = q.note || '';
+      var dimColor = {
+        '痛点收敛': '#ff6b6b',
+        '业务流转+角色': '#ffa94d',
+        '现状工具链+瓶颈': '#ffd43b',
+        '数据现状': '#69db7c',
+        '自动化诉求': '#38d9a9',
+        '数据接入方式': '#4dabf7',
+        '使用者清单': '#748ffc',
+        '权限隔离': '#da77f2',
+        '仪表盘': '#f783ac',
+        '交付预期': '#e599f7',
+        '开放补充': '#adb5bd'
+      }[dim] || '#667085';
+      var noteHtml = note ? '<div style="margin-top:8px;font-size:12px;color:#667085;line-height:1.6">'+note.replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/\*(.*?)\*/g,'<i>$1</i>')+'</div>' : '';
+      return '<div class="q-card' + (q._hidden ? ' hidden-q' : '') + '">' +
+        '<div class="q-card-main">' +
+          (dim ? '<div style="display:inline-block;background:'+dimColor+'22;color:'+dimColor+';border-radius:8px;padding:2px 10px;font-size:11px;font-weight:700;margin-bottom:6px">'+dim+'</div>' : '') +
+          '<div style="font-size:14px;color:#182235;line-height:1.6;font-weight:600">'+question+'</div>' +
+          noteHtml +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:28px">' +
+          '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px" onclick="deleteQuestionCard(this)" title="删除">×</div>' +
+        '</div>' +
+      '</div>';
     }).join('');
   }
   if (mustEl) mustEl.innerHTML = renderQ(must);
-  if (deepEl) deepEl.innerHTML = renderQ(deep);
-  if (indEl) indEl.innerHTML = industry.length ? industry.map(function(n){ return '<div style="padding:10px 0;border-bottom:1px solid #f0f2f5;font-size:13px;color:#667085">'+n+'</div>'; }).join('') : '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">暂无行业经验</div>';
+  if (deepEl) {
+    var deepWithHidden = deep.map(function(q, i) { return Object.assign({}, q, {_hidden: i >= 8}); });
+    deepEl.innerHTML = renderQ(deepWithHidden);
+  }
+  if (indEl) indEl.innerHTML = industry.length ? industry.map(function(n){ return '<div style="padding:10px 0;border-bottom:1px solid #f0f2f5;font-size:13px;color:#667085">'+n+'</div>'; }).join('') : '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">暂无行业经验知识库，添加更多案例可丰富此模块</div>';
+  // Update "查看更多问题" button based on current active tab
+  var moreBtn = document.getElementById('s2-more-btn');
+  var activeTab = document.querySelector('.tabs .tab.on');
+  var target = activeTab ? activeTab.dataset.target : 'must';
+  var activeEl = target === 'must' ? mustEl : target === 'deep' ? deepEl : indEl;
+  var total = activeEl ? activeEl.querySelectorAll('.q-card').length : 0;
+  if (moreBtn) {
+    moreBtn.style.display = total > 8 ? 'block' : 'none';
+    var totalEl = document.getElementById('s2-deep-total');
+    if (totalEl) totalEl.textContent = total;
+  }
+}
+
+function toggleQuestionCovered(el) {
+  var card = el.closest('.q-card');
+  var isCovered = card.dataset.covered === 'true';
+  card.dataset.covered = String(!isCovered);
+  card.classList.toggle('covered', !isCovered);
+  var check = card.querySelector('.q-card-check');
+  if (check) {
+    check.style.background = !isCovered ? '#13b96f' : '';
+    check.style.borderColor = !isCovered ? '#13b96f' : '';
+    check.style.color = !isCovered ? '#fff' : '';
+    check.textContent = !isCovered ? '✓' : '';
+  }
+}
+
+function deleteQuestionCard(btn) {
+  var card = btn.closest('.q-card');
+  if (!card) return;
+  card.remove();
+  var container = card.parentElement;
+  container.querySelectorAll('.q-card').forEach(function(c, i) { c.dataset.index = i; });
+}
+
+function addQuestion(tab) {
+  var tabMap = {must: 'must-questions', deep: 'deep-questions', industry: 'industry-notes'};
+  var containerId = 's2-' + tabMap[tab];
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  var dimColors = {
+    '痛点收敛': '#ff6b6b',
+    '业务流转+角色': '#ffa94d',
+    '现状工具链+瓶颈': '#ffd43b',
+    '数据现状': '#69db7c',
+    '自动化诉求': '#38d9a9',
+    '数据接入方式': '#4dabf7',
+    '使用者清单': '#748ffc',
+    '权限隔离': '#da77f2',
+    '仪表盘': '#f783ac',
+    '交付预期': '#e599f7',
+    '开放补充': '#adb5bd'
+  };
+  var defaultDim = '痛点收敛';
+  var dimColor = dimColors[defaultDim];
+  var newCard = document.createElement('div');
+  newCard.className = 'q-card';
+  newCard.innerHTML =
+    '<div class="q-card-main">' +
+      '<div style="display:inline-block;background:'+dimColor+'22;color:'+dimColor+';border-radius:8px;padding:2px 10px;font-size:11px;font-weight:700;margin-bottom:6px">'+defaultDim+'</div>' +
+      '<div style="font-size:14px;color:#182235;line-height:1.6;font-weight:600" contenteditable="true">新问题...</div>' +
+      '<div style="margin-top:8px;font-size:12px;color:#667085;font-style:italic;line-height:1.6" contenteditable="true">填写说明...</div>' +
+    '</div>' +
+    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:28px">' +
+      '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px" onclick="deleteQuestionCard(this)" title="删除">×</div>' +
+    '</div>';
+  container.appendChild(newCard);
+  newCard.querySelector('.q-card-main > div:nth-child(2)').focus();
+}
+
+function switchTab(btn) {
+  var tabs = btn.closest('.tabs');
+  var target = btn.dataset.target;
+  tabs.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('on'); });
+  btn.classList.add('on');
+  var container = btn.closest('.prep-card');
+  var mustEl = container.querySelector('#s2-must-questions');
+  var deepEl = container.querySelector('#s2-deep-questions');
+  var indEl = container.querySelector('#s2-industry-notes');
+  if (mustEl) mustEl.style.display = target === 'must' ? '' : 'none';
+  if (deepEl) deepEl.style.display = target === 'deep' ? '' : 'none';
+  if (indEl) indEl.style.display = target === 'industry' ? '' : 'none';
+  // Update "查看更多问题" button visibility based on current tab
+  var moreBtn = document.getElementById('s2-more-btn');
+  if (moreBtn) {
+    var currentEl = target === 'must' ? mustEl : target === 'deep' ? deepEl : indEl;
+    var count = currentEl ? currentEl.querySelectorAll('.q-card').length : 0;
+    moreBtn.style.display = count > 8 ? 'block' : 'none';
+    var totalEl = document.getElementById('s2-deep-total');
+    if (totalEl) totalEl.textContent = count;
+    // Collapse by default when switching
+    if (count > 8 && currentEl) currentEl.classList.remove('show-all');
+    moreBtn.textContent = '查看更多问题（' + count + '）';
+  }
+}
+
+function toggleMoreQuestions() {
+  var btn = document.getElementById('s2-more-btn');
+  if (!btn) return;
+  var activeTab = document.querySelector('.tabs .tab.on');
+  var target = activeTab ? activeTab.dataset.target : 'must';
+  var tabMap = {must: 'must-questions', deep: 'deep-questions', industry: 'industry-notes'};
+  var activeEl = document.getElementById('s2-' + tabMap[target]);
+  if (!activeEl) return;
+  var expanded = activeEl.classList.toggle('show-all');
+  var count = activeEl.querySelectorAll('.q-card').length;
+  btn.textContent = expanded ? '收起问题 ▲' : '查看更多问题（' + count + '）';
 }
 
 // ==================== STEP 3 RENDER FUNCTIONS ====================
 function renderNoteList(c) {
   var list = document.getElementById('s3-note-list');
+  var emptyEl = document.getElementById('s3-note-empty');
   if (!list) return;
   var notes = c.uploaded_files || [];
   if (notes.length === 0) {
     list.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = '';
     return;
   }
-  list.innerHTML = notes.map(function(n) {
+  if (emptyEl) emptyEl.style.display = 'none';
+  var sourceMap = {会议转写:'会议转写',微信聊天记录:'微信聊天记录',电话沟通:'电话沟通',线下拜访:'线下拜访',其他:'其他'};
+  var stageMap = {首次需求沟通:'首次需求沟通',方案确认:'方案确认',技术澄清:'技术澄清',报价沟通:'报价沟通',复盘补充:'复盘补充'};
+  list.innerHTML = notes.slice().reverse().map(function(n, idx) {
     var date = n.date || n.created_at || '';
     var dateStr = date ? new Date(date).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) : '';
-    var sourceMap = {meeting:'会议纪要',call:'电话沟通',email:'邮件往来',other:'其他'};
     var source = sourceMap[n.source] || n.source || '其他';
+    var stage = stageMap[n.stage] || n.stage || '';
+    var title = n.name || (source + '记录 · ' + dateStr);
+    var summary = n.ai_summary || n.summary || (n.content || n.note || '').substring(0, 120) + '…';
+    var tags = n.tags || [];
+    var tagHtml = '';
+    if (tags.length > 0) {
+      var show = tags.slice(0, 5);
+      var extra = tags.length > 5 ? '<span style="background:#e8edf5;color:#667085;border-radius:8px;padding:2px 8px;font-size:11px">+' + (tags.length - 5) + '</span>' : '';
+      tagHtml = '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">' + show.map(function(t){ return '<span style="background:#eef6ff;color:#1263e6;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:600">'+t+'</span>'; }).join('') + extra + '</div>';
+    }
+    var realIdx = notes.length - 1 - idx;
     return '<div class="saved-note">' +
-      '<div class="saved-note-top">' +
-        '<h4>' + (n.name || '沟通记录') + '</h4>' +
-        '<div class="note-meta">' +
-          '<span class="note-pill">' + source + '</span>' +
-          '<span style="color:#98a2b3;font-size:11px">' + dateStr + '</span>' +
+      '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">' +
+        '<div>' +
+          '<div style="font-size:15px;font-weight:800;color:#182235;margin-bottom:4px">'+title+'</div>' +
+          '<div style="display:flex;gap:8px;align-items:center">' +
+            '<span style="background:#f3f6fa;color:#344054;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:600">'+source+'</span>' +
+            (stage ? '<span style="background:#eef6ff;color:#1263e6;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:600">'+stage+'</span>' : '') +
+            '<span style="color:#98a2b3;font-size:11px">'+dateStr+'</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;flex-shrink:0">' +
+          '<button class="btn secondary" style="height:28px;padding:0 10px;font-size:12px" onclick="viewNoteDetail('+realIdx+')">查看详情</button>' +
+          '<button class="btn secondary" style="height:28px;padding:0 10px;font-size:12px;color:#ef4444" onclick="deleteNote('+realIdx+')">删除</button>' +
         '</div>' +
       '</div>' +
-      '<p>' + (n.content || n.note || n.text || '-') + '</p>' +
+      (summary ? '<div style="font-size:13px;color:#667085;line-height:1.6;margin-bottom:4px">'+summary+'</div>' : '') +
+      tagHtml +
     '</div>';
   }).join('');
+}
+
+function viewNoteDetail(idx) {
+  var c = getClient(currentClientId);
+  var notes = c.uploaded_files || [];
+  var n = notes[idx];
+  if (!n) return;
+  var date = n.date || n.created_at || '';
+  var dateStr = date ? new Date(date).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) : '';
+  var content = n.content || n.note || n.text || '(无内容)';
+  var tags = (n.tags || []).join('、') || '-';
+  var html = '<div style="font-family:-apple-system,BlinkMacSystemFont,\'PingFang SC\',sans-serif;padding:8px 0">' +
+    '<div style="margin-bottom:16px">' +
+      '<div style="font-size:11px;color:#98a2b3;margin-bottom:4px">来源：'+(n.source || '-')+'</div>' +
+      '<div style="font-size:11px;color:#98a2b3;margin-bottom:4px">阶段：'+(n.stage || '-')+'</div>' +
+      '<div style="font-size:11px;color:#98a2b3;margin-bottom:4px">标签：'+tags+'</div>' +
+      '<div style="font-size:11px;color:#98a2b3">时间：'+dateStr+'</div>' +
+    '</div>' +
+    '<div style="background:#f8f9fc;border-radius:12px;padding:16px;font-size:13px;color:#344054;line-height:1.8;white-space:pre-wrap;max-height:400px;overflow-y:auto">'+content+'</div>' +
+  '</div>';
+  document.getElementById('preview-modal-title').textContent = n.name || '沟通记录详情';
+  document.getElementById('preview-modal-content').innerHTML = html;
+  document.getElementById('artifact-preview-modal').classList.add('visible');
+}
+
+function deleteNote(idx) {
+  if (!confirm('确定删除这条沟通记录？')) return;
+  var c = getClient(currentClientId);
+  var notes = c.uploaded_files || [];
+  notes.splice(idx, 1);
+  updateClient(currentClientId, { uploaded_files: notes });
+  renderNoteList(c);
+  updateStep3NextBtn(c);
+  renderArtifacts();
+  showToast('已删除');
+}
+
+function doSaveNote() {
+  var text = document.getElementById('s3-note-text').value.trim();
+  var source = document.getElementById('s3-source').value;
+  var stage = document.getElementById('s3-stage').value;
+  var files = document.getElementById('s3-file-chips');
+  if (!text && (!files || files.children.length === 0)) {
+    showToast('请填写沟通记录或上传文件');
+    return;
+  }
+  var c = getClient(currentClientId);
+  var notes = c.uploaded_files || [];
+  var now = new Date().toISOString();
+  var dateStr = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'});
+  var newNote = {
+    name: source + '记录 · ' + dateStr,
+    source: source,
+    stage: stage,
+    content: text,
+    date: now,
+    created_at: now,
+    tags: []
+  };
+  notes.push(newNote);
+  updateClient(currentClientId, { uploaded_files: notes });
+  document.getElementById('s3-note-text').value = '';
+  document.getElementById('s3-file-chips').innerHTML = '';
+  renderNoteList(c);
+  updateStep3NextBtn(c);
+  renderArtifacts();
+  showToast('已保存，Step4 将基于全部沟通记录统一提炼需求');
+}
+
+function clearNoteForm() {
+  document.getElementById('s3-note-text').value = '';
+  document.getElementById('s3-file-chips').innerHTML = '';
+  var fi = document.getElementById('s3-file-input');
+  if (fi) fi.value = '';
+  window._pendingFiles = null;
+}
+
+function handleFileUpload(files) {
+  if (!files || files.length === 0) return;
+  // Read all files
+  var pending = [];
+  for (var i = 0; i < files.length; i++) {
+    pending.push({ name: files[i].name, content: '', file: files[i] });
+  }
+  window._pendingFiles = pending;
+
+  function readNext(idx) {
+    if (idx >= files.length) {
+      // All read, show modal with table
+      buildUploadModalTable();
+      document.getElementById('upload-note-modal').classList.add('visible');
+      // Show file chips in upload area
+      var chipsEl = document.getElementById('s3-file-chips');
+      if (chipsEl) {
+        var html = '';
+        for (var j = 0; j < files.length; j++) {
+          html += '<span class="file-chip">' + files[j].name + '</span>';
+        }
+        chipsEl.innerHTML = html;
+      }
+      return;
+    }
+    var f = files[idx];
+    var isDocx = f.name.toLowerCase().endsWith('.docx');
+    if (isDocx) {
+      // Use JSZip to read docx
+      JSZip.loadAsync(f).then(function(zip) {
+        return zip.file('word/document.xml');
+      }).then(function(xmlFile) {
+        if (!xmlFile) {
+          window._pendingFiles[idx].content = '';
+          readNext(idx + 1);
+          return;
+        }
+        return xmlFile.async('string');
+      }).then(function(xmlContent) {
+        // Extract plain text from XML
+        var txt = xmlContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        window._pendingFiles[idx].content = txt;
+        readNext(idx + 1);
+      }).catch(function(err) {
+        console.error('[docx read error]', err);
+        window._pendingFiles[idx].content = '';
+        readNext(idx + 1);
+      });
+    } else {
+      // Plain text file
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        window._pendingFiles[idx].content = e.target.result;
+        readNext(idx + 1);
+      };
+      reader.readAsText(f, 'utf-8');
+    }
+  }
+  readNext(0);
+}
+
+function buildUploadModalTable() {
+  var files = window._pendingFiles || [];
+  var rows = '';
+  var opts = ['会议转写','微信聊天记录','电话沟通','线下拜访','其他'];
+  var stages = ['首次需求沟通','方案确认','技术澄清','报价沟通','复盘补充'];
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    var shortName = f.name.length > 20 ? f.name.substring(0, 18) + '…' : f.name;
+    rows += '<tr>';
+    rows += '<td style="padding:8px 12px;font-size:13px;color:#344054;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+f.name+'">'+shortName+'</td>';
+    rows += '<td style="padding:8px 8px"><select class="select" id="uf-source-'+i+'" style="width:100%;font-size:12px">';
+    for (var j = 0; j < opts.length; j++) rows += '<option value="'+opts[j]+'">'+opts[j]+'</option>';
+    rows += '</select></td>';
+    rows += '<td style="padding:8px 8px"><select class="select" id="uf-stage-'+i+'" style="width:100%;font-size:12px">';
+    for (var k = 0; k < stages.length; k++) rows += '<option value="'+stages[k]+'">'+stages[k]+'</option>';
+    rows += '</select></td>';
+    rows += '<td style="padding:8px 8px;text-align:center"><span id="uf-len-'+i+'" style="font-size:11px;color:#98a2b3">'+f.content.length+'字</span></td>';
+    rows += '</tr>';
+  }
+  var tableHtml = '<div style="padding:16px 20px">';
+  tableHtml += '<div style="margin-bottom:12px;font-size:13px;color:#344054">已选择 <b>'+files.length+'</b> 个文件，请为每个文件选择纪要来源和沟通阶段</div>';
+  tableHtml += '<table style="width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;border:1px solid #e8edf5">';
+  tableHtml += '<thead><tr style="background:#f8f9fc">';
+  tableHtml += '<th style="padding:8px 12px;text-align:left;font-size:11px;color:#667085;font-weight:600">文件名</th>';
+  tableHtml += '<th style="padding:8px 8px;text-align:left;font-size:11px;color:#667085;font-weight:600;width:130px">纪要来源</th>';
+  tableHtml += '<th style="padding:8px 8px;text-align:left;font-size:11px;color:#667085;font-weight:600;width:130px">沟通阶段</th>';
+  tableHtml += '<th style="padding:8px 8px;text-align:center;font-size:11px;color:#667085;font-weight:600;width:60px">字数</th>';
+  tableHtml += '</tr></thead><tbody>'+rows+'</tbody></table>';
+  tableHtml += '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">';
+  tableHtml += '<button class="btn secondary" onclick="closeUploadModal()">取消</button>';
+  tableHtml += '<button class="btn primary" onclick="confirmUploadNote()">确认添加</button>';
+  tableHtml += '</div></div>';
+  document.getElementById('upload-modal-content').innerHTML = tableHtml;
+}
+
+function closeUploadModal() {
+  document.getElementById('upload-note-modal').classList.remove('visible');
+  window._pendingNoteText = null;
+  window._pendingNoteName = null;
+  window._pendingFiles = null;
+}
+
+function confirmUploadNote() {
+  var files = window._pendingFiles || [];
+  if (files.length === 0) { showToast('没有文件'); return; }
+  var c = getClient(currentClientId);
+  var notes = c.uploaded_files || [];
+  var now = new Date().toISOString();
+  var dateStr = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'});
+  var saved = 0;
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    var source = document.getElementById('uf-source-' + i);
+    var stage = document.getElementById('uf-stage-' + i);
+    if (!source || !stage) continue;
+    var text = f.content || '';
+    if (!text.trim()) continue;
+    notes.push({
+      name: f.name || (source.value + '记录 · ' + dateStr),
+      source: source.value,
+      stage: stage.value,
+      content: text,
+      date: now,
+      created_at: now,
+      tags: []
+    });
+    saved++;
+  }
+  if (saved === 0) { showToast('所有文件内容均为空'); return; }
+  updateClient(currentClientId, { uploaded_files: notes });
+  closeUploadModal();
+  document.getElementById('s3-note-text').value = '';
+  document.getElementById('s3-file-chips').innerHTML = '';
+  var fi = document.getElementById('s3-file-input');
+  if (fi) fi.value = '';
+  renderNoteList(c);
+  updateStep3NextBtn(c);
+  renderArtifacts();
+  showToast('已保存 ' + saved + ' 条沟通记录');
 }
 
 
@@ -3073,6 +4149,167 @@ function loadStep2(c) {
   renderQuestions(data.part3 || {});
   updateCtxBar(c);
 }
+
+function renderStep3Summary(c) {
+  var resultEl = document.getElementById('s3-summary-result');
+  var emptyEl = document.getElementById('s3-summary-empty');
+  var loadingEl = document.getElementById('s3-summary-loading');
+  if (!resultEl) return;
+  var report = c.step4_report;
+  var notes = c.uploaded_files || [];
+  var hasNotes = notes.length > 0;
+  if (report) {
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = 'none';
+    resultEl.style.display = '';
+    var html = renderSummaryReadable(report);
+    resultEl.innerHTML = html;
+    var actionsEl = document.getElementById('s3-summary-actions');
+    if (actionsEl) actionsEl.style.display = '';
+  } else {
+    if (emptyEl) {
+      emptyEl.style.display = '';
+      if (hasNotes) {
+        emptyEl.innerHTML = '<button class="btn primary" onclick="doGenerateStep3Summary()">生成 AI 摘要</button>';
+      } else {
+        emptyEl.innerHTML = '暂无摘要，请先添加沟通记录';
+      }
+    }
+    var actionsEl = document.getElementById('s3-summary-actions');
+    if (actionsEl) actionsEl.style.display = 'none';
+    if (resultEl) resultEl.style.display = 'none';
+    if (loadingEl) loadingEl.style.display = 'none';
+  }
+}
+
+function renderSummaryReadable(report) {
+  if (!report) return '';
+  if (typeof report === 'string') return '<div style="font-size:13px;color:#344054;line-height:1.8">'+report.replace(/\n/g,'<br>')+'</div>';
+  var html = '';
+  var EMPTY = '<div style="color:#98a2b3;font-size:13px;font-style:italic">未提取到</div>';
+  // 关键需求
+  html += '<div style="margin-bottom:16px">';
+  html += '<div style="font-size:11px;font-weight:900;color:#1263e6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">关键需求</div>';
+  if (report.key_requirements && report.key_requirements.length > 0) {
+    html += '<ul style="margin:0;padding-left:18px;color:#344054;font-size:13px;line-height:1.8">';
+    report.key_requirements.forEach(function(r) { html += '<li>'+r+'</li>'; });
+    html += '</ul>';
+  } else {
+    html += EMPTY;
+  }
+  html += '</div>';
+  // 角色与职责
+  html += '<div style="margin-bottom:16px">';
+  html += '<div style="font-size:11px;font-weight:900;color:#13b96f;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">角色与职责</div>';
+  if (report.roles_and_responsibilities && report.roles_and_responsibilities.length > 0) {
+    report.roles_and_responsibilities.forEach(function(r) {
+      html += '<div style="margin-bottom:8px;padding:8px 12px;background:#f8f9fc;border-radius:10px;font-size:13px;line-height:1.7">';
+      html += '<b style="color:#182235">'+r.role+'</b>';
+      if (r.responsibility) html += '<div style="color:#667085">职责：'+r.responsibility+'</div>';
+      if (r.concern) html += '<div style="color:#ff8a00;font-size:12px">关注：'+r.concern+'</div>';
+      html += '</div>';
+    });
+  } else {
+    html += EMPTY;
+  }
+  html += '</div>';
+  // 决策链
+  html += '<div style="margin-bottom:16px">';
+  html += '<div style="font-size:11px;font-weight:900;color:#ff8a00;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">决策链</div>';
+  var dc = report.decision_chain || {};
+  if (dc.decision_maker || dc.influencer || dc.executor) {
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+    if (dc.decision_maker) html += '<span style="background:#fff7ed;color:#d97706;border-radius:10px;padding:4px 12px;font-size:13px;font-weight:700">拍板人：'+dc.decision_maker+'</span>';
+    if (dc.influencer) html += '<span style="background:#f0f9ff;color:#0369a1;border-radius:10px;padding:4px 12px;font-size:13px;font-weight:700">影响者：'+dc.influencer+'</span>';
+    if (dc.executor) html += '<span style="background:#f0fdf4;color:#15803d;border-radius:10px;padding:4px 12px;font-size:13px;font-weight:700">执行者：'+dc.executor+'</span>';
+    html += '</div>';
+  } else {
+    html += EMPTY;
+  }
+  html += '</div>';
+  // 进度与阶段
+  html += '<div style="margin-bottom:16px">';
+  html += '<div style="font-size:11px;font-weight:900;color:#667085;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">进度与阶段</div>';
+  var ps = report.progress_and_stages || {};
+  if (ps.current_stage || (ps.next_steps && ps.next_steps.length > 0) || (ps.milestones && ps.milestones.length > 0)) {
+    if (ps.current_stage) html += '<div style="font-size:13px;color:#344054;margin-bottom:4px"><b>当前阶段：</b>'+ps.current_stage+'</div>';
+    if (ps.next_steps && ps.next_steps.length > 0) html += '<div style="font-size:13px;color:#344054;margin-bottom:4px"><b>下一步：</b>'+ps.next_steps.join('、')+'</div>';
+    if (ps.milestones && ps.milestones.length > 0) html += '<div style="font-size:13px;color:#344054"><b>里程碑：</b>'+ps.milestones.join('、')+'</div>';
+  } else {
+    html += EMPTY;
+  }
+  html += '</div>';
+  // 风险点
+  html += '<div style="margin-bottom:16px">';
+  html += '<div style="font-size:11px;font-weight:900;color:#ef4444;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">风险点</div>';
+  var hasRisk = report.risk_points && report.risk_points.length > 0 && report.risk_points.some(function(r){ return r.risk; });
+  if (hasRisk) {
+    report.risk_points.forEach(function(r) {
+      var statusColor = r.status === '已明确' ? '#13b96f' : '#ffa500';
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px;color:#344054;line-height:1.5">';
+      html += '<span style="background:#fef2f2;color:#ef4444;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;flex-shrink:0">'+r.risk+'</span>';
+      if (r.status) html += '<span style="color:'+statusColor+';font-size:12px">'+r.status+'</span>';
+      html += '</div>';
+    });
+  } else {
+    html += EMPTY;
+  }
+  html += '</div>';
+  return html;
+}
+
+function doGenerateStep3Summary() {
+  var c = getClient(currentClientId);
+  var notes = c.uploaded_files || [];
+  if (!notes || notes.length === 0) { showToast('请先添加沟通记录'); return; }
+  var emptyEl = document.getElementById('s3-summary-empty');
+  var loadingEl = document.getElementById('s3-summary-loading');
+  var resultEl = document.getElementById('s3-summary-result');
+  if (emptyEl) emptyEl.style.display = 'none';
+  if (resultEl) resultEl.style.display = 'none';
+  if (loadingEl) loadingEl.style.display = '';
+  var actionsEl = document.getElementById('s3-summary-actions');
+  if (actionsEl) actionsEl.style.display = 'none';
+  var records = notes.map(function(n) {
+    var date = n.date || n.created_at || '';
+    return { text: n.content || n.note || '', source: n.source || '其他', stage: n.stage || '', date: date };
+  });
+  fetch(API_BASE + '/api/summary/generate', {
+    method: 'POST', headers: getAuthHeaders(),
+    body: JSON.stringify({ records: records })
+  }).then(r => r.json()).then(data => {
+    console.log('[genSum] resp:', JSON.stringify(data).substring(0, 400));
+    if (loadingEl) loadingEl.style.display = 'none';
+    var summary = data.summary || data.result;
+    if (summary) {
+      updateClient(currentClientId, { step3_summary: summary });
+      try { renderStep3Summary(getClient(currentClientId)); } catch(e2) { console.error('[rS3 err]', e2); alert('渲染错误:'+e2.message); }
+      showToast('摘要已生成');
+    } else {
+      if (emptyEl) { emptyEl.style.display = ''; emptyEl.innerHTML = '失败：' + (data.detail || data.error || JSON.stringify(data).substring(0,100)); }
+    }
+  }).catch(e => {
+    console.error('[genSum fetch err]', e);
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (emptyEl) { emptyEl.style.display = ''; emptyEl.innerHTML = '网络错误：'+e.message; }
+    var actionsEl = document.getElementById('s3-summary-actions');
+    if (actionsEl) actionsEl.style.display = 'none';
+  });
+}
+
+function doRegenerateStep3Summary() {
+  doGenerateStep3Summary();
+}
+
+function updateStep3NextBtn(c) {
+  var btn = document.getElementById('s3-next-btn');
+  if (!btn) return;
+  var hasContent = !!(c.transcript || (c.uploaded_files && c.uploaded_files.length > 0));
+  btn.disabled = !hasContent;
+  btn.style.opacity = hasContent ? '' : '0.5';
+  btn.style.cursor = hasContent ? 'pointer' : 'not-allowed';
+}
+
 function loadStep3(c) {
   updateCtxBar(c);
   renderNoteList(c);
@@ -3080,27 +4317,19 @@ function loadStep3(c) {
   updateStep3NextBtn(c);
 }
 function loadStep4(c) {
-  updateCtxBar(c);
-  // 加载方案输入确认
-  const inputSummary = c.step4_report?.inputSummary;
-  if (inputSummary) {
-    document.getElementById('s4-current').textContent = inputSummary.current || '-';
-    document.getElementById('s4-pain').textContent = inputSummary.pain || '-';
-    document.getElementById('s4-roles').textContent = inputSummary.roles || '-';
-    document.getElementById('s4-goals').textContent = inputSummary.goals || '-';
-  } else {
-    // 从 step1_result 和 step3 自动生成摘要
-    autoGenerateStep4Input(c);
+  autoGenerateStep4Input(c);
+  var presalesVersions = c.step4_presales_versions || [];
+  if (presalesVersions.length > 0) {
+    renderStep4LatestPresales(presalesVersions[presalesVersions.length - 1], presalesVersions.length);
+    renderStep4History('presales', presalesVersions);
   }
-  // 加载售前方案
-  if (c.step4_presales) {
-    renderStep4Presales(c.step4_presales);
-  }
-  // 加载技术方案
-  if (c.step4_technical) {
-    renderStep4Technical(c.step4_technical);
+  var techVersions = c.step4_technical_versions || [];
+  if (techVersions.length > 0) {
+    renderStep4LatestTechnical(techVersions[techVersions.length - 1]);
+    renderStep4History('technical', techVersions);
   }
 }
+
 
 
 // ==================== CONTEXT BAR ====================
@@ -3156,7 +4385,7 @@ function calcProfilePct(c) {
   if (c.scale) pct += 10;
   if (c.tags) pct += 10;
   if (c.initial_demand) pct += 20;
-  if (c._saved) pct = 100;
+  if (c._saved || c.step1_result) pct = 100;
   return pct;
 }
 
@@ -3195,19 +4424,26 @@ function renderArtifacts() {
   items.push({ name: '调研问题清单', tag: c.step1_result ? '已生成' : '待生成', tagCls: c.step1_result ? '' : 'todo', pct: c.step1_result ? 100 : 0, dataKey: 'step1_result', hasWecomDoc: hasStep1WecomDoc, wecomUrl: c._step1_wecom_url, wecomDocid: c._step1_wecom_docid, isStep1Result: true });
 
   // 沟通记录库：0/40/80/100
-  items.push({ name: '沟通记录库', tag: noteCount > 0 ? '已沉淀' : '待补充', tagCls: noteCount > 0 ? '' : 'todo', pct: notePct, dataKey: 'uploaded_files', desc: '已沉淀 ' + noteCount + ' 次沟通记录。' });
+  const hasNotesWecomDoc = !!(c._notes_wecom_docid && c._notes_wecom_url);
+  items.push({ name: '沟通记录库', tag: noteCount > 0 ? '已沉淀' : '待补充', tagCls: noteCount > 0 ? '' : 'todo', pct: notePct, dataKey: 'uploaded_files', desc: '已沉淀 ' + noteCount + ' 次沟通记录。', hasWecomDoc: hasNotesWecomDoc, wecomUrl: c._notes_wecom_url, wecomDocid: c._notes_wecom_docid });
 
   // 售前解决方案
-  const hasPresales = !!(c.step4_presales);
-  const isGenPresales = window._generatingPresales;
-  const presalesPct = isGenPresales ? (window._presalesPct || 10) : (hasPresales ? 100 : 0);
-  items.push({ name: '售前解决方案', tag: isGenPresales ? '生成中' : (hasPresales ? '已生成' : '待生成'), tagCls: isGenPresales ? 'editing' : (hasPresales ? '' : 'todo'), pct: presalesPct, dataKey: 'step4_presales', desc: '面向客户汇报，包含痛点诊断、解决思路、建设模块与实施阶段。', isGen: isGenPresales });
+  var pv = c.step4_presales_versions || [];
+  var latestPresales = pv[pv.length - 1];
+  var hasPresales = pv.length > 0;
+  var isGenPresales = window._generatingPresales;
+  var presalesPct = isGenPresales ? (window._presalesPct || 10) : (hasPresales ? 100 : 0);
+  var presalesDesc = hasPresales && latestPresales ? new Date(latestPresales.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestPresales.version : '面向客户汇报，包含痛点诊断、解决思路、建设模块与实施阶段。';
+  items.push({ name: '售前解决方案', tag: isGenPresales ? '生成中' : (hasPresales ? '已生成' : '待生成'), tagCls: isGenPresales ? 'editing' : (hasPresales ? '' : 'todo'), pct: presalesPct, dataKey: 'step4_presales_versions', desc: presalesDesc, isGen: isGenPresales });
 
   // 技术路线及报价方案
-  const hasTechnical = !!(c.step4_technical);
-  const isGenTechnical = window._generatingTechnical;
-  const technicalPct = isGenTechnical ? (window._technicalPct || 10) : (hasTechnical ? 100 : 0);
-  items.push({ name: '技术路线及报价方案', tag: isGenTechnical ? '生成中' : (hasTechnical ? '已生成' : '待生成'), tagCls: isGenTechnical ? 'editing' : (hasTechnical ? '' : 'todo'), pct: technicalPct, dataKey: 'step4_technical', desc: '面向内部评估，拆解技术路径、交付范围与报价口径。', isGen: isGenTechnical });
+  var tv = c.step4_technical_versions || [];
+  var latestTechnical = tv[tv.length - 1];
+  var hasTechnical = tv.length > 0;
+  var isGenTechnical = window._generatingTechnical;
+  var technicalPct = isGenTechnical ? (window._technicalPct || 10) : (hasTechnical ? 100 : 0);
+  var techDesc = hasTechnical && latestTechnical ? new Date(latestTechnical.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestTechnical.version : '面向内部评估，拆解技术路径、交付范围与报价口径。';
+  items.push({ name: '技术路线及报价方案', tag: isGenTechnical ? '生成中' : (hasTechnical ? '已生成' : '待生成'), tagCls: isGenTechnical ? 'editing' : (hasTechnical ? '' : 'todo'), pct: technicalPct, dataKey: 'step4_technical_versions', desc: techDesc, isGen: isGenTechnical });
 
   // 智能表格 Demo
   const isGen5 = window._generatingStep5;
@@ -3219,17 +4455,11 @@ function renderArtifacts() {
   list.innerHTML = items.map((item, i) => {
     let actions = '';
     if (item.isProfile) {
-      const profileDone = !!(c._profileDone && c._saved);
-      if (profileDone) {
-        actions += '<button class="art-btn" onclick="doPreviewProfile()">预览</button>';
-        if (item.hasWecomDoc) {
-          actions += '<a class="art-btn success" href="' + item.wecomUrl + '" target="_blank">查看企微文档</a>';
-        } else {
-          actions += '<button class="art-btn" id="wecom-create-btn" onclick="doCreateWecomDoc()">生成企微文档</button>';
-        }
+      actions += '<button class="art-btn" onclick="doPreviewProfile()">预览</button>';
+      if (item.hasWecomDoc) {
+        actions += '<a class="art-btn success" href="' + item.wecomUrl + '" target="_blank">查看企微文档</a>';
       } else {
-        actions += '<button class="art-btn" disabled style="opacity:0.45;cursor:not-allowed">预览</button>';
-        actions += '<button class="art-btn" disabled style="opacity:0.45;cursor:not-allowed">生成企微文档</button>';
+        actions += '<button class="art-btn" id="wecom-create-btn" onclick="doCreateWecomDoc()">生成企微文档</button>';
       }
     } else if (item.isStep1Result) {
       actions += '<button class="art-btn" onclick="doPreviewStep1()">预览</button>';
@@ -3244,6 +4474,13 @@ function renderArtifacts() {
         actions += '<button class="art-btn" disabled style="opacity:0.6">生成中…</button>';
       } else if (item.pct === 0) {
         // no buttons when nothing
+      } else if (item.dataKey === 'uploaded_files') {
+        // 沟通记录库：有记录时显示按钮
+        if (item.hasWecomDoc) {
+          actions += '<a class="art-btn success" href="'+item.wecomUrl+'" target="_blank">查看企微文档</a>';
+        } else {
+          actions += '<button class="art-btn" onclick="doCreateNotesWecomDoc()">生成企微文档</button>';
+        }
       } else {
         // step4/5 artifacts: no preview/copy buttons
       }
@@ -3361,101 +4598,102 @@ function doExportProfile() {
   navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板，可粘贴到企微文档'));
 }
 
-function doCreateWecomDoc() {
-  const c = getClient(currentClientId);
+function doCreateWecomDoc(docName, docContent) {
+  var c = getClient(currentClientId);
   if (!c || !c._saved) { showToast('请先保存客户画像'); return; }
-
-  const btn = document.getElementById('wecom-create-btn');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block"></span> 生成中…';
-    btn.style.opacity = '0.6';
+  var btn = document.getElementById('wecom-create-btn');
+  var btnText = btn ? btn.textContent : '';
+  var name = docName || ((c.name || '客户') + ' - 需求调研');
+  var content = docContent;
+  if (!content) {
+    var step1 = c.step1_result || {};
+    var part1 = step1.part1 || {};
+    var part2 = step1.part2 || [];
+    var part3 = step1.part3 || {};
+    var lines = [];
+    lines.push('# ' + (c.name || '客户') + ' - 需求调研');
+    lines.push('');
+    lines.push('## 一、客户画像');
+    lines.push('');
+    lines.push('### 公司与需求背景');
+    lines.push(part1.company_background || c.company_intro || '-');
+    lines.push('');
+    lines.push('### 行业常见痛点');
+    var pains = part1.pain_points || [];
+    if (pains.length > 0) {
+      pains.forEach(function(p, i) { lines.push((i+1) + '. ' + p.replace(/\*\*/g, '')); });
+    } else { lines.push('-'); }
+    lines.push('');
+    lines.push('## 二、待确认信息清单');
+    if (part2.length > 0) {
+      part2.forEach(function(g, i) { lines.push((i+1) + '. ' + g.gap.replace(/\*\*/g, '') + ' [' + g.priority + '优先级]'); });
+    } else { lines.push('-'); }
+    lines.push('');
+    lines.push('## 三、调研问题清单');
+    lines.push('');
+    lines.push('### 必问问题');
+    var mustAsk = part3.must_ask || [];
+    if (mustAsk.length > 0) {
+      mustAsk.forEach(function(q, i) {
+        var line = (i+1) + '. ' + q.question.replace(/\*\*/g, '');
+        if (q.note) line += '\n   说明：' + q.note;
+        lines.push(line);
+      });
+    } else { lines.push('-'); }
+    lines.push('');
+    lines.push('### 深挖问题');
+    var deepDive = part3.deep_dive || [];
+    if (deepDive.length > 0) {
+      deepDive.forEach(function(q, i) {
+        var line = (i+1) + '. ' + q.question.replace(/\*\*/g, '');
+        if (q.note) line += '\n   说明：' + q.note;
+        lines.push(line);
+      });
+    } else { lines.push('-'); }
+    lines.push('');
+    lines.push('### 行业经验');
+    var indExp = part3.industry_experience || [];
+    if (indExp.length > 0) {
+      indExp.forEach(function(q, i) {
+        var line = (i+1) + '. ' + q.question.replace(/\*\*/g, '');
+        if (q.note) line += '\n   说明：' + q.note;
+        lines.push(line);
+      });
+    } else { lines.push('-'); }
+    lines.push('');
+    lines.push('## 四、原始需求');
+    lines.push(c.initial_demand || '-');
+    content = lines.join('\n\n');
   }
-
-  // Build comprehensive content from step1_result
-  const step1 = c.step1_result || {};
-  const part1 = step1.part1 || {};
-  const part2 = step1.part2 || [];
-  const part3 = step1.part3 || {};
-
-  let content = `# ${c.name || '客户'} - 需求调研
-
-## 一、客户画像
-
-### 公司与需求背景
-${part1.company_background || c.company_intro || '-'}
-
-### 行业常见痛点
-${(part1.pain_points || []).map((p, i) => `${i + 1}. ${p.replace(/\*\*/g, '')}`).join('\n\n') || '-'}
-
-## 二、待确认信息清单
-
-${part2.map((g, i) => `${i + 1}. ${g.gap.replace(/\*\*/g, '')} [${g.priority}优先级]`).join('\n\n') || '-'}
-
-## 三、调研问题清单
-
-### 必问问题
-${(part3.must_ask || []).map((q, i) => `${i + 1}. ${q.question.replace(/\*\*/g, '')}${q.note ? `\n   说明：${q.note}` : ''}`).join('\n\n') || '-'}
-
-### 深挖问题
-${(part3.deep_dive || []).map((q, i) => `${i + 1}. ${q.question.replace(/\*\*/g, '')}${q.note ? `\n   说明：${q.note}` : ''}`).join('\n\n') || '-'}
-
-### 行业经验
-${(part3.industry_experience || []).map((q, i) => `${i + 1}. ${q.question.replace(/\*\*/g, '')}${q.note ? `\n   说明：${q.note}` : ''}`).join('\n\n') || '-'}
-
-## 四、原始需求
-
-${c.initial_demand || '-'}
-`;
-
-  const schema = {
-    doc_name: (c.name || '客户') + ' - 需求调研',
+  var schema = {
+    doc_name: name,
     content: content,
     sheets: [{
-      sheet_name: '客户画像',
+      sheet_name: '内容摘要',
       fields: [
-        { field_title: '客户名称', field_type: 'TEXT' },
-        { field_title: '行业', field_type: 'TEXT' },
-        { field_title: '规模', field_type: 'TEXT' }
+        { field_title: '标题', field_type: 'TEXT' },
+        { field_title: '内容', field_type: 'TEXT' }
       ],
-      sample_records: [{
-        '客户名称': c.name || '',
-        '行业': c.industry || '',
-        '规模': c.scale || ''
-      }]
+      sample_records: [{ '标题': name, '内容': content.substring(0, 500) }]
     }]
   };
-
+  if (btn) { btn.disabled = true; btn.textContent = '生成中…'; btn.style.opacity = '0.6'; }
   fetch(API_BASE + '/api/create', {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(schema)
-  }).then(r => r.json()).then(data => {
+  }).then(function(r) { return r.json(); }).then(function(data) {
     if (data.success && data.docid) {
-      updateClient(currentClientId, {
-        _wecom_docid: data.docid,
-        _wecom_url: data.url || ('https://doc.weixin.qq.com/doc/' + data.docid)
-      });
       showToast('企微文档已创建');
-      renderArtifacts();
     } else {
       showToast('创建失败: ' + (data.error || '未知错误'));
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = '生成企微文档';
-        btn.style.opacity = '';
-      }
     }
-  }).catch(e => {
+    if (btn) { btn.disabled = false; btn.textContent = btnText; btn.style.opacity = ''; }
+  }).catch(function(e) {
     showToast('创建失败: ' + e.message);
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '生成企微文档';
-      btn.style.opacity = '';
-    }
+    if (btn) { btn.disabled = false; btn.textContent = btnText; btn.style.opacity = ''; }
   });
 }
-
 function doPreviewStep1() {
   const c = getClient(currentClientId);
   if (!c || !c.step1_result) { showToast('暂无内容可预览'); return; }
@@ -3552,55 +4790,88 @@ function doCreateStep1WecomDoc() {
   }
 
   const step1 = c.step1_result;
+  const part1 = step1.part1 || {};
+  const part2 = step1.part2 || [];
   const part3 = step1.part3 || {};
   const mustAsk = part3.must_ask || [];
   const deepDive = part3.deep_dive || [];
   const industryExp = part3.industry_experience || [];
 
-  let content = `# ${c.name || '客户'} - 调研问题清单\n\n`;
+  // 构建完整 markdown 内容：Part1 + Part2 + Part3
+  let content = `# ${c.name || '客户'} - 调研准备材料\n\n`;
+
+  // PART1: 客户画像
+  content += `## 一、客户画像\n\n`;
+  if (part1.company_background) {
+    content += part1.company_background + '\n\n';
+  }
+  if (part1.pain_points && part1.pain_points.length > 0) {
+    content += `**行业常见痛点**\n`;
+    part1.pain_points.forEach(function(p) {
+      content += `- ${p}\n`;
+    });
+    content += '\n';
+  }
+
+  // PART2: 待确认信息清单
+  if (part2.length > 0) {
+    content += `## 二、待确认信息清单\n\n`;
+    part2.forEach(function(g, i) {
+      var priorityLabel = g.priority === '高' ? '【高优先级】' : (g.priority === '中' ? '【中优先级】' : '');
+      content += `- ❓ ${g.gap || g.text || ''} ${priorityLabel}\n`;
+    });
+    content += '\n';
+  }
+
+  // PART3: 访谈提纲
+  content += `## 三、访谈提纲\n\n`;
 
   if (mustAsk.length > 0) {
-    content += '## 必问问题\n\n';
-    mustAsk.forEach((q, i) => {
-      content += `${i + 1}. ${q.question.replace(/\*\*/g, '')}`;
-      if (q.note) content += `\n   ${q.note}`;
-      content += '\n\n';
+    content += `### 必问问题\n\n`;
+    mustAsk.forEach(function(q, i) {
+      content += `${i + 1}. **${q.dimension || ''}** ${q.question || ''}\n`;
+      if (q.note) content += `   *${q.note}*\n`;
+      content += '\n';
     });
   }
 
   if (deepDive.length > 0) {
-    content += '## 深挖问题\n\n';
-    deepDive.forEach((q, i) => {
-      content += `${i + 1}. ${q.question.replace(/\*\*/g, '')}`;
-      if (q.note) content += `\n   ${q.note}`;
-      content += '\n\n';
+    content += `### 深挖问题\n\n`;
+    deepDive.forEach(function(q, i) {
+      content += `${i + 1}. **${q.dimension || ''}** ${q.question || ''}\n`;
+      if (q.note) content += `   *${q.note}*\n`;
+      content += '\n';
     });
   }
 
   if (industryExp.length > 0) {
-    content += '## 行业经验\n\n';
-    industryExp.forEach((q, i) => {
-      content += `${i + 1}. ${q.question.replace(/\*\*/g, '')}`;
-      if (q.note) content += `\n   ${q.note}`;
-      content += '\n\n';
+    content += `### 行业经验\n\n`;
+    industryExp.forEach(function(q, i) {
+      content += `${i + 1}. **${q.dimension || ''}** ${q.question || ''}\n`;
+      if (q.note) content += `   *${q.note}*\n`;
+      content += '\n';
     });
   }
 
   const schema = {
-    doc_name: (c.name || '客户') + ' - 调研问题清单',
+    doc_name: (c.name || '客户') + ' - 调研准备材料',
     content: content,
     sheets: [{
       sheet_name: '调研问题',
       fields: [
         { field_title: '类型', field_type: 'TEXT' },
+        { field_title: '维度', field_type: 'TEXT' },
         { field_title: '问题', field_type: 'TEXT' },
         { field_title: '说明', field_type: 'TEXT' }
       ],
-      sample_records: mustAsk.slice(0, 3).map(q => ({
-        '类型': '必问问题',
-        '问题': q.question.replace(/\*\*/g, ''),
-        '说明': q.note || ''
-      }))
+      sample_records: mustAsk.slice(0, 5).map(function(q) {
+        return {
+          '类型': '必问问题',
+          '维度': q.dimension || '',
+          '问题': q.question || '',
+          '说明': q.note || ''
+        };
+      })
     }]
   };
 
@@ -3631,6 +4902,69 @@ function doCreateStep1WecomDoc() {
       btn.innerHTML = '生成企微文档';
       btn.style.opacity = '';
     }
+  });
+}
+
+function doCreateNotesWecomDoc() {
+  var c = getClient(currentClientId);
+  var notes = c.uploaded_files || [];
+  if (!notes || notes.length === 0) { showToast('暂无沟通记录'); return; }
+
+  var btn = document.querySelector('[onclick="doCreateNotesWecomDoc()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '生成中…'; }
+
+  var content = '# ' + (c.name || '客户') + ' - 沟通记录汇总\n\n';
+  notes.forEach(function(n, i) {
+    var date = n.date || n.created_at || '';
+    var dateStr = date ? new Date(date).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) : '';
+    content += '## ' + (i + 1) + '. ' + (n.name || '沟通记录') + '\n\n';
+    content += '- 来源：' + (n.source || '-') + '\n';
+    content += '- 阶段：' + (n.stage || '-') + '\n';
+    content += '- 时间：' + dateStr + '\n';
+    if (n.tags && n.tags.length > 0) content += '- 标签：' + n.tags.join('、') + '\n';
+    content += '\n' + (n.content || n.note || '(无内容)') + '\n\n---\n\n';
+  });
+
+  var schema = {
+    doc_name: (c.name || '客户') + ' - 沟通记录汇总',
+    content: content,
+    sheets: [{
+      sheet_name: '沟通记录',
+      fields: [
+        { field_title: '来源', field_type: 'TEXT' },
+        { field_title: '阶段', field_type: 'TEXT' },
+        { field_title: '摘要', field_type: 'TEXT' }
+      ],
+      sample_records: notes.slice(0, 5).map(function(n) {
+        var summary = (n.content || n.note || '').substring(0, 80);
+        return {
+          '来源': n.source || '-',
+          '阶段': n.stage || '-',
+          '摘要': summary + (summary.length >= 80 ? '…' : '')
+        };
+      })
+    }]
+  };
+
+  fetch(API_BASE + '/api/create', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(schema)
+  }).then(r => r.json()).then(data => {
+    if (data.success && data.docid) {
+      updateClient(currentClientId, {
+        _notes_wecom_docid: data.docid,
+        _notes_wecom_url: data.url || ('https://doc.weixin.qq.com/doc/' + data.docid)
+      });
+      showToast('企微文档已创建');
+      renderArtifacts();
+    } else {
+      showToast('创建失败: ' + (data.error || '未知错误'));
+      if (btn) { btn.disabled = false; btn.textContent = '生成企微文档'; }
+    }
+  }).catch(e => {
+    showToast('创建失败: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '生成企微文档'; }
   });
 }
 
@@ -3869,7 +5203,7 @@ function logout() {
           const newClient = {
             id: d.id, name: '', industry: '', tags: '', status: 'pending',
             created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-            step1_result: '', step4_report: '', step5_schema: null,
+            step1_result: '', step3_summary: '', step4_report: '', step4_input_draft: null, step5_schema: null,
             initial_demand: '', company_intro: '', uploaded_files: [], transcript: ''
           };
           clients.push(newClient);
