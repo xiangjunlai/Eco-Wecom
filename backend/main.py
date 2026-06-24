@@ -2252,6 +2252,16 @@ async def create_agent_demo(body: dict, user: dict = Depends(require_auth)):
 
 # ==================== 健康检查 ====================
 
+@app.post("/api/company_search")
+async def company_search(body: dict, user: dict = Depends(require_auth)):
+    """企业工商信息搜索（预留 stub）"""
+    query = body.get("query", "")
+    if not query:
+        return {"results": []}
+    # TODO: 接入真实工商查询 API（如天眼查/企查查）
+    return {"results": [], "query": query}
+
+
 @app.get("/api/health")
 async def health_check():
     """健康检查"""
