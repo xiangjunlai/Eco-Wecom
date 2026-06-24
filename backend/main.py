@@ -844,7 +844,7 @@ async def update_client(client_id: str, data: dict, user: dict = Depends(require
 
     # 更新字段（前端发 is_completed/is_saved，数据库列名是 _completed/_saved）
     FIELD_MAP = {"is_completed": "_completed", "is_saved": "_saved"}
-    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions", "step4_input_draft", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url", "is_completed", "is_saved"]
+    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions", "step4_input_draft", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url", "is_completed", "is_saved", "company_type", "main_customers", "possible_focus", "company_intro"]
     updates = []
     values = []
     for field in allowed_fields:
@@ -2542,16 +2542,62 @@ async def create_agent_demo(body: dict, user: dict = Depends(require_auth)):
     return {"success": True, "url": url, "filename": filename}
 
 
+PROFILE_GENERATE_PROMPT = """你是一个售前顾问。根据客户基本信息，生成一份结构化的客户画像摘要。
+
+直接返回 JSON（不要 markdown 代码块），格式：
+{
+  "summary": "50字以内的客户画像一句话描述",
+  "background": "公司背景描述，80字以内",
+  "pain_points": ["核心痛点1", "核心痛点2", "核心痛点3"],
+  "scale": "公司规模判断，如：200-1000人中大型企业",
+  "tags": ["标签1", "标签2", "标签3"]
+}"""
+
+@app.post("/api/profile/generate")
+async def generate_profile(body: dict, user: dict = Depends(require_auth)):
+    """生成客户画像摘要"""
+    company_name = body.get("company_name", "")
+    industry = body.get("industry", "")
+    initial_demand = body.get("initial_demand", "")
+    if not company_name:
+        return {"error": "缺少客户名称"}
+    user_prompt = f"客户名称：{company_name}\n行业：{industry or '未指定'}\n原始需求：{initial_demand or '暂无'}\n请生成客户画像 JSON。"
+    raw = call_minimax(PROFILE_GENERATE_PROMPT, user_prompt, max_tokens=1000)
+    if raw.startswith("Error:"):
+        return {"error": raw}
+    result = parse_json_response(raw)
+    if not result:
+        return {"error": "AI 返回格式异常，请重试"}
+    return result
+
+
 # ==================== 健康检查 ====================
+
+COMPANY_SEARCH_PROMPT = """你是一个企业信息分析助手。根据客户名称和行业，生成公司简介、主要客户群体、可能关注点。
+
+直接返回 JSON（不要 markdown 代码块），格式：
+{
+  "company_type": "公司类型描述，如：制造业龙头民营企业",
+  "main_customers": "主要客户群体描述，如：大型三甲医院、政府机构",
+  "possible_focus": "可能关注点，用/分隔，如：提升审批效率/降低运营成本/数据打通",
+  "company_intro": "20字以内的公司简介"
+}"""
 
 @app.post("/api/company_search")
 async def company_search(body: dict, user: dict = Depends(require_auth)):
-    """企业工商信息搜索（预留 stub）"""
-    query = body.get("query", "")
-    if not query:
-        return {"results": []}
-    # TODO: 接入真实工商查询 API（如天眼查/企查查）
-    return {"results": [], "query": query}
+    """AI 智搜：根据客户名称和行业生成公司简介"""
+    company_name = body.get("company_name", "")
+    industry = body.get("industry", "")
+    if not company_name:
+        return {"error": "缺少公司名称"}
+    user_prompt = f"客户名称：{company_name}\n行业：{industry or '未指定'}\n请分析生成 JSON。"
+    raw = call_minimax(COMPANY_SEARCH_PROMPT, user_prompt, max_tokens=800)
+    if raw.startswith("Error:"):
+        return {"error": raw}
+    result = parse_json_response(raw)
+    if not result:
+        return {"error": "AI 返回格式异常，请重试"}
+    return result
 
 
 @app.get("/api/health")

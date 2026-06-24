@@ -805,7 +805,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
         <div class="prep-card" style="margin-bottom:16px">
           <div class="card-accent accent-blue"></div>
           <div class="prep-card-head">
-            <div><h3>客户名称</h3></div>
+            <div><h3>客户名称</h3><span>输入客户名称，作为后续信息检索和画像生成的基础</span></div>
           </div>
           <div class="search-row" style="margin-bottom:14px">
             <input class="input" id="s1-name" placeholder="输入客户名称">
@@ -830,18 +830,31 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
         <div class="prep-card" style="margin-bottom:16px">
           <div class="card-accent accent-green"></div>
           <div class="prep-card-head">
-            <div><h3>行业规模标签</h3></div>
+            <div><h3>行业规模标签</h3><span>确认客户行业、规模和需求方向，帮助 AI 判断后续方案边界</span></div>
           </div>
           <div class="row">
             <div class="field">
               <div class="label">客户行业</div>
               <select class="select" id="s1-industry">
                 <option value="">请选择行业</option>
-                <option>金融</option><option>制造业</option><option>服装生产</option>
-                <option>服装外贸</option><option>家居定制装修</option><option>B2B工业品</option>
-                <option>工业品生产销售</option><option>互联网教育</option><option>设计行业</option>
-                <option>企业行政</option><option>化工行业</option><option>医疗医药</option>
-                <option>餐饮</option><option>零售分销</option><option>物业</option>
+                <option>金融·银行保险</option><option>金融·证券基金</option><option>金融·投资融资</option>
+                <option>制造业·汽车零配件</option><option>制造业·电子电气</option><option>制造业·机械设备</option>
+                <option>制造业·纺织服装</option><option>制造业·食品饮料</option><option>制造业·家具家居</option>
+                <option>制造业·化工材料</option><option>制造业·医疗器械</option><option>制造业·其他</option>
+                <option>建筑业·地产开发</option><option>建筑业·工程建筑</option><option>建筑业·装修装饰</option>
+                <option>批发零售·B2B工业品</option><option>批发零售·消费品分销</option><option>批发零售·连锁商超</option>
+                <option>批发零售·品牌代理</option>
+                <option>互联网·电商平台</option><option>互联网·企业服务SaaS</option><option>互联网·游戏</option>
+                <option>互联网·内容资讯</option><option>互联网·IT/通信</option>
+                <option>服务业·餐饮酒店</option><option>服务业·教育培训</option><option>服务业·医疗健康</option>
+                <option>服务业·咨询顾问</option><option>服务业·法律财税</option><option>服务业·广告传媒</option>
+                <option>服务业·人力资源</option><option>服务业·物业安保</option><option>服务业·旅游票务</option>
+                <option>政府·公共事业</option><option>政府·非营利组织</option>
+                <option>能源·电力电网</option><option>能源·石油化工</option><option>能源·新能源</option>
+                <option>交通·物流运输</option><option>交通·仓储配送</option>
+                <option>农业·种养殖</option><option>农业·农产品加工</option>
+                <option>文娱·影视文化</option><option>文娱·体育健身</option>
+                <option>外贸·进出口</option>
                 <option>其他</option>
               </select>
             </div>
@@ -873,7 +886,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
         <div class="prep-card" style="margin-bottom:16px">
           <div class="card-accent accent-orange"></div>
           <div class="prep-card-head">
-            <div><h3>客户进线原始需求表达</h3></div>
+            <div><h3>客户进线原始需求表达</h3><span>粘贴客户原始需求、销售转述或线索备注，保留第一手业务背景</span></div>
           </div>
           <textarea class="textarea" id="s1-demand" style="min-height:108px" placeholder="粘贴客户的原始表达，或销售整理后的补充描述…"></textarea>
         </div>
@@ -1936,6 +1949,7 @@ document.addEventListener('click', (e) => {
 function loadStep1(c) {
   document.getElementById('s1-name').value = c.name || '';
   document.getElementById('s1-industry').value = c.industry || '';
+  document.getElementById('s1-scale').value = c.scale || '';
   document.getElementById('s1-demand').value = c.initial_demand || '';
   document.querySelectorAll('#s1-chips .chip').forEach(chip => {
     const tag = chip.dataset.tag;
@@ -2296,23 +2310,50 @@ async function doGenerateCustomerProfile() {
   const name = document.getElementById('s1-name').value.trim();
   const industry = document.getElementById('s1-industry').value;
   const demand = document.getElementById('s1-demand').value.trim();
-  if (!name || !industry || !demand) { showToast('请填写完整客户信息'); return; }
-  saveStep1Local();
-  // 制品区客户画像卡进度动画
+  if (!name || !industry) { showToast('请填写客户名称和行业'); return; }
+  // 进度动画
   let genPct = 0;
   updateClient(currentClientId, { _isGeneratingProfile: true, _profileGenPct: 0 });
   renderArtifacts();
   const interval = setInterval(() => {
-    genPct = Math.min(genPct + Math.random() * 15 + 5, 88);
+    genPct = Math.min(genPct + Math.random() * 12 + 5, 85);
     updateClient(currentClientId, { _profileGenPct: Math.round(genPct) }, true);
     renderArtifacts();
   }, 400);
-  setTimeout(() => {
+  try {
+    const token = getToken();
+    const resp = await fetch(API_BASE + '/api/profile/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ company_name: name, industry: industry, initial_demand: demand })
+    });
+    const data = await resp.json();
     clearInterval(interval);
-    updateClient(currentClientId, { _isGeneratingProfile: false, _profileGenPct: null, _profileDone: true });
+    if (data.error) throw new Error(data.error);
+    // 保存 AI 生成的画像内容
+    const profileData = {
+      summary: data.summary || '',
+      background: data.background || '',
+      pain_points: data.pain_points || [],
+      scale: data.scale || '',
+      tags: data.tags || []
+    };
+    updateClient(currentClientId, {
+      _isGeneratingProfile: false,
+      _profileGenPct: null,
+      _profileDone: true,
+      _customer_profile: profileData,
+      is_saved: true
+    });
+    saveStep1Local();
     renderArtifacts();
     showToast('客户画像卡已生成');
-  }, 1500);
+  } catch (e) {
+    clearInterval(interval);
+    updateClient(currentClientId, { _isGeneratingProfile: false, _profileGenPct: null });
+    renderArtifacts();
+    showToast('生成失败: ' + e.message);
+  }
 }
 
 function doStep1Next() {
@@ -4683,77 +4724,69 @@ function renderArtifacts() {
 function doPreviewProfile() {
   const c = getClient(currentClientId);
   if (!c || (!c.name && !c.industry && !c.initial_demand)) { showToast('暂无内容可预览'); return; }
-  const tags = (c.tags || '').split(',').filter(Boolean);
+  const profile = c._customer_profile || {};
+  const tags = (profile.tags && profile.tags.length) ? profile.tags : (c.tags || '').split(',').filter(Boolean);
   const tagsHTML = tags.length
-    ? tags.map(t => '<span style="display:inline-block;background:linear-gradient(135deg,#eef6ff 0%,#f0f7ff 100%);color:#1263e6;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:800;margin:3px;border:1px solid rgba(18,99,230,.15);box-shadow:0 2px 8px rgba(18,99,230,.06)">' + t + '</span>').join('')
+    ? tags.map(t => '<span style="display:inline-block;background:#eef6ff;color:#1263e6;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;margin:2px;border:1px solid rgba(18,99,230,.15)">' + t + '</span>').join('')
     : '<span style="color:#98a2b3;font-size:13px">暂无标签</span>';
+  const pains = profile.pain_points || [];
 
-  const aiSection = (c.company_intro || c.main_customers || c.possible_focus) ? `
-    <div style="background:#fff;border-radius:22px;padding:24px;margin-bottom:16px;box-shadow:0 8px 32px rgba(20,34,64,.08),0 2px 8px rgba(20,34,64,.04)">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #f0f2f7">
-        <div style="width:5px;height:24px;background:linear-gradient(180deg,#ff8a00 0%,#f97316 100%);border-radius:3px"></div>
-        <span style="font-size:16px;font-weight:900;color:#182235;letter-spacing:-0.3px">AI 智搜补充</span>
-        <span style="background:linear-gradient(135deg,#fff7ed 0%,#fef3c7 100%);color:#d97706;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;margin-left:auto;box-shadow:0 2px 6px rgba(255,138,0,.15)">公开信息</span>
+  const painSection = pains.length ? `
+    <div style="background:#fff;border-radius:22px;padding:24px;margin-bottom:16px;box-shadow:0 4px 16px rgba(20,34,64,.08)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:5px;height:24px;background:linear-gradient(180deg,#f97316 0%,#ea580c 100%);border-radius:3px"></div>
+        <span style="font-size:16px;font-weight:900;color:#182235">核心痛点</span>
       </div>
-      <div style="display:grid;gap:14px">
-        <div style="background:linear-gradient(135deg,#fafbfc 0%,#f5f7fa 100%);border-radius:16px;padding:18px 20px;border:1px solid #eaecef">
-          <div style="color:#8a9bae;font-size:11px;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">主要客户</div>
-          <div style="font-size:14px;color:#344054;font-weight:700;line-height:1.5">${c.main_customers || '-'}</div>
-        </div>
-        <div style="background:linear-gradient(135deg,#fafbfc 0%,#f5f7fa 100%);border-radius:16px;padding:18px 20px;border:1px solid #eaecef">
-          <div style="color:#8a9bae;font-size:11px;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">可能关注</div>
-          <div style="font-size:14px;color:#344054;font-weight:700;line-height:1.5">${c.possible_focus || '-'}</div>
-        </div>
-        <div style="background:linear-gradient(135deg,#fafbfc 0%,#f5f7fa 100%);border-radius:16px;padding:18px 20px;border:1px solid #eaecef">
-          <div style="color:#8a9bae;font-size:11px;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">公司简介</div>
-          <div style="font-size:14px;color:#344054;line-height:1.75">${c.company_intro || '-'}</div>
-        </div>
+      <div style="display:grid;gap:10px">
+        ${pains.map(p => '<div style="background:#fff7ed;border-radius:12px;padding:14px 16px;border-left:4px solid #f97316;font-size:14px;color:#344054;line-height:1.6">' + p + '</div>').join('')}
       </div>
     </div>` : '';
 
-  const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;max-width:640px;background:linear-gradient(180deg,#f7f9fc 0%,#f0f2f7 100%);min-height:100%;padding:24px">
-    <div style="background:linear-gradient(135deg,#1263e6 0%,#0c55cf 50%,#0950a8 100%);border-radius:28px;padding:32px 36px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden;box-shadow:0 20px 60px rgba(18,99,230,.3),0 8px 24px rgba(18,99,230,.2)">
-      <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(255,255,255,.15) 0%,transparent 70%);border-radius:50%"></div>
-      <div style="position:absolute;bottom:-30px;left:60px;width:120px;height:120px;background:radial-gradient(circle,rgba(255,255,255,.1) 0%,transparent 70%);border-radius:50%"></div>
+  const aiSearchSection = (c.company_intro || c.main_customers || c.possible_focus) ? `
+    <div style="background:#fff;border-radius:22px;padding:24px;margin-bottom:16px;box-shadow:0 4px 16px rgba(20,34,64,.08)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0f2f7">
+        <div style="width:5px;height:24px;background:linear-gradient(180deg,#ff8a00 0%,#f97316 100%);border-radius:3px"></div>
+        <span style="font-size:16px;font-weight:900;color:#182235">AI 智搜补充</span>
+        <span style="margin-left:auto;background:#fff7ed;color:#d97706;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700">公开信息</span>
+      </div>
+      <div style="display:grid;gap:12px">
+        ${c.main_customers ? '<div><div style="color:#8a9bae;font-size:11px;font-weight:700;margin-bottom:6px">主要客户</div><div style="font-size:14px;color:#344054;font-weight:600">' + c.main_customers + '</div></div>' : ''}
+        ${c.possible_focus ? '<div><div style="color:#8a9bae;font-size:11px;font-weight:700;margin-bottom:6px">可能关注</div><div style="font-size:14px;color:#344054;font-weight:600">' + c.possible_focus.replace(/\//g, ' / ') + '</div></div>' : ''}
+        ${c.company_intro ? '<div><div style="color:#8a9bae;font-size:11px;font-weight:700;margin-bottom:6px">公司简介</div><div style="font-size:14px;color:#344054;line-height:1.7">' + c.company_intro + '</div></div>' : ''}
+      </div>
+    </div>` : '';
+
+  const html = `
+  <div style="font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;max-width:600px;background:linear-gradient(180deg,#f7f9fc 0%,#f0f2f7 100%);min-height:100%;padding:20px">
+    <!-- 头部 -->
+    <div style="background:linear-gradient(135deg,#1263e6 0%,#0c55cf 100%);border-radius:24px;padding:28px 32px;color:#fff;margin-bottom:16px;position:relative;overflow:hidden;box-shadow:0 12px 40px rgba(18,99,230,.25)">
+      <div style="position:absolute;top:-30px;right:-30px;width:160px;height:160px;background:radial-gradient(circle,rgba(255,255,255,.15) 0%,transparent 70%);border-radius:50%"></div>
       <div style="position:relative;z-index:1">
-        <div style="font-size:28px;font-weight:950;margin-bottom:8px;letter-spacing:-0.5px;text-shadow:0 2px 8px rgba(0,0,0,.15)">${c.name || '未命名客户'}</div>
-        <div style="font-size:14px;opacity:0.95;display:flex;align-items:center;gap:10px">
-          <span style="background:rgba(255,255,255,.2);backdrop-filter:blur(8px);border-radius:999px;padding:5px 14px;font-size:12px;font-weight:700;letter-spacing:.3px">${c.industry || '行业未分类'}</span>
-          <span style="opacity:0.85">${c.scale || '规模待定'}</span>
+        <div style="font-size:26px;font-weight:950;margin-bottom:6px;letter-spacing:-0.5px">${c.name || '未命名客户'}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="background:rgba(255,255,255,.2);border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700">${c.industry || '行业未分类'}</span>
+          <span style="opacity:0.85;font-size:13px">${profile.scale || c.scale || '规模待定'}</span>
         </div>
       </div>
     </div>
-    <div style="background:#fff;border-radius:22px;padding:24px;margin-bottom:16px;box-shadow:0 8px 32px rgba(20,34,64,.08),0 2px 8px rgba(20,34,64,.04)">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #f0f2f7">
-        <div style="width:5px;height:24px;background:linear-gradient(180deg,#1263e6 0%,#13b96f 100%);border-radius:3px"></div>
-        <span style="font-size:16px;font-weight:900;color:#182235;letter-spacing:-0.3px">基本信息</span>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
-        <div style="background:linear-gradient(135deg,#fafbfc 0%,#f5f7fa 100%);border-radius:16px;padding:18px 20px;border:1px solid #eaecef">
-          <div style="color:#8a9bae;font-size:11px;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">入线时间</div>
-          <div style="font-size:15px;font-weight:900;color:#182235;letter-spacing:-0.3px">${c.created_at ? new Date(c.created_at).toLocaleDateString() : '-'}</div>
-        </div>
-        <div style="background:linear-gradient(135deg,#fafbfc 0%,#f5f7fa 100%);border-radius:16px;padding:18px 20px;border:1px solid #eaecef">
-          <div style="color:#8a9bae;font-size:11px;margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px">客户类型</div>
-          <div style="font-size:15px;font-weight:800;color:#182235;letter-spacing:-0.3px">${c.company_type || '-'}</div>
-        </div>
-      </div>
+    <!-- AI 画像摘要 -->
+    ${profile.summary ? '<div style="background:#eef6ff;border-radius:16px;padding:16px 20px;margin-bottom:16px;border-left:5px solid #1263e6;font-size:14px;color:#1263e6;font-weight:700;line-height:1.7">' + profile.summary + '</div>' : ''}
+    <!-- 背景 -->
+    ${profile.background ? '<div style="background:#fff;border-radius:22px;padding:24px;margin-bottom:16px;box-shadow:0 4px 16px rgba(20,34,64,.08)"><div style="font-size:16px;font-weight:900;color:#182235;margin-bottom:10px">公司背景</div><div style="font-size:14px;color:#344054;line-height:1.8">' + profile.background + '</div></div>' : ''}
+    <!-- 痛点 -->
+    ${painSection}
+    <!-- 标签 -->
+    <div style="background:#fff;border-radius:22px;padding:24px;margin-bottom:16px;box-shadow:0 4px 16px rgba(20,34,64,.08)">
+      <div style="font-size:16px;font-weight:900;color:#182235;margin-bottom:12px">需求标签</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${tagsHTML}</div>
     </div>
-    <div style="background:#fff;border-radius:22px;padding:24px;margin-bottom:16px;box-shadow:0 8px 32px rgba(20,34,64,.08),0 2px 8px rgba(20,34,64,.04)">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #f0f2f7">
-        <div style="width:5px;height:24px;background:linear-gradient(180deg,#1263e6 0%,#13b96f 100%);border-radius:3px"></div>
-        <span style="font-size:16px;font-weight:900;color:#182235;letter-spacing:-0.3px">需求标签</span>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">${tagsHTML}</div>
+    <!-- 原始需求 -->
+    <div style="background:#fff;border-radius:22px;padding:24px;margin-bottom:16px;box-shadow:0 4px 16px rgba(20,34,64,.08)">
+      <div style="font-size:16px;font-weight:900;color:#182235;margin-bottom:10px">原始需求表达</div>
+      <div style="font-size:14px;line-height:1.85;color:#475467;background:#f8fafc;border-radius:12px;padding:14px 16px;border:1px solid #e8ecf0">${c.initial_demand || '（未填写）'}</div>
     </div>
-    <div style="background:#fff;border-radius:22px;padding:24px;margin-bottom:16px;box-shadow:0 8px 32px rgba(20,34,64,.08),0 2px 8px rgba(20,34,64,.04)">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #f0f2f7">
-        <div style="width:5px;height:24px;background:linear-gradient(180deg,#1263e6 0%,#13b96f 100%);border-radius:3px"></div>
-        <span style="font-size:16px;font-weight:900;color:#182235;letter-spacing:-0.3px">原始需求表达</span>
-      </div>
-      <div style="background:linear-gradient(135deg,#fafbff 0%,#f5f8fc 100%);border-radius:16px;padding:18px 20px;font-size:14px;line-height:1.85;color:#344054;border:1px solid #e2e8f0">${c.initial_demand || '（未填写）'}</div>
-    </div>
-    ${aiSection}
+    <!-- AI 智搜补充 -->
+    ${aiSearchSection}
   </div>`;
 
   const modal = document.getElementById('artifact-preview-modal');
@@ -4837,16 +4870,25 @@ function doCreateWecomDoc(docName, docContent) {
     content = lines.join('\n\n');
   }
   var schema = {
-    doc_name: name,
-    content: content,
-    sheets: [{
-      sheet_name: '内容摘要',
-      fields: [
-        { field_title: '标题', field_type: 'TEXT' },
-        { field_title: '内容', field_type: 'TEXT' }
-      ],
-      sample_records: [{ '标题': name, '内容': content.substring(0, 500) }]
-    }]
+    client_id: currentClientId,
+    smartTableSpec: {
+      confirmedTables: [{ tableName: '内容摘要', tablePurpose: '需求调研内容摘要', source: '用户生成', phase: '一期', roles: [] }],
+      fieldsByTable: [{
+        tableName: '内容摘要',
+        fields: [
+          { fieldName: '标题', fieldType: '文本', required: true, rule: '', source: '用户输入' },
+          { fieldName: '内容', fieldType: '文本', required: true, rule: '', source: '用户输入' }
+        ]
+      }],
+      sheets: [{
+        sheet_name: '内容摘要',
+        fields: [
+          { field_title: '标题', field_type: '文本' },
+          { field_title: '内容', field_type: '文本' }
+        ],
+        sample_records: [{ '标题': name, '内容': content }]
+      }]
+    }
   };
   if (btn) { btn.disabled = true; btn.textContent = '生成中…'; btn.style.opacity = '0.6'; }
   fetch(API_BASE + '/api/create', {
@@ -4855,6 +4897,7 @@ function doCreateWecomDoc(docName, docContent) {
     body: JSON.stringify(schema)
   }).then(function(r) { return r.json(); }).then(function(data) {
     if (data.success && data.docid) {
+      updateClient(currentClientId, { _wecom_docid: data.docid, _wecom_url: data.url || ('https://doc.weixin.qq.com/doc/' + data.docid) });
       showToast('企微文档已创建');
     } else {
       showToast('创建失败: ' + (data.error || '未知错误'));
