@@ -2722,13 +2722,12 @@ async function generateStep4Presales() {
   var btn = document.getElementById('s4-presales-btn');
   if (btn) { btn.classList.add('loading'); btn.disabled = true; }
   window._generatingPresales = true;
+  window._presalesStep = 1;
   renderArtifacts();
-  var pct = 10;
-  var tick = setInterval(function() {
-    pct = Math.min(pct + Math.random() * 15, 85);
-    window._presalesPct = pct;
+  var stepTick = setInterval(function() {
+    window._presalesStep = (window._presalesStep % 3) + 1;
     renderArtifacts();
-  }, 300);
+  }, 2000);
   try {
     var resp = await Promise.race([
       fetch(API_BASE + '/api/step4/generate', {
@@ -2736,7 +2735,7 @@ async function generateStep4Presales() {
         headers: getAuthHeaders(),
         body: JSON.stringify({ client_id: currentClientId, type: 'presales' })
       }),
-      new Promise(function(_, reject) { setTimeout(function() { reject(new Error('请求超时120秒，请重试')); }, 120000); })
+      new Promise(function(_, reject) { setTimeout(function() { reject(new Error('请求超时，请检查 MiniMax API')); }, 70000); })
     ]);
     var data = await resp.json();
     if (data.success && data.requirementData) {
@@ -2766,10 +2765,9 @@ async function generateStep4Presales() {
   } catch(e) {
     showToast('生成失败：' + e.message);
   } finally {
-    clearInterval(tick);
+    clearInterval(stepTick);
     window._generatingPresales = false;
-    var v = (getClient(currentClientId) || {}).step4_presales_versions || [];
-    window._presalesPct = v.length > 0 ? 100 : 0;
+    window._presalesStep = 0;
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
     renderArtifacts();
   }
@@ -2781,13 +2779,12 @@ async function generateStep4Technical() {
   var btn = document.getElementById('s4-technical-btn');
   if (btn) { btn.classList.add('loading'); btn.disabled = true; }
   window._generatingTechnical = true;
+  window._technicalStep = 1;
   renderArtifacts();
-  var pct = 10;
-  var tick = setInterval(function() {
-    pct = Math.min(pct + Math.random() * 15, 85);
-    window._technicalPct = pct;
+  var stepTick = setInterval(function() {
+    window._technicalStep = (window._technicalStep % 3) + 1;
     renderArtifacts();
-  }, 300);
+  }, 2000);
   try {
     var resp = await Promise.race([
       fetch(API_BASE + '/api/step4/generate', {
@@ -2795,7 +2792,7 @@ async function generateStep4Technical() {
         headers: getAuthHeaders(),
         body: JSON.stringify({ client_id: currentClientId, type: 'html' })
       }),
-      new Promise(function(_, reject) { setTimeout(function() { reject(new Error('请求超时120秒，请重试')); }, 120000); })
+      new Promise(function(_, reject) { setTimeout(function() { reject(new Error('请求超时，请检查 MiniMax API')); }, 70000); })
     ]);
     var data = await resp.json();
     if (data.success) {
@@ -2824,10 +2821,9 @@ async function generateStep4Technical() {
   } catch(e) {
     showToast('生成失败：' + e.message);
   } finally {
-    clearInterval(tick);
+    clearInterval(stepTick);
     window._generatingTechnical = false;
-    var v = (getClient(currentClientId) || {}).step4_technical_versions || [];
-    window._technicalPct = v.length > 0 ? 100 : 0;
+    window._technicalStep = 0;
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
     renderArtifacts();
   }
@@ -4522,16 +4518,20 @@ function renderArtifacts() {
   var isGenPresales = window._generatingPresales;
   var presalesPct = isGenPresales ? (window._presalesPct || 10) : (hasPresales ? 100 : 0);
   var presalesDesc = hasPresales && latestPresales ? new Date(latestPresales.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestPresales.version : '面向客户汇报，包含痛点诊断、解决思路、建设模块与实施阶段。';
-  items.push({ name: '售前解决方案', tag: isGenPresales ? '生成中' : (hasPresales ? '已生成' : '待生成'), tagCls: isGenPresales ? 'editing' : (hasPresales ? '' : 'todo'), pct: presalesPct, dataKey: 'step4_presales_versions', desc: presalesDesc, isGen: isGenPresales });
+  var presalesStep = window._presalesStep;
+  var presalesGenDesc = presalesStep === 1 ? '正在生成需求结构化…' : presalesStep === 2 ? '正在生成 Word 文档…' : '正在质检文档…';
+  items.push({ name: '售前解决方案', tag: isGenPresales ? '生成中' : (hasPresales ? '已生成' : '待生成'), tagCls: isGenPresales ? 'editing' : (hasPresales ? '' : 'todo'), pct: presalesPct, dataKey: 'step4_presales_versions', desc: isGenPresales ? presalesGenDesc : presalesDesc, isGen: isGenPresales });
 
-  // 技术路线及报价方案
+  // 可视化方案 HTML
   var tv = c.step4_technical_versions || [];
   var latestTechnical = tv[tv.length - 1];
   var hasTechnical = tv.length > 0;
   var isGenTechnical = window._generatingTechnical;
   var technicalPct = isGenTechnical ? (window._technicalPct || 10) : (hasTechnical ? 100 : 0);
-  var techDesc = hasTechnical && latestTechnical ? new Date(latestTechnical.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestTechnical.version : '面向内部评估，拆解技术路径、交付范围与报价口径。';
-  items.push({ name: '技术路线及报价方案', tag: isGenTechnical ? '生成中' : (hasTechnical ? '已生成' : '待生成'), tagCls: isGenTechnical ? 'editing' : (hasTechnical ? '' : 'todo'), pct: technicalPct, dataKey: 'step4_technical_versions', desc: techDesc, isGen: isGenTechnical });
+  var techDesc = hasTechnical && latestTechnical ? new Date(latestTechnical.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestTechnical.version : '面向客户汇报，展示方案价值、建设模块与二期预留方向。';
+  var technicalStep = window._technicalStep;
+  var techGenDesc = technicalStep === 1 ? '正在生成需求结构化…' : technicalStep === 2 ? '正在生成可视化方案…' : '正在渲染页面…';
+  items.push({ name: '可视化方案 HTML', tag: isGenTechnical ? '生成中' : (hasTechnical ? '已生成' : '待生成'), tagCls: isGenTechnical ? 'editing' : (hasTechnical ? '' : 'todo'), pct: technicalPct, dataKey: 'step4_technical_versions', desc: isGenTechnical ? techGenDesc : techDesc, isGen: isGenTechnical });
 
   // 智能表格 Demo
   const isGen5 = window._generatingStep5;

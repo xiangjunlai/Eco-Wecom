@@ -77,7 +77,7 @@ def extract_mcp(mcp_resp: dict):
 DEEPSEEK_API_KEY = "sk-cp-FxfZUSUHnTWn7eCtl1V-5CI1jFpfF3XLI0jxHZJ7U0p16_cea_FTQqxOaOYavdfwiS9DDN4pomf4CxLZlQYqIyvJJK_eaKR7tbh4d77_1dGK8DwQtwwjLDc"
 
 def call_deepseek(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -> str:
-    """调用 MiniMax API"""
+    """调用 MiniMax API，60秒超时"""
     import httpx
     try:
         response = httpx.post(
@@ -95,10 +95,12 @@ def call_deepseek(system_prompt: str, user_prompt: str, max_tokens: int = 4000) 
                 "max_tokens": max_tokens,
                 "temperature": 0.7
             },
-            timeout=180.0
+            timeout=httpx.Timeout(60.0, connect=10.0)
         )
         result = response.json()
         return result["choices"][0]["message"]["content"]
+    except httpx.TimeoutException:
+        return "Error: MiniMax API 请求超时（60秒），请重试"
     except Exception as e:
         return f"Error: {str(e)}"
 
