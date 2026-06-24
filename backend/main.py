@@ -134,6 +134,15 @@ async def cors_options_middleware(request, call_next):
         )
     return await call_next(request)
 
+# CORS 允许所有来源（含 localhost:9090）
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True,
+)
+
 # 初始化数据库
 init_db()
 init_kb_db()
@@ -240,6 +249,20 @@ async def login(user: UserLogin):
         "token_type": "bearer",
         "user": {"id": row["id"], "username": row["username"], "provider_name": row["provider_name"] or ""}
     }
+
+@app.get("/api/debug-saved")
+async def debug_saved(user: dict = Depends(require_auth)):
+    """Debug: 检查 _saved 列"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, _completed, _saved FROM clients WHERE id = 71")
+    row = cursor.fetchone()
+    conn.close()
+    d = dict(row)
+    # 直接返回确认有 _saved
+    import sys
+    print(f"_saved in d: {'_saved' in d}, value: {d.get('_saved')}", file=sys.stderr)
+    return {"_saved_val": d.get("_saved"), "completed_val": d.get("_completed"), "raw": d}
 
 @app.post("/api/test-login")
 async def test_login():
@@ -745,15 +768,20 @@ async def list_clients(user: dict = Depends(require_auth)):
         SELECT id, user_id, name, industry, initial_demand, status,
                step1_result, step2_report, step2_todo, step2_schema,
                step4_presales, step4_technical, step5_schema,
-               created_at, updated_at, demo_url,
+               created_at, updated_at, demo_url, _completed, _saved,
                COALESCE(LENGTH(uploaded_files) - LENGTH(REPLACE(uploaded_files, '[', '')), 0) AS note_count
         FROM clients WHERE user_id = ? ORDER BY updated_at DESC
     """, (user["user_id"],))
     cols = ["id", "user_id", "name", "industry", "initial_demand", "status",
             "step1_result", "step2_report", "step2_todo", "step2_schema",
             "step4_presales", "step4_technical", "step5_schema",
-            "created_at", "updated_at", "demo_url", "note_count"]
-    clients = [dict(zip(cols, row)) for row in cursor.fetchall()]
+            "created_at", "updated_at", "demo_url", "_completed", "_saved", "note_count"]
+    clients = []
+    for row in cursor.fetchall():
+        d = dict(zip(cols, row))
+        d["is_completed"] = int(d.pop("_completed", 0) or 0)
+        d["is_saved"] = int(d.pop("_saved", 0) or 0)
+        clients.append(d)
     conn.close()
     return clients
 
@@ -789,6 +817,11 @@ async def get_client(client_id: str, user: dict = Depends(require_auth)):
         raise HTTPException(status_code=404, detail="客户不存在")
 
     result = dict(row)
+    # FastAPI JSON 序列化会丢弃下划线开头的 key，强制 pop 后重命名
+    _saved_v = result.pop("_saved", 0)
+    result["is_saved"] = int(_saved_v) if _saved_v else 0
+    _completed_v = result.pop("_completed", 0)
+    result["is_completed"] = int(_completed_v) if _completed_v else 0
     # Parse JSON fields back to objects
     for field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions"):
         if result.get(field) and isinstance(result[field], str):
@@ -809,13 +842,15 @@ async def update_client(client_id: str, data: dict, user: dict = Depends(require
     if not cursor.fetchone():
         raise HTTPException(status_code=404, detail="客户不存在")
 
-    # 更新字段
-    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions", "step4_input_draft", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url"]
+    # 更新字段（前端发 is_completed/is_saved，数据库列名是 _completed/_saved）
+    FIELD_MAP = {"is_completed": "_completed", "is_saved": "_saved"}
+    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions", "step4_input_draft", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url", "is_completed", "is_saved"]
     updates = []
     values = []
     for field in allowed_fields:
         if field in data:
-            updates.append(f"{field} = ?")
+            db_field = FIELD_MAP.get(field, field)  # 前端名→数据库列名
+            updates.append(f"{db_field} = ?")
             val = data[field]
             # JSON fields must be serialized to string for SQLite
             if field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions", "step4_input_draft"):
@@ -1575,13 +1610,21 @@ def db_get_client(client_id):
     conn.close()
     if not row:
         return None
-    return dict(row)
+    d = dict(row)
+    # JSON 字段反序列化
+    for k in JSON_FIELDS:
+        if k in d and d[k]:
+            try:
+                d[k] = json.loads(d[k])
+            except Exception:
+                pass
+    return d
 
 
 JSON_FIELDS = {"step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary",
                 "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical",
                 "step4_presales_versions", "step4_technical_versions", "step5_schema",
-                "step5_agent_suggestions", "step4_input_draft"}
+                "step5_agent_suggestions", "step4_input_draft", "_completed", "_saved"}
 
 def db_update_client(client_id, updates):
     """同步更新客户字段"""
@@ -2046,6 +2089,8 @@ notRecommended：{not_recommended_scope}
 
 请严格按以下 JSON Schema 输出（直接输出 JSON，不要任何前缀）：
 
+【重要】每个子表的 sample_records 至少填写 10 条真实业务数据，数据要贴合行业和客户场景，禁止填虚假或无关数据。
+
 {
   "doc_name": "智能表格名称",
   "sheets": [
@@ -2059,6 +2104,7 @@ notRecommended：{not_recommended_scope}
         }
       ],
       "sample_records": [
+        { "字段名": "示例值" },
         { "字段名": "示例值" }
       ]
     }
@@ -2112,7 +2158,7 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
         "{not_recommended_scope}", json.dumps(scope.get("notRecommended") or [], ensure_ascii=False, indent=2)
     )
 
-    raw = call_minimax(STEP5_SCHEMA_SYSTEM_PROMPT, user_prompt, max_tokens=8000)
+    raw = call_minimax(STEP5_SCHEMA_SYSTEM_PROMPT, user_prompt, max_tokens=15000)
     schema = parse_json_response(raw)
 
     if not schema:
@@ -2137,6 +2183,7 @@ STEP5_AGENT_PROMPT = """你是一个企业微信智能表格 AI 增强专家。�
 请生成 4-6 条"若要加强 AI 化，可以考虑..."的建议，每条包含：
 - title：建议标题（如"引入 AI 自动汇总"）
 - description：2-3 句话说明实现方式和价值
+- example：该建议在当前客户场景中的具体应用示例（如"在【项目状态】表中，字段值变为'待验收'时，自动推送企微消息给项目经理"）
 - difficulty：实现难度（低/中/高）
 - phase：建议时机（一期/二期/远期）
 
@@ -2201,51 +2248,55 @@ async def step5_agent_suggest(body: dict, user: dict = Depends(require_auth)):
 
 # 字段类型映射：我们的规范 → WeCom field_type id
 FIELD_TYPE_MAP = {
-    "文本": "1",
-    "多行文本": "2",
-    "单选": "3",
-    "多选": "4",
-    "数字": "5",
-    "金额": "7",
-    "日期": "8",
-    "日期时间": "9",
-    "人员": "10",
-    "附件": "11",
-    "图片": "12",
-    "关联记录": "13",
-    "公式": "19",
-    "自动编号": "20",
-    "进度": "21",
-    "勾选": "22",
-    "URL": "23",
+    # WeCom API 格式（FIELD_TYPE_ 前缀）
+    "文本": "FIELD_TYPE_TEXT",
+    "多行文本": "FIELD_TYPE_TEXT",
+    "单选": "FIELD_TYPE_SINGLE_SELECT",
+    "多选": "FIELD_TYPE_SELECT",
+    "数字": "FIELD_TYPE_NUMBER",
+    "金额": "FIELD_TYPE_CURRENCY",
+    "日期": "FIELD_TYPE_DATE_TIME",
+    "日期时间": "FIELD_TYPE_DATE_TIME",
+    "人员": "FIELD_TYPE_USER",
+    "附件": "FIELD_TYPE_ATTACHMENT",
+    "图片": "FIELD_TYPE_IMAGE",
+    "关联记录": "FIELD_TYPE_TEXT",
+    "公式": "FIELD_TYPE_TEXT",
+    "自动编号": "FIELD_TYPE_TEXT",
+    "进度": "FIELD_TYPE_PROGRESS",
+    "勾选": "FIELD_TYPE_CHECKBOX",
+    "URL": "FIELD_TYPE_URL",
     # 别名
-    "text": "1",
-    "number": "5",
-    "currency": "7",
-    "date": "8",
-    "datetime": "9",
-    "contact": "10",
-    "file": "11",
-    "checkbox": "22",
-    "percent": "21",
+    "text": "FIELD_TYPE_TEXT",
+    "number": "FIELD_TYPE_NUMBER",
+    "currency": "FIELD_TYPE_CURRENCY",
+    "date": "FIELD_TYPE_DATE_TIME",
+    "datetime": "FIELD_TYPE_DATE_TIME",
+    "contact": "FIELD_TYPE_USER",
+    "file": "FIELD_TYPE_ATTACHMENT",
+    "checkbox": "FIELD_TYPE_CHECKBOX",
+    "percent": "FIELD_TYPE_PERCENTAGE",
 }
 
 
 def _map_field_type(ft: str) -> str:
-    """将字段类型字符串映射为 WeCom field_type ID"""
+    """将字段类型字符串映射为 WeCom field_type 枚举值"""
     ft = ft.strip()
-    return FIELD_TYPE_MAP.get(ft, "1")  # 默认文本
+    return FIELD_TYPE_MAP.get(ft, "FIELD_TYPE_TEXT")  # 默认文本
 
 
 @app.post("/api/create")
 async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
     """
-    基于 smartTableSpec 创建企业微信智能表格。
+    基于 smartTableSpec 创建企业微信智能表格（包含完整字段和样例数据）。
 
     body = {
         "client_id": 71,
-        // 以下字段从 requirementSolutionData.smartTableSpec 传入
-        "smartTableSpec": { ... }
+        "smartTableSpec": {
+            "confirmedTables": [...],
+            "fieldsByTable": [...],
+            "sheets": [...]  // 直接包含 sheets/fields/sample_records 结构
+        }
     }
     """
     import re
@@ -2256,12 +2307,13 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
     if not client_id:
         return {"success": False, "error": "缺少 client_id"}
 
+    # 支持两种结构：
+    # 1. confirmedTables + fieldsByTable（旧结构）
+    # 2. sheets 直接包含字段和样例数据（新结构，来自 step5_schema）
     confirmed_tables = spec.get("confirmedTables") or []
     fields_by_table = spec.get("fieldsByTable") or []
+    sheets_data = spec.get("sheets") or []  # 直接的 sheets 结构
     fields_map = {f.get("tableName", ""): f.get("fields", []) for f in fields_by_table}
-
-    if not confirmed_tables:
-        return {"success": False, "error": "smartTableSpec 中无 confirmedTables"}
 
     # ---- 1. 创建智能表格文档 ----
     client = db_get_client(client_id)
@@ -2274,7 +2326,7 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
         return {"success": False, "error": "创建文档失败：" + create_resp["error"]}
 
     docid = create_resp.get("docid", "")
-    doc_url = create_resp.get("url", "")  # 使用 API 返回的真实 URL
+    doc_url = create_resp.get("url", "")
     if not docid:
         return {"success": False, "error": "创建文档失败，未返回 docid"}
 
@@ -2289,74 +2341,129 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
         return {"success": False, "error": "未找到子表"}
     first_sheet_id = sheets[0].get("sheet_id", "")
 
-    # ---- 3. 为每个 confirmedTables 建表/设字段 ----
-    for idx, table in enumerate(confirmed_tables):
-        table_name = table.get("tableName", f"子表{idx + 1}")
-        phase = table.get("phase", "一期")
-        if phase != "一期":
-            continue  # 只建一期的表
+    # ---- 2b. 获取默认子表的字段（含默认 field_id）----
+    fields_resp = call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": first_sheet_id})
+    default_field_id = ""
+    if not fields_resp.get("error") and fields_resp.get("fields"):
+        default_field_id = fields_resp["fields"][0].get("field_id", "")
 
-        fields_def = fields_map.get(table.get("tableName", ""), [])
+    # ---- 3a. 使用 sheets 结构（直接包含字段和样例数据）----
+    if sheets_data:
+        for idx, sheet in enumerate(sheets_data):
+            sheet_name = sheet.get("sheet_name", f"子表{idx + 1}")
+            fields_list = sheet.get("fields") or []
+            sample_records = sheet.get("sample_records") or []
 
-        if idx == 0:
-            # ---- 第一个表：用默认子表 ----
-            sheet_id = first_sheet_id
-            # 重命名默认字段为第一个字段
-            if fields_def:
-                first_field = fields_def[0]
-                first_ft = _map_field_type(first_field.get("fieldType", "文本"))
-                rename_resp = call_mcp("smartsheet_update_fields", {
-                    "docid": docid,
-                    "sheet_id": sheet_id,
-                    "fields": [{"field_title": first_field.get("fieldName", ""), "field_id": "", "field_type": first_ft}]
-                })
-                # 添加其余字段
-                if len(fields_def) > 1:
-                    add_fields = []
-                    for f in fields_def[1:]:
-                        add_fields.append({
-                            "field_title": f.get("fieldName", ""),
-                            "field_type": _map_field_type(f.get("fieldType", "文本")),
-                        })
-                    call_mcp("smartsheet_add_fields", {
+            if idx == 0:
+                # ---- 用默认子表 ----
+                sheet_id = first_sheet_id
+                # 重命名默认字段（需要真实的 field_id）
+                if fields_list and default_field_id:
+                    first_field = fields_list[0]
+                    first_ft = _map_field_type(first_field.get("field_type") or first_field.get("fieldType") or "文本")
+                    call_mcp("smartsheet_update_fields", {
                         "docid": docid,
                         "sheet_id": sheet_id,
-                        "fields": add_fields
+                        "fields": [{"field_title": first_field.get("field_title") or first_field.get("fieldName") or "", "field_id": default_field_id, "field_type": first_ft}]
                     })
-        else:
-            # ---- 新增子表 ----
-            add_sheet_resp = call_mcp("smartsheet_add_sheet", {"docid": docid})
-            if add_sheet_resp.get("error"):
-                continue
-            new_sheets = add_sheet_resp.get("sheet_list", []) or add_sheet_resp.get("sheets", []) or []
-            if not new_sheets:
-                continue
-            # 取最新增加的 sheet_id（一般是列表最后一个）
-            sheet_id = new_sheets[-1].get("sheet_id", "")
-
-            # 重命名 + 设字段
-            if fields_def:
-                first_field = fields_def[0]
-                first_ft = _map_field_type(first_field.get("fieldType", "文本"))
-                call_mcp("smartsheet_update_fields", {
-                    "docid": docid,
-                    "sheet_id": sheet_id,
-                    "fields": [{"field_title": first_field.get("fieldName", ""), "field_id": "", "field_type": first_ft}]
-                })
-                if len(fields_def) > 1:
-                    add_fields = []
-                    for f in fields_def[1:]:
-                        add_fields.append({
-                            "field_title": f.get("fieldName", ""),
-                            "field_type": _map_field_type(f.get("fieldType", "文本")),
-                        })
-                    call_mcp("smartsheet_add_fields", {
+                    # 添加其余字段
+                    if len(fields_list) > 1:
+                        add_fields = [{"field_title": f.get("field_title") or f.get("fieldName") or "", "field_type": _map_field_type(f.get("field_type") or f.get("fieldType") or "文本")} for f in fields_list[1:]]
+                        call_mcp("smartsheet_add_fields", {"docid": docid, "sheet_id": sheet_id, "fields": add_fields})
+                # 重命名子表
+                call_mcp("smartsheet_update_sheet", {"docid": docid, "properties": {"sheet_id": sheet_id, "title": sheet_name}})
+                # 添加样例数据（需包装为 {"values": {...}}）
+                if sample_records:
+                    records_formatted = [{"values": rec} for rec in sample_records]
+                    call_mcp("smartsheet_add_records", {"docid": docid, "sheet_id": sheet_id, "records": records_formatted})
+            else:
+                # ---- 新增子表 ----
+                add_sheet_resp = call_mcp("smartsheet_add_sheet", {"docid": docid})
+                if add_sheet_resp.get("error"):
+                    continue
+                new_props = add_sheet_resp.get("properties", {})
+                new_sheet_id = new_props.get("sheet_id", "") or (add_sheet_resp.get("sheet_list", [{}])[0].get("sheet_id", "") if add_sheet_resp.get("sheet_list") else "") or ""
+                if not new_sheet_id:
+                    continue
+                sheet_id = new_sheet_id
+                # 获取新子表的默认 field_id
+                new_fields_resp = call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": sheet_id})
+                new_default_field_id = ""
+                if not new_fields_resp.get("error") and new_fields_resp.get("fields"):
+                    new_default_field_id = new_fields_resp["fields"][0].get("field_id", "")
+                # 重命名 + 设字段
+                if fields_list and new_default_field_id:
+                    first_field = fields_list[0]
+                    first_ft = _map_field_type(first_field.get("field_type") or first_field.get("fieldType") or "文本")
+                    call_mcp("smartsheet_update_fields", {
                         "docid": docid,
                         "sheet_id": sheet_id,
-                        "fields": add_fields
+                        "fields": [{"field_title": first_field.get("field_title") or first_field.get("fieldName") or "", "field_id": new_default_field_id, "field_type": first_ft}]
                     })
+                    if len(fields_list) > 1:
+                        add_fields = [{"field_title": f.get("field_title") or f.get("fieldName") or "", "field_type": _map_field_type(f.get("field_type") or f.get("fieldType") or "文本")} for f in fields_list[1:]]
+                        call_mcp("smartsheet_add_fields", {"docid": docid, "sheet_id": sheet_id, "fields": add_fields})
+                # 重命名子表
+                call_mcp("smartsheet_update_sheet", {"docid": docid, "properties": {"sheet_id": sheet_id, "title": sheet_name}})
+                # 添加样例数据（需包装为 {"values": {...}}）
+                if sample_records:
+                    records_formatted = [{"values": rec} for rec in sample_records]
+                    call_mcp("smartsheet_add_records", {"docid": docid, "sheet_id": sheet_id, "records": records_formatted})
 
-        created_sheets.append(table_name)
+            created_sheets.append(sheet_name)
+
+    # ---- 3b. 使用 confirmedTables + fieldsByTable 结构（兼容旧）----
+    elif confirmed_tables:
+        for idx, table in enumerate(confirmed_tables):
+            table_name = table.get("tableName", f"子表{idx + 1}")
+            phase = table.get("phase", "一期")
+            if phase != "一期":
+                continue
+
+            fields_def = fields_map.get(table.get("tableName", ""), [])
+
+            if idx == 0:
+                sheet_id = first_sheet_id
+                if fields_def:
+                    first_field = fields_def[0]
+                    first_ft = _map_field_type(first_field.get("fieldType", "文本"))
+                    call_mcp("smartsheet_update_fields", {
+                        "docid": docid,
+                        "sheet_id": sheet_id,
+                        "fields": [{"field_title": first_field.get("fieldName", ""), "field_id": default_field_id, "field_type": first_ft}]
+                    })
+                    if len(fields_def) > 1:
+                        add_fields = [{"field_title": f.get("fieldName", ""), "field_type": _map_field_type(f.get("fieldType", "文本"))} for f in fields_def[1:]]
+                        call_mcp("smartsheet_add_fields", {"docid": docid, "sheet_id": sheet_id, "fields": add_fields})
+                call_mcp("smartsheet_update_sheet", {"docid": docid, "properties": {"sheet_id": sheet_id, "title": table_name}})
+            else:
+                add_sheet_resp = call_mcp("smartsheet_add_sheet", {"docid": docid})
+                if add_sheet_resp.get("error"):
+                    continue
+                new_props = add_sheet_resp.get("properties", {})
+                new_sheet_id = new_props.get("sheet_id", "") or (add_sheet_resp.get("sheet_list", [{}])[0].get("sheet_id", "") if add_sheet_resp.get("sheet_list") else "") or ""
+                if not new_sheet_id:
+                    continue
+                sheet_id = new_sheet_id
+                # 获取新子表的默认 field_id
+                new_fields_resp = call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": sheet_id})
+                new_default_field_id = ""
+                if not new_fields_resp.get("error") and new_fields_resp.get("fields"):
+                    new_default_field_id = new_fields_resp["fields"][0].get("field_id", "")
+                if fields_def and new_default_field_id:
+                    first_field = fields_def[0]
+                    first_ft = _map_field_type(first_field.get("fieldType", "文本"))
+                    call_mcp("smartsheet_update_fields", {
+                        "docid": docid,
+                        "sheet_id": sheet_id,
+                        "fields": [{"field_title": first_field.get("fieldName", ""), "field_id": new_default_field_id, "field_type": first_ft}]
+                    })
+                    if len(fields_def) > 1:
+                        add_fields = [{"field_title": f.get("fieldName", ""), "field_type": _map_field_type(f.get("fieldType", "文本"))} for f in fields_def[1:]]
+                        call_mcp("smartsheet_add_fields", {"docid": docid, "sheet_id": sheet_id, "fields": add_fields})
+                call_mcp("smartsheet_update_sheet", {"docid": docid, "properties": {"sheet_id": sheet_id, "title": table_name}})
+
+            created_sheets.append(table_name)
 
     return {
         "success": True,
