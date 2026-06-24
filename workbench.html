@@ -4537,18 +4537,7 @@ function renderArtifacts() {
   const hasNotesWecomDoc = !!(c._notes_wecom_docid && c._notes_wecom_url);
   items.push({ name: '沟通记录库', tag: noteCount > 0 ? '已沉淀' : '待补充', tagCls: noteCount > 0 ? '' : 'todo', pct: notePct, dataKey: 'uploaded_files', desc: '已沉淀 ' + noteCount + ' 次沟通记录。', hasWecomDoc: hasNotesWecomDoc, wecomUrl: c._notes_wecom_url, wecomDocid: c._notes_wecom_docid });
 
-  // 售前解决方案
-  var pv = c.step4_presales_versions || [];
-  var latestPresales = pv[pv.length - 1];
-  var hasPresales = pv.length > 0;
-  var isGenPresales = window._generatingPresales;
-  var presalesPct = isGenPresales ? (window._presalesPct || 10) : (hasPresales ? 100 : 0);
-  var presalesDesc = hasPresales && latestPresales ? new Date(latestPresales.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestPresales.version : '正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题';
-  var presalesStep = window._presalesStep;
-  var presalesGenDesc = presalesStep === 1 ? '正在生成需求结构化…' : presalesStep === 2 ? '正在生成 Word 文档…' : '正在质检文档…';
-  items.push({ name: '技术路线及报价方案', tag: isGenPresales ? '生成中' : (hasPresales ? '已生成' : '待生成'), tagCls: isGenPresales ? 'editing' : (hasPresales ? '' : 'todo'), pct: presalesPct, dataKey: 'step4_presales_versions', desc: isGenPresales ? presalesGenDesc : presalesDesc, isGen: isGenPresales });
-
-  // 售前解决方案（HTML）
+  // 售前解决方案（HTML）→ 排在上面
   var tv = c.step4_technical_versions || [];
   var latestTechnical = tv[tv.length - 1];
   var hasTechnical = tv.length > 0;
@@ -4558,6 +4547,17 @@ function renderArtifacts() {
   var technicalStep = window._technicalStep;
   var techGenDesc = technicalStep === 1 ? '正在生成需求结构化…' : technicalStep === 2 ? '正在生成可视化方案…' : '正在质检文档…';
   items.push({ name: '售前解决方案', tag: isGenTechnical ? '生成中' : (hasTechnical ? '已生成' : '待生成'), tagCls: isGenTechnical ? 'editing' : (hasTechnical ? '' : 'todo'), pct: technicalPct, dataKey: 'step4_technical_versions', desc: isGenTechnical ? techGenDesc : techDesc, isGen: isGenTechnical });
+
+  // 技术路线及报价方案（Word）→ 排在下面
+  var pv = c.step4_presales_versions || [];
+  var latestPresales = pv[pv.length - 1];
+  var hasPresales = pv.length > 0;
+  var isGenPresales = window._generatingPresales;
+  var presalesPct = isGenPresales ? (window._presalesPct || 10) : (hasPresales ? 100 : 0);
+  var presalesDesc = hasPresales && latestPresales ? new Date(latestPresales.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestPresales.version : '正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题';
+  var presalesStep = window._presalesStep;
+  var presalesGenDesc = presalesStep === 1 ? '正在生成需求结构化…' : presalesStep === 2 ? '正在生成 Word 文档…' : '正在质检文档…';
+  items.push({ name: '技术路线及报价方案', tag: isGenPresales ? '生成中' : (hasPresales ? '已生成' : '待生成'), tagCls: isGenPresales ? 'editing' : (hasPresales ? '' : 'todo'), pct: presalesPct, dataKey: 'step4_presales_versions', desc: isGenPresales ? presalesGenDesc : presalesDesc, isGen: isGenPresales });
 
   // 智能表格 Demo
   const isGen5 = window._generatingStep5;
