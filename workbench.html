@@ -4072,7 +4072,7 @@ function updateAddButtonText() {
   var target = activeTab ? activeTab.dataset.target : 'must';
   var btn = document.getElementById('s2-add-btn');
   if (!btn) return;
-  var labels = {must: '+ 必问问题', deep: '+ 深挖问题', industry: '+ 行业经验'};
+  var labels = {must: '+ 添加问题', deep: '+ 添加问题', industry: '+ 添加问题'};
   btn.textContent = labels[target] || '+ 添加问题';
 }
 
@@ -4462,7 +4462,7 @@ function renderStep3Summary(c) {
   var emptyEl = document.getElementById('s3-summary-empty');
   var loadingEl = document.getElementById('s3-summary-loading');
   if (!resultEl) return;
-  var report = c.step4_report;
+  var report = c.step3_summary;
   var notes = c.uploaded_files || [];
   var hasNotes = notes.length > 0;
   if (report) {
@@ -4491,79 +4491,62 @@ function renderStep3Summary(c) {
 
 function renderSummaryReadable(report) {
   if (!report) return '';
-  if (typeof report === 'string') return '<div style="font-size:13px;color:#344054;line-height:1.8">'+report.replace(/\n/g,'<br>')+'</div>';
-  var html = '';
+  if (typeof report === 'string') return '<div style="font-size:13px;color:#344054;line-height:1.8">' + report.replace(/\n/g, '<br>') + '</div>';
   var EMPTY = '<div style="color:#98a2b3;font-size:13px;font-style:italic">未提取到</div>';
-  // 关键需求
-  html += '<div style="margin-bottom:16px">';
-  html += '<div style="font-size:11px;font-weight:900;color:#1263e6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">关键需求</div>';
-  if (report.key_requirements && report.key_requirements.length > 0) {
-    html += '<ul style="margin:0;padding-left:18px;color:#344054;font-size:13px;line-height:1.8">';
-    report.key_requirements.forEach(function(r) { html += '<li>'+r+'</li>'; });
-    html += '</ul>';
-  } else {
-    html += EMPTY;
+  var html = '';
+  // 客户现状
+  if (report.customerCurrentState) {
+    html += '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:900;color:#1263e6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">客户现状</div><div style="font-size:13px;color:#344054;line-height:1.7;background:#f8f9fc;border-radius:12px;padding:12px">' + report.customerCurrentState + '</div></div>';
   }
-  html += '</div>';
-  // 角色与职责
-  html += '<div style="margin-bottom:16px">';
-  html += '<div style="font-size:11px;font-weight:900;color:#13b96f;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">角色与职责</div>';
-  if (report.roles_and_responsibilities && report.roles_and_responsibilities.length > 0) {
-    report.roles_and_responsibilities.forEach(function(r) {
-      html += '<div style="margin-bottom:8px;padding:8px 12px;background:#f8f9fc;border-radius:10px;font-size:13px;line-height:1.7">';
-      html += '<b style="color:#182235">'+r.role+'</b>';
-      if (r.responsibility) html += '<div style="color:#667085">职责：'+r.responsibility+'</div>';
-      if (r.concern) html += '<div style="color:#ff8a00;font-size:12px">关注：'+r.concern+'</div>';
+  // 核心痛点
+  if (report.painPoints && report.painPoints.length > 0) {
+    html += '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:900;color:#ef4444;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">核心痛点</div>';
+    report.painPoints.forEach(function(p) {
+      html += '<div style="margin-bottom:8px;padding:10px 12px;background:#fef2f2;border-radius:12px;border-left:4px solid #ef4444">';
+      html += '<div style="font-size:13px;font-weight:700;color:#182235;margin-bottom:4px">' + (p.title || '') + '</div>';
+      html += '<div style="font-size:12px;color:#667085;line-height:1.6">' + (p.description || '') + '</div>';
+      if (p.evidence) html += '<div style="font-size:11px;color:#98a2b3;margin-top:4px;padding-top:6px;border-top:1px solid #fde8e8">客户原话：' + p.evidence + '</div>';
       html += '</div>';
     });
-  } else {
-    html += EMPTY;
-  }
-  html += '</div>';
-  // 决策链
-  html += '<div style="margin-bottom:16px">';
-  html += '<div style="font-size:11px;font-weight:900;color:#ff8a00;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">决策链</div>';
-  var dc = report.decision_chain || {};
-  if (dc.decision_maker || dc.influencer || dc.executor) {
-    html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
-    if (dc.decision_maker) html += '<span style="background:#fff7ed;color:#d97706;border-radius:10px;padding:4px 12px;font-size:13px;font-weight:700">拍板人：'+dc.decision_maker+'</span>';
-    if (dc.influencer) html += '<span style="background:#f0f9ff;color:#0369a1;border-radius:10px;padding:4px 12px;font-size:13px;font-weight:700">影响者：'+dc.influencer+'</span>';
-    if (dc.executor) html += '<span style="background:#f0fdf4;color:#15803d;border-radius:10px;padding:4px 12px;font-size:13px;font-weight:700">执行者：'+dc.executor+'</span>';
     html += '</div>';
-  } else {
-    html += EMPTY;
   }
-  html += '</div>';
-  // 进度与阶段
-  html += '<div style="margin-bottom:16px">';
-  html += '<div style="font-size:11px;font-weight:900;color:#667085;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">进度与阶段</div>';
-  var ps = report.progress_and_stages || {};
-  if (ps.current_stage || (ps.next_steps && ps.next_steps.length > 0) || (ps.milestones && ps.milestones.length > 0)) {
-    if (ps.current_stage) html += '<div style="font-size:13px;color:#344054;margin-bottom:4px"><b>当前阶段：</b>'+ps.current_stage+'</div>';
-    if (ps.next_steps && ps.next_steps.length > 0) html += '<div style="font-size:13px;color:#344054;margin-bottom:4px"><b>下一步：</b>'+ps.next_steps.join('、')+'</div>';
-    if (ps.milestones && ps.milestones.length > 0) html += '<div style="font-size:13px;color:#344054"><b>里程碑：</b>'+ps.milestones.join('、')+'</div>';
-  } else {
-    html += EMPTY;
+  // 已确认需求
+  if (report.confirmedNeeds && report.confirmedNeeds.length > 0) {
+    html += '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:900;color:#13b96f;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">已确认需求</div>';
+    report.confirmedNeeds.forEach(function(n) {
+      html += '<div style="margin-bottom:6px;font-size:13px;color:#344054;padding:6px 0;border-bottom:1px solid #f0f4f0">' + (n.description || n.title || '') + '</div>';
+    });
+    html += '</div>';
   }
-  html += '</div>';
-  // 风险点
-  html += '<div style="margin-bottom:16px">';
-  html += '<div style="font-size:11px;font-weight:900;color:#ef4444;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">风险点</div>';
-  var hasRisk = report.risk_points && report.risk_points.length > 0 && report.risk_points.some(function(r){ return r.risk; });
-  if (hasRisk) {
-    report.risk_points.forEach(function(r) {
-      var statusColor = r.status === '已明确' ? '#13b96f' : '#ffa500';
-      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px;color:#344054;line-height:1.5">';
-      html += '<span style="background:#fef2f2;color:#ef4444;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;flex-shrink:0">'+r.risk+'</span>';
-      if (r.status) html += '<span style="color:'+statusColor+';font-size:12px">'+r.status+'</span>';
+  // 涉及角色
+  if (report.involvedRoles && report.involvedRoles.length > 0) {
+    html += '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:900;color:#667085;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">涉及角色</div><div style="display:flex;flex-wrap:wrap;gap:8px">';
+    report.involvedRoles.forEach(function(r) {
+      html += '<span style="background:#f0f9ff;color:#0369a1;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:700">' + (r.role || '') + '：' + (r.responsibility || '') + '</span>';
+    });
+    html += '</div></div>';
+  }
+  // 当前流程
+  if (report.currentProcess) {
+    html += '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:900;color:#667085;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">当前流程</div><div style="font-size:13px;color:#344054;line-height:1.7">' + report.currentProcess + '</div></div>';
+  }
+  // 期望效果
+  if (report.expectedOutcome) {
+    html += '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:900;color:#667085;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">期望效果</div><div style="font-size:13px;color:#344054;line-height:1.7">' + report.expectedOutcome + '</div></div>';
+  }
+  // 待确认问题
+  if (report.pendingQuestions && report.pendingQuestions.length > 0) {
+    html += '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:900;color:#f97316;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">待确认问题</div>';
+    report.pendingQuestions.forEach(function(q) {
+      html += '<div style="margin-bottom:8px;font-size:13px;color:#344054;padding:8px 12px;background:#fff7ed;border-radius:10px;border-left:3px solid #f97316">';
+      html += (q.question || '') + (q.whyAsk ? '<div style="font-size:11px;color:#98a2b3;margin-top:4px">问因：' + q.whyAsk + '</div>' : '') + (q.impactIfUnknown ? '<div style="font-size:11px;color:#d97706;margin-top:2px">影响：' + q.impactIfUnknown + '</div>' : '');
       html += '</div>';
     });
-  } else {
-    html += EMPTY;
+    html += '</div>';
   }
-  html += '</div>';
-  return html;
+  return html || EMPTY;
 }
+
 
 function doGenerateStep3Summary() {
   var c = getClient(currentClientId);
@@ -4730,7 +4713,7 @@ function renderArtifacts() {
 
   // 调研问题清单
   const hasStep1WecomDoc = !!(c._step1_wecom_docid && c._step1_wecom_url);
-	  const hasStep1Content = !(c.step1_result);
+	  const hasStep1Content = !!(c.step1_result);
   items.push({ name: '调研问题清单', tag: hasStep1WecomDoc ? '已生成' : '待生成', tagCls: hasStep1WecomDoc ? '' : 'todo', pct: hasStep1Content ? 80 : 0, dataKey: 'step1_result', hasWecomDoc: hasStep1WecomDoc, wecomUrl: c._step1_wecom_url, wecomDocid: c._step1_wecom_docid, isStep1Result: true });
 
   // 沟通记录库：0/40/80/100
