@@ -2493,6 +2493,7 @@ function saveStep4Input() {
 // ==================== Step4 方案输入确认 ====================
 
 function getStep4InputDefault(c) {
+  console.log('[Step4 Input] client id:', c && c.id, 'step3_summary type:', typeof (c && c.step3_summary), 'keys:', c && c.step3_summary && typeof c.step3_summary === 'object' ? Object.keys(c.step3_summary) : 'N/A');
   // 1. user_edited 最高优先
   if (c.step4_input_draft) {
     var draft = c.step4_input_draft;
@@ -2514,6 +2515,7 @@ function getStep4InputDefault(c) {
           // 去掉 markdown 代码块标记
           var jsonStr = raw.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim();
           s3obj = JSON.parse(jsonStr);
+          console.log('[Step4 Input] _raw parsed, customerCurrentState:', s3obj && s3obj.customerCurrentState);
         } catch(e2) {
           s3obj = s3; // 解析失败则用原对象
         }
@@ -2527,20 +2529,19 @@ function getStep4InputDefault(c) {
   if (s3obj) {
     // ---- 新格式（有 customerCurrentState） ----
     if (s3obj.customerCurrentState !== undefined || s3obj.painPoints || s3obj.confirmedNeeds) {
-      return {
-        source: 'step3_summary',
-        draft: {
-          customerCurrentState: s3obj.customerCurrentState || '',
-          painPoints: (s3obj.painPoints || []).map(function(p) { return (p.title || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
-          confirmedNeeds: (s3obj.confirmedNeeds || []).map(function(n) { return (n.title || '') + (n.description ? '：' + n.description : ''); }).filter(Boolean),
-          involvedRoles: (s3obj.involvedRoles || []).map(function(r) { return (r.role || '') + (r.responsibility ? '（' + r.responsibility + '）' : ''); }).filter(Boolean),
-          currentProcess: s3obj.currentProcess ? [s3obj.currentProcess] : [],
-          expectedOutcome: s3obj.expectedOutcome ? [s3obj.expectedOutcome] : [],
-          phaseOneScope: (s3obj.phaseOneScope || []).map(function(p) { return (p.item || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
-          phaseTwoScope: (s3obj.phaseTwoScope || []).map(function(p) { return (p.item || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
-          pendingQuestions: (s3obj.pendingQuestions || []).map(function(q) { return q.question || ''; }).filter(Boolean)
-        }
+      var draft = {
+        customerCurrentState: s3obj.customerCurrentState || '',
+        painPoints: (s3obj.painPoints || []).map(function(p) { return (p.title || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
+        confirmedNeeds: (s3obj.confirmedNeeds || []).map(function(n) { return (n.title || '') + (n.description ? '：' + n.description : ''); }).filter(Boolean),
+        involvedRoles: (s3obj.involvedRoles || []).map(function(r) { return (r.role || '') + (r.responsibility ? '（' + r.responsibility + '）' : ''); }).filter(Boolean),
+        currentProcess: s3obj.currentProcess ? [s3obj.currentProcess] : [],
+        expectedOutcome: s3obj.expectedOutcome ? [s3obj.expectedOutcome] : [],
+        phaseOneScope: (s3obj.phaseOneScope || []).map(function(p) { return (p.item || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
+        phaseTwoScope: (s3obj.phaseTwoScope || []).map(function(p) { return (p.item || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
+        pendingQuestions: (s3obj.pendingQuestions || []).map(function(q) { return q.question || ''; }).filter(Boolean)
       };
+      console.log('[Step4 Input] returning step3_summary draft, customerCurrentState:', draft.customerCurrentState);
+      return { source: 'step3_summary', draft: draft };
     }
     // ---- 旧格式兼容（key_requirements / roles_and_responsibilities / risk_points） ----
     var parts = [];
