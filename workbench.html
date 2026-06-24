@@ -4305,13 +4305,15 @@ function doGenerateStep3Summary() {
     var date = n.date || n.created_at || '';
     return { text: n.content || n.note || '', source: n.source || '其他', stage: n.stage || '', date: date };
   });
-  fetch(API_BASE + '/api/summary/generate', {
+  // 复用 /api/reports/generate，传入 transcript 全文
+  var transcriptText = records.map(function(r) { return r.text; }).join('\n\n');
+  fetch(API_BASE + '/api/reports/generate', {
     method: 'POST', headers: getAuthHeaders(),
-    body: JSON.stringify({ records: records })
+    body: JSON.stringify({ transcript: transcriptText, industry: (getClient(currentClientId) || {}).industry || '' })
   }).then(r => r.json()).then(data => {
     console.log('[genSum] resp:', JSON.stringify(data).substring(0, 400));
     if (loadingEl) loadingEl.style.display = 'none';
-    var summary = data.summary || data.result;
+    var summary = data.summary;
     if (summary) {
       updateClient(currentClientId, { step3_summary: summary });
       try { renderStep3Summary(getClient(currentClientId)); } catch(e2) { console.error('[rS3 err]', e2); alert('渲染错误:'+e2.message); }
