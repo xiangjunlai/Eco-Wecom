@@ -952,10 +952,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
           <div class="q-list" id="s2-must-questions"></div>
           <div id="s2-deep-questions" style="display:none"></div>
           <div id="s2-industry-notes" style="display:none"></div>
-          <button class="more" id="s2-more-btn" onclick="toggleMoreQuestions()" style="display:none">查看更多问题（<span id="s2-deep-total">0</span>）</button>
-          <div style="display:flex;gap:8px;margin-top:10px" id="s2-add-btns">
-            <button class="add-q-btn" onclick="addQuestion('must')" style="flex:1">+ 必问问题</button>
-            <button class="add-q-btn" onclick="addQuestion('deep')" style="flex:1">+ 深挖问题</button>
+          <button class="more" id="s2-more-btn" onclick="toggleMoreQuestions()" style="display:none">查看更多（<span id="s2-deep-total">0</span>）</button>
+          <div style="margin-top:10px">
+            <button class="add-q-btn" id="s2-add-btn" onclick="addQuestionByTab()" style="width:100%">+ 添加问题</button>
           </div>
 
           <div class="step-action-bar">
@@ -4038,6 +4037,21 @@ function addQuestion(tab) {
   newCard.querySelector('.q-card-main > div:nth-child(2)').focus();
 }
 
+function addQuestionByTab() {
+  var activeTab = document.querySelector('.tabs .tab.on');
+  var target = activeTab ? activeTab.dataset.target : 'must';
+  addQuestion(target);
+}
+
+function updateAddButtonText() {
+  var activeTab = document.querySelector('.tabs .tab.on');
+  var target = activeTab ? activeTab.dataset.target : 'must';
+  var btn = document.getElementById('s2-add-btn');
+  if (!btn) return;
+  var labels = {must: '+ 必问问题', deep: '+ 深挖问题', industry: '+ 行业经验'};
+  btn.textContent = labels[target] || '+ 添加问题';
+}
+
 function switchTab(btn) {
   var tabs = btn.closest('.tabs');
   var target = btn.dataset.target;
@@ -4047,22 +4061,39 @@ function switchTab(btn) {
   var mustEl = container.querySelector('#s2-must-questions');
   var deepEl = container.querySelector('#s2-deep-questions');
   var indEl = container.querySelector('#s2-industry-notes');
-  if (mustEl) mustEl.style.display = target === 'must' ? '' : 'none';
-  if (deepEl) deepEl.style.display = target === 'deep' ? '' : 'none';
-  if (indEl) indEl.style.display = target === 'industry' ? '' : 'none';
-  // Update "查看更多问题" button visibility based on current tab
+  var tabEls = {must: mustEl, deep: deepEl, industry: indEl};
+  Object.keys(tabEls).forEach(function(t) {
+    var el = tabEls[t];
+    if (!el) return;
+    el.style.display = t === target ? '' : 'none';
+    // 恢复展开/收起状态
+    if (t === target && _qTabExpanded[t]) {      el.classList.add('show-all');
+      el.querySelectorAll('.q-card.hidden-q').forEach(function(c){ c.style.display='grid'; });
+    } else if (el) {
+      el.classList.remove('show-all');
+    }
+  });
+  // Update "查看更多" button
   var moreBtn = document.getElementById('s2-more-btn');
   if (moreBtn) {
-    var currentEl = target === 'must' ? mustEl : target === 'deep' ? deepEl : indEl;
+    var currentEl = tabEls[target];
     var threshold = target === 'must' ? 8 : target === 'deep' ? 5 : 3;
-    var count = currentEl ? currentEl.querySelectorAll('.q-card').length : 0;
+    var c = getClient(currentClientId);
+    var step1 = c?.step1_result?.part3 || {};
+    var must = step1.must_ask || [];
+    var deep = step1.deep_dive || [];
+    var industry = step1.industry_experience || [];
+    var list = target === 'must' ? must : target === 'deep' ? deep : industry;
+    var hiddenCount = Math.max(0, list.length - threshold);
     var totalEl = document.getElementById('s2-deep-total');
-    var hiddenCount = Math.max(0, count - threshold);
-    moreBtn.style.display = hiddenCount > 0 ? 'block' : 'none';
     if (totalEl) totalEl.textContent = hiddenCount;
-    moreBtn.textContent = hiddenCount > 0 ? '查看更多（' + hiddenCount + '）' : '收起 ▲';
+    var isExpanded = _qTabExpanded[target];
+    moreBtn.style.display = hiddenCount > 0 ? '' : 'none';
+    moreBtn.textContent = isExpanded ? '收起 ▲' : (hiddenCount > 0 ? '查看更多（' + hiddenCount + '）' : '收起 ▲');
   }
 }
+var _qTabExpanded = {must: false, deep: false, industry: false};
+updateAddButtonText();
 
 function toggleMoreQuestions() {
   var btn = document.getElementById('s2-more-btn');
@@ -4072,9 +4103,14 @@ function toggleMoreQuestions() {
   var tabMap = {must: 's2-must-questions', deep: 's2-deep-questions', industry: 's2-industry-notes'};
   var activeEl = document.getElementById(tabMap[target]);
   if (!activeEl) return;
-  activeEl.classList.toggle('show-all');
-  var isExpanded = activeEl.classList.contains('show-all');
-  btn.textContent = isExpanded ? '收起 ▲' : '查看更多（' + (document.getElementById('s2-deep-total').textContent || '0') + '）';
+  var isExpanded = activeEl.classList.toggle('show-all');
+  _qTabExpanded[target] = isExpanded;
+  activeEl.querySelectorAll('.q-card.hidden-q').forEach(function(c){
+    c.style.display = isExpanded ? 'grid' : 'none';
+  });
+  var totalEl = document.getElementById('s2-deep-total');
+  var hiddenCount = parseInt(totalEl ? totalEl.textContent : '0') || 0;
+  btn.textContent = isExpanded ? '收起 ▲' : (hiddenCount > 0 ? '查看更多（' + hiddenCount + '）' : '收起 ▲');
 }
 
 // ==================== STEP 3 RENDER FUNCTIONS ====================
@@ -4670,7 +4706,8 @@ function renderArtifacts() {
 
   // 调研问题清单
   const hasStep1WecomDoc = !!(c._step1_wecom_docid && c._step1_wecom_url);
-  items.push({ name: '调研问题清单', tag: c.step1_result ? '已生成' : '待生成', tagCls: c.step1_result ? '' : 'todo', pct: c.step1_result ? 100 : 0, dataKey: 'step1_result', hasWecomDoc: hasStep1WecomDoc, wecomUrl: c._step1_wecom_url, wecomDocid: c._step1_wecom_docid, isStep1Result: true });
+	  const hasStep1Content = !(c.step1_result);
+  items.push({ name: '调研问题清单', tag: hasStep1WecomDoc ? '已生成' : '待生成', tagCls: hasStep1WecomDoc ? '' : 'todo', pct: hasStep1Content ? 80 : 0, dataKey: 'step1_result', hasWecomDoc: hasStep1WecomDoc, wecomUrl: c._step1_wecom_url, wecomDocid: c._step1_wecom_docid, isStep1Result: true });
 
   // 沟通记录库：0/40/80/100
   const hasNotesWecomDoc = !!(c._notes_wecom_docid && c._notes_wecom_url);
