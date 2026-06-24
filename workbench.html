@@ -2507,7 +2507,19 @@ function getStep4InputDefault(c) {
   var s3obj = null;
   if (s3) {
     if (typeof s3 === 'object' && Object.keys(s3).length > 0) {
-      s3obj = s3;
+      // 降级格式 {"_raw": "```json\n{...}"} — 尝试从 _raw 解析真实 JSON
+      if (s3._raw !== undefined) {
+        try {
+          var raw = s3._raw;
+          // 去掉 markdown 代码块标记
+          var jsonStr = raw.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim();
+          s3obj = JSON.parse(jsonStr);
+        } catch(e2) {
+          s3obj = s3; // 解析失败则用原对象
+        }
+      } else {
+        s3obj = s3;
+      }
     } else if (typeof s3 === 'string' && s3.trim().length > 0) {
       try { s3obj = JSON.parse(s3); } catch(e) { }
     }
