@@ -2729,7 +2729,7 @@ async function generateStep4Presales() {
         headers: getAuthHeaders(),
         body: JSON.stringify({ client_id: currentClientId, type: 'presales' })
       }),
-      new Promise(function(_, reject) { setTimeout(function() { reject(new Error('请求超时，请检查 MiniMax API')); }, 70000); })
+      new Promise(function(_, reject) { setTimeout(function() { reject(new Error('请求超时（320秒），请稍后重试')); }, 320000); })
     ]);
     var data = await resp.json();
     if (data.success && data.requirementData) {
@@ -2786,7 +2786,7 @@ async function generateStep4Technical() {
         headers: getAuthHeaders(),
         body: JSON.stringify({ client_id: currentClientId, type: 'html' })
       }),
-      new Promise(function(_, reject) { setTimeout(function() { reject(new Error('请求超时，请检查 MiniMax API')); }, 70000); })
+      new Promise(function(_, reject) { setTimeout(function() { reject(new Error('请求超时（320秒），请稍后重试')); }, 320000); })
     ]);
     var data = await resp.json();
     if (data.success) {

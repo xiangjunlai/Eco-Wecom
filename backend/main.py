@@ -77,9 +77,10 @@ def extract_mcp(mcp_resp: dict):
 MINIMAX_API_KEY = "sk-cp-FxfZUSUHnTWn7eCtl1V-5CI1jFpfF3XLI0jxHZJ7U0p16_cea_FTQqxOaOYavdfwiS9DDN4pomf4CxLZlQYqIyvJJK_eaKR7tbh4d77_1dGK8DwQtwwjLDc"
 
 def call_minimax(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -> str:
-    """调用 MiniMax API，60秒超时"""
+    """调用 MiniMax API，300秒超时，最多一次重试"""
     import httpx
-    try:
+
+    def _do_request():
         response = httpx.post(
             "https://api.minimax.chat/v1/text/chatcompletion_v2",
             headers={
@@ -95,12 +96,21 @@ def call_minimax(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -
                 "max_tokens": max_tokens,
                 "temperature": 0.7
             },
-            timeout=httpx.Timeout(60.0, connect=10.0)
+            timeout=httpx.Timeout(300.0, connect=15.0)
         )
         result = response.json()
         return result["choices"][0]["message"]["content"]
+
+    try:
+        return _do_request()
     except httpx.TimeoutException:
-        return "Error: MiniMax API 请求超时（60秒），请重试"
+        # 重试一次
+        try:
+            return _do_request()
+        except httpx.TimeoutException:
+            return "Error: MiniMax API 请求超时（300秒），请稍后重试"
+        except Exception as e:
+            return f"Error: {str(e)}"
     except Exception as e:
         return f"Error: {str(e)}"
 
@@ -1856,34 +1866,39 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
         step3_summary_text = "\n".join(parts)
 
     def build_context(prompt_template):
+        def json_escape(s):
+            if s is None:
+                return ""
+            return json.dumps(str(s), ensure_ascii=False)[1:-1]  # 去掉首尾引号
+
         return (prompt_template
-            .replace("{customer_name}", customer_name)
-            .replace("{industry}", industry)
-            .replace("{scale}", scale)
-            .replace("{initial_demand}", initial_demand)
-            .replace("{company_background}", company_background)
-            .replace("{pain_points}", pain_points)
-            .replace("{gaps}", gaps)
-            .replace("{must_ask}", must_ask_text)
-            .replace("{transcript}", transcript or "暂无沟通记录")
-            .replace("{input_summary}", input_summary or "暂无用户已确认输入")
+            .replace("{customer_name}", json_escape(customer_name))
+            .replace("{industry}", json_escape(industry))
+            .replace("{scale}", json_escape(scale))
+            .replace("{initial_demand}", json_escape(initial_demand))
+            .replace("{company_background}", json_escape(company_background))
+            .replace("{pain_points}", json_escape(pain_points))
+            .replace("{gaps}", json_escape(gaps))
+            .replace("{must_ask}", json_escape(must_ask_text))
+            .replace("{transcript}", json_escape(transcript) if transcript else "暂无沟通记录")
+            .replace("{input_summary}", json_escape(input_summary) if input_summary else "暂无用户已确认输入")
             .replace("{step4_input_draft}", step4_input_draft_str)
             .replace("{step4_report}", step4_report_str or "暂无Step4历史草稿")
             # 传 JSON 字符串，让 Prompt 3 的 AI 自己推理填充空字段
             .replace("{step3_summary}", json.dumps(step3_summary, ensure_ascii=False, indent=2) if step3_summary else "暂无Step3 AI摘要")
-            .replace("{kb_match_result}", kb_match_result or "暂无知识库匹配结果")
-            .replace("{xlsx_sheet_summary}", xlsx_sheet_summary or "暂无xlsx交付物摘要")
-            .replace("{service_provider_summary}", service_provider_summary or "暂无服务商需求总结")
+            .replace("{kb_match_result}", json_escape(kb_match_result) if kb_match_result else "暂无知识库匹配结果")
+            .replace("{xlsx_sheet_summary}", json_escape(xlsx_sheet_summary) if xlsx_sheet_summary else "暂无xlsx交付物摘要")
+            .replace("{service_provider_summary}", json_escape(service_provider_summary) if service_provider_summary else "暂无服务商需求总结")
         )
 
     result = {}
 
     # ====== Step 1: Prompt 3 → requirementSolutionData ======
     req_prompt = build_context(STEP4_REQUIREMENT_PROMPT)
-    req_raw = call_minimax(STEP4_REQUIREMENT_PROMPT, req_prompt, max_tokens=5000)
+    req_raw = call_minimax(STEP4_REQUIREMENT_PROMPT, req_prompt, max_tokens=15000)
     requirement_data = parse_json_response(req_raw)
     if not requirement_data:
-        return {"success": False, "error": "Prompt 3 生成失败：" + (req_raw[:200] if req_raw else "空响应")}
+        return {"success": False, "error": "Prompt 3 生成失败（输出被截断或格式异常），请稍后重试。详情：" + (req_raw[:300] if req_raw else "空响应")}
 
     result["requirementData"] = requirement_data
     req_json_str = json.dumps(requirement_data, ensure_ascii=False)
@@ -1891,7 +1906,7 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
     # ====== Step 2: Prompt 4 → Word 内容 ======
     if artifact_type in ("both", "presales", "word"):
         word_prompt = STEP4_WORD_PROMPT.replace("{requirement_data}", req_json_str)
-        word_raw = call_minimax(STEP4_WORD_PROMPT, word_prompt, max_tokens=6000)
+        word_raw = call_minimax(STEP4_WORD_PROMPT, word_prompt, max_tokens=8000)
         word_content = parse_json_response(word_raw)
         if word_content:
             # 质检
@@ -1907,7 +1922,7 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
     # ====== Step 3: Prompt 5 → HTML 内容 ======
     if artifact_type in ("both", "html"):
         html_prompt = STEP4_HTML_PROMPT.replace("{requirement_data}", req_json_str)
-        html_raw = call_minimax(STEP4_HTML_PROMPT, html_prompt, max_tokens=6000)
+        html_raw = call_minimax(STEP4_HTML_PROMPT, html_prompt, max_tokens=8000)
         html_content = parse_json_response(html_raw)
         if html_content:
             result["htmlContent"] = html_content
