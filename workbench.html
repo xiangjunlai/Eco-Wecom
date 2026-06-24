@@ -1089,58 +1089,52 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	            </div>
 	          </div>
 	        </div>
-	        <!-- 产物 1 · Word版《需求确认 & 方案设计表》 -->
-	        <div class="analysis-card" style="margin-bottom:16px">
-	          <div class="analysis-card-head">
-	            <div>
-	              <h3>产物 1 · Word《需求确认 & 方案设计表》</h3>
-	              <span id="s4-presales-ts" style="margin-left:8px;font-size:11px;color:#98a2b3"></span>
-	              <span id="s4-presales-status" style="margin-left:8px;font-size:11px;padding:2px 8px;border-radius:6px;background:#f0f7ff;color:#1677ff">待生成</span>
-	            </div>
-	          </div>
-	          <p style="color:#667085;font-size:13px;margin:0 0 12px">正式需求确认文档，用于确认需求范围、一期边界、智能表格搭建口径与待确认问题。</p>
-	          <div id="s4-presales-preview" style="display:none"></div>
-	          <div id="s4-presales-empty" style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">点击下方按钮生成</div>
-	          <div style="display:flex;gap:10px;align-items:center;margin-top:12px">
-	            <button class="btn secondary" id="s4-presales-btn" onclick="generateStep4Presales()">生成 Word《需求确认 & 方案设计表》</button>
-	            <button class="art-link-btn" id="s4-presales-wecom-btn" onclick="doCreatePresalesWecomDoc()" style="display:none">生成企微文档</button>
-	          </div>
-	          <div id="s4-presales-history" class="artifact-history-list" style="margin-top:16px;border-top:1px solid #e8edf5;padding-top:12px;display:none">
-	            <div class="history-toggle" onclick="togglePresalesHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none">
-	              历史记录 <span id="s4-presales-history-count"></span> <span id="s4-presales-history-arrow">▶</span>
-	            </div>
-	            <div id="s4-presales-history-content" style="margin-top:8px"></div>
-	          </div>
-	        </div>
+			<!-- 产物生成按钮区 -->
+			<div class="analysis-card" style="margin-bottom:16px">
+			  <div class="analysis-card-head" style="margin-bottom:14px">
+			    <h3>Step4 产物生成</h3>
+			  </div>
+			  <div style="display:flex;flex-direction:column;gap:10px">
+			    <!-- 产物A：售前解决方案 -->
+			    <div style="border:1px solid #e8edf5;border-radius:12px;padding:14px 16px">
+			      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+			        <div>
+			          <div style="font-size:14px;font-weight:600;color:#182235">售前解决方案</div>
+			          <div style="font-size:12px;color:#667085;margin-top:2px">面向客户汇报，展示方案价值、建设模块与二期预留方向</div>
+			        </div>
+			        <button class="btn primary" id="s4-presales-btn" onclick="generateStep4Presales()" style="height:34px;font-size:13px">生成售前解决方案</button>
+			      </div>
+			      <div id="s4-presales-history" style="display:none">
+			        <div class="history-toggle" onclick="togglePresalesHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;margin-top:4px">
+			          版本记录 <span id="s4-presales-history-count"></span> <span id="s4-presales-history-arrow">▶</span>
+			        </div>
+			        <div id="s4-presales-history-content" style="margin-top:8px"></div>
+			      </div>
+			    </div>
+			    <!-- 产物B：技术路线及报价方案 -->
+			    <div style="border:1px solid #e8edf5;border-radius:12px;padding:14px 16px">
+			      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+			        <div>
+			          <div style="font-size:14px;font-weight:600;color:#182235">技术路线及报价方案</div>
+			          <div style="font-size:12px;color:#667085;margin-top:2px">正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题</div>
+			        </div>
+			        <button class="btn primary" id="s4-technical-btn" onclick="generateStep4Technical()" style="height:34px;font-size:13px">生成技术路线及报价方案</button>
+			      </div>
+			      <div id="s4-technical-history" style="display:none">
+			        <div class="history-toggle" onclick="toggleTechnicalHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;margin-top:4px">
+			          版本记录 <span id="s4-technical-history-count"></span> <span id="s4-technical-history-arrow">▶</span>
+			        </div>
+			        <div id="s4-technical-history-content" style="margin-top:8px"></div>
+			      </div>
+			    </div>
+			  </div>
+			</div>
 
-	        <!-- 产物 2 · 技术路线及报价方案 -->
-	        <div class="analysis-card" style="margin-bottom:16px">
-	          <div class="analysis-card-head">
-	            <div>
-	              <h3>产物 2 · 可视化方案 HTML</h3>
-	              <span id="s4-technical-ts" style="margin-left:8px;font-size:11px;color:#98a2b3"></span>
-	              <span id="s4-technical-status" style="margin-left:8px;font-size:11px;padding:2px 8px;border-radius:6px;background:#f0f7ff;color:#1677ff">待生成</span>
-	            </div>
-	          </div>
-	          <p style="color:#667085;font-size:13px;margin:0 0 12px">面向客户汇报，展示方案价值、建设模块与二期预留方向。</p>
-	          <div id="s4-technical-preview" style="display:none"></div>
-	          <div id="s4-technical-empty" style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">点击下方按钮生成</div>
-	          <div style="display:flex;gap:10px;align-items:center;margin-top:12px">
-	            <button class="btn secondary" id="s4-technical-btn" onclick="generateStep4Technical()">生成可视化方案 HTML</button>
-	            <button class="art-link-btn" id="s4-technical-wecom-btn" onclick="doCreateTechnicalWecomDoc()" style="display:none">生成企微文档</button>
-	          </div>
-	          <div id="s4-technical-history" class="artifact-history-list" style="margin-top:16px;border-top:1px solid #e8edf5;padding-top:12px;display:none">
-	            <div class="history-toggle" onclick="toggleTechnicalHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none">
-	              历史记录 <span id="s4-technical-history-count"></span> <span id="s4-technical-history-arrow">▶</span>
-	            </div>
-	            <div id="s4-technical-history-content" style="margin-top:8px"></div>
-	          </div>
-	        </div>
+			<div class="step-action-bar">
+			  <button class="btn secondary" id="s4-save-btn" onclick="saveStep4Input()">保存输入</button>
+			  <button class="btn primary" id="s4-next-btn" onclick="doStep4Next()">下一步 →</button>
+			</div>
 
-	        <div class="step-action-bar">
-	          <button class="btn secondary" id="s4-save-btn" onclick="saveStep4Input()">保存输入</button>
-	          <button class="btn primary" id="s4-next-btn" onclick="doStep4Next()">下一步 →</button>
-	        </div>
 	      </section>
 
       <!-- Step 5: Demo设计 -->
@@ -2754,7 +2748,7 @@ async function generateStep4Presales() {
       renderStep4History('presales', versions);
       window._presalesPct = 100;
       renderArtifacts();
-      showToast('Word 版《需求确认 & 方案设计表》生成完成');
+      showToast('售前解决方案生成完成');
     } else {
       var errMsg = data.error || '未知错误';
       if (data.validation && data.validation.errors && data.validation.errors.length > 0) {
@@ -2810,7 +2804,7 @@ async function generateStep4Technical() {
       renderStep4History('technical', versions);
       window._technicalPct = 100;
       renderArtifacts();
-      showToast('可视化方案 HTML 生成完成');
+      showToast('技术路线及报价方案生成完成');
     } else {
       var errMsg = data.error || '未知错误';
       if (data.validation && data.validation.errors && data.validation.errors.length > 0) {
@@ -2894,6 +2888,28 @@ function doDownloadStep4Word(wordContent, customerName) {
   a.download = (customerName || '客户') + '_需求确认方案.doc';
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+// 右侧制品区：下载最新 Word 版
+function doDownloadLatestWord() {
+  var c = getClient(currentClientId);
+  var versions = c.step4_presales_versions || [];
+  var latest = versions[versions.length - 1];
+  if (!latest || !latest.content) { showToast('无已生成的 Word 文档'); return; }
+  doDownloadStep4Word(latest.content.wordContent || latest.content, c.name || '客户');
+}
+
+// 右侧制品区：新窗口预览最新 HTML
+function doPreviewLatestHtml() {
+  var c = getClient(currentClientId);
+  var versions = c.step4_technical_versions || [];
+  var latest = versions[versions.length - 1];
+  if (!latest || !latest.content) { showToast('无已生成的 HTML 方案'); return; }
+  var hc = latest.content.htmlContent;
+  if (!hc) { showToast('HTML 内容为空'); return; }
+  var blob = new Blob([hc], { type: 'text/html;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
 }
 
 function buildStep4WordHtml(data, customerName) {
@@ -3178,28 +3194,20 @@ function renderStep4History(type, versions) {
     return;
   }
   histEl.style.display = '';
-  if (countEl) countEl.textContent = '(' + (versions.length - 1) + ' 条历史)';
+  if (countEl) countEl.textContent = '(' + (versions.length) + ' 个版本)';
   var contentEl = document.getElementById('s4-' + type + '-history-content');
   if (!contentEl) return;
   var html = '';
-  // Show all but the last (latest) - newest first
-  for (var i = versions.length - 2; i >= 0; i--) {
+  var isHtml = (type === 'technical'); // technical = HTML, presales = Word
+  var artifactName = isHtml ? '面向客户汇报，展示方案价值、建设模块与二期预留方向' : '正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题';
+  // Show all versions (newest first)
+  for (var i = versions.length - 1; i >= 0; i--) {
     var v = versions[i];
     var date = new Date(v.created_at);
     var dateStr = date.toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'});
-    var timeStr = date.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
-    var content = v.content;
-    var preview = '';
-    if (typeof content === 'object') {
-      var keys = Object.keys(content).filter(function(k){ return k !== 'raw'; });
-      preview = keys.slice(0, 3).join('、');
-      if (keys.length > 3) preview += '…';
-    } else {
-      preview = String(content).substring(0, 60);
-    }
     html += '<div style="margin-bottom:8px;padding:8px 10px;background:#f8f9fc;border-radius:8px;font-size:12px">';
-    html += '<div style="color:#667085;margin-bottom:4px">v' + v.version + ' · ' + dateStr + ' ' + timeStr + '</div>';
-    html += '<div style="color:#344054">' + preview + '</div>';
+    html += '<div style="color:#667085;margin-bottom:4px">v' + v.version + ' · ' + dateStr + '</div>';
+    html += '<div style="color:#344054;font-size:12px">' + artifactName + '</div>';
     html += '</div>';
   }
   contentEl.innerHTML = html;
@@ -4517,7 +4525,7 @@ function renderArtifacts() {
   var hasPresales = pv.length > 0;
   var isGenPresales = window._generatingPresales;
   var presalesPct = isGenPresales ? (window._presalesPct || 10) : (hasPresales ? 100 : 0);
-  var presalesDesc = hasPresales && latestPresales ? new Date(latestPresales.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestPresales.version : '面向客户汇报，包含痛点诊断、解决思路、建设模块与实施阶段。';
+  var presalesDesc = hasPresales && latestPresales ? new Date(latestPresales.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestPresales.version : '面向客户汇报，展示方案价值、建设模块与二期预留方向';
   var presalesStep = window._presalesStep;
   var presalesGenDesc = presalesStep === 1 ? '正在生成需求结构化…' : presalesStep === 2 ? '正在生成 Word 文档…' : '正在质检文档…';
   items.push({ name: '售前解决方案', tag: isGenPresales ? '生成中' : (hasPresales ? '已生成' : '待生成'), tagCls: isGenPresales ? 'editing' : (hasPresales ? '' : 'todo'), pct: presalesPct, dataKey: 'step4_presales_versions', desc: isGenPresales ? presalesGenDesc : presalesDesc, isGen: isGenPresales });
@@ -4528,7 +4536,7 @@ function renderArtifacts() {
   var hasTechnical = tv.length > 0;
   var isGenTechnical = window._generatingTechnical;
   var technicalPct = isGenTechnical ? (window._technicalPct || 10) : (hasTechnical ? 100 : 0);
-  var techDesc = hasTechnical && latestTechnical ? new Date(latestTechnical.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestTechnical.version : '面向客户汇报，展示方案价值、建设模块与二期预留方向。';
+  var techDesc = hasTechnical && latestTechnical ? new Date(latestTechnical.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestTechnical.version : '正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题';
   var technicalStep = window._technicalStep;
   var techGenDesc = technicalStep === 1 ? '正在生成需求结构化…' : technicalStep === 2 ? '正在生成可视化方案…' : '正在渲染页面…';
   items.push({ name: '可视化方案 HTML', tag: isGenTechnical ? '生成中' : (hasTechnical ? '已生成' : '待生成'), tagCls: isGenTechnical ? 'editing' : (hasTechnical ? '' : 'todo'), pct: technicalPct, dataKey: 'step4_technical_versions', desc: isGenTechnical ? techGenDesc : techDesc, isGen: isGenTechnical });
@@ -4569,8 +4577,12 @@ function renderArtifacts() {
         } else {
           actions += '<button class="art-btn" onclick="doCreateNotesWecomDoc()">生成企微文档</button>';
         }
-      } else {
-        // step4/5 artifacts: no preview/copy buttons
+      } else if (item.dataKey === 'step4_presales_versions' && c.step4_presales_versions && c.step4_presales_versions.length > 0) {
+        // Word《需求确认 & 方案设计表》→ 下载
+        actions += '<button class="art-btn" onclick="doDownloadLatestWord()">下载 Word</button>';
+      } else if (item.dataKey === 'step4_technical_versions' && c.step4_technical_versions && c.step4_technical_versions.length > 0) {
+        // 可视化方案 HTML → 新窗口预览
+        actions += '<button class="art-btn" onclick="doPreviewLatestHtml()">新窗口预览</button>';
       }
     }
     if (item.isGen5) {
