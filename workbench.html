@@ -3832,6 +3832,10 @@ function saveStep2ToClient() {
 
 // ==================== STEP 2 RENDER FUNCTIONS ====================
 function renderGaps(gaps) {
+  // 兼容新旧格式：新格式是 {gaps:[...]}，旧格式是直接数组[...]
+  if (gaps && typeof gaps === 'object' && !Array.isArray(gaps) && gaps.gaps) {
+    gaps = gaps.gaps;
+  }
   var container = document.getElementById('s2-gaps');
   var totalEl = document.getElementById('s2-gaps-total');
   if (!container) return;
