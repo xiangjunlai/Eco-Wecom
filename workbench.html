@@ -2971,10 +2971,10 @@ function buildStep4WordHtml(data, customerName) {
     return html;
   }
 
-  function phaseBox(items, color) {
+  function phaseBox(items, color, label) {
     if (!Array.isArray(items) || items.length === 0) return '';
     var html = '<div style="margin:6px 0;padding:10px 14px;background:' + color + '11;border-left:3px solid ' + color + ';border-radius:4px">';
-    html += '<div style="font-size:12px;font-weight:600;color:' + color + ';margin-bottom:6px">' + title + '</div>';
+    html += '<div style="font-size:12px;font-weight:600;color:' + color + ';margin-bottom:6px">' + label + '</div>';
     html += '<ul style="margin:0;padding-left:18px">';
     for (var i = 0; i < items.length; i++) {
       var item = items[i];
@@ -3036,9 +3036,9 @@ function buildStep4WordHtml(data, customerName) {
   html += '<h2>二、场景类型判断与方案边界</h2>';
   var sb = data.scenarioBoundary || {};
   html += '<h3>场景判断</h3><p style="font-size:13px;background:#f5f7ff;padding:10px 14px;border-radius:6px;margin:8px 0">' + safe(sb.scenarioJudgement || '（未判断）') + '</p>';
-  html += phaseBox(sb.phaseOne || [], '#13b96f').replace('一期建议范围', '■ 一期建议范围');
-  html += phaseBox(sb.phaseTwo || [], '#ff8a00').replace('二期 / 试点评估', '□ 二期 / 试点评估');
-  html += phaseBox(sb.notRecommended || [], '#98a2b3').replace('暂不建议写入一期承诺', '× 暂不建议写入一期承诺');
+  html += phaseBox(sb.phaseOne || [], '#13b96f', '■ 一期建议范围');
+  html += phaseBox(sb.phaseTwo || [], '#ff8a00', '□ 二期 / 试点评估');
+  html += phaseBox(sb.notRecommended || [], '#98a2b3', '× 暂不建议写入一期承诺');
 
   // 章节三：需求优先级
   html += '<h2>三、需求理解与优先级确认</h2>';
