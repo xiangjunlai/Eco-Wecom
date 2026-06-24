@@ -1748,7 +1748,7 @@ def validate_requirement_doc(word_content, requirement_data=None):
 
 # ==================== Step1 调研问题生成 ====================
 
-STEP1_SYSTEM_PROMPT = """你是一个售前调研顾问。根据客户背景信息，生成结构化的售前准备材料 JSON。"""
+STEP1_SYSTEM_PROMPT = """你是一个售前调研顾问，擅长通过提问把握客户需求背景，并生成有深度的调研材料。"""
 
 STEP1_USER_PROMPT = """## 客户基本信息
 - 客户名称：{company_name}
@@ -1760,36 +1760,42 @@ STEP1_USER_PROMPT = """## 客户基本信息
 
 ## 生成要求
 
-请生成结构化 JSON，直接输出 JSON，不要 markdown 代码块。
+请严格按以下格式生成 JSON，直接输出，不要 markdown 代码块。
 
 ### part1（客户画像）
-在客户填写的背景信息基础上，AI 扩展推理，生成：
-- company_background：公司背景描述，150字以内，条理清晰
-- pain_points：核心痛点数组，精确 5 条，每条 30 字以内
-- customer_type：客户类型描述，如"制造业民营中小企业"
-- main_customers：主要客户群体，1 句话
+在客户填写的背景信息基础上，AI 扩展推理：
+- company_background：公司背景描述，100字以内，基于客户提供信息和行业常识综合判断
+- pain_points：精确 5 条核心痛点，每条 25 字以内，要具体到该客户的实际情况，不是泛泛的行业痛点
+- customer_type：如"xx行业中型民营企业"或"xx行业规模化企业"
+- main_customers：该企业主要客户群体，1 句话
 
 ### part2（待确认信息清单）
-在客户需求和痛点基础上，推理出 5-8 条最关键的信息缺口：
-- gaps：数组，每项包含：
-  - gap：缺口描述，40 字以内，表述清晰
+在客户需求和痛点基础上，推理 5-8 条关键缺口：
+- gaps：数组，每项 {gap, priority, whyNeed}
+  - gap：缺口描述 40 字以内，要具体，如"当前项目状态由谁维护"
   - priority：高/中/低
-  - whyNeed：为什么需要知道这条信息，30 字以内
+  - whyNeed：为什么需要知道，30 字以内
 
 ### part3（访谈提纲）
 
 **must_ask（必问问题）：生成 10-12 条**
-每条包含：
-- question：问题正文
-- dimension：所属维度（如：痛点收敛/业务流转+角色/现状工具链/数据现状/自动化诉求）
-- note：提问提示和背景说明，帮助销售更好理解和追问，50字以内
-- needRole：谁来回答这个问题
+每条 {question, dimension, note, needRole, whyAsk, impactIfUnknown}：
+- question：问题要具体，结合客户行业和实际情况，不是泛泛的"您有什么痛点"
+- dimension：维度，如"项目状态管理"、"财务数据关联"、"跨部门协同"、"工具链现状"、"数据口径"等具体维度
+- note：50字以内，说明这个问题怎么问、问谁、有什么坑
+- needRole：回答角色，如"项目经理"、"财务负责人"、"IT负责人"
+- whyAsk：为什么问这句，20字以内
+- impactIfUnknown：不知道的话会有什么影响，20字以内
 
 **deep_dive（深挖问题）：生成 5-8 条**
-在 must_ask 基础上继续深挖，每条包含 question/dimension/note/needRole。
+在 must_ask 基础上深挖，每条 {question, dimension, note, needRole}：
+- dimension 用更细的维度，如"字段完整性"、"流程自动化程度"、"权限层级"、"数据更新频率"等
+- question 要具体到客户可能存在的具体场景和情况
 
 **industry_experience（行业经验）：生成 2-3 条**
-基于该行业知识，给出 2-3 条行业常见坑或经验，每条包含 question 和 note。
+基于 {industry} 行业知识，每条 {question, note}：
+- question：行业内常见坑或经验，如"该行业通常在哪个环节容易出问题"
+- note：具体说明，约 30 字
 
 直接输出 JSON，不要 markdown 代码块。"""
 

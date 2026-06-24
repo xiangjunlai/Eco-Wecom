@@ -3942,12 +3942,14 @@ function renderQuestions(questions) {
         '交付预期': '#e599f7',
         '开放补充': '#adb5bd'
       }[dim] || '#667085';
-      var noteHtml = note ? '<div style="margin-top:8px;font-size:12px;color:#667085;line-height:1.6">'+note.replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/\*(.*?)\*/g,'<i>$1</i>')+'</div>' : '';
+      var whyAsk = q.whyAsk || '';
+      var impact = q.impactIfUnknown || '';
+      var extraHtml = (note || whyAsk || impact) ? '<div style="margin-top:8px;font-size:12px;color:#667085;line-height:1.6">' + (note ? '<div style="margin-bottom:4px">'+note+'</div>' : '') + (whyAsk ? '<div style="color:#8a9bae;font-size:11px;margin-top:4px">问因: '+whyAsk+'</div>' : '') + (impact ? '<div style="color:#8a9bae;font-size:11px;margin-top:2px">影响: '+impact+'</div>' : '') + '</div>' : '';
       return '<div class="q-card' + (q._hidden ? ' hidden-q' : '') + '">' +
         '<div class="q-card-main">' +
           (dim ? '<div style="display:inline-block;background:'+dimColor+'22;color:'+dimColor+';border-radius:8px;padding:2px 10px;font-size:11px;font-weight:700;margin-bottom:6px">'+dim+'</div>' : '') +
           '<div style="font-size:14px;color:#182235;line-height:1.6;font-weight:600">'+question+'</div>' +
-          noteHtml +
+          extraHtml +
         '</div>' +
         '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:28px">' +
           '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px" onclick="deleteQuestionCard(this)" title="删除">×</div>' +
@@ -3956,11 +3958,11 @@ function renderQuestions(questions) {
     }).join('');
   }
   if (mustEl) {
-    var mustWithHidden = must.map(function(q, i) { return Object.assign({}, q, {_hidden: i >= 8}); });
+    var mustWithHidden = must.map(function(q, i) { return Object.assign({}, q, {_hidden: i >= 8})});
     mustEl.innerHTML = renderQ(mustWithHidden);
   }
   if (deepEl) {
-    var deepWithHidden = deep.map(function(q, i) { return Object.assign({}, q, {_hidden: i >= 5}); });
+    var deepWithHidden = deep.map(function(q, i) { return Object.assign({}, q, {_hidden: i >= 5})});
     deepEl.innerHTML = renderQ(deepWithHidden);
   }
   if (indEl) indEl.innerHTML = industry.length ? industry.map(function(n){ var q = typeof n === 'string' ? n : (n.question || ''); var note = (n.note || ''); return '<div class="q-card">' + (note ? '<div style="font-size:14px;color:#182235;line-height:1.6;margin-bottom:6px">'+q+'</div><div style="font-size:12px;color:#98a2b3;line-height:1.5">'+note+'</div>' : '<div style="font-size:14px;color:#182235;line-height:1.6">'+q+'</div>') + '</div>'; }).join('') : '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">暂无行业经验知识库，添加更多案例可丰富此模块</div>';
