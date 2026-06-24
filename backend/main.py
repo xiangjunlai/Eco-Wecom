@@ -117,13 +117,22 @@ def call_minimax(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -
 
 app = FastAPI(title="Provider Assist API", version="1.0.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# 所有 OPTIONS 请求直接返回 200（处理 preflight）
+@app.middleware("http")
+async def cors_options_middleware(request, call_next):
+    if request.method == "OPTIONS":
+        from starlette.responses import JSONResponse
+        return JSONResponse(
+            {"status": "ok"},
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Max-Age": "600",
+            },
+        )
+    return await call_next(request)
 
 # 初始化数据库
 init_db()
@@ -1554,8 +1563,43 @@ def _safe(v):
                   "phase", "tableName", "fieldName"):
             if k in v and v[k]:
                 return _safe(v[k])
-        return "|||".join(_safe(x) for x in v.values())
+        return json.dumps(v, ensure_ascii=False)
     return str(v)
+
+def db_get_client(client_id):
+    """同步获取客户字典（用于非 async 函数）"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM clients WHERE id = ?", (client_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return dict(row)
+
+
+JSON_FIELDS = {"step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary",
+                "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical",
+                "step4_presales_versions", "step4_technical_versions", "step5_schema",
+                "step5_agent_suggestions", "step4_input_draft"}
+
+def db_update_client(client_id, updates):
+    """同步更新客户字段"""
+    if not updates:
+        return
+    conn = get_db()
+    cursor = conn.cursor()
+    sets = []
+    vals = []
+    for k, v in updates.items():
+        if k in JSON_FIELDS and v is not None:
+            v = json.dumps(v, ensure_ascii=False)
+        sets.append(f"{k} = ?")
+        vals.append(v if v is not None else "")
+    vals.append(client_id)
+    cursor.execute(f"UPDATE clients SET {', '.join(sets)}, updated_at = CURRENT_TIMESTAMP WHERE id = ?", vals)
+    conn.commit()
+    conn.close()
 
 
 def validate_requirement_doc(word_content, requirement_data=None):
