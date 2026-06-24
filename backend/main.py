@@ -1903,7 +1903,7 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
             result["wordContent"] = word_content
 
     # ====== Step 3: Prompt 5 → HTML 内容 ======
-    if artifact_type in ("both", "presales", "html"):
+    if artifact_type in ("both", "html"):
         html_prompt = STEP4_HTML_PROMPT.replace("{requirement_data}", req_json_str)
         html_raw = call_deepseek(STEP4_HTML_PROMPT, html_prompt, max_tokens=6000)
         html_content = parse_json_response(html_raw)

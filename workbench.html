@@ -1089,20 +1089,20 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	            </div>
 	          </div>
 	        </div>
-	        <!-- 产物 1 · 售前解决方案 -->
+	        <!-- 产物 1 · Word版《需求确认 & 方案设计表》 -->
 	        <div class="analysis-card" style="margin-bottom:16px">
 	          <div class="analysis-card-head">
 	            <div>
-	              <h3>产物 1 · 售前解决方案</h3>
+	              <h3>产物 1 · Word《需求确认 & 方案设计表》</h3>
 	              <span id="s4-presales-ts" style="margin-left:8px;font-size:11px;color:#98a2b3"></span>
 	              <span id="s4-presales-status" style="margin-left:8px;font-size:11px;padding:2px 8px;border-radius:6px;background:#f0f7ff;color:#1677ff">待生成</span>
 	            </div>
 	          </div>
-	          <p style="color:#667085;font-size:13px;margin:0 0 12px">面向客户汇报用，包含痛点诊断、解决思路、建设模块与实施阶段。</p>
+	          <p style="color:#667085;font-size:13px;margin:0 0 12px">正式需求确认文档，用于确认需求范围、一期边界、智能表格搭建口径与待确认问题。</p>
 	          <div id="s4-presales-preview" style="display:none"></div>
 	          <div id="s4-presales-empty" style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">点击下方按钮生成</div>
 	          <div style="display:flex;gap:10px;align-items:center;margin-top:12px">
-	            <button class="btn secondary" id="s4-presales-btn" onclick="generateStep4Presales()">生成售前方案</button>
+	            <button class="btn secondary" id="s4-presales-btn" onclick="generateStep4Presales()">生成 Word《需求确认 & 方案设计表》</button>
 	            <button class="art-link-btn" id="s4-presales-wecom-btn" onclick="doCreatePresalesWecomDoc()" style="display:none">生成企微文档</button>
 	          </div>
 	          <div id="s4-presales-history" class="artifact-history-list" style="margin-top:16px;border-top:1px solid #e8edf5;padding-top:12px;display:none">
@@ -1117,16 +1117,16 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	        <div class="analysis-card" style="margin-bottom:16px">
 	          <div class="analysis-card-head">
 	            <div>
-	              <h3>产物 2 · 技术路线及报价方案</h3>
+	              <h3>产物 2 · 可视化方案 HTML</h3>
 	              <span id="s4-technical-ts" style="margin-left:8px;font-size:11px;color:#98a2b3"></span>
 	              <span id="s4-technical-status" style="margin-left:8px;font-size:11px;padding:2px 8px;border-radius:6px;background:#f0f7ff;color:#1677ff">待生成</span>
 	            </div>
 	          </div>
-	          <p style="color:#667085;font-size:13px;margin:0 0 12px">面向内部评估用，拆解技术路径、交付范围与报价口径。</p>
+	          <p style="color:#667085;font-size:13px;margin:0 0 12px">面向客户汇报，展示方案价值、建设模块与二期预留方向。</p>
 	          <div id="s4-technical-preview" style="display:none"></div>
 	          <div id="s4-technical-empty" style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">点击下方按钮生成</div>
 	          <div style="display:flex;gap:10px;align-items:center;margin-top:12px">
-	            <button class="btn secondary" id="s4-technical-btn" onclick="generateStep4Technical()">生成技术报价</button>
+	            <button class="btn secondary" id="s4-technical-btn" onclick="generateStep4Technical()">生成可视化方案 HTML</button>
 	            <button class="art-link-btn" id="s4-technical-wecom-btn" onclick="doCreateTechnicalWecomDoc()" style="display:none">生成企微文档</button>
 	          </div>
 	          <div id="s4-technical-history" class="artifact-history-list" style="margin-top:16px;border-top:1px solid #e8edf5;padding-top:12px;display:none">
@@ -2755,7 +2755,7 @@ async function generateStep4Presales() {
       renderStep4History('presales', versions);
       window._presalesPct = 100;
       renderArtifacts();
-      showToast('售前方案生成完成');
+      showToast('Word 版《需求确认 & 方案设计表》生成完成');
     } else {
       var errMsg = data.error || '未知错误';
       if (data.validation && data.validation.errors && data.validation.errors.length > 0) {
@@ -2793,29 +2793,33 @@ async function generateStep4Technical() {
       fetch(API_BASE + '/api/step4/generate', {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ client_id: currentClientId, type: 'technical' })
+        body: JSON.stringify({ client_id: currentClientId, type: 'html' })
       }),
       new Promise(function(_, reject) { setTimeout(function() { reject(new Error('请求超时120秒，请重试')); }, 120000); })
     ]);
     var data = await resp.json();
-    if (data.success && data.requirementData) {
+    if (data.success) {
       var now = new Date().toISOString();
       var versions = c.step4_technical_versions || [];
       var version = versions.length + 1;
       versions.push({
-        content: { requirementData: data.requirementData, wordContent: data.wordContent },
+        content: { requirementData: data.requirementData, htmlContent: data.htmlContent },
         created_at: now,
         version: version
       });
       updateClient(currentClientId, { step4_technical_versions: versions });
-      if (data.wordContent) doDownloadStep4Word(data.wordContent, c.name || '客户');
+      if (data.htmlContent) doPreviewStep4Html(data.htmlContent);
       renderStep4LatestTechnical(versions[versions.length - 1]);
       renderStep4History('technical', versions);
       window._technicalPct = 100;
       renderArtifacts();
-      showToast('技术方案生成完成');
+      showToast('可视化方案 HTML 生成完成');
     } else {
-      showToast('生成失败：' + (data.error || '未知错误'));
+      var errMsg = data.error || '未知错误';
+      if (data.validation && data.validation.errors && data.validation.errors.length > 0) {
+        errMsg = '质检未通过：\n' + data.validation.errors.join('\n');
+      }
+      showToast(errMsg.length > 100 ? errMsg.substring(0, 97) + '…' : errMsg);
     }
   } catch(e) {
     showToast('生成失败：' + e.message);
@@ -3152,13 +3156,16 @@ function renderStep4LatestTechnical(version) {
   if (!previewEl) return;
   var content = version && version.content;
   if (!content) return;
-  var wc = content.wordContent || '';
-  if (wc) {
-    previewEl.innerHTML = '<div style="padding:12px 0">' + wc + '</div>';
+  var hc = content.htmlContent || '';
+  if (hc) {
+    // htmlContent 是完整 HTML，直接用 iframe 预览
+    var blob = new Blob([hc], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    previewEl.innerHTML = '<iframe src="' + url + '" style="width:100%;height:400px;border:1px solid #e8edf5;border-radius:8px"></iframe>';
     previewEl.style.display = '';
     if (emptyEl) emptyEl.style.display = 'none';
     if (statusEl) { statusEl.textContent = '已生成'; statusEl.style.background='#e6f4ea'; statusEl.style.color='#1677ff'; }
-    if (wecomBtn) wecomBtn.style.display = '';
+    if (wecomBtn) wecomBtn.style.display = 'none';
     if (tsEl) {
       var d = new Date(version.created_at);
       tsEl.textContent = d.toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}) + ' ' + d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
