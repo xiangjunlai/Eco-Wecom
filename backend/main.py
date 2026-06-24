@@ -1659,6 +1659,57 @@ def validate_requirement_doc(word_content, requirement_data=None):
     return {"pass": len(errors) == 0, "errors": errors, "warnings": warnings}
 
 
+# ==================== Step1 调研问题生成 ====================
+
+STEP1_SYSTEM_PROMPT = """你是一个企业微信智能表格售前调研助手，擅长通过提问快速把握客户需求背景。
+
+请基于客户提供的信息，生成结构化的调研问题 JSON。"""
+
+STEP1_USER_PROMPT = """客户基本信息：
+- 客户名称：{company_name}
+- 行业：{industry}
+- 业务需求：{initial_demand}
+- 公司简介：{company_intro}
+
+请生成结构化 JSON，包含三个部分：
+1. part1（客户画像）：company_background（公司背景）、pain_points（3个核心痛点，每个50字以内）
+2. part2（信息缺口）：gaps 数组，每项包含 gap（缺口描述）
+3. part3（调研问题）：must_ask 数组，每项包含 question（问题）、need_role（回答角色）、whyAsk（为什么问）、impactIfUnknown（不知道的影响）
+
+直接输出 JSON，不要 markdown 代码块。"""
+
+
+@app.post("/api/question_list")
+async def question_list(body: dict, user: dict = Depends(require_auth)):
+    """生成 Step1 调研问题（客户画像 + 信息缺口 + 调研清单）"""
+    company_name = body.get("company_name", "")
+    industry = body.get("industry", "")
+    initial_demand = body.get("initial_demand", "")
+    company_intro = body.get("company_intro", "")
+
+    user_prompt = STEP1_USER_PROMPT.format(
+        company_name=company_name,
+        industry=industry,
+        initial_demand=initial_demand,
+        company_intro=company_intro or "暂无"
+    )
+
+    raw = call_minimax(STEP1_SYSTEM_PROMPT, user_prompt, max_tokens=4000)
+    if raw.startswith("Error:"):
+        return {"success": False, "error": raw}
+
+    # 解析 JSON
+    result = parse_json_response(raw)
+    if not result:
+        return {"success": False, "error": "AI 返回格式异常，请重试"}
+
+    return {
+        "success": True,
+        "result": result,   # 前端 updateClient({ step1_result: data.result })
+        "summary": result   # 兼容前端 data.summary 判断
+    }
+
+
 @app.post("/api/step4/generate")
 async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth)):
     """生成 Step4 售前方案和技术路线方案（Prompt 3→4→5 三步）"""
