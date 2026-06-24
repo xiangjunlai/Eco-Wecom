@@ -3789,7 +3789,12 @@ function addGap() {
   if (!container) return;
   var newGap = document.createElement('div');
   newGap.className = 'gap';
-  newGap.innerHTML = '<div class="check"></div><div class="gap-text" contenteditable="true" style="outline:none;border:1px dashed #ddeeff;border-radius:8px;padding:4px 8px"><b>新信息项...</b></div><div class="priority">高优</div><div style="color:#98a2b3;font-size:12px;cursor:pointer" onclick="this.parentElement.remove()">×</div>';
+  newGap.innerHTML = '<div class="check"></div><div class="gap-text" contenteditable="true" style="outline:none;border:1px dashed #ddeeff;border-radius:8px;padding:4px 8px"><b>新信息项...</b></div><select class="priority-select" onchange="onGapPriorityChange(this)" style="border:none;background:transparent;font-size:12px;font-weight:700;cursor:pointer;color:#ff6b6b;outline:none">' +
+    '<option value="高" style="color:#ff6b6b">高优先级</option>' +
+    '<option value="中" style="color:#ffa94d">中优先级</option>' +
+    '<option value="低" style="color:#69db7c">低优先级</option>' +
+  '</select>' +
+  '<div style="color:#98a2b3;font-size:12px;cursor:pointer;padding:4px" onclick="this.parentElement.remove()">×</div>';
   container.appendChild(newGap);
   newGap.querySelector('.gap-text').focus();
   saveStep2Part2();
