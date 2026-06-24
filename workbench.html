@@ -3742,6 +3742,12 @@ function togglePartEdit(btn, part) {
         qc.addEventListener('dblclick', function(e) { e.stopPropagation(); });
       });
     }
+    if (part === 'part2') {
+      card.querySelectorAll('.gap').forEach(function(g) {
+        var txt = g.querySelector('.gap-text');
+        if (txt) { txt.contentEditable = 'true'; txt.classList.add('editing'); }
+      });
+    }
     editableEls.forEach(function(el) { el.contentEditable = 'true'; el.classList.add('editing'); el.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); el.blur(); } }); });
   }
 }
@@ -3970,7 +3976,7 @@ function renderQuestions(questions) {
     var deepWithHidden = deep.map(function(q, i) { return Object.assign({}, q, {_hidden: i >= 5})});
     deepEl.innerHTML = renderQ(deepWithHidden);
   }
-  if (indEl) indEl.innerHTML = industry.length ? industry.map(function(n){ var q = typeof n === 'string' ? n : (n.question || ''); var note = (n.note || ''); return '<div class="q-card">' + (note ? '<div style="font-size:14px;color:#182235;line-height:1.6;margin-bottom:6px">'+q+'</div><div style="font-size:12px;color:#98a2b3;line-height:1.5">'+note+'</div>' : '<div style="font-size:14px;color:#182235;line-height:1.6">'+q+'</div>') + '</div>'; }).join('') : '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">暂无行业经验知识库，添加更多案例可丰富此模块</div>';
+  if (indEl) indEl.innerHTML = industry.length ? industry.map(function(n){ var q = typeof n === 'string' ? n : (n.question || ''); var note = (n.note || ''); var whyAsk = n.whyAsk || ''; var impact = n.impactIfUnknown || ''; var extra = (note ? '<div style="font-size:12px;color:#667085;line-height:1.6;margin-top:6px">提示: '+note+'</div>' : '') + (whyAsk ? '<div style="font-size:11px;color:#8a9bae;line-height:1.5;margin-top:4px">问因: '+whyAsk+'</div>' : '') + (impact ? '<div style="font-size:11px;color:#8a9bae;line-height:1.5;margin-top:2px">影响: '+impact+'</div>' : ''); return '<div class="q-card"><div class="q-card-main"><div style="font-size:14px;color:#182235;line-height:1.6;font-weight:600">'+q+'</div>' + extra + '</div></div></div>'; }).join('') : '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">暂无行业经验知识库，添加更多案例可丰富此模块</div>';
   // Update "查看更多问题" button based on current active tab
   var moreBtn = document.getElementById('s2-more-btn');
   var totalEl = document.getElementById('s2-deep-total');
@@ -4031,15 +4037,26 @@ function addQuestion(tab) {
   var dimColor = dimColors[defaultDim];
   var newCard = document.createElement('div');
   newCard.className = 'q-card';
-  newCard.innerHTML =
-    '<div class="q-card-main">' +
-      '<div style="display:inline-block;background:'+dimColor+'22;color:'+dimColor+';border-radius:8px;padding:2px 10px;font-size:11px;font-weight:700;margin-bottom:6px">'+defaultDim+'</div>' +
-      '<div style="font-size:14px;color:#182235;line-height:1.6;font-weight:600" contenteditable="true">新问题...</div>' +
-      '<div style="margin-top:8px;font-size:12px;color:#667085;font-style:italic;line-height:1.6" contenteditable="true">填写说明...</div>' +
-    '</div>' +
-    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:28px">' +
-      '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px" onclick="deleteQuestionCard(this)" title="删除">×</div>' +
-    '</div>';
+  if (tab === 'industry') {
+    newCard.innerHTML =
+      '<div class="q-card-main" style="width:100%">' +
+        '<div style="font-size:14px;color:#182235;line-height:1.6;font-weight:600;margin-bottom:8px" contenteditable="true">新行业经验...</div>' +
+        '<div style="font-size:12px;color:#667085;line-height:1.5" contenteditable="true">填写提示说明...</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;width:28px;flex-shrink:0;padding-top:8px">' +
+        '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px" onclick="deleteQuestionCard(this)" title="删除">×</div>' +
+      '</div>';
+  } else {
+    newCard.innerHTML =
+      '<div class="q-card-main">' +
+        '<div style="display:inline-block;background:'+dimColor+'22;color:'+dimColor+';border-radius:8px;padding:2px 10px;font-size:11px;font-weight:700;margin-bottom:6px">'+defaultDim+'</div>' +
+        '<div style="font-size:14px;color:#182235;line-height:1.6;font-weight:600" contenteditable="true">新问题...</div>' +
+        '<div style="margin-top:8px;font-size:12px;color:#667085;font-style:italic;line-height:1.6" contenteditable="true">填写说明...</div>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:28px">' +
+        '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px" onclick="deleteQuestionCard(this)" title="删除">×</div>' +
+      '</div>';
+  }
   container.appendChild(newCard);
   newCard.querySelector('.q-card-main > div:nth-child(2)').focus();
 }
