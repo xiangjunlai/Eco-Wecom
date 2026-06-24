@@ -789,7 +789,7 @@ async def update_client(client_id: str, data: dict, user: dict = Depends(require
         raise HTTPException(status_code=404, detail="客户不存在")
 
     # 更新字段
-    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step5_schema", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url"]
+    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step5_schema", "step4_input_draft", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url"]
     updates = []
     values = []
     for field in allowed_fields:
@@ -797,7 +797,7 @@ async def update_client(client_id: str, data: dict, user: dict = Depends(require
             updates.append(f"{field} = ?")
             val = data[field]
             # JSON fields must be serialized to string for SQLite
-            if field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step5_schema"):
+            if field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step5_schema", "step4_input_draft"):
                 val = json.dumps(val) if val is not None else ""
             values.append(val)
 
@@ -1666,7 +1666,7 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
         raise HTTPException(status_code=404, detail="客户不存在")
 
     client = dict(row)
-    for field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files"):
+    for field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "step4_input_draft"):
         if client.get(field) and isinstance(client[field], str):
             try:
                 client[field] = json.loads(client[field])
