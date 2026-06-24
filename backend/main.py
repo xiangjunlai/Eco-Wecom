@@ -1768,39 +1768,88 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
             step3_summary = json.loads(step3_summary)
         except:
             step3_summary = {}
-    # 渲染 step3_summary 为可读文本
+    # 渲染 step3_summary 为可读文本（兼容新旧格式）
     step3_summary_text = ""
     if isinstance(step3_summary, dict):
         parts = []
-        if step3_summary.get("key_requirements"):
-            parts.append("关键需求：" + "、".join(step3_summary["key_requirements"]))
-        if step3_summary.get("roles_and_responsibilities"):
-            roles = step3_summary["roles_and_responsibilities"]
+        # ---- 新格式优先 ----
+        if step3_summary.get("customerCurrentState"):
+            parts.append("客户现状：" + str(step3_summary["customerCurrentState"]))
+        if step3_summary.get("painPoints"):
+            pains = step3_summary["painPoints"]
+            if isinstance(pains, list):
+                for p in pains:
+                    if isinstance(p, dict):
+                        parts.append(f"核心问题：{p.get('title','')}")
+                    elif isinstance(p, str):
+                        parts.append(f"核心问题：{p}")
+        if step3_summary.get("confirmedNeeds"):
+            needs = step3_summary["confirmedNeeds"]
+            if isinstance(needs, list):
+                for n in needs:
+                    if isinstance(n, dict):
+                        parts.append(f"已确认需求：{n.get('title','')}")
+                    elif isinstance(n, str):
+                        parts.append(f"已确认需求：{n}")
+        if step3_summary.get("involvedRoles"):
+            roles = step3_summary["involvedRoles"]
             if isinstance(roles, list):
                 for r in roles:
                     if isinstance(r, dict):
-                        parts.append(f"{r.get('role','')}：{r.get('responsibility','')}")
-        if step3_summary.get("decision_chain"):
-            dc = step3_summary["decision_chain"]
-            if dc.get("decision_maker"):
-                parts.append(f"拍板人：{dc['decision_maker']}")
-            if dc.get("influencer"):
-                parts.append(f"影响者：{dc['influencer']}")
-            if dc.get("executor"):
-                parts.append(f"执行者：{dc['executor']}")
-        if step3_summary.get("progress_and_stages"):
-            ps = step3_summary["progress_and_stages"]
-            if ps.get("current_stage"):
-                parts.append(f"当前阶段：{ps['current_stage']}")
-        if step3_summary.get("risk_points"):
-            risks = step3_summary["risk_points"]
-            if isinstance(risks, list) and risks:
-                risk_texts = []
-                for r in risks:
-                    if isinstance(r, dict) and r.get("risk"):
-                        risk_texts.append(r["risk"])
-                if risk_texts:
-                    parts.append("风险点：" + "、".join(risk_texts))
+                        parts.append(f"涉及角色：{r.get('role','')}（{r.get('responsibility','')}）")
+                    elif isinstance(r, str):
+                        parts.append(f"涉及角色：{r}")
+        if step3_summary.get("currentProcess"):
+            parts.append("当前流程：" + str(step3_summary["currentProcess"]))
+        if step3_summary.get("expectedOutcome"):
+            parts.append("期望效果：" + str(step3_summary["expectedOutcome"]))
+        if step3_summary.get("phaseOneScope"):
+            scope = step3_summary["phaseOneScope"]
+            if isinstance(scope, list):
+                for s in scope:
+                    if isinstance(s, dict):
+                        parts.append(f"一期范围：{s.get('item','')}")
+                    elif isinstance(s, str):
+                        parts.append(f"一期范围：{s}")
+        if step3_summary.get("pendingQuestions"):
+            qs = step3_summary["pendingQuestions"]
+            if isinstance(qs, list):
+                for q in qs:
+                    if isinstance(q, dict):
+                        parts.append(f"待确认问题：{q.get('question','')}")
+                    elif isinstance(q, str):
+                        parts.append(f"待确认问题：{q}")
+        # ---- 旧格式兼容 ----
+        if not parts:
+            if step3_summary.get("key_requirements"):
+                parts.append("关键需求：" + "、".join(step3_summary["key_requirements"]))
+            if step3_summary.get("roles_and_responsibilities"):
+                roles = step3_summary["roles_and_responsibilities"]
+                if isinstance(roles, list):
+                    for r in roles:
+                        if isinstance(r, dict):
+                            parts.append(f"{r.get('role','')}：{r.get('responsibility','')}")
+            if step3_summary.get("decision_chain"):
+                dc = step3_summary["decision_chain"]
+                if dc.get("decision_maker"):
+                    parts.append(f"拍板人：{dc['decision_maker']}")
+                if dc.get("influencer"):
+                    parts.append(f"影响者：{dc['influencer']}")
+                if dc.get("executor"):
+                    parts.append(f"执行者：{dc['executor']}")
+            if step3_summary.get("progress_and_stages"):
+                ps = step3_summary["progress_and_stages"]
+                if ps.get("current_stage"):
+                    parts.append(f"当前阶段：{ps['current_stage']}")
+            if step3_summary.get("risk_points"):
+                risks = step3_summary["risk_points"]
+                if isinstance(risks, list) and risks:
+                    risk_texts = []
+                    for r in risks:
+                        if isinstance(r, dict) and r.get("risk"):
+                            risk_texts.append(r["risk"])
+                    if risk_texts:
+                        parts.append("风险点：" + "、".join(risk_texts))
         step3_summary_text = "\n".join(parts)
 
     def build_context(prompt_template):

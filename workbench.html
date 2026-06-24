@@ -2506,7 +2506,7 @@ function getStep4InputDefault(c) {
       return { source: 'user_edited', draft: draft };
     }
   }
-  // 2. step3_summary（JSON 格式）
+  // 2. step3_summary（新 JSON 格式）
   var s3 = c.step3_summary;
   var s3obj = null;
   if (s3) {
@@ -2516,19 +2516,55 @@ function getStep4InputDefault(c) {
       try { s3obj = JSON.parse(s3); } catch(e) { }
     }
   }
-  if (s3obj && s3obj.customerCurrentState !== undefined) {
+  if (s3obj) {
+    // ---- 新格式（有 customerCurrentState） ----
+    if (s3obj.customerCurrentState !== undefined || s3obj.painPoints || s3obj.confirmedNeeds) {
+      return {
+        source: 'step3_summary',
+        draft: {
+          customerCurrentState: s3obj.customerCurrentState || '',
+          painPoints: (s3obj.painPoints || []).map(function(p) { return (p.title || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
+          confirmedNeeds: (s3obj.confirmedNeeds || []).map(function(n) { return (n.title || '') + (n.description ? '：' + n.description : ''); }).filter(Boolean),
+          involvedRoles: (s3obj.involvedRoles || []).map(function(r) { return (r.role || '') + (r.responsibility ? '（' + r.responsibility + '）' : ''); }).filter(Boolean),
+          currentProcess: s3obj.currentProcess ? [s3obj.currentProcess] : [],
+          expectedOutcome: s3obj.expectedOutcome ? [s3obj.expectedOutcome] : [],
+          phaseOneScope: (s3obj.phaseOneScope || []).map(function(p) { return (p.item || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
+          phaseTwoScope: (s3obj.phaseTwoScope || []).map(function(p) { return (p.item || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
+          pendingQuestions: (s3obj.pendingQuestions || []).map(function(q) { return q.question || ''; }).filter(Boolean)
+        }
+      };
+    }
+    // ---- 旧格式兼容（key_requirements / roles_and_responsibilities / risk_points） ----
+    var parts = [];
+    if (s3obj.key_requirements && s3obj.key_requirements.length > 0) {
+      s3obj.key_requirements.forEach(function(p) { if (p) parts.push(typeof p === 'string' ? p : p.title || ''); });
+    }
+    var roles = [];
+    if (s3obj.roles_and_responsibilities && s3obj.roles_and_responsibilities.length > 0) {
+      s3obj.roles_and_responsibilities.forEach(function(r) {
+        if (r.role) roles.push(r.role + (r.responsibility ? '：' + r.responsibility : ''));
+      });
+    }
+    var risks = [];
+    if (s3obj.risk_points && s3obj.risk_points.length > 0) {
+      s3obj.risk_points.forEach(function(r) { if (r && r.risk) risks.push(r.risk); });
+    }
+    var stage = '';
+    if (s3obj.progress_and_stages && s3obj.progress_and_stages.current_stage) {
+      stage = s3obj.progress_and_stages.current_stage;
+    }
     return {
       source: 'step3_summary',
       draft: {
-        customerCurrentState: s3obj.customerCurrentState || '',
-        painPoints: (s3obj.painPoints || []).map(function(p) { return (p.title || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
-        confirmedNeeds: (s3obj.confirmedNeeds || []).map(function(n) { return (n.title || '') + (n.description ? '：' + n.description : ''); }).filter(Boolean),
-        involvedRoles: (s3obj.involvedRoles || []).map(function(r) { return (r.role || '') + (r.responsibility ? '（' + r.responsibility + '）' : ''); }).filter(Boolean),
-        currentProcess: s3obj.currentProcess ? [s3obj.currentProcess] : [],
-        expectedOutcome: s3obj.expectedOutcome ? [s3obj.expectedOutcome] : [],
-        phaseOneScope: (s3obj.phaseOneScope || []).map(function(p) { return (p.item || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
-        phaseTwoScope: (s3obj.phaseTwoScope || []).map(function(p) { return (p.item || '') + (p.description ? '：' + p.description : ''); }).filter(Boolean),
-        pendingQuestions: (s3obj.pendingQuestions || []).map(function(q) { return q.question || ''; }).filter(Boolean)
+        customerCurrentState: stage || '',
+        painPoints: risks,
+        confirmedNeeds: parts,
+        involvedRoles: roles,
+        currentProcess: stage ? [stage] : [],
+        expectedOutcome: [],
+        phaseOneScope: [],
+        phaseTwoScope: [],
+        pendingQuestions: []
       }
     };
   }
