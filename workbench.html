@@ -1102,7 +1102,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 			          <div style="font-size:14px;font-weight:600;color:#182235">售前解决方案</div>
 			          <div style="font-size:12px;color:#667085;margin-top:2px">面向客户汇报，展示方案价值、建设模块与二期预留方向</div>
 			        </div>
-			        <button class="btn primary" id="s4-presales-btn" onclick="generateStep4Presales()" style="height:34px;font-size:13px">生成</button>
+			        <button class="btn primary" id="s4-presales-btn" onclick="generateStep4Technical()" style="height:34px;font-size:13px">生成</button>
 			      </div>
 			      <div id="s4-presales-history" style="display:none">
 			        <div class="history-toggle" onclick="togglePresalesHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;margin-top:4px">
@@ -1118,7 +1118,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 			          <div style="font-size:14px;font-weight:600;color:#182235">技术路线及报价方案</div>
 			          <div style="font-size:12px;color:#667085;margin-top:2px">正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题</div>
 			        </div>
-			        <button class="btn primary" id="s4-technical-btn" onclick="generateStep4Technical()" style="height:34px;font-size:13px">生成</button>
+			        <button class="btn primary" id="s4-technical-btn" onclick="generateStep4Presales()" style="height:34px;font-size:13px">生成</button>
 			      </div>
 			      <div id="s4-technical-history" style="display:none">
 			        <div class="history-toggle" onclick="toggleTechnicalHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;margin-top:4px">
@@ -2894,11 +2894,13 @@ function buildStep4HtmlPage(data) {
 
 function doDownloadStep4Word(wordContent, customerName) {
   var html = buildStep4WordHtml(wordContent, customerName);
-  var blob = new Blob([html], { type: 'application/msword' });
+  var blob = new Blob([html], { type: 'application/vnd.ms-word' });
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = (customerName || '客户') + '_需求确认方案.doc';
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
 }
 
