@@ -808,7 +808,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             <div><h3>客户名称</h3><span>输入客户名称，作为后续信息检索和画像生成的基础</span></div>
           </div>
           <div class="search-row" style="margin-bottom:14px">
-            <input class="input" id="s1-name" placeholder="输入客户名称">
+            <input class="input" id="s1-name" placeholder="输入客户名称" oninput="saveStep1()">
             <button class="ai-search-btn" id="aiSearchBtn" onclick="toggleAISearch()">
               <span class="ai-icon">✨</span>
               <span>AI 智搜</span>
@@ -835,7 +835,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
           <div class="row">
             <div class="field">
               <div class="label">客户行业</div>
-              <select class="select" id="s1-industry">
+              <select class="select" id="s1-industry" onchange="saveStep1()">
                 <option value="">请选择行业</option>
                 <option>金融·银行保险</option><option>金融·证券基金</option><option>金融·投资融资</option>
                 <option>制造业·汽车零配件</option><option>制造业·电子电气</option><option>制造业·机械设备</option>
@@ -860,7 +860,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             </div>
             <div class="field">
               <div class="label">公司规模</div>
-              <select class="select" id="s1-scale">
+              <select class="select" id="s1-scale" onchange="saveStep1()">
                 <option value="">暂不明确</option>
                 <option>1-50人</option><option>50-200人</option><option>200-1000人</option><option>1000人以上</option>
               </select>
@@ -888,7 +888,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
           <div class="prep-card-head">
             <div><h3>客户进线原始需求表达</h3><span>粘贴客户原始需求、销售转述或线索备注，保留第一手业务背景</span></div>
           </div>
-          <textarea class="textarea" id="s1-demand" style="min-height:108px" placeholder="粘贴客户的原始表达，或销售整理后的补充描述…"></textarea>
+          <textarea class="textarea" id="s1-demand" style="min-height:108px" placeholder="粘贴客户的原始表达，或销售整理后的补充描述…" oninput="saveStep1()"></textarea>
         </div>
 
         <div class="step-action-bar">
@@ -2010,6 +2010,7 @@ function bindStep1Inputs() {
       chip.classList.toggle('active');
       updateProfileProgress();
       updateProfileClient();
+      saveStep1();
     });
   });
 }
@@ -2281,7 +2282,7 @@ function handleCustomTag(e) {
   chip.className = 'chip active';
   chip.dataset.tag = tag;
   chip.textContent = tag;
-  chip.onclick = () => chip.classList.toggle('active');
+  chip.onclick = () => { chip.classList.toggle('active'); saveStep1(); };
   // Insert before the input
   const chips = document.getElementById('s1-chips');
   chips.insertBefore(chip, input);
@@ -4666,6 +4667,7 @@ function renderArtifacts() {
       actions += '<button class="art-btn" onclick="doPreviewProfile()">预览</button>';
       if (item.hasWecomDoc) {
         actions += '<a class="art-btn success" href="' + item.wecomUrl + '" target="_blank">查看企微文档</a>';
+        actions += '<button class="art-btn" onclick="doCreateWecomDoc()">再次生成</button>';
       } else {
         actions += '<button class="art-btn" id="wecom-create-btn" onclick="doCreateWecomDoc()">生成企微文档</button>';
       }
@@ -4869,43 +4871,24 @@ function doCreateWecomDoc(docName, docContent) {
     lines.push(c.initial_demand || '-');
     content = lines.join('\n\n');
   }
-  var schema = {
-    client_id: currentClientId,
-    smartTableSpec: {
-      confirmedTables: [{ tableName: '内容摘要', tablePurpose: '需求调研内容摘要', source: '用户生成', phase: '一期', roles: [] }],
-      fieldsByTable: [{
-        tableName: '内容摘要',
-        fields: [
-          { fieldName: '标题', fieldType: '文本', required: true, rule: '', source: '用户输入' },
-          { fieldName: '内容', fieldType: '文本', required: true, rule: '', source: '用户输入' }
-        ]
-      }],
-      sheets: [{
-        sheet_name: '内容摘要',
-        fields: [
-          { field_title: '标题', field_type: '文本' },
-          { field_title: '内容', field_type: '文本' }
-        ],
-        sample_records: [{ '标题': name, '内容': content }]
-      }]
-    }
-  };
-  if (btn) { btn.disabled = true; btn.textContent = '生成中…'; btn.style.opacity = '0.6'; }
-  fetch(API_BASE + '/api/create', {
+  var fetchBtn = document.getElementById('wecom-create-btn');
+  if (fetchBtn) { fetchBtn.disabled = true; fetchBtn.textContent = '生成中…'; fetchBtn.style.opacity = '0.6'; }
+  fetch(API_BASE + '/api/create_doc', {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify(schema)
+    body: JSON.stringify({ client_id: currentClientId, doc_name: name, content: content })
   }).then(function(r) { return r.json(); }).then(function(data) {
     if (data.success && data.docid) {
       updateClient(currentClientId, { _wecom_docid: data.docid, _wecom_url: data.url || ('https://doc.weixin.qq.com/doc/' + data.docid) });
       showToast('企微文档已创建');
+      renderArtifacts();
     } else {
       showToast('创建失败: ' + (data.error || '未知错误'));
+      renderArtifacts();
     }
-    if (btn) { btn.disabled = false; btn.textContent = btnText; btn.style.opacity = ''; }
   }).catch(function(e) {
     showToast('创建失败: ' + e.message);
-    if (btn) { btn.disabled = false; btn.textContent = btnText; btn.style.opacity = ''; }
+    renderArtifacts();
   });
 }
 function doPreviewStep1() {
@@ -5067,32 +5050,10 @@ function doCreateStep1WecomDoc() {
     });
   }
 
-  const schema = {
-    doc_name: (c.name || '客户') + ' - 调研准备材料',
-    content: content,
-    sheets: [{
-      sheet_name: '调研问题',
-      fields: [
-        { field_title: '类型', field_type: 'TEXT' },
-        { field_title: '维度', field_type: 'TEXT' },
-        { field_title: '问题', field_type: 'TEXT' },
-        { field_title: '说明', field_type: 'TEXT' }
-      ],
-      sample_records: mustAsk.slice(0, 5).map(function(q) {
-        return {
-          '类型': '必问问题',
-          '维度': q.dimension || '',
-          '问题': q.question || '',
-          '说明': q.note || ''
-        };
-      })
-    }]
-  };
-
-  fetch(API_BASE + '/api/create', {
+  fetch(API_BASE + '/api/create_doc', {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify(schema)
+    body: JSON.stringify({ client_id: currentClientId, doc_name: (c.name || '客户') + ' - 调研准备材料', content: content })
   }).then(r => r.json()).then(data => {
     if (data.success && data.docid) {
       updateClient(currentClientId, {
@@ -5139,31 +5100,10 @@ function doCreateNotesWecomDoc() {
     content += '\n' + (n.content || n.note || '(无内容)') + '\n\n---\n\n';
   });
 
-  var schema = {
-    doc_name: (c.name || '客户') + ' - 沟通记录汇总',
-    content: content,
-    sheets: [{
-      sheet_name: '沟通记录',
-      fields: [
-        { field_title: '来源', field_type: 'TEXT' },
-        { field_title: '阶段', field_type: 'TEXT' },
-        { field_title: '摘要', field_type: 'TEXT' }
-      ],
-      sample_records: notes.slice(0, 5).map(function(n) {
-        var summary = (n.content || n.note || '').substring(0, 80);
-        return {
-          '来源': n.source || '-',
-          '阶段': n.stage || '-',
-          '摘要': summary + (summary.length >= 80 ? '…' : '')
-        };
-      })
-    }]
-  };
-
-  fetch(API_BASE + '/api/create', {
+  fetch(API_BASE + '/api/create_doc', {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify(schema)
+    body: JSON.stringify({ client_id: currentClientId, doc_name: (c.name || '客户') + ' - 沟通记录汇总', content: content })
   }).then(r => r.json()).then(data => {
     if (data.success && data.docid) {
       updateClient(currentClientId, {

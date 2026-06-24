@@ -2473,6 +2473,36 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
     }
 
 
+@app.post("/api/create_doc")
+async def create_wecom_doc(body: dict, user: dict = Depends(require_auth)):
+    """
+    创建企业微信智能文档（smartpage）并写入 Markdown 内容。
+    body = {
+        "client_id": 71,
+        "doc_name": "文档标题",
+        "content": "# Markdown 内容..."
+    }
+    """
+    client_id = body.get("client_id")
+    doc_name = body.get("doc_name", "未命名文档")
+    content = body.get("content", "")
+
+    if not client_id:
+        return {"success": False, "error": "缺少 client_id"}
+
+    # 使用 smartpage_create 创建智能文档（不是 create_doc，那是智能表格）
+    pages = [{"page_title": "内容" if not doc_name else doc_name, "page_content": content, "content_type": 1}]
+    create_resp = call_mcp("smartpage_create", {"title": doc_name, "pages": pages})
+    if create_resp.get("error"):
+        return {"success": False, "error": "创建文档失败：" + create_resp["error"]}
+    docid = create_resp.get("docid", "")
+    doc_url = create_resp.get("url", "")
+    if not docid:
+        return {"success": False, "error": "创建文档失败，未返回 docid"}
+
+    return {"success": True, "docid": docid, "url": doc_url}
+
+
 # ==================== Step5 Agent Demo H5 生成 ====================
 
 AGENT_DEMO_SYSTEM_PROMPT = """你是一个专业的 H5 页面生成助手。根据客户需求分析报告，生成一个独立的、可直接在浏览器中运行的 HTML5 页面。
