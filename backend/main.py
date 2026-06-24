@@ -26,7 +26,7 @@ KB_DIR = BASE_DIR / "data" / "kb"
 KB_DIR.mkdir(parents=True, exist_ok=True)
 
 # 企微 CLI 已配置（通过 wecom-cli init 初始化）
-DEEPSEEK_API_KEY = "sk-cp-FxfZUSUHnTWn7eCtl1V-5CI1jFpfF3XLI0jxHZJ7U0p16_cea_FTQqxOaOYavdfwiS9DDN4pomf4CxLZlQYqIyvJJK_eaKR7tbh4d77_1dGK8DwQtwwjLDc"
+MINIMAX_API_KEY = "sk-cp-FxfZUSUHnTWn7eCtl1V-5CI1jFpfF3XLI0jxHZJ7U0p16_cea_FTQqxOaOYavdfwiS9DDN4pomf4CxLZlQYqIyvJJK_eaKR7tbh4d77_1dGK8DwQtwwjLDc"
 
 # ==================== 通用辅助函数 ====================
 
@@ -74,9 +74,9 @@ def extract_mcp(mcp_resp: dict):
     return result
 
 
-DEEPSEEK_API_KEY = "sk-cp-FxfZUSUHnTWn7eCtl1V-5CI1jFpfF3XLI0jxHZJ7U0p16_cea_FTQqxOaOYavdfwiS9DDN4pomf4CxLZlQYqIyvJJK_eaKR7tbh4d77_1dGK8DwQtwwjLDc"
+MINIMAX_API_KEY = "sk-cp-FxfZUSUHnTWn7eCtl1V-5CI1jFpfF3XLI0jxHZJ7U0p16_cea_FTQqxOaOYavdfwiS9DDN4pomf4CxLZlQYqIyvJJK_eaKR7tbh4d77_1dGK8DwQtwwjLDc"
 
-def call_deepseek(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -> str:
+def call_minimax(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -> str:
     """调用 MiniMax API，60秒超时"""
     import httpx
     try:
@@ -84,7 +84,7 @@ def call_deepseek(system_prompt: str, user_prompt: str, max_tokens: int = 4000) 
             "https://api.minimax.chat/v1/text/chatcompletion_v2",
             headers={
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {DEEPSEEK_API_KEY}"
+                "Authorization": f"Bearer {MINIMAX_API_KEY}"
             },
             json={
                 "model": "abab6.5s-chat",
@@ -660,7 +660,7 @@ async def get_kb_enhancement(user: dict = Depends(require_auth)):
 
     user_prompt = f"知识库内容概览：\n{kb_summary}\n\n根据以上内容，生成3个有说服力的售前示例。"
 
-    result = call_deepseek(system_prompt, user_prompt)
+    result = call_minimax(system_prompt, user_prompt)
 
     # 解析JSON结果
     import json
@@ -975,7 +975,7 @@ async def generate_report(body: dict, user: dict = Depends(require_auth)):
         user_prompt = f"{kb_context}## 客户沟通记录\n\n{transcript}\n\n请基于以上沟通记录，生成结构化的需求分析报告。"
         max_tokens = 4000
 
-    result = call_deepseek(system_prompt, user_prompt, max_tokens=max_tokens)
+    result = call_minimax(system_prompt, user_prompt, max_tokens=max_tokens)
 
     # 解析JSON（如果是schema）
     demo_json = None
@@ -1504,7 +1504,7 @@ STEP4_HTML_PROMPT = """你是一个企业微信智能表格可视化方案顾问
 内容要求：少字高信息密度、不堆砌字段、突出客户现状和核心痛点、不确定内容写"待确认"或"二期评估"。直接输出 JSON。"""
 
 def parse_json_response(raw):
-    """解析 DeepSeek 返回的 JSON，处理各种异常情况"""
+    """解析 MiniMax 返回的 JSON，处理各种异常情况"""
     import re, json
     if not raw:
         return None
@@ -1880,7 +1880,7 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
 
     # ====== Step 1: Prompt 3 → requirementSolutionData ======
     req_prompt = build_context(STEP4_REQUIREMENT_PROMPT)
-    req_raw = call_deepseek(STEP4_REQUIREMENT_PROMPT, req_prompt, max_tokens=5000)
+    req_raw = call_minimax(STEP4_REQUIREMENT_PROMPT, req_prompt, max_tokens=5000)
     requirement_data = parse_json_response(req_raw)
     if not requirement_data:
         return {"success": False, "error": "Prompt 3 生成失败：" + (req_raw[:200] if req_raw else "空响应")}
@@ -1891,7 +1891,7 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
     # ====== Step 2: Prompt 4 → Word 内容 ======
     if artifact_type in ("both", "presales", "word"):
         word_prompt = STEP4_WORD_PROMPT.replace("{requirement_data}", req_json_str)
-        word_raw = call_deepseek(STEP4_WORD_PROMPT, word_prompt, max_tokens=6000)
+        word_raw = call_minimax(STEP4_WORD_PROMPT, word_prompt, max_tokens=6000)
         word_content = parse_json_response(word_raw)
         if word_content:
             # 质检
@@ -1907,7 +1907,7 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
     # ====== Step 3: Prompt 5 → HTML 内容 ======
     if artifact_type in ("both", "html"):
         html_prompt = STEP4_HTML_PROMPT.replace("{requirement_data}", req_json_str)
-        html_raw = call_deepseek(STEP4_HTML_PROMPT, html_prompt, max_tokens=6000)
+        html_raw = call_minimax(STEP4_HTML_PROMPT, html_prompt, max_tokens=6000)
         html_content = parse_json_response(html_raw)
         if html_content:
             result["htmlContent"] = html_content
@@ -2002,7 +2002,7 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
         "{not_recommended_scope}", json.dumps(scope.get("notRecommended") or [], ensure_ascii=False, indent=2)
     )
 
-    raw = call_deepseek(STEP5_SCHEMA_SYSTEM_PROMPT, user_prompt, max_tokens=8000)
+    raw = call_minimax(STEP5_SCHEMA_SYSTEM_PROMPT, user_prompt, max_tokens=8000)
     schema = parse_json_response(raw)
 
     if not schema:
@@ -2229,7 +2229,7 @@ async def create_agent_demo(body: dict, user: dict = Depends(require_auth)):
 
 请基于以上信息，生成一个展示 AI 售前助手能力的 H5 页面。"""
 
-    result = call_deepseek(AGENT_DEMO_SYSTEM_PROMPT, user_prompt, max_tokens=8000)
+    result = call_minimax(AGENT_DEMO_SYSTEM_PROMPT, user_prompt, max_tokens=8000)
 
     # 保存到 public 目录
     import uuid, os
