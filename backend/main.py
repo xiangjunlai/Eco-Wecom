@@ -781,7 +781,7 @@ async def get_client(client_id: str, user: dict = Depends(require_auth)):
 
     result = dict(row)
     # Parse JSON fields back to objects
-    for field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step5_schema"):
+    for field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions"):
         if result.get(field) and isinstance(result[field], str):
             try:
                 result[field] = json.loads(result[field])
@@ -801,7 +801,7 @@ async def update_client(client_id: str, data: dict, user: dict = Depends(require
         raise HTTPException(status_code=404, detail="客户不存在")
 
     # 更新字段
-    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step4_input_draft", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url"]
+    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions", "step4_input_draft", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url"]
     updates = []
     values = []
     for field in allowed_fields:
@@ -809,7 +809,7 @@ async def update_client(client_id: str, data: dict, user: dict = Depends(require
             updates.append(f"{field} = ?")
             val = data[field]
             # JSON fields must be serialized to string for SQLite
-            if field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step4_input_draft"):
+            if field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions", "step4_input_draft"):
                 val = json.dumps(val) if val is not None else ""
             values.append(val)
 
@@ -2080,6 +2080,79 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
     return {"success": True, "demo": schema}
 
 
+STEP5_AGENT_PROMPT = """你是一个企业微信智能表格 AI 增强专家。基于已有的智能表格 Schema，为服务商提供进一步 AI 化的建议。
+
+【客户背景】
+客户名称：{customer_name}
+行业：{industry}
+需求：{initial_demand}
+
+【现有智能表格 Schema（已规划的一期交付内容）】
+{schema_summary}
+
+请生成 4-6 条"若要加强 AI 化，可以考虑..."的建议，每条包含：
+- title：建议标题（如"引入 AI 自动汇总"）
+- description：2-3 句话说明实现方式和价值
+- difficulty：实现难度（低/中/高）
+- phase：建议时机（一期/二期/远期）
+
+直接输出 JSON 数组，不要 markdown 代码块，不要任何前缀文字。"""
+
+
+@app.post("/api/step5/agent-suggest")
+async def step5_agent_suggest(body: dict, user: dict = Depends(require_auth)):
+    """生成 Step5 AI 增强建议"""
+    client_id = body.get("client_id")
+    if not client_id:
+        return {"success": False, "error": "缺少 client_id"}
+
+    client = db_get_client(client_id)
+    if not client:
+        return {"success": False, "error": "客户不存在"}
+
+    # 获取 schema 和需求数据
+    schema = client.get("step5_schema")
+    if isinstance(schema, str):
+        try:
+            schema = json.loads(schema)
+        except:
+            schema = {}
+
+    # 构建 schema 摘要用于 prompt
+    sheets = schema.get("sheets") or []
+    schema_lines = []
+    for s in sheets:
+        name = s.get("sheet_name", "未命名")
+        fields = s.get("fields") or []
+        field_names = [f.get("field_title", "") for f in fields]
+        schema_lines.append(f"- {name}：{', '.join(field_names)}")
+    schema_summary = "\n".join(schema_lines) if schema_lines else "暂无子表"
+
+    customer_name = client.get("name", "")
+    industry = client.get("industry", "")
+    initial_demand = client.get("initial_demand", "")
+
+    user_prompt = STEP5_AGENT_PROMPT.format(
+        customer_name=customer_name,
+        industry=industry,
+        initial_demand=initial_demand,
+        schema_summary=schema_summary
+    )
+
+    raw = call_minimax(STEP5_AGENT_PROMPT, user_prompt, max_tokens=4000)
+    if raw.startswith("Error:"):
+        return {"success": False, "error": raw}
+
+    suggestions = parse_json_response(raw)
+    if not suggestions:
+        return {"success": False, "error": "AI 返回格式异常，请重试"}
+
+    # 保存到后端
+    db_update_client(client_id, {"step5_agent_suggestions": suggestions})
+
+    return {"success": True, "suggestions": suggestions}
+
+
 # ==================== 创建企业微信智能表格（从 smartTableSpec） ====================
 
 # 字段类型映射：我们的规范 → WeCom field_type id
@@ -2150,14 +2223,14 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
     client = db_get_client(client_id)
     doc_name = (client.get("name", "") if client else "") + " - 需求智能表格"
     create_resp = call_mcp("create_doc", {
-        "title": doc_name,
+        "doc_name": doc_name,
         "doc_type": 10  # 智能表格
     })
     if create_resp.get("error"):
         return {"success": False, "error": "创建文档失败：" + create_resp["error"]}
 
-    docid = create_resp.get("docid") or create_resp.get("data", {}).get("docid", "")
-    doc_url = create_resp.get("url", "") or f"https://doc.wps.cn/s/{docid}"
+    docid = create_resp.get("docid", "")
+    doc_url = create_resp.get("url", "")  # 使用 API 返回的真实 URL
     if not docid:
         return {"success": False, "error": "创建文档失败，未返回 docid"}
 

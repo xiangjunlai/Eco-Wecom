@@ -435,7 +435,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .demo-type.active:after{content:'当前';color:#1263e6;background:#eef6ff;border-color:#b9d8ff}
 .demo-workspace,#page5 .agent-workspace{display:grid;grid-template-columns:260px 1fr;border:1px solid #dce8f8;border-radius:20px;overflow:hidden;background:#fff;min-height:420px}
 .demo-nav{background:#f8fbff;border-right:1px solid #edf1f7;padding:14px;display:flex;flex-direction:column;gap:10px}
-.demo-nav-item{border:1px solid #e3ebf6;background:#fff;border-radius:16px;padding:12px 13px;text-align:left;cursor:pointer;color:#344054;transition:.16s;box-shadow:0 4px 10px rgba(20,34,64,.03)}
+.demo-nav-item{border:1px solid #e3ebf6;background:#fff;border-radius:16px;padding:12px 13px;text-align:left;cursor:pointer;color:#344054;transition:.16s;box-shadow:0 4px 10px rgba(20,34,64,.03);margin-right:10px}
 .demo-nav-item b{display:block;font-size:13px;color:#182235;margin-bottom:5px}
 .demo-nav-item span{display:block;font-size:11px;color:#667085;line-height:1.45}
 .demo-nav-item.active{border-color:#b9d8ff;background:linear-gradient(135deg,#eef6ff,#ffffff);box-shadow:0 10px 24px rgba(18,99,230,.10)}
@@ -1139,14 +1139,6 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 
       <!-- Step 5: Demo设计 -->
       <section class="page" id="page5">
-        <div class="ctx-bar">
-          <span class="ctx-name" id="s5-ctx-name">-</span>
-          <span class="ctx-dot">·</span>
-          <span class="ctx-meta" id="s5-ctx-meta">-</span>
-          <span class="ctx-dot">·</span>
-          <span class="ctx-summary" id="s5-ctx-summary">-</span>
-        </div>
-
         <!-- 智能表格设计器 -->
         <div id="s5-editor" style="display:flex;flex-direction:column;gap:0;flex:1;overflow:hidden">
           <!-- 工具栏 -->
@@ -1218,6 +1210,20 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Agent 建议区 -->
+          <div id="s5-agent-panel" style="border-top:1px solid #e5e7eb;padding:14px 20px;background:#f8fafc;flex-shrink:0">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:14px;font-weight:600;color:#182235">💡 Agent 建议</div>
+                <span style="font-size:12px;color:#667085">若要加强 AI 化，可以考虑…</span>
+              </div>
+              <button class="btn secondary" id="s5-agent-btn" onclick="doGenerateAgentSuggest()" style="height:30px;font-size:12px">生成建议</button>
+            </div>
+            <div id="s5-agent-loading" style="display:none;text-align:center;padding:8px 0;color:#98a2b3;font-size:13px">正在生成…</div>
+            <div id="s5-agent-list" style="display:none;flex-direction:column;gap:8px"></div>
+            <div id="s5-agent-empty" style="text-align:center;padding:8px 0;color:#98a2b3;font-size:13px">暂无建议，点击上方按钮生成</div>
           </div>
 
           <!-- 底部操作栏 -->
@@ -1681,7 +1687,7 @@ function loadStepData(n) {
   else if (n === 2) loadStep2(c);
   else if (n === 3) loadStep3(c);
   else if (n === 4) loadStep4(c);
-  else if (n === 5) loadStep5(c);
+  else if (n === 5) { loadStep5(c); loadS5Agent(); }
   renderArtifacts();
   updateCtxBar(c);
   if (n === 1) setTimeout(bindStep1Inputs, 50);
@@ -3278,6 +3284,77 @@ function doCreateTechnicalWecomDoc() {
 
 let _s5Schema = null;
 let _s5CurrentSheet = 0;
+let _s5AgentSuggestions = null;
+
+async function doGenerateAgentSuggest() {
+  var btn = document.getElementById('s5-agent-btn');
+  var loading = document.getElementById('s5-agent-loading');
+  var list = document.getElementById('s5-agent-list');
+  var empty = document.getElementById('s5-agent-empty');
+  if (btn) { btn.classList.add('loading'); btn.disabled = true; btn.textContent = '生成中…'; }
+  if (loading) loading.style.display = '';
+  if (list) list.style.display = 'none';
+  if (empty) empty.style.display = 'none';
+  try {
+    var resp = await Promise.race([
+      fetch(API_BASE + '/api/step5/agent-suggest', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ client_id: currentClientId })
+      }),
+      new Promise(function(_, reject) { setTimeout(function() { reject(new Error('超时')); }, 60000); })
+    ]);
+    var data = await resp.json();
+    if (data.success && data.suggestions) {
+      _s5AgentSuggestions = data.suggestions;
+      updateClient(currentClientId, { step5_agent_suggestions: data.suggestions });
+      renderS5Agent();
+    } else {
+      showToast(data.error || '生成失败');
+      if (empty) { empty.style.display = ''; empty.textContent = '生成失败，点击重试'; }
+    }
+  } catch(e) {
+    showToast('生成失败：' + e.message);
+    if (empty) { empty.style.display = ''; empty.textContent = '生成失败，点击重试'; }
+  } finally {
+    if (btn) { btn.classList.remove('loading'); btn.disabled = false; btn.textContent = '重新生成'; }
+    if (loading) loading.style.display = 'none';
+  }
+}
+
+function renderS5Agent() {
+  var list = document.getElementById('s5-agent-list');
+  var empty = document.getElementById('s5-agent-empty');
+  var suggestions = _s5AgentSuggestions;
+  if (!suggestions || !suggestions.length) {
+    if (list) list.style.display = 'none';
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (list) {
+    list.style.display = '';
+    list.innerHTML = suggestions.map(function(s) {
+      var diffColor = s.difficulty === '低' ? '#13b96f' : (s.difficulty === '中' ? '#ff8a00' : '#ef4444');
+      var phaseColor = s.phase === '一期' ? '#13b96f' : (s.phase === '二期' ? '#1263e6' : '#98a2b3');
+      return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+        '<span style="font-size:13px;font-weight:600;color:#182235;flex:1">' + escHtml(s.title || '') + '</span>' +
+        '<span style="font-size:11px;padding:2px 8px;border-radius:6px;background:' + diffColor + '22;color:' + diffColor + '">' + (s.difficulty || '') + '</span>' +
+        '<span style="font-size:11px;padding:2px 8px;border-radius:6px;background:' + phaseColor + '22;color:' + phaseColor + '">' + (s.phase || '') + '</span>' +
+        '</div>' +
+        '<div style="font-size:12px;color:#667085;line-height:1.6">' + escHtml(s.description || '') + '</div>' +
+        '</div>';
+    }).join('');
+  }
+  if (empty) empty.style.display = 'none';
+}
+
+function loadS5Agent() {
+  var c = getClient(currentClientId);
+  var suggestions = c && c.step5_agent_suggestions;
+  _s5AgentSuggestions = suggestions || null;
+  renderS5Agent();
+}
 
 function markClientDone() {
   if (!confirm('确认将该客户标记为已完成？完成后可在客户列表查看。')) return;
