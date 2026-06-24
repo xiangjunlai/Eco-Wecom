@@ -1102,7 +1102,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 			          <div style="font-size:14px;font-weight:600;color:#182235">售前解决方案</div>
 			          <div style="font-size:12px;color:#667085;margin-top:2px">面向客户汇报，展示方案价值、建设模块与二期预留方向</div>
 			        </div>
-			        <button class="btn primary" id="s4-presales-btn" onclick="generateStep4Presales()" style="height:34px;font-size:13px">生成售前解决方案</button>
+			        <button class="btn primary" id="s4-presales-btn" onclick="generateStep4Presales()" style="height:34px;font-size:13px">生成</button>
 			      </div>
 			      <div id="s4-presales-history" style="display:none">
 			        <div class="history-toggle" onclick="togglePresalesHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;margin-top:4px">
@@ -1118,7 +1118,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 			          <div style="font-size:14px;font-weight:600;color:#182235">技术路线及报价方案</div>
 			          <div style="font-size:12px;color:#667085;margin-top:2px">正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题</div>
 			        </div>
-			        <button class="btn primary" id="s4-technical-btn" onclick="generateStep4Technical()" style="height:34px;font-size:13px">生成技术路线及报价方案</button>
+			        <button class="btn primary" id="s4-technical-btn" onclick="generateStep4Technical()" style="height:34px;font-size:13px">生成</button>
 			      </div>
 			      <div id="s4-technical-history" style="display:none">
 			        <div class="history-toggle" onclick="toggleTechnicalHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;margin-top:4px">
@@ -2717,11 +2717,16 @@ async function generateStep4Presales() {
   if (btn) { btn.classList.add('loading'); btn.disabled = true; }
   window._generatingPresales = true;
   window._presalesStep = 1;
+  window._presalesPct = 10;
   renderArtifacts();
   var stepTick = setInterval(function() {
     window._presalesStep = (window._presalesStep % 3) + 1;
     renderArtifacts();
   }, 2000);
+  var pctTick = setInterval(function() {
+    window._presalesPct = Math.min((window._presalesPct || 10) + 10, 85);
+    renderArtifacts();
+  }, 15000);
   try {
     var resp = await Promise.race([
       fetch(API_BASE + '/api/step4/generate', {
@@ -2760,6 +2765,7 @@ async function generateStep4Presales() {
     showToast('生成失败：' + e.message);
   } finally {
     clearInterval(stepTick);
+    clearInterval(pctTick);
     window._generatingPresales = false;
     window._presalesStep = 0;
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
@@ -2774,11 +2780,16 @@ async function generateStep4Technical() {
   if (btn) { btn.classList.add('loading'); btn.disabled = true; }
   window._generatingTechnical = true;
   window._technicalStep = 1;
+  window._technicalPct = 10;
   renderArtifacts();
   var stepTick = setInterval(function() {
     window._technicalStep = (window._technicalStep % 3) + 1;
     renderArtifacts();
   }, 2000);
+  var pctTick = setInterval(function() {
+    window._technicalPct = Math.min((window._technicalPct || 10) + 10, 85);
+    renderArtifacts();
+  }, 15000);
   try {
     var resp = await Promise.race([
       fetch(API_BASE + '/api/step4/generate', {
@@ -2816,6 +2827,7 @@ async function generateStep4Technical() {
     showToast('生成失败：' + e.message);
   } finally {
     clearInterval(stepTick);
+    clearInterval(pctTick);
     window._generatingTechnical = false;
     window._technicalStep = 0;
     if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
@@ -4525,21 +4537,21 @@ function renderArtifacts() {
   var hasPresales = pv.length > 0;
   var isGenPresales = window._generatingPresales;
   var presalesPct = isGenPresales ? (window._presalesPct || 10) : (hasPresales ? 100 : 0);
-  var presalesDesc = hasPresales && latestPresales ? new Date(latestPresales.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestPresales.version : '面向客户汇报，展示方案价值、建设模块与二期预留方向';
+  var presalesDesc = hasPresales && latestPresales ? new Date(latestPresales.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestPresales.version : '正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题';
   var presalesStep = window._presalesStep;
   var presalesGenDesc = presalesStep === 1 ? '正在生成需求结构化…' : presalesStep === 2 ? '正在生成 Word 文档…' : '正在质检文档…';
-  items.push({ name: '售前解决方案', tag: isGenPresales ? '生成中' : (hasPresales ? '已生成' : '待生成'), tagCls: isGenPresales ? 'editing' : (hasPresales ? '' : 'todo'), pct: presalesPct, dataKey: 'step4_presales_versions', desc: isGenPresales ? presalesGenDesc : presalesDesc, isGen: isGenPresales });
+  items.push({ name: '技术路线及报价方案', tag: isGenPresales ? '生成中' : (hasPresales ? '已生成' : '待生成'), tagCls: isGenPresales ? 'editing' : (hasPresales ? '' : 'todo'), pct: presalesPct, dataKey: 'step4_presales_versions', desc: isGenPresales ? presalesGenDesc : presalesDesc, isGen: isGenPresales });
 
-  // 可视化方案 HTML
+  // 售前解决方案（HTML）
   var tv = c.step4_technical_versions || [];
   var latestTechnical = tv[tv.length - 1];
   var hasTechnical = tv.length > 0;
   var isGenTechnical = window._generatingTechnical;
   var technicalPct = isGenTechnical ? (window._technicalPct || 10) : (hasTechnical ? 100 : 0);
-  var techDesc = hasTechnical && latestTechnical ? new Date(latestTechnical.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestTechnical.version : '正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题';
+  var techDesc = hasTechnical && latestTechnical ? new Date(latestTechnical.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestTechnical.version : '面向客户汇报，展示方案价值、建设模块与二期预留方向';
   var technicalStep = window._technicalStep;
-  var techGenDesc = technicalStep === 1 ? '正在生成需求结构化…' : technicalStep === 2 ? '正在生成可视化方案…' : '正在渲染页面…';
-  items.push({ name: '可视化方案 HTML', tag: isGenTechnical ? '生成中' : (hasTechnical ? '已生成' : '待生成'), tagCls: isGenTechnical ? 'editing' : (hasTechnical ? '' : 'todo'), pct: technicalPct, dataKey: 'step4_technical_versions', desc: isGenTechnical ? techGenDesc : techDesc, isGen: isGenTechnical });
+  var techGenDesc = technicalStep === 1 ? '正在生成需求结构化…' : technicalStep === 2 ? '正在生成可视化方案…' : '正在质检文档…';
+  items.push({ name: '售前解决方案', tag: isGenTechnical ? '生成中' : (hasTechnical ? '已生成' : '待生成'), tagCls: isGenTechnical ? 'editing' : (hasTechnical ? '' : 'todo'), pct: technicalPct, dataKey: 'step4_technical_versions', desc: isGenTechnical ? techGenDesc : techDesc, isGen: isGenTechnical });
 
   // 智能表格 Demo
   const isGen5 = window._generatingStep5;
