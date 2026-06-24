@@ -2440,8 +2440,8 @@ function doStep3Next() {
 function doStep4Next() {
   const c = getClient(currentClientId);
   saveStep4Input();
-  var hasPresales = (c.step4_presales_versions || []).length > 0;
-  var hasTechnical = (c.step4_technical_versions || []).length > 0;
+  var hasPresales = Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0;
+  var hasTechnical = Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0;
   if (!hasPresales && !hasTechnical) {
     showToast('请先生成售前方案或技术方案');
     return;
@@ -2739,9 +2739,9 @@ async function generateStep4Presales() {
     var data = await resp.json();
     if (data.success && data.requirementData) {
       var now = new Date().toISOString();
-      // 重新读取最新数据，避免缓存过时导致覆盖
+      // 重新读取最新数据，确保是数组（防止被JSON字符串污染）
       var c2 = getClient(currentClientId);
-      var versions = (c2.step4_presales_versions || []).slice();
+      var versions = Array.isArray(c2.step4_presales_versions) ? c2.step4_presales_versions.slice() : [];
       var version = versions.length + 1;
       versions.push({
         content: { requirementData: data.requirementData, wordContent: data.wordContent, htmlContent: data.htmlContent },
@@ -2804,9 +2804,9 @@ async function generateStep4Technical() {
     var data = await resp.json();
     if (data.success) {
       var now = new Date().toISOString();
-      // 重新读取最新数据，避免缓存过时导致覆盖
+      // 重新读取最新数据，确保是数组（防止被JSON字符串污染）
       var c2 = getClient(currentClientId);
-      var versions = (c2.step4_technical_versions || []).slice();
+      var versions = Array.isArray(c2.step4_technical_versions) ? c2.step4_technical_versions.slice() : [];
       var version = versions.length + 1;
       versions.push({
         content: { requirementData: data.requirementData, htmlContent: data.htmlContent },
@@ -2912,7 +2912,7 @@ function doDownloadStep4Word(wordContent, customerName) {
 // 右侧制品区：下载最新 Word 版
 function doDownloadLatestWord() {
   var c = getClient(currentClientId);
-  var versions = c.step4_presales_versions || [];
+  var versions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
   var latest = versions[versions.length - 1];
   if (!latest || !latest.content) { showToast('无已生成的 Word 文档'); return; }
   doDownloadStep4Word(latest.content.wordContent || latest.content, c.name || '客户');
@@ -2921,7 +2921,7 @@ function doDownloadLatestWord() {
 // 右侧制品区：新窗口预览最新 HTML
 function doPreviewLatestHtml() {
   var c = getClient(currentClientId);
-  var versions = c.step4_technical_versions || [];
+  var versions = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
   var latest = versions[versions.length - 1];
   if (!latest || !latest.content) { showToast('无已生成的 HTML 方案'); return; }
   var hc = latest.content.htmlContent;
@@ -3253,7 +3253,7 @@ function toggleTechnicalHistory() {
 
 function doCreatePresalesWecomDoc() {
   var c = getClient(currentClientId);
-  var versions = c.step4_presales_versions || [];
+  var versions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
   var latest = versions[versions.length - 1];
   if (!latest) { showToast('无售前方案内容'); return; }
   var content = latest.content;
@@ -3264,7 +3264,7 @@ function doCreatePresalesWecomDoc() {
 
 function doCreateTechnicalWecomDoc() {
   var c = getClient(currentClientId);
-  var versions = c.step4_technical_versions || [];
+  var versions = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
   var latest = versions[versions.length - 1];
   if (!latest) { showToast('无技术方案内容'); return; }
   var content = latest.content;
@@ -4430,12 +4430,12 @@ function loadStep3(c) {
 }
 function loadStep4(c) {
   autoGenerateStep4Input(c);
-  var presalesVersions = c.step4_presales_versions || [];
+  var presalesVersions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
   if (presalesVersions.length > 0) {
     renderStep4LatestPresales(presalesVersions[presalesVersions.length - 1], presalesVersions.length);
     renderStep4History('presales', presalesVersions);
   }
-  var techVersions = c.step4_technical_versions || [];
+  var techVersions = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
   if (techVersions.length > 0) {
     renderStep4LatestTechnical(techVersions[techVersions.length - 1]);
     renderStep4History('technical', techVersions);
@@ -4540,7 +4540,7 @@ function renderArtifacts() {
   items.push({ name: '沟通记录库', tag: noteCount > 0 ? '已沉淀' : '待补充', tagCls: noteCount > 0 ? '' : 'todo', pct: notePct, dataKey: 'uploaded_files', desc: '已沉淀 ' + noteCount + ' 次沟通记录。', hasWecomDoc: hasNotesWecomDoc, wecomUrl: c._notes_wecom_url, wecomDocid: c._notes_wecom_docid });
 
   // 售前解决方案（HTML）→ 排在上面
-  var tv = c.step4_technical_versions || [];
+  var tv = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
   var latestTechnical = tv[tv.length - 1];
   var hasTechnical = tv.length > 0;
   var isGenTechnical = window._generatingTechnical;
@@ -4551,7 +4551,7 @@ function renderArtifacts() {
   items.push({ name: '售前解决方案', tag: isGenTechnical ? '生成中' : (hasTechnical ? '已生成' : '待生成'), tagCls: isGenTechnical ? 'editing' : (hasTechnical ? '' : 'todo'), pct: technicalPct, dataKey: 'step4_technical_versions', desc: isGenTechnical ? techGenDesc : techDesc, isGen: isGenTechnical });
 
   // 技术路线及报价方案（Word）→ 排在下面
-  var pv = c.step4_presales_versions || [];
+  var pv = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
   var latestPresales = pv[pv.length - 1];
   var hasPresales = pv.length > 0;
   var isGenPresales = window._generatingPresales;
@@ -4597,10 +4597,10 @@ function renderArtifacts() {
         } else {
           actions += '<button class="art-btn" onclick="doCreateNotesWecomDoc()">生成企微文档</button>';
         }
-      } else if (item.dataKey === 'step4_presales_versions' && c.step4_presales_versions && c.step4_presales_versions.length > 0) {
+      } else if (item.dataKey === 'step4_presales_versions' && Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0) {
         // Word《需求确认 & 方案设计表》→ 下载
         actions += '<button class="art-btn" onclick="doDownloadLatestWord()">下载 Word</button>';
-      } else if (item.dataKey === 'step4_technical_versions' && c.step4_technical_versions && c.step4_technical_versions.length > 0) {
+      } else if (item.dataKey === 'step4_technical_versions' && Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0) {
         // 可视化方案 HTML → 新窗口预览
         actions += '<button class="art-btn" onclick="doPreviewLatestHtml()">新窗口预览</button>';
       }
