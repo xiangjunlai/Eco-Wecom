@@ -2840,7 +2840,8 @@ async function generateStep4Technical() {
 }
 
 function doPreviewStep4Html(htmlContent, customerName) {
-  var html = buildStep4HtmlPage(htmlContent);
+  // 如果是字符串直接预览，如果是对象则用 buildStep4HtmlPage 渲染
+  var html = (typeof htmlContent === 'string') ? htmlContent : buildStep4HtmlPage(htmlContent);
   var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   var url = URL.createObjectURL(blob);
   window.open(url, '_blank');
@@ -2925,9 +2926,10 @@ function doPreviewLatestHtml() {
   if (!latest || !latest.content) { showToast('无已生成的 HTML 方案'); return; }
   var hc = latest.content.htmlContent;
   if (!hc) { showToast('HTML 内容为空'); return; }
-  var blob = new Blob([hc], { type: 'text/html;charset=utf-8' });
-  var url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
+  // 如果是对象（未渲染的JSON），用 buildStep4HtmlPage 渲染；如果是字符串直接用
+  var htmlText = (typeof hc === 'string') ? hc : buildStep4HtmlPage(hc);
+  var blob = new Blob([htmlText], { type: 'text/html;charset=utf-8' });
+  window.open(URL.createObjectURL(blob), '_blank');
 }
 
 function buildStep4WordHtml(data, customerName) {
