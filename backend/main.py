@@ -938,7 +938,7 @@ async def list_clients(user: dict = Depends(require_auth)):
                step1_result, step2_report, step2_todo, step2_schema,
                step4_presales, step4_technical, step5_schema,
                created_at, updated_at, demo_url, _completed, _saved,
-               COALESCE(LENGTH(uploaded_files) - LENGTH(REPLACE(uploaded_files, '[', '')), 0) AS note_count
+               0 AS note_count
         FROM clients WHERE user_id = ? ORDER BY updated_at DESC
     """, (user["user_id"],))
     cols = ["id", "user_id", "name", "industry", "initial_demand", "status",
