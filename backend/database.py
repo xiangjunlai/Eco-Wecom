@@ -200,6 +200,44 @@ def init_db_legacy():
         )
     """)
 
+    # 补全 clients 表缺失的列（兼容已有数据库）
+    for col_def in [
+        "step2_report TEXT",
+        "step2_todo TEXT",
+        "step2_schema TEXT",
+        "step3_summary TEXT",
+        "transcript TEXT",
+        "step4_report TEXT",
+        "step4_presales TEXT",
+        "step4_technical TEXT",
+        "step4_presales_versions TEXT",
+        "step4_technical_versions TEXT",
+        "step5_schema TEXT",
+        "step5_agent_suggestions TEXT",
+        "step4_input_draft TEXT",
+        "_wecom_docid TEXT",
+        "_wecom_url TEXT",
+        "_step1_wecom_docid TEXT",
+        "_step1_wecom_url TEXT",
+        "_notes_wecom_docid TEXT",
+        "_notes_wecom_url TEXT",
+        "is_completed INTEGER DEFAULT 0",
+        "is_saved INTEGER DEFAULT 0",
+        "company_type TEXT",
+        "main_customers TEXT",
+        "possible_focus TEXT",
+        "company_intro TEXT",
+        "tags TEXT",
+        "scale TEXT",
+        "uploaded_files TEXT",
+    ]:
+        col_name = col_def.split()[0]
+        try:
+            cursor.execute(f"ALTER TABLE clients ADD COLUMN {col_def}")
+            conn.commit()
+        except Exception:
+            pass
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS reports (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -714,6 +714,16 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
               <span class="step-status" id="ps5">等待中</span>
             </div>
           </div>
+          <!-- 简化进度条（Step4/5 导航用）-->
+          <div id="gen-simple-progress" style="display:none;width:100%;margin-bottom:20px;text-align:left">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:#667085;margin-bottom:6px">
+              <span id="gen-simple-label">加载中…</span>
+              <span id="gen-simple-pct">0%</span>
+            </div>
+            <div style="height:6px;background:#e8edf5;border-radius:999px;overflow:hidden">
+              <div id="gen-simple-bar" style="height:100%;background:linear-gradient(90deg,#1263e6,#13b96f);border-radius:999px;width:0%;transition:width .3s"></div>
+            </div>
+          </div>
           <button class="btn-enter" id="gen-btn" style="display:none" onclick="onGenBtnClick()">进入下一步</button>
           <p class="error-tip" id="gen-error" style="display:none"></p>
         </div>
@@ -1493,6 +1503,81 @@ function onGenBtnClick() {
   }
 }
 
+// ==================== SIMPLE LOADING MODAL (Step3→4 / Step4→5) ====================
+var _simpleLoadingResolve = null;
+var _simpleLoadingReject = null;
+
+function showSimpleLoadingModal(titleText, subtitleText, onComplete) {
+  const modal = document.getElementById('generate-modal');
+  const icon = document.getElementById('gen-icon');
+  const title = document.getElementById('gen-title');
+  const subtitle = document.getElementById('gen-subtitle');
+  const btn = document.getElementById('gen-btn');
+  const error = document.getElementById('gen-error');
+  const progress = document.getElementById('gen-progress');
+  const simpleProgress = document.getElementById('gen-simple-progress');
+  const simpleLabel = document.getElementById('gen-simple-label');
+  const simpleBar = document.getElementById('gen-simple-bar');
+  const simplePct = document.getElementById('gen-simple-pct');
+
+  icon.className = 'modal-icon loading';
+  icon.textContent = '⚙';
+  title.textContent = titleText || '加载中…';
+  subtitle.textContent = subtitleText || '请稍候…';
+  btn.style.display = 'none';
+  error.style.display = 'none';
+  progress.style.display = 'none';
+  simpleProgress.style.display = 'block';
+  simpleBar.style.width = '0%';
+  simplePct.textContent = '0%';
+
+  modal.classList.add('active');
+
+  // Animate progress bar
+  let pct = 0;
+  var tick = setInterval(() => {
+    pct = Math.min(pct + Math.random() * 8 + 3, 78);
+    simpleBar.style.width = pct + '%';
+    simplePct.textContent = Math.round(pct) + '%';
+  }, 200);
+
+  _simpleLoadingResolve = null;
+  _simpleLoadingReject = null;
+
+  Promise.resolve(onComplete()).then(() => {
+    clearInterval(tick);
+    simpleBar.style.width = '100%';
+    simplePct.textContent = '100%';
+    icon.className = 'modal-icon success';
+    icon.textContent = '✓';
+    subtitle.textContent = '加载完成';
+    setTimeout(() => {
+      modal.classList.remove('active');
+      clearInterval(tick);
+    }, 600);
+  }).catch((err) => {
+    clearInterval(tick);
+    icon.className = 'modal-icon error';
+    icon.textContent = '✗';
+    subtitle.textContent = '';
+    error.style.display = 'block';
+    error.textContent = err.message || '加载失败';
+    btn.style.display = 'block';
+    btn.textContent = '返回';
+    btn.onclick = function() {
+      modal.classList.remove('active');
+      btn.onclick = onGenBtnClick;
+    };
+    genReady = false;
+  });
+}
+
+function hideSimpleLoadingModal() {
+  document.getElementById('generate-modal').classList.remove('active');
+  _simpleLoadingResolve = null;
+  _simpleLoadingReject = null;
+}
+
 // ==================== LOADING ====================
 function showFullscreenLoading(text, hint) {
   const el = document.getElementById('page-loading');
@@ -1520,7 +1605,7 @@ function safeGo(n) {
     1: !!(c && c.step1_result),
     2: !!(c && c.step1_result),
     3: !!(c && c.step1_result) && !!(c && (c.uploaded_files && c.uploaded_files.length > 0 || c.transcript)),
-    4: !!(c && c.step4_report),
+    4: !!(c && (Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0 || Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0)),
     5: !!(c && c.step5_schema)
   };
   if (n !== currentStep && !isCompleted[n]) {
@@ -1552,7 +1637,7 @@ function updateStepLocks(c) {
     1: !!(c && c.step1_result),
     2: !!(c && c.step1_result),
     3: !!(c && c.step1_result) && !!(c && (c.uploaded_files && c.uploaded_files.length > 0 || c.transcript)),
-    4: !!(c && c.step4_report),
+    4: !!(c && (Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0 || Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0)),
     5: !!(c && c.step5_schema)
   };
   document.querySelectorAll('.step').forEach(s => {
@@ -1697,7 +1782,19 @@ function loadStepData(n) {
   else if (n === 2) loadStep2(c);
   else if (n === 3) loadStep3(c);
   else if (n === 4) loadStep4(c);
-  else if (n === 5) { loadStep5(c); loadS5Agent(); }
+  else if (n === 5) {
+    loadStep5(c);
+    loadS5Agent();
+    // 如果没有 schema，自动触发生成（首次进入 Step5）
+    if (!c.step5_schema) {
+      setTimeout(() => {
+        showSimpleLoadingModal('正在生成智能表格 Demo…（约 5-10 秒）', '智能表格 + Agent 建议将同时生成', async () => {
+          await doRegenerateStep5(true);
+          await doGenerateAgentSuggest(true);
+        });
+      }, 100);
+    }
+  }
   renderArtifacts();
   updateCtxBar(c);
   if (n === 1) setTimeout(bindStep1Inputs, 50);
@@ -1766,7 +1863,9 @@ function getProgress(c) {
   if (c.industry || c.name) p = 1;
   if (c.step1_result) p = 2;
   if (c.transcript || (c.uploaded_files && c.uploaded_files.length > 0)) p = 3;
-  if (c.step4_presales || c.step4_technical) p = 4;
+  if (c.step4_presales || c.step4_technical ||
+      Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0 ||
+      Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0) p = 4;
   if (c.step5_schema) p = 5;
   return p;
 }
@@ -3325,12 +3424,12 @@ let _s5Schema = null;
 let _s5CurrentSheet = 0;
 let _s5AgentSuggestions = null;
 
-async function doGenerateAgentSuggest() {
+async function doGenerateAgentSuggest(silent) {
   var btn = document.getElementById('s5-agent-btn');
   var loading = document.getElementById('s5-agent-loading');
   var list = document.getElementById('s5-agent-list');
   var empty = document.getElementById('s5-agent-empty');
-  if (btn) { btn.classList.add('loading'); btn.disabled = true; btn.textContent = '生成中…'; }
+  if (btn && !silent) { btn.classList.add('loading'); btn.disabled = true; btn.textContent = '生成中…'; }
   if (loading) loading.style.display = '';
   if (list) list.style.display = 'none';
   if (empty) empty.style.display = 'none';
@@ -3423,7 +3522,8 @@ function loadStep5(c) {
       doneBtn.style.background = '#ecfdf3';
       doneBtn.style.color = '#059669';
       doneBtn.style.borderColor = '#bbf7d0';
-      doneBtn.disabled = true;
+      doneBtn.style.cursor = 'default';
+      doneBtn.disabled = false;
     } else {
       doneBtn.textContent = '已完成';
       doneBtn.style.background = '#1263e6';
@@ -3627,10 +3727,10 @@ function doSaveStep5Schema() {
   createSmartSheet();
 }
 
-async function doRegenerateStep5() {
-  if (!confirm('重新生成会覆盖当前的 Demo 方案，确定要重新生成吗？')) return;
+async function doRegenerateStep5(silent) {
+  if (!silent && !confirm('重新生成会覆盖当前的 Demo 方案，确定要重新生成吗？')) return;
   var c = getClient(currentClientId);
-  if (!c.step4_presales && !c.step4_report && !c.transcript) {
+  if (!c.step4_presales && !c.step4_report && !c.transcript && !Array.isArray(c.step4_presales_versions) && !Array.isArray(c.step4_technical_versions)) {
     alert('请先生成售前方案（Step4）再生成 Demo'); return;
   }
   window._generatingStep5 = true;
@@ -4491,8 +4591,30 @@ function renderStep3Summary(c) {
 
 function renderSummaryReadable(report) {
   if (!report) return '';
-  if (typeof report === 'string') return '<div style="font-size:13px;color:#344054;line-height:1.8">' + report.replace(/\n/g, '<br>') + '</div>';
   var EMPTY = '<div style="color:#98a2b3;font-size:13px;font-style:italic">未提取到</div>';
+  // 字符串直接渲染
+  if (typeof report === 'string') {
+    if (!report.trim()) return EMPTY;
+    return '<div style="font-size:13px;color:#344054;line-height:1.8">' + report.replace(/\n/g, '<br>') + '</div>';
+  }
+  // 非对象也尝试字符串化
+  if (typeof report !== 'object') {
+    var s = String(report);
+    if (!s || s === 'undefined' || s === 'null') return EMPTY;
+    return '<div style="font-size:13px;color:#344054;line-height:1.8">' + s.replace(/\n/g, '<br>') + '</div>';
+  }
+  // 处理 {_raw: "```json\n{...}\n```"} 格式（后端降级存储格式）
+  if (report._raw && typeof report._raw === 'string') {
+    var raw = report._raw;
+    // 去掉 markdown 代码块标记
+    var jsonStr = raw.replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim();
+    try {
+      report = JSON.parse(jsonStr);
+    } catch (e) {
+      // 解析失败则直接渲染原始文本
+      return '<div style="font-size:13px;color:#344054;line-height:1.8">' + raw.replace(/\n/g, '<br>') + '</div>';
+    }
+  }
   var html = '';
   // 客户现状
   if (report.customerCurrentState) {
@@ -4763,6 +4885,7 @@ function renderArtifacts() {
       actions += '<button class="art-btn" onclick="doPreviewStep1()">预览</button>';
       if (item.hasWecomDoc) {
         actions += '<a class="art-btn success" href="' + item.wecomUrl + '" target="_blank">查看企微文档</a>';
+        actions += '<button class="art-btn" onclick="doCreateStep1WecomDoc()">再次生成</button>';
       } else {
         actions += '<button class="art-btn" id="step1-wecom-create-btn" onclick="doCreateStep1WecomDoc()">生成企微文档</button>';
       }
