@@ -90,9 +90,50 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .action-link{color:var(--blue);cursor:pointer;font-size:12px;font-weight:700;margin-right:8px}
 .action-link:hover{text-decoration:underline}
 .code-tag{font-family:monospace;background:#f0f4f8;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:700;color:var(--text)}
+
+/* Admin login overlay */
+.login-overlay{position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;align-items:center;justify-content:center}
+.login-overlay.hidden{display:none}
+.login-box{background:#fff;border-radius:24px;box-shadow:0 24px 60px rgba(20,34,64,.15);padding:40px;width:400px;max-width:90vw}
+.login-box h2{font-size:22px;font-weight:900;margin-bottom:6px;color:var(--text)}
+.login-box p{font-size:13px;color:var(--text3);margin-bottom:28px}
+.login-box .form-group{margin-bottom:18px}
+.login-box .form-group label{display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px}
+.login-box .form-group input{width:100%;padding:11px 14px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:inherit;outline:0;transition:.15s}
+.login-box .form-group input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(18,99,230,.1)}
+.login-box .btn-submit{width:100%;padding:13px;border-radius:10px;background:var(--blue);color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s}
+.login-box .btn-submit:hover{background:var(--blue-dark);transform:translateY(-1px)}
+.login-box .btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.login-box .error-msg{color:#dc2626;font-size:12px;margin-top:10px;padding:8px 12px;background:#fef2f2;border-radius:6px;display:none}
+.login-box .error-msg.show{display:block}
+.login-box .switch-link{text-align:center;margin-top:16px;font-size:13px;color:var(--text3)}
+.login-box .switch-link a{color:var(--blue);font-weight:700;cursor:pointer;text-decoration:none}
 </style>
 </head>
 <body>
+
+<!-- Admin login overlay -->
+<div class="login-overlay" id="admin-login-overlay">
+  <div class="login-box">
+    <h2>管理后台登录</h2>
+    <p>输入管理员账号信息登录</p>
+    <div id="admin-login-error" class="error-msg"></div>
+    <div class="form-group">
+      <label>用户名</label>
+      <input type="text" id="admin-login-username" placeholder="请输入用户名" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>密码</label>
+      <input type="password" id="admin-login-password" placeholder="请输入密码" autocomplete="current-password">
+    </div>
+    <button class="btn-submit" id="admin-login-btn" onclick="doAdminLogin()">登录</button>
+    <div class="switch-link">
+      <a href="login.html">返回服务商登录</a>
+    </div>
+  </div>
+</div>
+
+
 
 <div class="header">
   <div class="header-left">
@@ -233,7 +274,52 @@ async function api(url, opts = {}) {
 function logout() {
   localStorage.removeItem('provider-token');
   localStorage.removeItem('provider-auto-login');
-  window.location.href = 'login.html';
+  document.getElementById('admin-login-overlay').classList.remove('hidden');
+  document.querySelector('.header').style.display = 'none';
+  document.querySelector('.main').style.display = 'none';
+}
+
+async function doAdminLogin() {
+  const username = document.getElementById('admin-login-username').value.trim();
+  const password = document.getElementById('admin-login-password').value;
+  const errorEl = document.getElementById('admin-login-error');
+  const btn = document.getElementById('admin-login-btn');
+  errorEl.classList.remove('show');
+  errorEl.textContent = '';
+  if (!username || !password) { errorEl.textContent = '请输入用户名和密码'; errorEl.classList.add('show'); return; }
+  btn.disabled = true;
+  btn.textContent = '登录中…';
+  try {
+    const resp = await fetch(API_BASE + '/api/test-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await resp.json();
+    if (data.access_token) {
+      localStorage.setItem('provider-token', data.access_token);
+      localStorage.setItem('provider-auto-login', 'true');
+      document.getElementById('admin-login-overlay').classList.add('hidden');
+      document.querySelector('.header').style.display = '';
+      document.querySelector('.main').style.display = '';
+      document.getElementById('user-greet').textContent = data.user?.username || username;
+      loadAll();
+    } else {
+      errorEl.textContent = data.detail || '登录失败';
+      errorEl.classList.add('show');
+    }
+  } catch(e) {
+    errorEl.textContent = '网络错误，请稍后重试';
+    errorEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '登录';
+  }
+}
+
+function loadAll() {
+  loadStats();
+  loadUsers();
 }
 
 function switchTab(name) {
@@ -369,7 +455,14 @@ function esc(s) {
 }
 
 async function init() {
-  if (!getToken()) { logout(); return; }
+  if (!getToken()) {
+    document.querySelector('.header').style.display = 'none';
+    document.querySelector('.main').style.display = 'none';
+    return;
+  }
+  document.getElementById('admin-login-overlay').classList.add('hidden');
+  document.querySelector('.header').style.display = '';
+  document.querySelector('.main').style.display = '';
   await loadStats();
   await loadUsers();
 }
