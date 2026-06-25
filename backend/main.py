@@ -186,10 +186,12 @@ async def register(user: dict):
     if types < 2:
         raise HTTPException(status_code=400, detail="密码必须包含至少2种不同字符类型")
 
-    # 校验受邀码
-    is_valid, error_msg = validate_invitation_code(invitation_code, provider_name)
+    # 校验受邀码（返回 provider_name 以邀请码为准）
+    is_valid, error_msg, prov_from_code = validate_invitation_code(invitation_code, provider_name)
     if not is_valid:
         raise HTTPException(status_code=400, detail=error_msg)
+    # 企业名称以邀请码为准（防止注册页伪造）
+    provider_name = prov_from_code
 
     conn = get_db()
     cursor = conn.cursor()
@@ -223,6 +225,14 @@ async def register(user: dict):
         "token_type": "bearer",
         "user": {"id": user_id, "username": username, "provider_name": provider_name}
     }
+
+@app.get("/api/invitation-code/{code}")
+async def get_invitation_code_info(code: str):
+    """查询邀请码对应的企业名称（注册页预填用）"""
+    is_valid, error_msg, provider_name = validate_invitation_code(code)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_msg)
+    return {"provider_name": provider_name}
 
 @app.post("/api/auth/login", response_model=dict)
 async def login(user: UserLogin):
@@ -543,6 +553,165 @@ async def get_knowledge_stats(user: dict = Depends(require_auth)):
 
     conn.close()
     return stats
+
+# ==================== 管理后台 API ====================
+import secrets
+import string
+
+@app.get("/api/admin/stats")
+async def admin_stats(user: dict = Depends(require_auth)):
+    """管理后台统计数据"""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # 注册用户数
+    cursor.execute("SELECT COUNT(*) FROM users")
+    total_users = cursor.fetchone()[0]
+
+    # 今日新增
+    cursor.execute("SELECT COUNT(*) FROM users WHERE date(created_at) = date('now')")
+    today_users = cursor.fetchone()[0]
+
+    # 客户总数
+    cursor.execute("SELECT COUNT(*) FROM clients")
+    total_clients = cursor.fetchone()[0]
+
+    # 已分配受邀码
+    cursor.execute("SELECT COUNT(*) FROM invitation_codes WHERE used > 0")
+    assigned_codes = cursor.fetchone()[0]
+
+    # 可用受邀码
+    cursor.execute("SELECT COUNT(*) FROM invitation_codes WHERE used < max_users OR max_users IS NULL")
+    available_codes = cursor.fetchone()[0]
+
+    conn.close()
+    return {
+        "total_users": total_users,
+        "today_users": today_users,
+        "total_clients": total_clients,
+        "assigned_codes": assigned_codes,
+        "available_codes": available_codes,
+    }
+
+@app.get("/api/admin/users")
+async def admin_list_users(user: dict = Depends(require_auth)):
+    """服务商用户列表"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT u.id, u.username, u.provider_name, u.created_at,
+               (SELECT COUNT(*) FROM clients WHERE user_id = u.id) as client_count
+        FROM users u ORDER BY u.id DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"id": r["id"], "username": r["username"], "provider_name": r["provider_name"],
+             "created_at": r["created_at"], "client_count": r["client_count"]} for r in rows]
+
+@app.delete("/api/admin/users/{uid}")
+async def admin_delete_user(uid: int, user: dict = Depends(require_auth)):
+    """删除服务商用户"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM users WHERE id = ?", (uid,))
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+@app.get("/api/admin/clients")
+async def admin_list_clients(user: dict = Depends(require_auth)):
+    """所有客户列表"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT c.id, c.name, c.industry, c.status, c.created_at, u.provider_name
+        FROM clients c JOIN users u ON c.user_id = u.id
+        ORDER BY c.id DESC LIMIT 200
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"id": r["id"], "name": r["name"], "industry": r["industry"],
+             "status": r["status"], "created_at": r["created_at"],
+             "provider_name": r["provider_name"]} for r in rows]
+
+@app.get("/api/admin/invitation-codes")
+async def admin_list_codes(user: dict = Depends(require_auth)):
+    """受邀码列表"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT ic.id, ic.code, ic.provider_name, ic.used, ic.max_users, ic.created_at,
+               u.username as used_by_username
+        FROM invitation_codes ic
+        LEFT JOIN users u ON ic.used_by = u.id
+        ORDER BY ic.id DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    return [{"id": r["id"], "code": r["code"], "provider_name": r["provider_name"],
+             "used": r["used"], "max_users": r["max_users"] or 1,
+             "created_at": r["created_at"],
+             "used_by_username": r["used_by_username"] or "-"} for r in rows]
+
+@app.post("/api/admin/invitation-codes")
+async def admin_create_code(body: dict, user: dict = Depends(require_auth)):
+    """创建受邀码"""
+    provider_name = body.get("provider_name", "").strip()
+    max_users = int(body.get("max_users", 1))
+
+    if not provider_name:
+        raise HTTPException(status_code=400, detail="服务商名称不能为空")
+
+    # 生成随机码
+    chars = string.ascii_uppercase + string.digits
+    code = ''.join(secrets.choice(chars) for _ in range(8))
+    # 确保不重复
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM invitation_codes WHERE code = ?", (code,))
+    while cursor.fetchone():
+        code = ''.join(secrets.choice(chars) for _ in range(8))
+        cursor.execute("SELECT id FROM invitation_codes WHERE code = ?", (code,))
+
+    cursor.execute(
+        "INSERT INTO invitation_codes (code, provider_name, max_users) VALUES (?, ?, ?)",
+        (code, provider_name, max_users)
+    )
+    conn.commit()
+    code_id = cursor.lastrowid
+    conn.close()
+    return {"id": code_id, "code": code, "provider_name": provider_name, "max_users": max_users}
+
+@app.delete("/api/admin/invitation-codes/{code_id}")
+async def admin_delete_code(code_id: int, user: dict = Depends(require_auth)):
+    """删除受邀码"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM invitation_codes WHERE id = ?", (code_id,))
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+@app.post("/api/admin/invitation-codes/{code_id}/reset")
+async def admin_reset_code(code_id: int, user: dict = Depends(require_auth)):
+    """重置受邀码（生成新码）"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT provider_name, max_users FROM invitation_codes WHERE id = ?", (code_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="受邀码不存在")
+
+    chars = string.ascii_uppercase + string.digits
+    new_code = ''.join(secrets.choice(chars) for _ in range(8))
+    cursor.execute(
+        "UPDATE invitation_codes SET code = ?, used = 0, used_by = NULL WHERE id = ?",
+        (new_code, code_id)
+    )
+    conn.commit()
+    conn.close()
+    return {"code": new_code}
 
 # ==================== 知识库文件管理 ====================
 

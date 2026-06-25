@@ -107,41 +107,46 @@ def require_auth(user: dict = Depends(get_current_user)) -> dict:
         raise HTTPException(status_code=401, detail="请先登录")
     return user
 
-def validate_invitation_code(code: str, provider_name: str) -> tuple:
+def validate_invitation_code(code: str, provider_name: str = None) -> tuple:
     """校验受邀码
-    返回 (is_valid, error_message)
-    受邀码必须与服务商名称匹配
+    返回 (is_valid, error_message, provider_name)
+    受邀码不校验企业名称（注册页企业名称已预填）
     """
     if not code:
-        return False, "受邀码不能为空"
-    if not provider_name:
-        return False, "服务商名称不能为空"
+        return False, "受邀码不能为空", None
 
     from database import get_db
     conn = get_db()
     cursor = conn.cursor()
 
     # 查找受邀码
-    cursor.execute("SELECT id, provider_name, used, used_by FROM invitation_codes WHERE code = ?", (code,))
+    cursor.execute("SELECT id, provider_name, max_users FROM invitation_codes WHERE code = ?", (code,))
     row = cursor.fetchone()
+    if not row:
+        conn.close()
+        return False, "受邀码无效", None
+
+    prov_name = row['provider_name']
+    max_users = row['max_users'] or 1
+
+    # 统计该企业已有用户数
+    cursor.execute("SELECT COUNT(*) FROM users WHERE provider_name = ?", (prov_name,))
+    user_count = cursor.fetchone()[0]
     conn.close()
 
-    if not row:
-        return False, "受邀码无效"
-    if row['used'] == 1:
-        return False, "受邀码已被使用"
-    if row['provider_name'] != provider_name:
-        return False, "受邀码与服务商名称不匹配"
+    if user_count >= max_users:
+        return False, f"该企业注册名额已满（{max_users}人）", prov_name
 
-    return True, ""
+    return True, "", prov_name
 
 def mark_invitation_code_used(code: str, user_id: int):
-    """标记受邀码已使用"""
+    """标记受邀码已使用（人数+1）"""
     from database import get_db
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("UPDATE invitation_codes SET used = 1, used_by = ? WHERE code = ?", (user_id, code))
+    cursor.execute("UPDATE invitation_codes SET used = used + 1, used_by = ? WHERE code = ?", (user_id, code))
     conn.commit()
+    conn.close()
     # 注意：不关闭连接，因为 get_db() 返回全局单例
 
 def seed_invitation_codes():

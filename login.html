@@ -198,6 +198,16 @@ const API_BASE = 'http://localhost:8000';
 const TOKEN_KEY = 'provider-token';
 const AUTO_LOGIN_KEY = 'provider-auto-login';
 
+// 检测邀请码链接参数，有则跳转到注册页
+(function checkInviteCode() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code) {
+        window.location.href = 'register.html?code=' + encodeURIComponent(code);
+        return;
+    }
+})();
+
 // 自动登录检查
 async function checkAutoLogin() {
     const autoLogin = localStorage.getItem(AUTO_LOGIN_KEY);

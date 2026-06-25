@@ -258,10 +258,18 @@ def init_db_legacy():
             provider_name TEXT NOT NULL,
             used INTEGER DEFAULT 0,
             used_by INTEGER,
+            max_users INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (used_by) REFERENCES users(id)
         )
     """)
+
+    # 补全 invitation_codes 表缺失的 max_users 列
+    try:
+        cursor.execute("ALTER TABLE invitation_codes ADD COLUMN max_users INTEGER DEFAULT 1")
+        conn.commit()
+    except Exception:
+        pass
 
     conn.commit()
     print(f"数据库初始化完成（Legacy SQLite）")
