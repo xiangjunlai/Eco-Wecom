@@ -6,6 +6,7 @@ import os
 import json
 import re
 from pathlib import Path
+from string import Template
 from datetime import datetime
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form
@@ -34,7 +35,7 @@ def call_mcp(tool_name: str, arguments: dict) -> dict:
     """调用企微 CLI API"""
     import subprocess, json
     args_str = json.dumps(arguments, ensure_ascii=False)
-    cmd = ["wecom-cli", "doc", tool_name, args_str]
+    cmd = [str(Path(__file__).parent / "node_modules" / ".bin" / "wecom-cli"), "doc", tool_name, args_str]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         if result.returncode != 0:
@@ -323,10 +324,14 @@ async def dev_login(user: dict):
 @app.post("/api/auth/auto-login")
 async def auto_login(body: dict, user: dict = Depends(require_auth)):
     """自动登录 - 检查token是否有效"""
-    return {
-        "success": True,
-        "user": {"id": user["user_id"], "username": user["sub"]}
-    }
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT username, provider_name FROM users WHERE id = ?", (user["user_id"],))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return {"success": True, "user": {"id": user["user_id"], "username": row[0], "provider_name": row[1]}}
+    return {"success": True, "user": {"id": user["user_id"], "username": user["sub"]}}
 
 @app.get("/api/auth/me")
 async def get_me(user: dict = Depends(require_auth)):
@@ -1013,7 +1018,7 @@ async def update_client(client_id: str, data: dict, user: dict = Depends(require
 
     # 更新字段（前端发 is_completed/is_saved，数据库列名是 _completed/_saved）
     FIELD_MAP = {"is_completed": "_completed", "is_saved": "_saved"}
-    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions", "step4_input_draft", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url", "is_completed", "is_saved", "company_type", "main_customers", "possible_focus", "company_intro"]
+    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions", "step4_input_draft", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url", "_step4_publish_url", "_step4_technical_publish_url", "_notes_wecom_docid", "_notes_wecom_url", "is_completed", "is_saved", "company_type", "main_customers", "possible_focus", "company_intro"]
     updates = []
     values = []
     for field in allowed_fields:
@@ -1874,7 +1879,8 @@ def validate_requirement_doc(word_content, requirement_data=None):
     check_table("smartTableDeliveryTable", word_content.get("smartTableDeliveryTable"))
 
     # 6. 检查行业/场景识别错误
-    industry_wrong = ["家居定制装修", "家居装修", "装修", "全屋定制"]
+    # 精确匹配错误行业（仅针对"家居装修误识别"场景，不拒正常含"装修"词根的行业如"建筑装饰"）
+    industry_wrong_exact = ["家居定制装修", "家居装修", "全屋定制"]
     scenario = _safe(word_content.get("scenarioBoundary", {}).get("scenarioJudgement", ""))
     cust_info = word_content.get("customerInfoTable", [])
     industry_val = ""
@@ -1882,7 +1888,7 @@ def validate_requirement_doc(word_content, requirement_data=None):
         if _safe(row.get("field", "")) == "行业":
             industry_val = _safe(row.get("value", ""))
             break
-    if any(w in industry_val for w in industry_wrong):
+    if industry_val in industry_wrong_exact:
         errors.append(f"行业识别错误：'{industry_val}'（应为设计/景观建筑-跨国多区域项目管理）")
     if "家居" in scenario or "家居定制" in scenario:
         errors.append(f"场景判断错误：'{scenario}'")
@@ -1919,13 +1925,13 @@ def validate_requirement_doc(word_content, requirement_data=None):
 
 STEP1_SYSTEM_PROMPT = """你是一个售前调研顾问，擅长通过提问把握客户需求背景，并生成有深度的调研材料。"""
 
-STEP1_USER_PROMPT = """## 客户基本信息
-- 客户名称：{company_name}
-- 行业：{industry}
-- 规模：{scale}
-- 需求标签：{tags}
-- 原始需求：{initial_demand}
-- AI 补充简介：{company_intro}
+STEP1_USER_PROMPT = Template("""## 客户基本信息
+- 客户名称：${company_name}
+- 行业：${industry}
+- 规模：${scale}
+- 需求标签：${tags}
+- 原始需求：${initial_demand}
+- AI 补充简介：${company_intro}
 
 ## 生成要求
 
@@ -1962,11 +1968,11 @@ STEP1_USER_PROMPT = """## 客户基本信息
 - question 要具体到客户可能存在的具体场景和情况
 
 **industry_experience（行业经验）：生成 2-3 条**
-基于 {industry} 行业知识，每条 {question, note}：
+基于 ${industry} 行业知识，每条 {question, note}：
 - question：行业内常见坑或经验，如"该行业通常在哪个环节容易出问题"
 - note：具体说明，约 30 字
 
-直接输出 JSON，不要 markdown 代码块。"""
+直接输出 JSON，不要 markdown 代码块。""")
 
 
 @app.post("/api/question_list")
@@ -1979,7 +1985,7 @@ async def question_list(body: dict, user: dict = Depends(require_auth)):
     initial_demand = body.get("initial_demand", "")
     company_intro = body.get("company_intro", "")
 
-    user_prompt = STEP1_USER_PROMPT.format(
+    user_prompt = STEP1_USER_PROMPT.substitute(
         company_name=company_name,
         industry=industry,
         scale=scale or "未填写",
@@ -2251,17 +2257,24 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
     # ====== Step 2: Prompt 4 → Word 内容 ======
     if artifact_type in ("both", "presales", "word"):
         word_prompt = STEP4_WORD_PROMPT.replace("{requirement_data}", req_json_str)
-        word_raw = call_minimax(STEP4_WORD_PROMPT, word_prompt, max_tokens=8000)
-        word_content = parse_json_response(word_raw)
-        if word_content:
-            # 质检
-            v = validate_requirement_doc(word_content, requirement_data)
-            if not v["pass"]:
+        word_content = None
+        for attempt in range(3):
+            word_raw = call_minimax(STEP4_WORD_PROMPT, word_prompt, max_tokens=8000)
+            word_content = parse_json_response(word_raw)
+            if word_content:
+                v = validate_requirement_doc(word_content, requirement_data)
+                if v["pass"]:
+                    break
+                if attempt < 2:
+                    continue  # 重试
                 return {
                     "success": False,
-                    "error": "生成结果未通过质检：\n" + "\n".join(v["errors"]),
+                    "error": "生成结果未通过质检（已重试 2 次）：\n" + "\n".join(v["errors"]),
                     "validation": v
                 }
+            elif attempt >= 2:
+                return {"success": False, "error": "Word 内容生成失败（输出截断），请稍后重试"}
+        if word_content:
             result["wordContent"] = word_content
 
     # ====== Step 3: Prompt 5 → HTML 内容 ======
@@ -2397,6 +2410,30 @@ STEP5_AGENT_PROMPT = """你是一个企业微信智能表格 AI 增强专家。�
 直接输出 JSON 数组，不要 markdown 代码块，不要任何前缀文字。"""
 
 
+@app.post("/api/step4/publish")
+async def publish_step4_report(body: dict, user: dict = Depends(require_auth)):
+    """将 Step4 HTML 方案发布为可分享的外链"""
+    client_id = body.get("client_id")
+    html_content = body.get("html_content", "")
+    doc_type = body.get("type", "presales")  # "presales" or "technical"
+
+    if not client_id:
+        return {"success": False, "error": "缺少 client_id"}
+    if not html_content:
+        return {"success": False, "error": "缺少 html_content"}
+
+    # 保存到 /var/www/provider-assist/public/s/{client_id}_step4.html（默认）
+    # 或 {client_id}_step4_technical.html（type=technical）
+    share_dir = Path("/var/www/provider-assist/public/s")
+    share_dir.mkdir(parents=True, exist_ok=True)
+    suffix = "_technical" if doc_type == "technical" else ""
+    filepath = share_dir / f"{client_id}_step4{suffix}.html"
+    filepath.write_text(html_content, encoding="utf-8")
+
+    url = f"http://sining.cloud/s/{client_id}_step4{suffix}.html"
+    return {"success": True, "url": url}
+
+
 @app.post("/api/step5/agent-suggest")
 async def step5_agent_suggest(body: dict, user: dict = Depends(require_auth)):
     """生成 Step5 AI 增强建议"""
@@ -2415,6 +2452,9 @@ async def step5_agent_suggest(body: dict, user: dict = Depends(require_auth)):
             schema = json.loads(schema)
         except:
             schema = {}
+
+    if not schema:
+        return {"success": False, "error": "请先生成智能表格 Schema（Step5）"}
 
     # 构建 schema 摘要用于 prompt
     sheets = schema.get("sheets") or []

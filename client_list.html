@@ -581,7 +581,7 @@ var STAGE_BADGE_CLASS = {
 };
 
 function getStage(c) {
-  if (c._completed) return 'done';
+  if (c.is_completed || c._completed) return 'done';
   if (c.step5_schema) return 'step5';
   if (c.step4_presales || c.step4_technical || c.step4_report) return 'step4';
   if (c.transcript || (c.note_count > 0)) return 'step3';
@@ -977,13 +977,13 @@ function deleteClient(id) {
 function openClient(id) {
   var numId = Number(id);
   var c = _backendClients.find(function(x) { return x.id === numId || String(x.id) === String(id); });
-  if (!c) { location.href = 'workbench?client_id=' + encodeURIComponent(id); return; }
+  if (!c) { location.href = 'workbench.html?client_id=' + encodeURIComponent(id); return; }
   var stage = getStage(c);
-  location.href = 'workbench?client_id=' + encodeURIComponent(id) + '&step=' + stage;
+  location.href = 'workbench.html?client_id=' + encodeURIComponent(id) + '&step=' + stage;
 }
 
 function goNewClient() {
-  location.href = 'workbench?new=1';
+  location.href = 'workbench.html?new=1';
 }
 
 // ===== TABS =====
@@ -1434,7 +1434,7 @@ document.querySelectorAll('.kb-filter-tab').forEach(function(tab) {
 
 // New client button
 document.getElementById('btn-new-client').addEventListener('click', function() {
-  location.href = 'workbench?new=1';
+  location.href = 'workbench.html?new=1';
 });
 
 // Init

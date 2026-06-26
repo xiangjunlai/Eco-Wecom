@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/logo.jpg">
 <title>服务商助手 - 工作台</title>
 <style>
 :root{
@@ -1055,6 +1056,11 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 	              <button class="btn secondary" id="s4-input-edit-btn" onclick="toggleS4InputEdit()" style="height:30px;font-size:12px;padding:0 14px;border-radius:8px">编辑</button>
 	            </div>
 	          </div>
+	          <!-- 无内容时的空状态提示 -->
+	          <div id="s4-empty-hint" style="display:none;text-align:center;padding:32px 16px;color:#667085">
+	            <div style="font-size:14px;margin-bottom:8px">⚠️ 方案输入确认单暂无内容</div>
+	            <div style="font-size:12px">请先在 Step3 生成 AI 摘要，或在下方编辑区手动填入内容</div>
+	          </div>
 	          <!-- 4个折叠组 -->
 	          <div class="s4-group" id="s4-group-status">
 	            <div class="s4-ghead" onclick="toggleS4Group('status')">
@@ -1123,7 +1129,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 			      <div>
 			        <div style="font-size:13px;color:#667085">面向客户汇报，展示方案价值、建设模块与二期预留方向</div>
 			      </div>
-			      <button class="btn primary" id="s4-presales-btn" onclick="generateStep4Technical()" style="height:34px;font-size:13px">生成</button>
+			      <button class="btn primary" id="s4-presales-btn" onclick="generateStep4Technical()" style="height:34px;font-size:13px">生成 HTML</button>
 			    </div>
 			    <div id="s4-presales-history" style="display:none">
 			      <div class="history-toggle" onclick="togglePresalesHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;margin-top:4px">
@@ -1145,7 +1151,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 			      <div>
 			        <div style="font-size:13px;color:#667085">正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题</div>
 			      </div>
-			      <button class="btn primary" id="s4-technical-btn" onclick="generateStep4Presales()" style="height:34px;font-size:13px">生成</button>
+			      <button class="btn primary" id="s4-technical-btn" onclick="generateStep4Presales()" style="height:34px;font-size:13px">生成 Word</button>
 			    </div>
 			    <div id="s4-technical-history" style="display:none">
 			      <div class="history-toggle" onclick="toggleTechnicalHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;margin-top:4px">
@@ -1317,12 +1323,22 @@ const PROVIDER_KEY = 'provider-assist-name';
 const TOKEN_KEY = 'provider-token';
 let currentClientId = null;
 let currentStep = 1;
-let currentSort = 'updated';
+let currentSort = localStorage.getItem('pa-sort') || 'updated';
 let debounceTimer = null;
 let _backendClientCache = {};
 
 // ==================== AUTH ====================
 function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
+function decodeTokenPayload(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length >= 2) {
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return payload;
+    }
+  } catch(e) {}
+  return null;
+}
 function getAuthHeaders() {
   const token = getToken();
   return token ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } : { 'Content-Type': 'application/json' };
@@ -1533,10 +1549,15 @@ function showSimpleLoadingModal(titleText, subtitleText, onComplete) {
 
   modal.classList.add('active');
 
-  // Animate progress bar
+  // Animate progress bar — driven by window._step5Pct if set, else gentle auto-increment
   let pct = 0;
   var tick = setInterval(() => {
-    pct = Math.min(pct + Math.random() * 8 + 3, 78);
+    // 如果外部更新了 _step5Pct，跟进它；否则自己慢慢涨（上限 95%，等真正完成才到 100%）
+    if (window._step5Pct != null && window._step5Pct > pct) {
+      pct = Math.min(window._step5Pct, 95);
+    } else {
+      pct = Math.min(pct + Math.random() * 6 + 2, 95);
+    }
     simpleBar.style.width = pct + '%';
     simplePct.textContent = Math.round(pct) + '%';
   }, 200);
@@ -1705,6 +1726,13 @@ function closeClientDropdownOutside(e) {
   }
 }
 
+function refreshClientDropdown() {
+  const list = document.getElementById('client-dropdown-list');
+  if (!list) return;
+  const localClients = getClients();
+  renderDropdownClients(localClients, list);
+}
+
 function renderClientDropdownList() {
   const list = document.getElementById('client-dropdown-list');
   if (!list) return;
@@ -1790,7 +1818,8 @@ function loadStepData(n) {
       setTimeout(() => {
         showSimpleLoadingModal('正在生成智能表格 Demo…（约 5-10 秒）', '智能表格 + Agent 建议将同时生成', async () => {
           await doRegenerateStep5(true);
-          await doGenerateAgentSuggest(true);
+          // Agent 建议在后台独立生成，不阻塞模态框关闭
+          doGenerateAgentSuggest(true);
         });
       }, 100);
     }
@@ -1803,9 +1832,14 @@ function loadStepData(n) {
 
 // ==================== CLIENT LIST ====================
 function renderClientList() {
+  // 客户列表页面不存在时直接跳过（如 step5 页面）
+  const subtitleEl = document.getElementById('list-subtitle');
+  if (!subtitleEl) return;
+
   const clients = getClients();
-  const filterIndustry = document.getElementById('filter-industry').value;
-  const filterStage = document.getElementById('filter-stage').value;
+  var fiEl = document.getElementById('filter-industry');
+  const filterIndustry = fiEl ? fiEl.value : '';
+  const filterStage = currentStageFilter;
 
   let filtered = clients;
   if (filterIndustry) filtered = filtered.filter(c => c.industry === filterIndustry);
@@ -1815,23 +1849,31 @@ function renderClientList() {
   else if (currentSort === 'name') filtered.sort((a,b) => a.name.localeCompare(b.name));
   else if (currentSort === 'progress') filtered.sort((a,b) => getProgress(b) - getProgress(a));
 
-  document.getElementById('list-subtitle').textContent = `共 ${clients.length} 个客户`;
+  subtitleEl.textContent = `共 ${clients.length} 个客户`;
   const grid = document.getElementById('client-list-grid');
   const empty = document.getElementById('empty-list');
 
   if (filtered.length === 0) {
-    grid.innerHTML = '';
-    empty.style.display = clients.length === 0 ? 'grid' : 'none';
+    if (grid) grid.innerHTML = '';
+    if (empty) empty.style.display = clients.length === 0 ? 'grid' : 'none';
     return;
   }
-  empty.style.display = 'none';
-  grid.innerHTML = filtered.map(c => renderClientCard(c)).join('');
+  if (empty) empty.style.display = 'none';
+  if (grid) grid.innerHTML = filtered.map(c => renderClientCard(c)).join('');
 
   const allIndustries = [...new Set(clients.map(c => c.industry).filter(Boolean))];
   const sel = document.getElementById('filter-industry');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">全部行业</option>' + allIndustries.map(i => `<option>${i}</option>`).join('');
-  sel.value = cur;
+  const cur = sel ? sel.value : '';
+  if (sel) sel.innerHTML = '<option value="">全部行业</option>' + allIndustries.map(i => `<option>${i}</option>`).join('');
+  if (sel) sel.value = cur;
+
+  // 更新阶段 pill 计数
+  const counts = { '': clients.length, step1: 0, step2: 0, step3: 0, step4: 0, step5: 0, done: 0 };
+  clients.forEach(c => { const s = getStage(c); if (counts[s] !== undefined) counts[s]++; });
+  ['count-all','count-1','count-2','count-3','count-4','count-5','count-done'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = counts[['','step1','step2','step3','step4','step5','done'][i]];
+  });
 }
 
 
@@ -1976,6 +2018,7 @@ function setView(view) {
 
 function setSort(sort) {
   currentSort = sort;
+  localStorage.setItem('pa-sort', sort);
   document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === sort));
   renderClientList();
 }
@@ -2003,7 +2046,7 @@ function deleteClient(id) {
 }
 
 function openClient(id) {
-  location.href = 'workbench?client_id=' + encodeURIComponent(id);
+  location.href = 'workbench.html?client_id=' + encodeURIComponent(id);
 }
 
 function goStep1() {
@@ -2026,11 +2069,16 @@ function goStep1() {
   };
   clients.push(newClient);
   saveClients(clients);
-  location.href = 'workbench?client_id=' + encodeURIComponent(newClient.id);
+  location.href = 'workbench.html?client_id=' + encodeURIComponent(newClient.id);
 }
 
 function loadClientsList() {
   window._clients = getClients();
+  // 恢复阶段筛选状态
+  currentStageFilter = localStorage.getItem('pa-stage-filter') || '';
+  document.querySelectorAll('.stage-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.stage === currentStageFilter);
+  });
   renderClientList();
 }
 
@@ -2041,6 +2089,7 @@ document.addEventListener('click', (e) => {
   document.querySelectorAll('.stage-pill').forEach(p => p.classList.remove('active'));
   pill.classList.add('active');
   currentStageFilter = pill.dataset.stage || '';
+  localStorage.setItem('pa-stage-filter', currentStageFilter);
   renderClientList();
 });
 
@@ -2184,9 +2233,8 @@ function toggleAISearch() {
 
 function setAIIndicator(state, text) {
   const indicator = document.getElementById('s1-ai-indicator');
-  const statusText = document.getElementById('s1-ai-status-text');
+  if (!indicator) return;
   indicator.className = 'ai-panel-indicator ' + state;
-  statusText.textContent = text;
   if (state === 'loading') {
     indicator.innerHTML = '<span class="pulse"></span><span id="s1-ai-status-text">AI 智搜中...</span>';
   } else if (state === 'success') {
@@ -2572,10 +2620,31 @@ async function doRegenerateStep3() {
   });
 }
 
-function doStep3Next() {
+async function doStep3Next() {
   const c = getClient(currentClientId);
   if (!c.uploaded_files || c.uploaded_files.length === 0) {
     showToast('请先添加沟通记录');
+    return;
+  }
+  if (!c.step3_summary) {
+    // step3_summary 不存在，先遮罩生成
+    showSimpleLoadingModal('正在生成方案输入确认单……', 'AI 正在分析沟通记录', async () => {
+      try {
+        var resp = await fetch(API_BASE + '/api/reports/generate', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ transcript: c.transcript || '', industry: c.industry || '' })
+        });
+        var data = await resp.json();
+        if (data.summary) {
+          updateClient(currentClientId, { step3_summary: data.summary });
+        } else {
+          showToast('生成摘要失败：' + (data.error || '未知错误'));
+        }
+      } catch(e) {
+        showToast('网络错误，请重试');
+      }
+    });
     return;
   }
   go(4);
@@ -2747,6 +2816,18 @@ function autoGenerateStep4Input(c) {
   if (!c) return;
   var result = getStep4InputDefault(c);
   var d = result.draft;
+
+  // 判断编辑区是否有实质内容
+  var hasContent = !!(d.customerCurrentState || (d.painPoints && d.painPoints.length > 0) ||
+    (d.confirmedNeeds && d.confirmedNeeds.length > 0) || (d.involvedRoles && d.involvedRoles.length > 0) ||
+    (d.expectedOutcome && d.expectedOutcome.length > 0) || (d.phaseOneScope && d.phaseOneScope.length > 0));
+
+  // 无内容时显示空状态提示，隐藏折叠组
+  var emptyHint = document.getElementById('s4-empty-hint');
+  var groups = document.querySelectorAll('#page4 .s4-group');
+  if (emptyHint) emptyHint.style.display = hasContent ? 'none' : '';
+  groups.forEach(g => g.style.display = hasContent ? '' : 'none');
+
   var sourceMap = {
     'user_edited': '（用户已编辑）',
     'step3_summary': '（来自 Step3 AI 摘要）',
@@ -2958,7 +3039,7 @@ async function generateStep4Technical() {
         version: version
       });
       updateClient(currentClientId, { step4_technical_versions: versions });
-      if (data.htmlContent) doPreviewStep4Html(data.htmlContent, c2.name || c.name || '客户');
+      if (data.htmlContent) doPreviewStep4Html(data.htmlContent, c2.name || c.name || '客户', 'technical');
       renderStep4LatestTechnical(versions[versions.length - 1]);
       renderStep4History('technical', versions);
       window._technicalPct = 100;
@@ -2983,12 +3064,49 @@ async function generateStep4Technical() {
   }
 }
 
-function doPreviewStep4Html(htmlContent, customerName) {
-  // 如果是字符串直接预览，如果是对象则用 buildStep4HtmlPage 渲染
+async function doPreviewStep4Html(htmlContent, customerName, docType) {
   var html = (typeof htmlContent === 'string') ? htmlContent : buildStep4HtmlPage(htmlContent);
   var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  var url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
+  window.open(URL.createObjectURL(blob), '_blank');
+  // 同时发布到可分享链接
+  var pubKey = docType === 'technical' ? '_step4_technical_publish_url' : '_step4_publish_url';
+  try {
+    var resp = await fetch(API_BASE + '/api/step4/publish', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: currentClientId, html_content: html, type: docType || 'presales' })
+    });
+    var data = await resp.json();
+    if (data.success && data.url) {
+      var update = {}; update[pubKey] = data.url;
+      updateClient(currentClientId, update);
+      showToast('分享链接已生成：' + data.url);
+    }
+  } catch(e) { console.error('publish error:', e); }
+}
+
+async function republishStep4() {
+  var c = getClient(currentClientId);
+  if (!c) return;
+  var versions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
+  var latest = versions[versions.length - 1];
+  if (!latest || !latest.content) { showToast('无内容可发布'); return; }
+  var html = buildStep4HtmlPage(latest.content.htmlContent || latest.content);
+  try {
+    var resp = await fetch(API_BASE + '/api/step4/publish', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: currentClientId, html_content: html })
+    });
+    var data = await resp.json();
+    if (data.success && data.url) {
+      updateClient(currentClientId, { _step4_publish_url: data.url });
+      showToast('分享链接已生成');
+      renderArtifacts();
+    } else {
+      showToast('发布失败：' + (data.error || '未知错误'));
+    }
+  } catch(e) { showToast('发布失败：' + e.message); }
 }
 
 function buildStep4HtmlPage(data) {
@@ -3070,10 +3188,31 @@ function doPreviewLatestHtml() {
   if (!latest || !latest.content) { showToast('无已生成的 HTML 方案'); return; }
   var hc = latest.content.htmlContent;
   if (!hc) { showToast('HTML 内容为空'); return; }
-  // 如果是对象（未渲染的JSON），用 buildStep4HtmlPage 渲染；如果是字符串直接用
   var htmlText = (typeof hc === 'string') ? hc : buildStep4HtmlPage(hc);
-  var blob = new Blob([htmlText], { type: 'text/html;charset=utf-8' });
-  window.open(URL.createObjectURL(blob), '_blank');
+  var pubUrl = c._step4_technical_publish_url;
+  if (pubUrl) {
+    window.open(pubUrl, '_blank');
+  } else {
+    // 尚未发布，先发布再打开
+    fetch(API_BASE + '/api/step4/publish', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: currentClientId, html_content: htmlText, type: 'technical' })
+    }).then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success && data.url) {
+          updateClient(currentClientId, { _step4_technical_publish_url: data.url });
+          window.open(data.url, '_blank');
+        } else {
+          // fallback to blob
+          var blob = new Blob([htmlText], { type: 'text/html;charset=utf-8' });
+          window.open(URL.createObjectURL(blob), '_blank');
+        }
+      }).catch(function() {
+        var blob = new Blob([htmlText], { type: 'text/html;charset=utf-8' });
+        window.open(URL.createObjectURL(blob), '_blank');
+      });
+  }
 }
 
 function buildStep4WordHtml(data, customerName) {
@@ -3500,7 +3639,20 @@ function loadS5Agent() {
 
 function markClientDone() {
   if (!confirm('确认将该客户标记为已完成？完成后可在客户列表查看。')) return;
+  if (!currentClientId) { showToast('客户未选定'); return; }
   updateClient(currentClientId, { is_completed: true });
+
+  // 1. 更新侧边栏当前客户名的 ✓ 标记
+  var sbNameEl = document.getElementById('sidebar-client-name-text');
+  if (sbNameEl) {
+    var clientName = (getClient(currentClientId) || {}).name || '当前客户';
+    sbNameEl.textContent = clientName + ' ✓';
+  }
+
+  // 2. 刷新侧边栏下拉列表（从后端重新拉最新数据）
+  refreshClientDropdown();
+
+  // 3. 更新按钮样式
   var btn = document.getElementById('s5-done-btn');
   if (btn) {
     btn.textContent = '已完成 ✓';
@@ -3509,8 +3661,13 @@ function markClientDone() {
     btn.style.borderColor = '#bbf7d0';
     btn.disabled = true;
   }
-  renderClientList();
+
   showToast('已标记为完成');
+
+  // 4. 跳转到客户列表页（强制刷新以显示最新状态）
+  setTimeout(function() {
+    location.href = 'client_list.html?_t=' + Date.now();
+  }, 800);
 }
 
 function loadStep5(c) {
@@ -3730,7 +3887,9 @@ function doSaveStep5Schema() {
 async function doRegenerateStep5(silent) {
   if (!silent && !confirm('重新生成会覆盖当前的 Demo 方案，确定要重新生成吗？')) return;
   var c = getClient(currentClientId);
-  if (!c.step4_presales && !c.step4_report && !c.transcript && !Array.isArray(c.step4_presales_versions) && !Array.isArray(c.step4_technical_versions)) {
+  var hasPresalesVersions = Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0;
+  var hasTechVersions = Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0;
+  if (!c.step4_presales && !c.step4_report && !c.transcript && !hasPresalesVersions && !hasTechVersions) {
     alert('请先生成售前方案（Step4）再生成 Demo'); return;
   }
   window._generatingStep5 = true;
@@ -3767,7 +3926,7 @@ async function generateDemoSchema(c) {
   });
   if (!resp.ok) throw new Error('生成失败');
   var data = await resp.json();
-  if (!data.success || !data.demo) throw new Error(data.detail || '生成失败');
+  if (!data.success || !data.demo) throw new Error(data.error || data.detail || '生成失败');
   // step5_schema 是 JSON Schema 对象
   return data.demo;
 }
@@ -4313,11 +4472,11 @@ function viewNoteDetail(idx) {
 function deleteNote(idx) {
   if (!confirm('确定删除这条沟通记录？')) return;
   var c = getClient(currentClientId);
-  var notes = c.uploaded_files || [];
+  var notes = (c.uploaded_files || []).slice();
   notes.splice(idx, 1);
   updateClient(currentClientId, { uploaded_files: notes });
-  renderNoteList(c);
-  updateStep3NextBtn(c);
+  renderNoteList(getClient(currentClientId));
+  updateStep3NextBtn(getClient(currentClientId));
   renderArtifacts();
   showToast('已删除');
 }
@@ -4348,8 +4507,8 @@ function doSaveNote() {
   updateClient(currentClientId, { uploaded_files: notes });
   document.getElementById('s3-note-text').value = '';
   document.getElementById('s3-file-chips').innerHTML = '';
-  renderNoteList(c);
-  updateStep3NextBtn(c);
+  renderNoteList(getClient(currentClientId));
+  updateStep3NextBtn(getClient(currentClientId));
   renderArtifacts();
   showToast('已保存，Step4 将基于全部沟通记录统一提炼需求');
 }
@@ -4498,8 +4657,8 @@ function confirmUploadNote() {
   document.getElementById('s3-file-chips').innerHTML = '';
   var fi = document.getElementById('s3-file-input');
   if (fi) fi.value = '';
-  renderNoteList(c);
-  updateStep3NextBtn(c);
+  renderNoteList(getClient(currentClientId));
+  updateStep3NextBtn(getClient(currentClientId));
   renderArtifacts();
   showToast('已保存 ' + saved + ' 条沟通记录');
 }
@@ -4731,6 +4890,7 @@ function loadStep3(c) {
   updateStep3NextBtn(c);
 }
 function loadStep4(c) {
+  if (!c || !c.id) return;
   autoGenerateStep4Input(c);
   var presalesVersions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
   if (presalesVersions.length > 0) {
@@ -4836,7 +4996,7 @@ function renderArtifacts() {
   // 调研问题清单
   const hasStep1WecomDoc = !!(c._step1_wecom_docid && c._step1_wecom_url);
 	  const hasStep1Content = !!(c.step1_result);
-  items.push({ name: '调研问题清单', tag: hasStep1WecomDoc ? '已生成' : '待生成', tagCls: hasStep1WecomDoc ? '' : 'todo', pct: hasStep1Content ? 80 : 0, dataKey: 'step1_result', hasWecomDoc: hasStep1WecomDoc, wecomUrl: c._step1_wecom_url, wecomDocid: c._step1_wecom_docid, isStep1Result: true });
+  items.push({ name: '调研问题清单', tag: hasStep1Content ? '已完成' : '待生成', tagCls: hasStep1Content && !hasStep1WecomDoc ? 'todo' : '', pct: hasStep1Content ? (hasStep1WecomDoc ? 100 : 90) : 0, dataKey: 'step1_result', hasWecomDoc: hasStep1WecomDoc, wecomUrl: c._step1_wecom_url, wecomDocid: c._step1_wecom_docid, isStep1Result: true });
 
   // 沟通记录库：0/40/80/100
   const hasNotesWecomDoc = !!(c._notes_wecom_docid && c._notes_wecom_url);
@@ -4903,11 +5063,19 @@ function renderArtifacts() {
           actions += '<button class="art-btn" onclick="doCreateNotesWecomDoc()">生成企微文档</button>';
         }
       } else if (item.dataKey === 'step4_presales_versions' && Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0) {
-        // Word《需求确认 & 方案设计表》→ 下载
+        // 技术路线及报价方案（Word）
         actions += '<button class="art-btn" onclick="doDownloadLatestWord()">下载 Word</button>';
+        actions += '<button class="art-btn" onclick="generateStep4Presales()">重新生成</button>';
       } else if (item.dataKey === 'step4_technical_versions' && Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0) {
-        // 可视化方案 HTML → 新窗口预览
-        actions += '<button class="art-btn" onclick="doPreviewLatestHtml()">新窗口预览</button>';
+        // 售前解决方案（HTML）→ 预览 + 分享链接
+        actions += '<button class="art-btn" onclick="doPreviewLatestHtml()">预览</button>';
+        actions += '<button class="art-btn" onclick="generateStep4Technical()">重新生成</button>';
+        if (c._step4_technical_publish_url) {
+          actions += '<a class="art-btn success" href="' + c._step4_technical_publish_url + '" target="_blank">🔗 分享链接</a>';
+          actions += '<button class="art-btn" onclick="copyToClipboard(\'' + (c._step4_technical_publish_url || '') + '\')">复制链接</button>';
+        } else {
+          actions += '<button class="art-btn" onclick="doPreviewLatestHtml()">生成分享链接</button>';
+        }
       }
     }
     if (item.isGen5) {
@@ -5444,6 +5612,37 @@ async function callDeepSeek(systemPrompt, userPrompt, maxTokens = 4500) {
   return d.result;
 }
 
+function copyToClipboard(text) {
+  if (text == null) return;
+  var str = String(text);
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(str).then(function() { showToast('链接已复制'); }).catch(function() {
+        fallbackCopy(str);
+      });
+    } else {
+      fallbackCopy(str);
+    }
+  } catch(e) {
+    fallbackCopy(str);
+  }
+}
+function fallbackCopy(str) {
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = str;
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    var ok = document.execCommand('copy');
+    ta.remove();
+    showToast(ok ? '链接已复制' : '复制失败，请手动复制');
+  } catch(e) {
+    showToast('复制失败，请手动复制');
+  }
+}
+
 function showToast(msg) {
   const t = document.createElement('div');
   t.textContent = msg;
@@ -5462,28 +5661,29 @@ function logout() {
 
 // ==================== INIT ====================
 (async function init() {
-  // Always try test-login first to get a guaranteed valid token
-  try {
-    const testResp = await fetch(API_BASE + '/api/test-login', { method: 'POST' });
-    const testData = await testResp.json();
-    if (testData.access_token) {
-      localStorage.setItem(TOKEN_KEY, testData.access_token);
-      if (testData.user) {
-        window._currentUser = testData.user;
-        const sbProvider = document.getElementById('sidebar-provider-name');
-        const sbUser = document.getElementById('sidebar-username');
-        if (sbProvider) sbProvider.textContent = testData.user.provider_name || '-';
-        if (sbUser) {
-          sbUser.textContent = testData.user.username || '-';
+  // 优先使用本地存储的 token，实现账号隔离
+  let token = localStorage.getItem(TOKEN_KEY) || '';
+
+  // 只有在没有 token 时才尝试 test-login（兼容旧会话）
+  if (!token) {
+    try {
+      const testResp = await fetch(API_BASE + '/api/test-login', { method: 'POST' });
+      const testData = await testResp.json();
+      if (testData.access_token) {
+        token = testData.access_token;
+        localStorage.setItem(TOKEN_KEY, token);
+        const userInfo = testData.user || decodeTokenPayload(token);
+        if (userInfo) {
+          window._currentUser = userInfo;
+          const sbProvider = document.getElementById('sidebar-provider-name');
+          const sbUser = document.getElementById('sidebar-username');
+          if (sbProvider) sbProvider.textContent = userInfo.provider_name || userInfo.sub || '-';
+          if (sbUser) sbUser.textContent = userInfo.username || '-';
         }
       }
-      await finishInit(testData.access_token);
-      return;
-    }
-  } catch(e) {}
+    } catch(e) {}
+  }
 
-  // Fallback: use existing token if test-login fails
-  const token = localStorage.getItem(TOKEN_KEY) || '';
   if (!token) {
     location.href = 'login.html';
     return;
@@ -5491,6 +5691,18 @@ function logout() {
   await finishInit(token);
 
   async function finishInit(token) {
+    // 调用 /api/auth/me 获取完整用户信息并更新侧边栏
+    try {
+      const meResp = await fetch(API_BASE + '/api/auth/me', { headers: getAuthHeaders() });
+      if (meResp.ok) {
+        const meData = await meResp.json();
+        const sbProvider = document.getElementById('sidebar-provider-name');
+        const sbUser = document.getElementById('sidebar-username');
+        if (sbProvider) sbProvider.textContent = meData.provider_name || meData.username || '-';
+        if (sbUser) sbUser.textContent = meData.username || '-';
+      }
+    } catch(e) {}
+
     const params = new URLSearchParams(location.search);
     const clientId = params.get('client_id');
     const isNew = params.get('new') === '1';
@@ -5505,7 +5717,11 @@ function logout() {
       });
       const d = await r.json();
       if (d.success && d.id) {
-        currentClientId = String(d.id);  // 统一为字符串
+        currentClientId = String(d.id);
+        // 写入 localStorage
+        var allClients = getClients();
+        allClients.push(Object.assign({}, d, { id: d.id }));
+        saveClients(allClients);
         console.log('t0 - client created, redirecting to Step1...');
         go(1);
         console.log('tN - go(1) returned');
@@ -5522,10 +5738,25 @@ function logout() {
   } else if (clientId) {
     // Always fetch from backend to get latest data, regardless of localStorage cache
     const r = await fetch(API_BASE + '/api/clients/' + clientId, { headers: getAuthHeaders() });
+    if (!r.ok) {
+      alert('客户不存在或无权访问');
+      location.href = 'client_list.html';
+      return;
+    }
     const bc = await r.json();
     if (r.ok && bc && bc.id) {
       _backendClientCache[clientId] = bc;
-      currentClientId = clientId;
+      // 确保后端客户也写入 localStorage，避免 localStorage 和后端 ID 不一致
+      var allClients = getClients();
+      var existingIdx = allClients.findIndex(function(c){ return String(c.id) === String(bc.id); });
+      if (existingIdx >= 0) {
+        allClients[existingIdx] = Object.assign({}, bc);
+      } else {
+        allClients.push(Object.assign({}, bc));
+      }
+      saveClients(allClients);
+      currentClientId = String(bc.id);
+      history.replaceState(null, '', '?client_id=' + bc.id + '&step=step' + currentStep);
       let targetStep = 1;
       if (stepParam) {
         const n = parseInt(stepParam.replace('step', ''));
