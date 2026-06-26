@@ -960,6 +960,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             <button class="tab" data-target="deep" onclick="switchTab(this)">深挖问题 <span class="tab-count" id="s2-deep-count">0</span></button>
             <button class="tab" data-target="industry" onclick="switchTab(this)">行业经验 <span class="tab-count" id="s2-industry-count">0</span></button>
           </div>
+          <div id="s2-scope-boundary" style="display:none;background:rgba(18,99,230,.06);border:1px solid rgba(18,99,230,.15);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--blue);line-height:1.5">
+            <b>场景边界：</b><span id="s2-scope-text"></span>
+          </div>
           <div class="q-list" id="s2-must-questions"></div>
           <div class="q-list" id="s2-deep-questions" style="display:none"></div>
           <div class="q-list" id="s2-industry-notes" style="display:none"></div>
@@ -2800,7 +2803,7 @@ function getStep4InputDefault(c) {
     source: 'fallback',
     draft: {
       customerCurrentState: part1.company_background || '',
-      painPoints: (part1.pain_points || []).slice(0, 3),
+      painPoints: (part1.pain_points || []).slice(0, 3).map(function(p) { return typeof p === 'string' ? p : (p.text || ''); }),
       confirmedNeeds: [],
       involvedRoles: (s1.part3 && s1.part3.must_ask || []).map(function(q) { return q.need_role || ''; }).filter(Boolean),
       currentProcess: [],
@@ -4018,7 +4021,15 @@ function saveStep2Part1(card) {
   if (!c || !c.step1_result) return;
   c.step1_result.part1 = c.step1_result.part1 || {};
   if (profileText) c.step1_result.part1.company_background = profileText.textContent;
-  if (pains.length) c.step1_result.part1.pain_points = Array.from(pains).map(function(p){ return p.textContent; });
+  // pain_points 存为 {text, sourceType} 格式，保留来源标签
+  if (pains.length) {
+    c.step1_result.part1.pain_points = Array.from(pains).map(function(p) {
+      var text = typeof p === 'string' ? p : (p.textContent || p.text || '');
+      var existing = c.step1_result.part1.pain_points || [];
+      var prev = existing.find(function(e) { return (typeof e === 'string' ? e : (e.text || '')) === text; });
+      return { text: text, sourceType: (prev && prev.sourceType) || 'explicit' };
+    });
+  }
   updateClient(currentClientId, { step1_result: c.step1_result });
 }
 
@@ -4027,7 +4038,13 @@ function saveStep2Part2() {
   document.querySelectorAll('#s2-gaps .gap').forEach(function(g) {
     var textEl = g.querySelector('.gap-text b');
     var priEl = g.querySelector('.priority-select');
-    if (textEl) gaps.push({ gap: textEl.textContent, priority: priEl ? priEl.value : '高' });
+    if (textEl) {
+      gaps.push({
+        gap: textEl.textContent,
+        priority: priEl ? priEl.value : '高优先级',
+        sourceType: 'explicit'
+      });
+    }
   });
   var c = getClient(currentClientId);
   if (!c || !c.step1_result) return;
@@ -4054,19 +4071,20 @@ function addGap() {
   if (!container) return;
   var newGap = document.createElement('div');
   newGap.className = 'gap';
-  newGap.innerHTML = '<div class="check"></div><div class="gap-text" contenteditable="true" style="outline:none;border:1px dashed #ddeeff;border-radius:8px;padding:4px 8px"><b>新信息项...</b></div><select class="priority-select" onchange="onGapPriorityChange(this)" style="border:none;background:transparent;font-size:12px;font-weight:700;cursor:pointer;color:#ff6b6b;outline:none">' +
-    '<option value="高" style="color:#ff6b6b">高优先级</option>' +
-    '<option value="中" style="color:#ffa94d">中优先级</option>' +
-    '<option value="低" style="color:#69db7c">低优先级</option>' +
+  newGap.innerHTML = '<div class="check" style="cursor:grab"></div><div class="gap-text" contenteditable="true" style="outline:none;border:1px dashed #ddeeff;border-radius:8px;padding:4px 8px;flex:1"><b>新信息项...</b></div><select class="priority-select" onchange="onGapPriorityChange(this)" style="border:none;background:transparent;font-size:12px;font-weight:700;cursor:pointer;color:#ff6b6b;outline:none;flex-shrink:0">' +
+    '<option value="高优先级" style="color:#ff6b6b">高优先级</option>' +
+    '<option value="中优先级" style="color:#ffa94d">中优先级</option>' +
+    '<option value="低优先级" style="color:#69db7c">低优先级</option>' +
+    '<option value="待澄清" style="color:#94a3b8">待澄清</option>' +
   '</select>' +
-  '<div style="color:#98a2b3;font-size:12px;cursor:pointer;padding:4px" onclick="this.parentElement.remove()">×</div>';
+  '<div style="color:#98a2b3;font-size:12px;cursor:pointer;padding:4px;flex-shrink:0" onclick="this.parentElement.remove()">×</div>';
   container.appendChild(newGap);
   newGap.querySelector('.gap-text').focus();
   saveStep2Part2();
 }
 
 function onGapPriorityChange(sel) {
-  var color = {高:'#ff6b6b',中:'#ffa94d',低:'#69db7c'}[sel.value] || '#ff6b6b';
+  var color = {高优先级:'#ff6b6b',中优先级:'#ffa94d',低优先级:'#69db7c',待澄清:'#94a3b8',高:'#ff6b6b',中:'#ffa94d',低:'#69db7c'}[sel.value] || '#ff6b6b';
   sel.style.color = color;
 }
 
@@ -4115,17 +4133,25 @@ function renderGaps(gaps) {
   }
   if (totalEl) totalEl.textContent = gaps.length;
   container.innerHTML = gaps.map(function(g, i) {
-    var priority = g.priority || '高';
-    var priColor = {high:'#ff6b6b',中:'#ffa94d',低:'#69db7c'}[priority] || '#ff6b6b';
-    return '<div class="gap sortable-item' + (i >= 8 ? ' hidden-gaps' : '') + '" draggable="true">' +
-      '<div class="check" style="cursor:grab"></div>' +
-      '<div class="gap-text"><b>' + (g.gap || g.text || g.question || g.item || '-') + '</b></div>' +
-      '<select class="priority-select" onchange="onGapPriorityChange(this)" style="border:none;background:transparent;font-size:12px;font-weight:700;cursor:pointer;color:'+priColor+';outline:none">' +
-        '<option value="高" '+(priority==='高'?'selected':'')+' style="color:#ff6b6b">高优先级</option>' +
-        '<option value="中" '+(priority==='中'?'selected':'')+' style="color:#ffa94d">中优先级</option>' +
-        '<option value="低" '+(priority==='低'?'selected':'')+' style="color:#69db7c">低优先级</option>' +
-      '</select>' +
-      '<div style="color:#98a2b3;font-size:12px;cursor:pointer;padding:4px" onclick="this.parentElement.remove()">×</div>' +
+    var priority = g.priority || '高优先级';
+    var priColor = {高优先级:'#ff6b6b',中优先级:'#ffa94d',低优先级:'#69db7c',高:'#ff6b6b',中:'#ffa94d',低:'#69db7c',待澄清:'#94a3b8'}[priority] || '#ff6b6b';
+    var st = g.sourceType || '';
+    var badge = st ? '<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;background:' + (st === 'explicit' ? 'rgba(19,185,111,.15);color:#34d399' : st === 'implicit' ? 'rgba(245,158,11,.15);color:#fbbf24' : 'rgba(100,116,139,.15);color:#94a3b8') + '">' + (st === 'explicit' ? '🟩明确' : st === 'implicit' ? '🟨隐含' : '🟦推导') + '</span>' : '';
+    var whyNeed = g.whyNeed || '';
+    return '<div class="gap sortable-item' + (i >= 8 ? ' hidden-gaps' : '') + '" draggable="true" style="flex-direction:column;align-items:stretch;gap:4px">' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+        '<div class="check" style="cursor:grab;flex-shrink:0"></div>' +
+        '<div class="gap-text" style="flex:1"><b>' + esc(g.gap || g.text || g.question || g.item || '-') + '</b></div>' +
+        badge +
+        '<select class="priority-select" onchange="onGapPriorityChange(this)" style="border:none;background:transparent;font-size:12px;font-weight:700;cursor:pointer;color:'+priColor+';outline:none;flex-shrink:0">' +
+          '<option value="高优先级" '+(priority==='高优先级'||priority==='高'?'selected':'')+' style="color:#ff6b6b">高优先级</option>' +
+          '<option value="中优先级" '+(priority==='中优先级'||priority==='中'?'selected':'')+' style="color:#ffa94d">中优先级</option>' +
+          '<option value="低优先级" '+(priority==='低优先级'||priority==='低'?'selected':'')+' style="color:#69db7c">低优先级</option>' +
+          '<option value="待澄清" '+(priority==='待澄清'?'selected':'')+' style="color:#94a3b8">待澄清</option>' +
+        '</select>' +
+        '<div style="color:#98a2b3;font-size:12px;cursor:pointer;padding:4px;flex-shrink:0" onclick="this.parentElement.parentElement.remove()">×</div>' +
+      '</div>' +
+      (whyNeed ? '<div style="color:#64748b;font-size:11px;padding-left:28px;line-height:1.5">原因：' + esc(whyNeed) + '</div>' : '') +
     '</div>';
   }).join('');
   var moreBtn = document.getElementById('s2-gaps-more-btn');
@@ -4214,10 +4240,15 @@ function renderQuestions(questions) {
       }[dim] || '#667085';
       var whyAsk = q.whyAsk || '';
       var impact = q.impactIfUnknown || '';
+      var st = q.sourceType || '';
+      var stBadge = st ? '<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;margin-left:4px;background:' + (st === 'explicit' ? 'rgba(19,185,111,.15);color:#34d399' : st === 'implicit' ? 'rgba(245,158,11,.15);color:#fbbf24' : st === 'explicit_clarify' ? 'rgba(18,99,230,.15);color:#60a5fa' : 'rgba(100,116,139,.15);color:#94a3b8') + '">' + (st === 'explicit' ? '🟩明确' : st === 'implicit' ? '🟨隐含' : st === 'explicit_clarify' ? '🟦澄清' : '🟦推导') + '</span>' : '';
       var extraHtml = (note || whyAsk || impact) ? '<div style="margin-top:8px;font-size:12px;color:#667085;line-height:1.6">' + (note ? '<div style="margin-bottom:4px">'+note+'</div>' : '') + (whyAsk ? '<div style="color:#8a9bae;font-size:11px;margin-top:4px">问因: '+whyAsk+'</div>' : '') + (impact ? '<div style="color:#8a9bae;font-size:11px;margin-top:2px">影响: '+impact+'</div>' : '') + '</div>' : '';
       return '<div class="q-card' + (q._hidden ? ' hidden-q' : '') + '">' +
         '<div class="q-card-main">' +
-          (dim ? '<div style="display:inline-block;background:'+dimColor+'22;color:'+dimColor+';border-radius:8px;padding:2px 10px;font-size:11px;font-weight:700;margin-bottom:6px">'+dim+'</div>' : '') +
+          '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:6px">' +
+            (dim ? '<div style="display:inline-block;background:'+dimColor+'22;color:'+dimColor+';border-radius:8px;padding:2px 10px;font-size:11px;font-weight:700">'+dim+'</div>' : '') +
+            stBadge +
+          '</div>' +
           '<div style="font-size:14px;color:#182235;line-height:1.6;font-weight:600">'+question+'</div>' +
           extraHtml +
         '</div>' +
@@ -4668,13 +4699,19 @@ function loadStep2(c) {
   if (!c.step1_result) return;
   const data = c.step1_result;
   document.getElementById('s2-profile-text').textContent = data.part1?.company_background || '-';
-  // pain_points：最多显示 5 条，其余折叠
-  const pains = data.part1?.pain_points || [];
+  // pain_points：最多显示 5 条，其余折叠（兼容新旧格式：新={text,sourceType}，旧=string）
+  const pains = (data.part1?.pain_points || []).map(function(p) {
+    return typeof p === 'string' ? { text: p, sourceType: 'explicit' } : p;
+  });
   const painGrid = document.getElementById('s2-pains');
   const showPains = pains.slice(0, 5);
   const hiddenCount = pains.length - 5;
   if (pains.length > 0) {
-    painGrid.innerHTML = showPains.map(p => `<div class="pain" contenteditable="false">${p}</div>`).join('');
+    painGrid.innerHTML = showPains.map(function(p) {
+      var st = p.sourceType || '';
+      var badge = st ? '<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;background:' + (st === 'explicit' ? 'rgba(19,185,111,.15);color:#34d399' : st === 'implicit' ? 'rgba(245,158,11,.15);color:#fbbf24' : 'rgba(100,116,139,.15);color:#94a3b8') + '">' + (st === 'explicit' ? '🟩明确' : st === 'implicit' ? '🟨隐含' : '🟦推导') + '</span>' : '';
+      return '<div class="pain" contenteditable="false">' + esc(p.text || '') + ' ' + badge + '</div>';
+    }).join('');
   } else {
     painGrid.innerHTML = '<div class="pain" contenteditable="false">-</div>';
   }
@@ -4686,8 +4723,19 @@ function loadStep2(c) {
     moreBtn.textContent = hiddenCount > 0 ? `查看更多（${hiddenCount}）` : '收起 ▲';
     moreBtn.dataset.expanded = 'false';
   }
+  // scope_boundary（新增字段）
+  var scopeEl = document.getElementById('s2-scope-boundary');
+  var scopeTextEl = document.getElementById('s2-scope-text');
+  var scope = data.part3?.scope_boundary || '';
+  if (scopeEl && scopeTextEl) {
+    if (scope) {
+      scopeTextEl.textContent = scope;
+      scopeEl.style.display = '';
+    } else {
+      scopeEl.style.display = 'none';
+    }
+  }
   renderGaps(data.part2 || []);
-  // 先清空容器再渲染，避免 innerHTML+= 导致按钮叠加
   document.getElementById('s2-must-questions').innerHTML = '';
   document.getElementById('s2-deep-questions').innerHTML = '';
   document.getElementById('s2-industry-notes').innerHTML = '';
@@ -4699,17 +4747,27 @@ function toggleMorePains() {
   const btn = document.getElementById('s2-pains-more-btn');
   const c = getClient(currentClientId);
   if (!btn || !c?.step1_result) return;
-  const pains = c.step1_result.part1?.pain_points || [];
+  const pains = (c.step1_result.part1?.pain_points || []).map(function(p) {
+    return typeof p === 'string' ? { text: p, sourceType: 'explicit' } : p;
+  });
   const expanded = btn.dataset.expanded === 'true';
   const painGrid = document.getElementById('s2-pains');
   if (!expanded) {
     // 展开全部
-    painGrid.innerHTML = pains.map(p => `<div class="pain" contenteditable="false">${p}</div>`).join('');
+    painGrid.innerHTML = pains.map(function(p) {
+      var st = p.sourceType || '';
+      var badge = st ? '<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;background:' + (st === 'explicit' ? 'rgba(19,185,111,.15);color:#34d399' : st === 'implicit' ? 'rgba(245,158,11,.15);color:#fbbf24' : 'rgba(100,116,139,.15);color:#94a3b8') + '">' + (st === 'explicit' ? '🟩明确' : st === 'implicit' ? '🟨隐含' : '🟦推导') + '</span>' : '';
+      return '<div class="pain" contenteditable="false">' + esc(p.text || '') + ' ' + badge + '</div>';
+    }).join('');
     btn.textContent = '收起 ▲';
     btn.dataset.expanded = 'true';
   } else {
     // 收起只显示前5条
-    painGrid.innerHTML = pains.slice(0, 5).map(p => `<div class="pain" contenteditable="false">${p}</div>`).join('');
+    painGrid.innerHTML = pains.slice(0, 5).map(function(p) {
+      var st = p.sourceType || '';
+      var badge = st ? '<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;background:' + (st === 'explicit' ? 'rgba(19,185,111,.15);color:#34d399' : st === 'implicit' ? 'rgba(245,158,11,.15);color:#fbbf24' : 'rgba(100,116,139,.15);color:#94a3b8') + '">' + (st === 'explicit' ? '🟩明确' : st === 'implicit' ? '🟨隐含' : '🟦推导') + '</span>' : '';
+      return '<div class="pain" contenteditable="false">' + esc(p.text || '') + ' ' + badge + '</div>';
+    }).join('');
     const hidden = pains.length - 5;
     btn.textContent = hidden > 0 ? `查看更多（${hidden}）` : '收起 ▲';
     btn.dataset.expanded = 'false';
@@ -5119,7 +5177,11 @@ function doPreviewProfile() {
         <span style="font-size:16px;font-weight:900;color:#182235">核心痛点</span>
       </div>
       <div style="display:grid;gap:10px">
-        ${pains.map(p => '<div style="background:#fff7ed;border-radius:12px;padding:14px 16px;border-left:4px solid #f97316;font-size:14px;color:#344054;line-height:1.6">' + p + '</div>').join('')}
+        ${pains.map(function(p) {
+          var text = typeof p === 'string' ? p : (p.text || '');
+          var st = (p && p.sourceType) ? '<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;background:rgba(19,185,111,.1);color:#059669;margin-left:6px">' + (p.sourceType === 'explicit' ? '🟩明确' : p.sourceType === 'implicit' ? '🟨隐含' : '🟦推导') + '</span>' : '';
+          return '<div style="background:#fff7ed;border-radius:12px;padding:14px 16px;border-left:4px solid #f97316;font-size:14px;color:#344054;line-height:1.6">' + esc(text) + ' ' + st + '</div>';
+        }).join('')}
       </div>
     </div>` : '';
 
@@ -5206,7 +5268,7 @@ function doCreateWecomDoc(docName, docContent) {
     lines.push('### 行业常见痛点');
     var pains = part1.pain_points || [];
     if (pains.length > 0) {
-      pains.forEach(function(p, i) { lines.push((i+1) + '. ' + p.replace(/\*\*/g, '')); });
+      pains.forEach(function(p, i) { lines.push((i+1) + '. ' + (typeof p === 'string' ? p : (p.text || '')).replace(/\*\*/g, '')); });
     } else { lines.push('-'); }
     lines.push('');
     lines.push('## 二、待确认信息清单');
@@ -5384,7 +5446,7 @@ function doCreateStep1WecomDoc() {
   if (part1.pain_points && part1.pain_points.length > 0) {
     content += `**行业常见痛点**\n`;
     part1.pain_points.forEach(function(p) {
-      content += `- ${p}\n`;
+      content += `- ${typeof p === 'string' ? p : (p.text || '')}\n`;
     });
     content += '\n';
   }
