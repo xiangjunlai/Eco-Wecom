@@ -165,6 +165,17 @@ def init_db_legacy():
         )
     """)
 
+    # 补全 users 表缺失的列
+    for col_def in [
+        "grade TEXT DEFAULT '普通'",
+    ]:
+        col_name = col_def.split()[0]
+        try:
+            cursor.execute(f"ALTER TABLE users ADD COLUMN {col_def}")
+            conn.commit()
+        except Exception:
+            pass
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS provider_knowledge (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -230,6 +241,12 @@ def init_db_legacy():
         "tags TEXT",
         "scale TEXT",
         "uploaded_files TEXT",
+        "admin_note_step1 TEXT",
+        "admin_note_step2 TEXT",
+        "admin_note_step3 TEXT",
+        "admin_note_step4 TEXT",
+        "admin_note_step5 TEXT",
+        "ai_call_count INTEGER DEFAULT 0",
     ]:
         col_name = col_def.split()[0]
         try:

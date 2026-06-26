@@ -589,6 +589,35 @@ async def admin_stats(user: dict = Depends(require_auth)):
     cursor.execute("SELECT COUNT(*) FROM invitation_codes WHERE used < max_users OR max_users IS NULL")
     available_codes = cursor.fetchone()[0]
 
+    # 漏斗：已完成客户数
+    cursor.execute("SELECT COUNT(*) FROM clients WHERE is_completed = 1")
+    completed = cursor.fetchone()[0]
+
+    # 7日活跃客户
+    cursor.execute("SELECT COUNT(*) FROM clients WHERE updated_at >= datetime('now', '-7 days')")
+    active_7d = cursor.fetchone()[0]
+
+    # 服务商平均客户数
+    avg_clients = round(total_clients / total_users, 1) if total_users > 0 else 0
+
+    # AI 调用相关
+    cursor.execute("""
+        SELECT
+            COUNT(*) as ai_calls,
+            SUM(COALESCE(ai_call_count, 0)) as total_tokens
+        FROM clients
+        WHERE step4_report IS NOT NULL OR step5_schema IS NOT NULL
+    """)
+    ai_row = cursor.fetchone()
+    total_ai_calls = ai_row["ai_calls"] or 0
+    total_tokens = ai_row["total_tokens"] or 0
+
+    # Step 完成率
+    cursor.execute("SELECT COUNT(*) FROM clients WHERE step3_summary IS NOT NULL AND step3_summary != ''")
+    step3_count = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM clients WHERE step5_schema IS NOT NULL AND step5_schema != ''")
+    step5_count = cursor.fetchone()[0]
+
     conn.close()
     return {
         "total_users": total_users,
@@ -596,6 +625,19 @@ async def admin_stats(user: dict = Depends(require_auth)):
         "total_clients": total_clients,
         "assigned_codes": assigned_codes,
         "available_codes": available_codes,
+        "funnel": {
+            "registered": total_users,
+            "clients": total_clients,
+            "completed": completed,
+        },
+        "active_clients_7d": active_7d,
+        "clients_per_provider_avg": avg_clients,
+        "total_ai_calls": total_ai_calls,
+        "total_tokens": total_tokens,
+        "step_completion": {
+            "step3": round(step3_count / total_clients * 100) if total_clients > 0 else 0,
+            "step5": round(step5_count / total_clients * 100) if total_clients > 0 else 0,
+        },
     }
 
 @app.get("/api/admin/users")
@@ -604,14 +646,27 @@ async def admin_list_users(user: dict = Depends(require_auth)):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT u.id, u.username, u.provider_name, u.created_at,
+        SELECT u.id, u.username, u.provider_name, u.created_at, u.grade,
                (SELECT COUNT(*) FROM clients WHERE user_id = u.id) as client_count
         FROM users u ORDER BY u.id DESC
     """)
     rows = cursor.fetchall()
     conn.close()
     return [{"id": r["id"], "username": r["username"], "provider_name": r["provider_name"],
-             "created_at": r["created_at"], "client_count": r["client_count"]} for r in rows]
+             "created_at": r["created_at"], "client_count": r["client_count"],
+             "grade": r["grade"] or "普通"} for r in rows]
+
+@app.put("/api/admin/users/{uid}")
+async def admin_update_user(uid: int, body: dict, user: dict = Depends(require_auth)):
+    """更新服务商用户（分级等）"""
+    conn = get_db()
+    cursor = conn.cursor()
+    grade = body.get("grade")
+    if grade:
+        cursor.execute("UPDATE users SET grade = ? WHERE id = ?", (grade, uid))
+        conn.commit()
+    conn.close()
+    return {"success": True}
 
 @app.delete("/api/admin/users/{uid}")
 async def admin_delete_user(uid: int, user: dict = Depends(require_auth)):
@@ -625,19 +680,49 @@ async def admin_delete_user(uid: int, user: dict = Depends(require_auth)):
 
 @app.get("/api/admin/clients")
 async def admin_list_clients(user: dict = Depends(require_auth)):
-    """所有客户列表"""
+    """所有客户列表（完整字段）"""
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT c.id, c.name, c.industry, c.status, c.created_at, u.provider_name
+        SELECT c.id, c.name, c.industry, c.status, c.created_at, c.updated_at,
+               c.user_id, c.is_completed, c.is_saved,
+               c.step1_result, c.step2_report, c.step3_summary,
+               c.step4_report, c.step4_presales, c.step4_technical,
+               c.step5_schema, c.step5_agent_suggestions,
+               c.admin_note_step1, c.admin_note_step2, c.admin_note_step3,
+               c.admin_note_step4, c.admin_note_step5,
+               u.provider_name
         FROM clients c JOIN users u ON c.user_id = u.id
-        ORDER BY c.id DESC LIMIT 200
+        ORDER BY c.id DESC LIMIT 500
     """)
     rows = cursor.fetchall()
     conn.close()
-    return [{"id": r["id"], "name": r["name"], "industry": r["industry"],
-             "status": r["status"], "created_at": r["created_at"],
-             "provider_name": r["provider_name"]} for r in rows]
+    return [{
+        "id": r["id"],
+        "name": r["name"],
+        "industry": r["industry"],
+        "status": r["status"],
+        "created_at": r["created_at"],
+        "updated_at": r["updated_at"],
+        "user_id": r["user_id"],
+        "is_completed": bool(r["is_completed"]),
+        "is_saved": bool(r["is_saved"]),
+        "provider_name": r["provider_name"],
+        "step1_data": r["step1_result"] or "",
+        "step2_data": r["step2_report"] or "",
+        "step3_data": r["step3_summary"] or "",
+        "step3_summary": r["step3_summary"] or "",
+        "step4_report": r["step4_report"] or "",
+        "step4_presales_content": r["step4_presales"] or "",
+        "step4_technical_content": r["step4_technical"] or "",
+        "step5_schema": r["step5_schema"] or "",
+        "step5_demo_content": r["step5_agent_suggestions"] or "",
+        "admin_note_step1": r["admin_note_step1"] or "",
+        "admin_note_step2": r["admin_note_step2"] or "",
+        "admin_note_step3": r["admin_note_step3"] or "",
+        "admin_note_step4": r["admin_note_step4"] or "",
+        "admin_note_step5": r["admin_note_step5"] or "",
+    } for r in rows]
 
 @app.get("/api/admin/invitation-codes")
 async def admin_list_codes(user: dict = Depends(require_auth)):
@@ -1018,7 +1103,7 @@ async def update_client(client_id: str, data: dict, user: dict = Depends(require
 
     # 更新字段（前端发 is_completed/is_saved，数据库列名是 _completed/_saved）
     FIELD_MAP = {"is_completed": "_completed", "is_saved": "_saved"}
-    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions", "step4_input_draft", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url", "_step4_publish_url", "_step4_technical_publish_url", "_notes_wecom_docid", "_notes_wecom_url", "is_completed", "is_saved", "company_type", "main_customers", "possible_focus", "company_intro"]
+    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions", "step4_input_draft", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url", "_step4_publish_url", "_step4_technical_publish_url", "_notes_wecom_docid", "_notes_wecom_url", "is_completed", "is_saved", "company_type", "main_customers", "possible_focus", "company_intro", "admin_note_step1", "admin_note_step2", "admin_note_step3", "admin_note_step4", "admin_note_step5"]
     updates = []
     values = []
     for field in allowed_fields:
