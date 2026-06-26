@@ -771,8 +771,10 @@ function drawClientsList(clients) {
   container.innerHTML = clients.map(c => {
     var statusBadge = c.is_completed || c._completed ? 'badge-green' : 'badge-gray';
     var statusText = c.is_completed || c._completed ? '已完成' : '待完善';
-    var step1 = hasContent(c.step1_data) ? '✅' : '❌';
-    var step2 = hasContent(c.step2_data) ? '✅' : '❌';
+    var step1 = hasContent(c.step1_result) ? '✅' : '❌';
+    // Step2: content is in step1_result.part3 (访谈提纲) or step1_result.part2 (gaps)
+    var s1 = c.step1_result;
+    var step2 = (s1 && (s1.part3 || s1.part2)) ? '✅' : '❌';
     var step3 = hasContent(c.step3_summary) || hasContent(c.step3_data) ? '✅' : '❌';
     var step4 = hasContent(c.step4_presales_versions) || hasContent(c.step4_technical_versions) || hasContent(c.step4_presales_content) || hasContent(c.step4_technical_content) ? '✅' : '❌';
     var step5 = hasContent(c.step5_schema) || hasContent(c.step5_demo_content) ? '✅' : '❌';
@@ -887,7 +889,23 @@ function switchStepTab(stepKey) {
   var area = document.getElementById('step-detail-area');
   if (!c || !area) return;
 
-  var content = c[stepKey + '_data'] || c[stepKey + '_content'] || c[stepKey + '_summary'] || '';
+  // Resolve content: try _data, _content, _summary, or direct step1_result
+  var raw = c[stepKey + '_data'] || c[stepKey + '_content'] || c[stepKey + '_summary'] || '';
+  // step1_result is the actual field name for step1 content
+  if (stepKey === 'step1') raw = c['step1_result'] || raw;
+
+  // Parse JSON if string, then pretty-print for display
+  function fmt(val) {
+    if (!val) return '';
+    try {
+      var obj = typeof val === 'string' ? JSON.parse(val) : val;
+      return JSON.stringify(obj, null, 2);
+    } catch(e) {
+      return typeof val === 'string' ? val : JSON.stringify(val, null, 2);
+    }
+  }
+
+  var content = raw;
 
   // For step4, show both presales and technical (from versions fields)
   if (stepKey === 'step4') {
@@ -933,10 +951,11 @@ function switchStepTab(stepKey) {
   }
 
   var hasContent = content && content.trim().length > 0;
+  var displayContent = hasContent ? fmt(esc(content)) : '';
   area.innerHTML = `
-    ${hasContent ? '<div class="step-summary" id="view-' + stepKey + '">' + esc(content) + '</div>' : '<div class="text-muted" style="margin-bottom:16px">暂无内容</div>'}
+    ${hasContent ? '<div class="step-full" id="view-' + stepKey + '" style="white-space:pre-wrap;max-height:600px;overflow-y:auto;font-size:13px;line-height:1.6">' + displayContent + '</div>' : '<div class="text-muted" style="margin-bottom:16px">暂无内容</div>'}
     ${hasContent ? '<div class="step-actions"><button class="btn btn-sm" onclick="enableStepEdit(\'' + stepKey + '\')">编辑内容</button></div>' : ''}
-    <textarea class="step-edit-area" id="edit-' + stepKey + '" style="display:none;margin-top:12px">${esc(content)}</textarea>
+    <textarea class="step-edit-area" id="edit-' + stepKey + '" style="display:none;margin-top:12px">${esc(fmt(content))}</textarea>
     <div class="step-actions" id="save-actions-' + stepKey + '" style="display:none;margin-top:8px">
       <button class="btn btn-sm btn-blue" onclick="saveStepEdit(' + c.id + ',\'' + stepKey + '_content\',\'' + stepKey + '\')">保存</button>
       <button class="btn btn-sm" onclick="cancelStepEdit(\'' + stepKey + '\')">取消</button>
@@ -1078,8 +1097,10 @@ function hasContent(val) {
 
 function getStepFilter(c) {
   var steps = [];
-  if (hasContent(c.step1_data)) steps.push('step1');
-  if (hasContent(c.step2_data)) steps.push('step2');
+  if (hasContent(c.step1_result)) steps.push('step1');
+  // step2 content lives in step1_result.part3/part2
+  var s1 = c.step1_result;
+  if (s1 && (s1.part3 || s1.part2)) steps.push('step2');
   if (hasContent(c.step3_summary) || hasContent(c.step3_data)) steps.push('step3');
   if (hasContent(c.step4_presales_versions) || hasContent(c.step4_technical_versions) || hasContent(c.step4_presales_content) || hasContent(c.step4_technical_content)) steps.push('step4');
   if (hasContent(c.step5_schema) || hasContent(c.step5_demo_content)) steps.push('step5');
@@ -1088,8 +1109,9 @@ function getStepFilter(c) {
 
 function renderContentSummary(c) {
   var items = [];
-  if (hasContent(c.step1_data)) items.push('<span class="badge badge-blue">Step1</span> ');
-  if (hasContent(c.step2_data)) items.push('<span class="badge badge-blue">Step2</span> ');
+  if (hasContent(c.step1_result)) items.push('<span class="badge badge-blue">Step1</span> ');
+  var s1 = c.step1_result;
+  if (s1 && (s1.part3 || s1.part2)) items.push('<span class="badge badge-blue">Step2</span> ');
   if (hasContent(c.step3_summary) || hasContent(c.step3_data)) items.push('<span class="badge badge-blue">Step3</span> ');
   if (hasContent(c.step4_presales_versions) || hasContent(c.step4_technical_versions) || hasContent(c.step4_presales_content) || hasContent(c.step4_technical_content)) items.push('<span class="badge badge-green">Step4</span> ');
   if (hasContent(c.step5_schema) || hasContent(c.step5_demo_content)) items.push('<span class="badge badge-purple">Step5</span> ');
