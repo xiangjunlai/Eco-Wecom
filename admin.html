@@ -771,11 +771,11 @@ function drawClientsList(clients) {
   container.innerHTML = clients.map(c => {
     var statusBadge = c.is_completed || c._completed ? 'badge-green' : 'badge-gray';
     var statusText = c.is_completed || c._completed ? '已完成' : '待完善';
-    var step1 = c.step1_data ? '✅' : '❌';
-    var step2 = c.step2_data ? '✅' : '❌';
-    var step3 = c.step3_summary ? '✅' : '❌';
-    var step4 = c.step4_presales_content || c.step4_technical_content ? '✅' : '❌';
-    var step5 = c.step5_demo_content ? '✅' : '❌';
+    var step1 = hasContent(c.step1_data) ? '✅' : '❌';
+    var step2 = hasContent(c.step2_data) ? '✅' : '❌';
+    var step3 = hasContent(c.step3_summary) || hasContent(c.step3_data) ? '✅' : '❌';
+    var step4 = hasContent(c.step4_presales_versions) || hasContent(c.step4_technical_versions) || hasContent(c.step4_presales_content) || hasContent(c.step4_technical_content) ? '✅' : '❌';
+    var step5 = hasContent(c.step5_schema) || hasContent(c.step5_demo_content) ? '✅' : '❌';
     return `
       <div class="expand-panel" id="client-panel-${c.id}">
         <div class="expand-head" onclick="toggleClientPanel(${c.id})">
@@ -889,10 +889,30 @@ function switchStepTab(stepKey) {
 
   var content = c[stepKey + '_data'] || c[stepKey + '_content'] || c[stepKey + '_summary'] || '';
 
-  // For step4, show both presales and technical
+  // For step4, show both presales and technical (from versions fields)
   if (stepKey === 'step4') {
-    var presales = c.step4_presales_content || c.step4_presales_summary || '';
-    var technical = c.step4_technical_content || '';
+    // Versions fields contain JSON array with content - parse and extract
+    function getStep4Content(field) {
+      var raw = c[field];
+      if (!raw) return '';
+      try {
+        var arr = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if (Array.isArray(arr) && arr.length > 0) {
+          var latest = arr[arr.length - 1];
+          var content = latest.content || latest;
+          return typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
+        }
+        if (typeof arr === 'object') {
+          var content = arr.content || arr;
+          return typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
+        }
+        return typeof arr === 'string' ? arr : JSON.stringify(arr, null, 2);
+      } catch(e) {
+        return typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2);
+      }
+    }
+    var presales = getStep4Content('step4_presales_versions');
+    var technical = getStep4Content('step4_technical_versions');
     area.innerHTML = `
       <div style="margin-bottom:16px">
         <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">📄 售前解决方案</div>
@@ -1049,23 +1069,30 @@ function drawContentList(clients) {
   }).join('');
 }
 
+function hasContent(val) {
+  if (!val) return false;
+  if (typeof val === 'string') return val.trim().length > 0;
+  if (typeof val === 'object') return true; // JSON arrays/objects count as content
+  return false;
+}
+
 function getStepFilter(c) {
   var steps = [];
-  if (c.step1_data) steps.push('step1');
-  if (c.step2_data) steps.push('step2');
-  if (c.step3_summary || c.step3_data) steps.push('step3');
-  if (c.step4_presales_content || c.step4_technical_content) steps.push('step4');
-  if (c.step5_demo_content) steps.push('step5');
+  if (hasContent(c.step1_data)) steps.push('step1');
+  if (hasContent(c.step2_data)) steps.push('step2');
+  if (hasContent(c.step3_summary) || hasContent(c.step3_data)) steps.push('step3');
+  if (hasContent(c.step4_presales_versions) || hasContent(c.step4_technical_versions) || hasContent(c.step4_presales_content) || hasContent(c.step4_technical_content)) steps.push('step4');
+  if (hasContent(c.step5_schema) || hasContent(c.step5_demo_content)) steps.push('step5');
   return steps.join(',');
 }
 
 function renderContentSummary(c) {
   var items = [];
-  if (c.step1_data) items.push('<span class="badge badge-blue">Step1</span> ');
-  if (c.step2_data) items.push('<span class="badge badge-blue">Step2</span> ');
-  if (c.step3_summary || c.step3_data) items.push('<span class="badge badge-blue">Step3</span> ');
-  if (c.step4_presales_content || c.step4_technical_content) items.push('<span class="badge badge-green">Step4</span> ');
-  if (c.step5_demo_content) items.push('<span class="badge badge-purple">Step5</span> ');
+  if (hasContent(c.step1_data)) items.push('<span class="badge badge-blue">Step1</span> ');
+  if (hasContent(c.step2_data)) items.push('<span class="badge badge-blue">Step2</span> ');
+  if (hasContent(c.step3_summary) || hasContent(c.step3_data)) items.push('<span class="badge badge-blue">Step3</span> ');
+  if (hasContent(c.step4_presales_versions) || hasContent(c.step4_technical_versions) || hasContent(c.step4_presales_content) || hasContent(c.step4_technical_content)) items.push('<span class="badge badge-green">Step4</span> ');
+  if (hasContent(c.step5_schema) || hasContent(c.step5_demo_content)) items.push('<span class="badge badge-purple">Step5</span> ');
   return '<div style="font-size:12px;color:var(--text3)">' + items.join(' ') + '</div>';
 }
 
