@@ -648,7 +648,7 @@ function drawProviderTable(providers) {
       '<td class="text-muted">' + formatDate(p.created_at) + '</td>' +
       '<td><span class="badge badge-blue">' + (p.client_count || 0) + ' 个</span></td>' +
       '<td><span class="badge ' + codeStatus + '">' + codeLabel + '</span></td>' +
-      '<td><span class="badge ' + gradeClass + '" id="grade-'+p.id+'">' + grade + '</span></td>' +
+      '<td><span class="badge ' + gradeClass + '" id="grade-'+p.id+'" onclick="openGradeModal('+p.id+',\''+esc(grade)+'\')" style="cursor:pointer" title="点击修改分级">' + grade + '</span></td>' +
       '<td>' +
         '<button class="btn btn-sm" onclick="viewProvider(' + p.id + ')">查看详情</button> ' +
         '<button class="btn btn-sm btn-danger" onclick="deleteProvider(' + p.id + ')">删除</button>' +
@@ -1028,7 +1028,7 @@ function drawContentList(clients) {
   container.innerHTML = clients.map(c => {
     var pName = window._contentProviderMap ? (window._contentProviderMap[c.user_id]?.provider_name || c.provider_name || '-') : (c.provider_name || '-');
     return `
-      <div class="expand-panel content-panel" data-name="${(c.name||'')+' '+(pName||'')}" data-provider="${pName}" data-step-filter="${getStepFilter(c)}">
+      <div class="expand-panel content-panel" data-id="${c.id}" data-name="${(c.name||'')+' '+(pName||'')}" data-provider="${pName}" data-step-filter="${getStepFilter(c)}">
         <div class="expand-head" onclick="toggleContentPanel(${c.id})">
           <span class="expand-arrow">▶</span>
           <div class="expand-info">
@@ -1070,15 +1070,14 @@ function renderContentSummary(c) {
 }
 
 function toggleContentPanel(id) {
-  var panel = document.querySelector('.content-panel[data-name]')?.closest('.expand-panel') ||
-    document.getElementById('content-body-' + id)?.closest('.expand-panel');
-  // Find the right panel
-  document.querySelectorAll('.content-panel').forEach(p => {
-    var panel = p.closest('.expand-panel');
-    if (panel) panel.classList.remove('open');
-  });
-  var allPanels = document.querySelectorAll('.expand-panel');
-  allPanels.forEach(p => p.classList.remove('open'));
+  // Find the panel for this client
+  var panel = document.querySelector('.content-panel[data-id="' + id + '"]');
+  if (!panel) {
+    // Fallback: find by checking if content-body-{id} is inside it
+    panel = document.getElementById('content-body-' + id)?.closest('.expand-panel');
+  }
+  if (!panel) return;
+  panel.classList.toggle('open');
 }
 
 function filterContent() {
@@ -1354,7 +1353,81 @@ async function init() {
 }
 
 init();
+
+var GRADES = ['普通', '试用', '优质'];
+var _gradeTarget = null;
+
+function openGradeModal(userId, currentGrade) {
+  _gradeTarget = userId;
+  var select = document.getElementById('grade-select');
+  select.innerHTML = GRADES.map(g =>
+    '<option value="'+g+'"' + (g === currentGrade ? ' selected' : '') + '>'+g+'</option>'
+  ).join('');
+  document.getElementById('grade-modal').classList.add('active');
+}
+
+function closeGradeModal() {
+  document.getElementById('grade-modal').classList.remove('active');
+  _gradeTarget = null;
+}
+
+async function doUpdateGrade() {
+  if (!_gradeTarget) return;
+  var grade = document.getElementById('grade-select').value;
+  var d = await api('/api/admin/users/' + _gradeTarget, {
+    method: 'PUT',
+    body: JSON.stringify({ grade })
+  });
+  if (d && d.success) {
+    showToast('分级已更新为：' + grade);
+    // Update local cache and UI
+    if (window._providerMap && window._providerMap[_gradeTarget]) {
+      window._providerMap[_gradeTarget].grade = grade;
+    }
+    // Update grade badge
+    var badge = document.getElementById('grade-' + _gradeTarget);
+    if (badge) {
+      badge.textContent = grade;
+      badge.className = 'badge ' + (grade === '优质' ? 'badge-green' : grade === '试用' ? 'badge-orange' : 'badge-gray');
+      badge.onclick = function() { openGradeModal(_gradeTarget, grade); };
+    }
+    closeGradeModal();
+  } else {
+    showToast('更新失败');
+  }
+}
 </script>
+
+<!-- Grade modal -->
+<div class="modal-overlay" id="grade-modal">
+  <div class="modal" style="width:360px">
+    <div class="modal-head">
+      <div class="modal-title">调整服务商分级</div>
+      <button class="modal-close" onclick="closeGradeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">选择分级</label>
+        <select id="grade-select" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;outline:0;background:var(--panel2);color:var(--text)">
+          <option value="普通">普通</option>
+          <option value="试用">试用</option>
+          <option value="优质">优质</option>
+        </select>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text3);line-height:1.6">
+        <div>• <span class="badge badge-gray">普通</span> 默认分级</div>
+        <div>• <span class="badge badge-orange">试用</span> 试用期服务商</div>
+        <div>• <span class="badge badge-green">优质</span> 长期合作服务商</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeGradeModal()">取消</button>
+      <button class="btn btn-blue" onclick="doUpdateGrade()">确认修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create code modal -->
 
 <!-- Create code modal -->
 <div class="modal-overlay" id="create-code-modal">
