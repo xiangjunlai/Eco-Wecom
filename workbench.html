@@ -1321,6 +1321,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 <script>window.addEventListener("error",function(e){console.error("[JS ERROR]",e.message,"at",e.filename+":"+e.lineno)});console.log("[workbench] v0.6.14 loaded at", new Date().toISOString());
 // ==================== CONSTANTS ====================
 const API_BASE = 'http://sining.cloud';
+// esc fallback: defined later as escHtml, provide simple version here
+function esc(s) { if (s==null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 const STORAGE_KEY = 'provider-assist-clients';
 const PROVIDER_KEY = 'provider-assist-name';
 const TOKEN_KEY = 'provider-token';
@@ -2049,7 +2051,7 @@ function deleteClient(id) {
 }
 
 function openClient(id) {
-  location.href = 'workbench.html?client_id=' + encodeURIComponent(id);
+  location.href = 'workbench.html?v=20260626&client_id=' + encodeURIComponent(id);
 }
 
 function goStep1() {
@@ -2072,7 +2074,7 @@ function goStep1() {
   };
   clients.push(newClient);
   saveClients(clients);
-  location.href = 'workbench.html?client_id=' + encodeURIComponent(newClient.id);
+  location.href = 'workbench.html?v=20260626&client_id=' + encodeURIComponent(newClient.id);
 }
 
 function loadClientsList() {

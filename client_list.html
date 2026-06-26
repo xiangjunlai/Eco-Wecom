@@ -977,13 +977,13 @@ function deleteClient(id) {
 function openClient(id) {
   var numId = Number(id);
   var c = _backendClients.find(function(x) { return x.id === numId || String(x.id) === String(id); });
-  if (!c) { location.href = 'workbench.html?client_id=' + encodeURIComponent(id); return; }
+  if (!c) { location.href = 'workbench.html?v=20260626&client_id=' + encodeURIComponent(id); return; }
   var stage = getStage(c);
-  location.href = 'workbench.html?client_id=' + encodeURIComponent(id) + '&step=' + stage;
+  location.href = 'workbench.html?v=20260626&client_id=' + encodeURIComponent(id) + '&step=' + stage;
 }
 
 function goNewClient() {
-  location.href = 'workbench.html?new=1';
+  location.href = 'workbench.html?v=20260626&new=1';
 }
 
 // ===== TABS =====
@@ -1434,7 +1434,7 @@ document.querySelectorAll('.kb-filter-tab').forEach(function(tab) {
 
 // New client button
 document.getElementById('btn-new-client').addEventListener('click', function() {
-  location.href = 'workbench.html?new=1';
+  location.href = 'workbench.html?v=20260626&new=1';
 });
 
 // Init
