@@ -830,6 +830,7 @@ function getClientById(id) {
 }
 
 async function openClientModal(id) {
+  window._clientMap = window._clientMap || {};
   var c = getClientById(id);
   if (!c) {
     // Try fetching directly
@@ -1054,6 +1055,8 @@ async function renderContent() {
   window._contentClients = clients;
   window._contentProviders = providers;
   window._contentProviderMap = {};
+  window._clientMap = {};
+  clients.forEach(c => { window._clientMap[c.id] = c; });
   providers.forEach(p => { window._contentProviderMap[p.id] = p; });
   drawContentList(clients);
 }
