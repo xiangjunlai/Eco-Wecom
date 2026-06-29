@@ -257,7 +257,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .pain{background:#fff;border-radius:16px;padding:14px 16px;border:1px solid #e8edf5;box-shadow:0 2px 8px rgba(20,34,64,.06);line-height:1.6;display:flex;flex-direction:column;gap:8px;transition:.15s}
 .pain:hover{box-shadow:0 4px 16px rgba(20,34,64,.1);transform:translateY(-1px)}
 .pain-row{display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
-.pain-text{flex:1;font-size:14px;color:#182235;font-weight:400;line-height:1.5}
+.pain-text{flex:1;font-size:14px;color:#182235;font-weight:500;line-height:1.5}
 .pain-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800;white-space:nowrap;flex-shrink:0}
 .pain-badge.explicit{background:rgba(19,185,111,.1);color:#059669}
 .pain-badge.implicit{background:rgba(245,158,11,.1);color:#d97706}
@@ -878,22 +878,24 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
               <div class="label">客户行业</div>
               <select class="select" id="s1-industry" onchange="saveStep1()">
                 <option value="">请选择行业</option>
-                <option>制造业</option>
-                <option>零售/商贸</option>
-                <option>互联网/科技</option>
-                <option>服务业（咨询/财税/法务等）</option>
-                <option>医疗健康</option>
-                <option>教育培训</option>
-                <option>金融机构</option>
-                <option>政府/公共事业</option>
-                <option>建筑/地产</option>
-                <option>能源/制造</option>
-                <option>媒体/文娱</option>
-                <option>交通/物流</option>
-                <option>外贸/跨境</option>
-                <option>电商/直播</option>
-                <option>农业/食品</option>
-                <option>行业协会/商会</option>
+                <option>金融·银行保险</option><option>金融·证券基金</option><option>金融·投资融资</option>
+                <option>制造业·汽车零配件</option><option>制造业·电子电气</option><option>制造业·机械设备</option>
+                <option>制造业·纺织服装</option><option>制造业·食品饮料</option><option>制造业·家具家居</option>
+                <option>制造业·化工材料</option><option>制造业·医疗器械</option><option>制造业·其他</option>
+                <option>建筑业·地产开发</option><option>建筑业·工程建筑</option><option>建筑业·装修装饰</option>
+                <option>批发零售·B2B工业品</option><option>批发零售·消费品分销</option><option>批发零售·连锁商超</option>
+                <option>批发零售·品牌代理</option>
+                <option>互联网·电商平台</option><option>互联网·企业服务SaaS</option><option>互联网·游戏</option>
+                <option>互联网·内容资讯</option><option>互联网·IT/通信</option>
+                <option>服务业·餐饮酒店</option><option>服务业·教育培训</option><option>服务业·医疗健康</option>
+                <option>服务业·咨询顾问</option><option>服务业·法律财税</option><option>服务业·广告传媒</option>
+                <option>服务业·人力资源</option><option>服务业·物业安保</option><option>服务业·旅游票务</option>
+                <option>政府·公共事业</option><option>政府·非营利组织</option>
+                <option>能源·电力电网</option><option>能源·石油化工</option><option>能源·新能源</option>
+                <option>交通·物流运输</option><option>交通·仓储配送</option>
+                <option>农业·种养殖</option><option>农业·农产品加工</option>
+                <option>文娱·影视文化</option><option>文娱·体育健身</option>
+                <option>外贸·进出口</option>
                 <option>其他</option>
               </select>
             </div>
@@ -955,7 +957,6 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             <button class="edit-btn" onclick="togglePartEdit(this, 'part1')">编辑</button>
           </div>
           <div class="s2-profile-summary" id="s2-profile-text" contenteditable="false">-</div>
-          <div id="s2-profile-extra" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div class="subhead">行业常见痛点</div>
             <button class="more" id="s2-pains-more-btn" onclick="toggleMorePains()" style="display:none">查看更多（<span id="s2-pains-total">0</span>）</button>
@@ -1215,14 +1216,62 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             </div>
           </div>
 
-          <!-- Tab + 编辑区 -->
-          <div id="s5-sheet-tabs" style="display:flex;gap:4px;padding:0 0 12px;align-items:center;flex-wrap:wrap"></div>
-          <div id="s5-empty-state" style="text-align:center;padding:60px 0;color:#98a2b3">
-            <div style="font-size:40px;margin-bottom:12px">📊</div>
-            <div style="font-size:14px;margin-bottom:6px">暂无智能表格方案</div>
-            <div style="font-size:12px">点击右上角「重新生成」生成 Demo 数据</div>
+          <!-- 表选择Tab -->
+          <div id="s5-sheet-tabs" style="display:flex;gap:2px;padding:0 0 12px;overflow-x:auto;align-items:flex-end"></div>
+
+          <!-- 编辑区 -->
+          <div id="s5-edit-area">
+            <div id="s5-empty-state" style="text-align:center;padding:60px 0;color:#98a2b3">
+              <div style="font-size:40px;margin-bottom:12px">📊</div>
+              <div style="font-size:14px;margin-bottom:6px">暂无智能表格方案</div>
+              <div style="font-size:12px">点击右上角「重新生成」生成 Demo 数据</div>
+            </div>
+            <div id="s5-sheet-editor" style="display:none">
+              <div style="margin-bottom:20px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <input id="s5-sheet-name" class="sheet-name-input" placeholder="表名称" oninput="onSheetNameChange(this.value)" style="font-size:20px;font-weight:700;border:none;border-bottom:2px solid #1263e6;outline:none;padding:4px 0;background:transparent;min-width:240px">
+                    <span style="font-size:12px;color:#667085">点击表名可直接编辑</span>
+                  </div>
+                  <button class="btn danger" onclick="doDeleteCurrentSheet()" style="height:30px;font-size:12px">删除此表</button>
+                </div>
+
+                <!-- 字段列表 -->
+                <div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;margin-bottom:14px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#f9fafb;border-bottom:1px solid #e5e7eb">
+                    <b style="font-size:13px;color:#374151">字段设计</b>
+                    <button class="btn secondary" onclick="doAddField()" style="height:26px;font-size:12px;padding:0 10px">+ 添加字段</button>
+                  </div>
+                  <table style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead>
+                      <tr style="background:#f9fafb">
+                        <th style="padding:9px 14px;text-align:left;color:#667085;font-weight:500;width:40px">#</th>
+                        <th style="padding:9px 14px;text-align:left;color:#667085;font-weight:500">字段名称</th>
+                        <th style="padding:9px 14px;text-align:left;color:#667085;font-weight:500;width:130px">字段类型</th>
+                        <th style="padding:9px 14px;text-align:center;color:#667085;font-weight:500;width:70px">必填</th>
+                        <th style="padding:9px 14px;text-align:center;color:#667085;font-weight:500;width:60px">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="s5-fields-tbody"></tbody>
+                  </table>
+                </div>
+
+                <!-- 样例数据 -->
+                <div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#f9fafb;border-bottom:1px solid #e5e7eb">
+                    <b style="font-size:13px;color:#374151">样例数据 <span style="font-weight:400;color:#98a2b3;margin-left:6px" id="s5-record-count">0 条</span></b>
+                    <button class="btn secondary" onclick="doAddRecord()" style="height:26px;font-size:12px;padding:0 10px">+ 添加行</button>
+                  </div>
+                  <div id="s5-records-grid" style="overflow-x:auto">
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:600px">
+                      <thead id="s5-records-header"></thead>
+                      <tbody id="s5-records-body"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div id="s5-fields-tbody" style="display:none"></div>
         </div>
 
         <!-- 卡片2：Agent 建议 -->
@@ -1580,7 +1629,6 @@ function showSimpleLoadingModal(titleText, subtitleText, onComplete) {
 
 function hideSimpleLoadingModal() {
   document.getElementById('generate-modal').classList.remove('active');
-  clearTimeout(genTimeout);
   _simpleLoadingResolve = null;
   _simpleLoadingReject = null;
 }
@@ -2032,7 +2080,7 @@ function deleteClient(id) {
 }
 
 function openClient(id) {
-  location.href = 'workbench.html?v=20260628&client_id=' + encodeURIComponent(id);
+  location.href = 'workbench.html?v=20260626&client_id=' + encodeURIComponent(id);
 }
 
 function goStep1() {
@@ -2960,11 +3008,7 @@ async function generateStep4Presales() {
         version: version
       });
       updateClient(currentClientId, { step4_presales_versions: versions });
-      if (data.htmlContent) {
-        doPreviewStep4Html(data.htmlContent, c2.name || c.name || '客户');
-      } else if (data.requirementData) {
-        doPreviewStep4Html(data.requirementData, c2.name || c.name || '客户');
-      }
+      if (data.htmlContent) doPreviewStep4Html(data.htmlContent, c2.name || c.name || '客户');
       if (data.wordContent) doDownloadStep4Word(data.wordContent, c2.name || c.name || '客户');
       renderStep4LatestPresales(versions[versions.length - 1], versions.length);
       renderStep4History('presales', versions);
@@ -3029,11 +3073,7 @@ async function generateStep4Technical() {
         version: version
       });
       updateClient(currentClientId, { step4_technical_versions: versions });
-      if (data.htmlContent) {
-        doPreviewStep4Html(data.htmlContent, c2.name || c.name || '客户', 'technical');
-      } else if (data.requirementData) {
-        doPreviewStep4Html(data.requirementData, c2.name || c.name || '客户', 'technical');
-      }
+      if (data.htmlContent) doPreviewStep4Html(data.htmlContent, c2.name || c.name || '客户', 'technical');
       renderStep4LatestTechnical(versions[versions.length - 1]);
       renderStep4History('technical', versions);
       window._technicalPct = 100;
@@ -3104,501 +3144,53 @@ async function republishStep4() {
 }
 
 function buildStep4HtmlPage(data) {
-  /* data: requirementData 对象，或 {requirementData, wordContent, htmlContent} 结构 */
   if (!data) return '<html><body><p>No content</p></body></html>';
-
-  // 兼容旧结构：{htmlContent: "完整HTML字符串"} → 直接返回
-  if (typeof data === 'string') return data;
-  if (data.htmlContent && typeof data.htmlContent === 'string') return data.htmlContent;
-
-  // 兼容旧结构：{wordContent: {...}} → 提取requirementData
-  if (data.wordContent && !data.requirementData) {
-    data = data.wordContent;
+  var tags = (data.hero && data.hero.tags) || [];
+  var tagsHtml = '';
+  for (var i = 0; i < tags.length; i++) {
+    tagsHtml += '<span style="display:inline-block;background:#eef6ff;color:#1263e6;border-radius:999px;padding:3px 10px;font-size:12px;margin:2px">' + tags[i] + '</span>';
   }
-
-  // 取 requirementData（支持直接传 requirementData 对象）
-  var rd = data.requirementData || data;
-
-  var watermark = '企业微信生态定制开发';
-  var outputDate = rd.meta && rd.meta.outputDate || new Date().toLocaleDateString('zh-CN');
-  var customerName = (rd.meta && rd.meta.customerName) || '客户';
-  var scenario = (rd.meta && rd.meta.mainScenario) || '';
-  var industry = (rd.meta && rd.meta.industry) || '';
-  var provider = rd.spName || '';
-
-  // ---- helpers ----
-  function esc(s) {
-    if (s === null || s === undefined) return '';
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  var painCards = (data.insightSection && data.insightSection.painCards) || [];
+  var painCardsHtml = '';
+  for (var i = 0; i < painCards.length; i++) {
+    painCardsHtml += '<div style="background:#fff;border:1px solid #e8edf5;border-radius:16px;padding:20px;margin-bottom:12px">';
+    painCardsHtml += '<div style="font-weight:700;color:#182235;margin-bottom:8px">' + (painCards[i].title || '') + '</div>';
+    painCardsHtml += '<div style="color:#667085;font-size:14px;line-height:1.7">' + (painCards[i].description || '') + '</div>';
+    if (painCards[i].impact) painCardsHtml += '<div style="color:#1263e6;font-size:12px;margin-top:8px">影响：' + painCards[i].impact + '</div>';
+    painCardsHtml += '</div>';
   }
-  function ls(v) { return v && Array.isArray(v) ? v : (v ? [v] : []); }
-  function ss(v) {
-    if (!v || typeof v === 'boolean') return '';
-    if (typeof v === 'number') return String(v);
-    if (typeof v === 'string') return v.trim();
-    if (Array.isArray(v)) return v.map(ss).filter(Boolean).join('、');
-    if (typeof v === 'object') return v.title || v.name || v.item || '';
-    return String(v);
+  var modules = data.recommendedModules || [];
+  var modulesHtml = '';
+  for (var i = 0; i < modules.length; i++) {
+    var phaseColor = modules[i].phase === '一期' ? '#13b96f' : (modules[i].phase === '二期评估' ? '#ff8a00' : '#98a2b3');
+    modulesHtml += '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #f0f4ff">';
+    modulesHtml += '<div style="flex:1">';
+    modulesHtml += '<div style="font-weight:600;color:#182235;margin-bottom:4px">' + (modules[i].moduleName || '') + '</div>';
+    modulesHtml += '<div style="color:#667085;font-size:13px;line-height:1.6">' + (modules[i].description || '') + '</div>';
+    modulesHtml += '</div>';
+    modulesHtml += '<span style="background:' + phaseColor + '22;color:' + phaseColor + ';border-radius:6px;padding:2px 8px;font-size:11px;white-space:nowrap;flex-shrink:0">' + (modules[i].phase || '') + '</span>';
+    modulesHtml += '</div>';
   }
-  function yn(v) {
-    if (typeof v === 'boolean') return v ? '是' : '否';
-    var t = String(v || '').toLowerCase();
-    if (['true','yes','是'].includes(t)) return '是';
-    if (['false','no','否'].includes(t)) return '否';
-    return v ? '是' : '否';
+  var roadmap = data.roadmap || [];
+  var roadmapHtml = '';
+  for (var i = 0; i < roadmap.length; i++) {
+    roadmapHtml += '<div style="display:flex;gap:16px;margin-bottom:20px">';
+    roadmapHtml += '<div style="width:32px;height:32px;border-radius:50%;background:#1263e6;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">' + (i + 1) + '</div>';
+    roadmapHtml += '<div style="flex:1;padding-top:4px">';
+    roadmapHtml += '<div style="font-weight:600;color:#182235;margin-bottom:6px">' + (roadmap[i].phaseName || '') + '</div>';
+    roadmapHtml += '<div style="color:#667085;font-size:13px;line-height:1.7">' + (roadmap[i].workContent || '') + '</div>';
+    if (roadmap[i].customerCooperation) roadmapHtml += '<div style="color:#98a2b3;font-size:12px;margin-top:4px">客户配合事项：' + roadmap[i].customerCooperation + '</div>';
+    roadmapHtml += '</div></div>';
   }
-
-  // ---- 0. 数据预处理 ----
-  var meta = rd.meta || {};
-  var facts = rd.customerFacts || {};
-  var pains = ls(rd.painPoints);
-  var bp = rd.businessProcess || {};
-  var scope = rd.scope || {};
-  var reqs = ls(rd.requirements);
-  var st = rd.smartTableSpec || {};
-  var mods = ls(rd.moduleRecommendation);
-  var impl = ls(rd.implementationPlanTable);
-  var oqs = ls(rd.openQuestions);
-  var tabs = ls(st.confirmedTables);
-  var autos = ls(st.automations);
-  var perms = ls(st.permissions);
-  var dashes = ls(st.dashboards);
-  var roles = ls(facts.involvedRoles);
-  var nodes = ls(bp.processNodes);
-  var curFlow = ls(bp.currentFlow);
-  var tgtFlow = ls(bp.targetFlow);
-
-  // ---- 1. Hero 速览 ----
-  var heroKpiCards = '';
-  var kpiMetrics = [
-    { label: '核心痛点', val: pains.length || '—' },
-    { label: '智能表格', val: tabs.length || reqs.length || '—' },
-    { label: '涉及角色', val: roles.length || '—' },
-    { label: '一期模块', val: reqs.filter(function(r){ return (r.phase||'').indexOf('一期')>-1; }).length || '—' }
-  ];
-  for (var ki = 0; ki < kpiMetrics.length; ki++) {
-    heroKpiCards += '<div style="flex:1;background:rgba(255,255,255,.15);border-radius:14px;padding:14px 12px;text-align:center">' +
-      '<div style="font-size:28px;font-weight:900;margin-bottom:2px">' + esc(kpiMetrics[ki].val) + '</div>' +
-      '<div style="font-size:11px;opacity:0.8">' + esc(kpiMetrics[ki].label) + '</div></div>';
+  var valuePoints = data.valuePoints || [];
+  var valueHtml = '';
+  for (var i = 0; i < valuePoints.length; i++) {
+    valueHtml += '<div style="display:flex;gap:12px;margin-bottom:12px">';
+    valueHtml += '<div style="width:6px;height:6px;border-radius:50%;background:#13b96f;margin-top:7px;flex-shrink:0"></div>';
+    valueHtml += '<div><div style="font-weight:600;color:#182235;margin-bottom:2px">' + (valuePoints[i].title || '') + '</div>';
+    valueHtml += '<div style="color:#667085;font-size:13px">' + (valuePoints[i].description || '') + '</div></div></div>';
   }
-
-  // 核心链路：从 currentFlow 取前4步
-  var flowSteps = '';
-  for (var fi = 0; fi < Math.min(4, curFlow.length); fi++) {
-    var cf = curFlow[fi];
-    flowSteps += '<div style="flex:1;background:#fff;border-radius:12px;padding:12px 10px;text-align:center;min-width:0">' +
-      '<div style="font-size:20px;font-weight:700;color:#1E5AFF;margin-bottom:4px">' + (fi+1) + '</div>' +
-      '<div style="font-size:12px;color:#182235;font-weight:600;line-height:1.3">' + esc(ss(cf.stepName||cf.title||'')) + '</div>' +
-      '<div style="font-size:11px;color:#667085;margin-top:4px">' + esc(ss(cf.role||'')) + '</div></div>';
-    if (fi < Math.min(3, curFlow.length-1)) {
-      flowSteps += '<div style="width:20px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;flex-shrink:0">→</div>';
-    }
-  }
-
-  var heroHtml =
-    '<div style="background:linear-gradient(135deg,#1E5AFF,#3D7BFF);border-radius:24px;padding:40px 44px;margin-bottom:24px;color:#fff;position:relative;overflow:hidden">' +
-    '<div style="position:absolute;right:0;top:0;width:320px;height:100%;opacity:0.06;background:radial-gradient(circle at 80% 20%,#fff 0%,transparent 70%)"></div>' +
-    '<div style="font-size:13px;opacity:0.75;margin-bottom:12px;letter-spacing:.5px">' + esc(customerName) + ' · ' + esc(industry) + ' · ' + esc(scenario) + '</div>' +
-    '<h1 style="font-size:34px;font-weight:900;margin:0 0 10px;line-height:1.2;letter-spacing:-1px">' + esc(scenario || meta.mainScenario || '企业微信定制开发方案') + '</h1>' +
-    '<p style="font-size:15px;opacity:0.85;line-height:1.6;margin:0 0 24px;max-width:680px">' +
-      (meta.customerName ? '以企业微信智能表格为数据底座，围绕「' + esc(scenario) + '」场景构建轻量高效的数字化管理工具。' : '围绕核心业务需求，构建企业微信智能表格数字化管理方案。') + '</p>' +
-    '<div style="display:flex;gap:10px;margin-bottom:28px;flex-wrap:wrap">' +
-      (scenario ? '<span style="background:rgba(255,255,255,.2);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.3)">' + esc(scenario) + '</span>' : '') +
-      '<span style="background:rgba(255,255,255,.2);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.3)">企业微信生态</span>' +
-      '<span style="background:rgba(255,255,255,.2);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.3)">智能表格</span>' +
-    '</div>' +
-    '<div style="display:flex;gap:16px;align-items:stretch;flex-wrap:wrap;margin-bottom:24px">' +
-      '<div style="flex:1;display:flex;gap:8px;flex-wrap:wrap">' + heroKpiCards + '</div>' +
-    '</div>' +
-    (flowSteps ? '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' + flowSteps + '</div>' : '') +
-    '</div>';
-
-  // ---- 2. 客户阶段判断 ----
-  var currentState = ss(facts.customerCurrentState || facts.currentState || '');
-  var phase1Items = ls(scope.phaseOne);
-  var phase2Items = ls(scope.phaseTwo);
-  var notRecItems = ls(scope.notRecommended);
-
-  var judgementHtml =
-    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px">' +
-    '<div style="background:#fff;border:1px solid #e8edf5;border-radius:16px;padding:20px">' +
-      '<div style="font-size:12px;font-weight:700;color:#98a2b3;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">当前现状</div>' +
-      '<div style="color:#182235;font-size:14px;line-height:1.7">' + (currentState ? esc(currentState) : '<span style="color:#98a2b3">（待补充）</span>') + '</div>' +
-    '</div>' +
-    '<div style="background:#fff7f0;border:1px solid #fed7aa;border-radius:16px;padding:20px">' +
-      '<div style="font-size:12px;font-weight:700;color:#c2410c;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">核心问题</div>' +
-      (pains.length ? pains.slice(0,2).map(function(p){return '<div style="color:#182235;font-size:13px;margin-bottom:6px">⚠ ' + esc(ss(p.title||p.description||'')) + '</div>';}).join('') : '<div style="color:#98a2b3;font-size:13px">（待识别）</div>') +
-    '</div>' +
-    '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:16px;padding:20px">' +
-      '<div style="font-size:12px;font-weight:700;color:#15803d;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">建设目标</div>' +
-      (phase1Items.length ? phase1Items.slice(0,2).map(function(p){return '<div style="color:#182235;font-size:13px;margin-bottom:6px">✓ ' + esc(ss(p.item||p.title||'')) + '</div>';}).join('') : '<div style="color:#98a2b3;font-size:13px">（待确认）</div>') +
-    '</div>' +
-    '</div>';
-
-  // ---- 3. 推荐建设范围（一期/二期/暂不建议三栏） ----
-  function renderPhaseItems(items, type) {
-    if (!items || items.length === 0) return '<div style="color:#98a2b3;font-size:13px">（暂无）</div>';
-    var colorClass = type === 1 ? {bg:'#f0fdf4',border:'#bbf7d0',text:'#15803d',label:'✅ 一期必做'} :
-                     type === 2 ? {bg:'#fff7ed',border:'#fed7aa',text:'#c2410c',label:'🔄 二期扩展'} :
-                     {bg:'#f5f5f5',border:'#d9d9d9',text:'#595959',label:'❌ 暂不建议'};
-    var html = '<div style="background:' + colorClass.bg + ';border:1px solid ' + colorClass.border + ';border-radius:14px;padding:18px;flex:1;min-width:200px">';
-    html += '<div style="font-weight:700;font-size:13px;color:' + colorClass.text + ';margin-bottom:12px">' + colorClass.label + '</div>';
-    for (var i = 0; i < items.length; i++) {
-      var it = items[i];
-      html += '<div style="margin-bottom:10px">';
-      html += '<div style="font-size:13px;color:#182235;font-weight:600;margin-bottom:3px">' + esc(ss(it.item||it.title||'')) + '</div>';
-      if (type === 1 && it.reason) html += '<div style="font-size:12px;color:#667085;padding-left:10px">→ ' + esc(ss(it.reason)) + '</div>';
-      if (type === 2 && it.prerequisites) html += '<div style="font-size:12px;color:#c2410c;padding-left:10px">前提: ' + esc(ss(it.prerequisites)) + '</div>';
-      if (type === 3 && it.reason) html += '<div style="font-size:12px;color:#595959;padding-left:10px">原因: ' + esc(ss(it.reason)) + '</div>';
-      html += '</div>';
-    }
-    html += '</div>';
-    return html;
-  }
-  var scopeHtml = '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px">' +
-    renderPhaseItems(phase1Items, 1) +
-    renderPhaseItems(phase2Items, 2) +
-    renderPhaseItems(notRecItems, 3) +
-    '</div>';
-
-  // ---- 4. 企业微信能力模块 ----
-  var modHtml = '';
-  if (mods.length) {
-    for (var mi = 0; mi < mods.length; mi++) {
-      var m = mods[mi];
-      var phaseTag = (m.phase||'').indexOf('一期')>-1 ? '✅ 一期' : ((m.phase||'').indexOf('二期')>-1 ? '🔄 二期' : '');
-      var tagColor = phaseTag.indexOf('一期')>-1 ? '#13b96f' : (phaseTag.indexOf('二期')>-1 ? '#ff8a00' : '#98a2b3');
-      modHtml += '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #f0f4ff' + (mi===mods.length-1?';border-bottom:none':'') + '">';
-      modHtml += '<div style="width:36px;height:36px;border-radius:10px;background:#eaf1fb;color:#1E5AFF;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0">' + (mi+1) + '</div>';
-      modHtml += '<div style="flex:1">';
-      modHtml += '<div style="font-weight:700;color:#182235;font-size:14px;margin-bottom:3px">' + esc(ss(m.moduleName||m.name||'')) + '</div>';
-      if (m.moduleType) modHtml += '<div style="font-size:11px;color:#98a2b3;margin-bottom:5px">' + esc(ss(m.moduleType)) + '</div>';
-      if (m.notes) modHtml += '<div style="color:#667085;font-size:13px;line-height:1.6">' + esc(ss(m.notes)) + '</div>';
-      modHtml += '</div>';
-      if (phaseTag) modHtml += '<span style="background:' + tagColor + '22;color:' + tagColor + ';border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0">' + phaseTag + '</span>';
-      modHtml += '</div>';
-    }
-  } else if (reqs.length) {
-    // 用需求反推模块
-    for (var ri = 0; ri < Math.min(6, reqs.length); ri++) {
-      var r = reqs[ri];
-      modHtml += '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #f0f4ff' + (ri===Math.min(5,reqs.length)-1?';border-bottom:none':'') + '">';
-      modHtml += '<div style="width:36px;height:36px;border-radius:10px;background:#eaf1fb;color:#1E5AFF;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0">' + (ri+1) + '</div>';
-      modHtml += '<div style="flex:1">';
-      modHtml += '<div style="font-weight:700;color:#182235;font-size:14px;margin-bottom:3px">' + esc(ss(r.requirementName||'')) + '</div>';
-      if (r.customerExpression) modHtml += '<div style="color:#667085;font-size:13px;line-height:1.6">' + esc(ss(r.customerExpression)) + '</div>';
-      modHtml += '</div>';
-      if (r.phase) {
-        var pc = r.phase.indexOf('一期')>-1 ? '#13b96f' : '#ff8a00';
-        modHtml += '<span style="background:' + pc + '22;color:' + pc + ';border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0">' + esc(r.phase) + '</span>';
-      }
-      modHtml += '</div>';
-    }
-  } else {
-    modHtml = '<p style="color:#98a2b3;font-size:13px">（暂无模块建议）</p>';
-  }
-
-  // ---- 5. 智能表格交付设计 ----
-  var tablesHtml = '';
-  if (tabs.length) {
-    for (var ti = 0; ti < tabs.length; ti++) {
-      var t = tabs[ti];
-      var phaseTag = (t.phase||'').indexOf('一期')>-1 ? '✅ 一期' : '🔄 二期';
-      var phaseColor = phaseTag.indexOf('一期')>-1 ? '#13b96f' : '#ff8a00';
-      var tRoles = ls(t.roles);
-      tablesHtml += '<div style="background:#f9faff;border:1px solid #e8edf5;border-radius:14px;padding:18px;margin-bottom:12px">';
-      tablesHtml += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
-      tablesHtml += '<div style="font-weight:700;color:#182235;font-size:14px">' + esc(ss(t.tableName||'')) + '</div>';
-      tablesHtml += '<span style="background:' + phaseColor + '22;color:' + phaseColor + ';border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600">' + phaseTag + '</span>';
-      tablesHtml += '</div>';
-      if (t.tablePurpose) tablesHtml += '<div style="font-size:13px;color:#667085;margin-bottom:6px">' + esc(ss(t.tablePurpose)) + '</div>';
-      if (tRoles.length) tablesHtml += '<div style="font-size:12px;color:#1E5AFF">使用角色: ' + tRoles.map(esc).join('、') + '</div>';
-      // 关键字段（从 fieldsByTable 找）
-      var flds = ls(t.fields);
-      if (flds.length) {
-        var fieldNames = flds.slice(0, 6).map(function(f){ return ss(f.fieldName||f.name||''); }).filter(Boolean);
-        if (fieldNames.length) tablesHtml += '<div style="font-size:12px;color:#667085;margin-top:5px">关键字段: ' + fieldNames.join('、') + '</div>';
-      }
-      tablesHtml += '</div>';
-    }
-  } else {
-    tablesHtml = '<p style="color:#98a2b3;font-size:13px">（智能表格待从 Step2 xlsx 补充）</p>';
-  }
-
-  // ---- 6. 方案价值 + KPI ----
-  // 推断 KPI
-  var kpiItems = [
-    { num: pains.length || '—', label: '核心痛点已识别' },
-    { num: tabs.length || reqs.length || '—', label: '智能表格模块' },
-    { num: roles.length || '—', label: '涉及角色' },
-    { num: autos.length || '—', label: '自动化规则' }
-  ];
-  var kpiHtml = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">';
-  for (var ki2 = 0; ki2 < kpiItems.length; ki2++) {
-    kpiHtml += '<div style="background:linear-gradient(135deg,#1E5AFF,#0d47a1);border-radius:16px;padding:20px 12px;text-align:center;color:#fff">';
-    kpiHtml += '<div style="font-size:30px;font-weight:900;margin-bottom:4px;letter-spacing:-1px">' + esc(kpiItems[ki2].num) + '</div>';
-    kpiHtml += '<div style="font-size:12px;opacity:0.85">' + esc(kpiItems[ki2].label) + '</div></div>';
-  }
-  kpiHtml += '</div>';
-  // 文字价值点
-  var valuePoints = st.valuePoints || [];
-  var valHtml = kpiHtml;
-  if (valuePoints.length) {
-    for (var vi = 0; vi < valuePoints.length; vi++) {
-      var vp = valuePoints[vi];
-      valHtml += '<div style="display:flex;gap:12px;margin-bottom:10px;align-items:flex-start">';
-      valHtml += '<div style="width:6px;height:6px;border-radius:50%;background:#13b96f;margin-top:7px;flex-shrink:0"></div>';
-      valHtml += '<div><div style="font-weight:600;color:#182235;font-size:13px;margin-bottom:2px">' + esc(ss(vp.title||'')) + '</div>';
-      valHtml += '<div style="color:#667085;font-size:13px">' + esc(ss(vp.description||vp.value||'')) + '</div></div></div>';
-    }
-  } else if (pains.length) {
-    // 从痛点推断价值
-    for (var pi2 = 0; pi2 < Math.min(4, pains.length); pi2++) {
-      var pp = pains[pi2];
-      valHtml += '<div style="display:flex;gap:12px;margin-bottom:10px;align-items:flex-start">';
-      valHtml += '<div style="width:6px;height:6px;border-radius:50%;background:#13b96f;margin-top:7px;flex-shrink:0"></div>';
-      valHtml += '<div><div style="font-weight:600;color:#182235;font-size:13px;margin-bottom:2px">解决「' + esc(ss(pp.title||'')) + '」问题</div>';
-      if (pp.businessImpact) valHtml += '<div style="color:#667085;font-size:13px">' + esc(ss(pp.businessImpact)) + '</div>';
-      valHtml += '</div></div>';
-    }
-  }
-
-  // ---- 7. 核心功能 Mockup（从流程节点推断） ----
-  var mockupHtml = '';
-  if (nodes.length) {
-    for (var ni = 0; ni < Math.min(6, nodes.length); ni++) {
-      var n = nodes[ni];
-      mockupHtml += '<div style="background:#fff;border:1px solid #e8edf5;border-radius:14px;overflow:hidden;margin-bottom:14px;transition:all .2s" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 8px 24px rgba(0,0,0,.08)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'\'">';
-      mockupHtml += '<div style="background:#f5f7ff;padding:8px 14px;display:flex;gap:6px;align-items:center;border-bottom:1px solid #e8edf5">';
-      mockupHtml += '<div style="width:10px;height:10px;border-radius:50%;background:#FF5F57"></div>';
-      mockupHtml += '<div style="width:10px;height:10px;border-radius:50%;background:#FFBD2E"></div>';
-      mockupHtml += '<div style="width:10px;height:10px;border-radius:50%;background:#28C840"></div>';
-      mockupHtml += '<div style="font-size:12px;color:#98a2b3;margin-left:6px">企微工作台 · ' + esc(ss(n.nodeName||'')) + '</div>';
-      mockupHtml += '</div>';
-      mockupHtml += '<div style="padding:16px">';
-      mockupHtml += '<div style="font-weight:700;color:#182235;font-size:14px;margin-bottom:8px">' + esc(ss(n.nodeName||'')) + '</div>';
-      if (n.input) mockupHtml += '<div style="font-size:12px;color:#667085;margin-bottom:4px">📥 ' + esc(ss(n.input)) + '</div>';
-      if (n.output) mockupHtml += '<div style="font-size:12px;color:#667085;margin-bottom:4px">📤 ' + esc(ss(n.output)) + '</div>';
-      if (n.responsibleRole) mockupHtml += '<div style="font-size:12px;color:#1E5AFF;margin-top:6px">👤 ' + esc(ss(n.responsibleRole)) + '</div>';
-      if (n.reminderNeeded) mockupHtml += '<div style="display:inline-block;background:#fff7ed;color:#c2410c;border-radius:4px;padding:2px 6px;font-size:11px;margin-top:6px">🔔 需提醒</div>';
-      mockupHtml += '</div></div>';
-    }
-  } else if (reqs.length) {
-    for (var ri2 = 0; ri2 < Math.min(4, reqs.length); ri2++) {
-      var r2 = reqs[ri2];
-      mockupHtml += '<div style="background:#fff;border:1px solid #e8edf5;border-radius:14px;overflow:hidden;margin-bottom:14px;padding:16px">';
-      mockupHtml += '<div style="font-weight:700;color:#182235;font-size:14px;margin-bottom:8px">📋 ' + esc(ss(r2.requirementName||'')) + '</div>';
-      if (r2.customerExpression) mockupHtml += '<div style="font-size:12px;color:#667085;margin-bottom:4px">客户: ' + esc(ss(r2.customerExpression)) + '</div>';
-      if (r2.businessTranslation) mockupHtml += '<div style="font-size:12px;color:#1E5AFF">方案: ' + esc(ss(r2.businessTranslation)) + '</div>';
-      mockupHtml += '</div>';
-    }
-  }
-  if (!mockupHtml) mockupHtml = '<p style="color:#98a2b3;font-size:13px">（核心功能待补充）</p>';
-
-  // ---- 8. 实施路径 + 甘特图 ----
-  var implHtml = '';
-  if (impl.length) {
-    for (var ii = 0; ii < impl.length; ii++) {
-      var imp = impl[ii];
-      var stepColors2 = ['#1E5AFF','#0d47a1','#13b96f','#ff8a00','#c2410c'];
-      var color = stepColors2[ii % stepColors2.length];
-      implHtml += '<div style="display:flex;gap:16px;margin-bottom:20px;align-items:flex-start">';
-      implHtml += '<div style="width:36px;height:36px;border-radius:50%;background:' + color + ';color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px">' + (ii+1) + '</div>';
-      implHtml += '<div style="flex:1;padding-top:4px">';
-      implHtml += '<div style="font-weight:700;color:#182235;font-size:14px;margin-bottom:6px">' + esc(ss(imp.phase||'')) + '</div>';
-      implHtml += '<div style="color:#667085;font-size:13px;line-height:1.7">' + esc(ss(imp.workContent||'')) + '</div>';
-      if (imp.customerCooperation) implHtml += '<div style="color:#98a2b3;font-size:12px;margin-top:5px">客户配合: ' + esc(ss(imp.customerCooperation)) + '</div>';
-      if (imp.output) implHtml += '<div style="color:#13b96f;font-size:12px;margin-top:4px">📤 ' + esc(ss(imp.output)) + '</div>';
-      implHtml += '</div></div>';
-    }
-  } else {
-    // 默认4阶段
-    var defaultImpl = [
-      {phase:'需求确认', workContent:'确认需求范围、一期二期边界、智能表格结构', customerCooperation:'提供业务需求，参与评审', output:'需求确认文档'},
-      {phase:'智能表格搭建', workContent:'按确认的字段设计搭建智能表格', customerCooperation:'参与字段确认、提供基础数据', output:'可用的智能表格 Demo'},
-      {phase:'规则配置', workContent:'配置自动化规则、审批流、权限', customerCooperation:'参与规则评审、测试确认', output:'配置完成的规则'},
-      {phase:'试运行与优化', workContent:'上线试运行，收集反馈并优化', customerCooperation:'提供试运行数据、反馈问题', output:'上线文档+优化建议'}
-    ];
-    for (var dii = 0; dii < defaultImpl.length; dii++) {
-      var dim = defaultImpl[dii];
-      var dcolor = ['#1E5AFF','#0d47a1','#13b96f','#ff8a00'][dii];
-      implHtml += '<div style="display:flex;gap:16px;margin-bottom:20px;align-items:flex-start">';
-      implHtml += '<div style="width:36px;height:36px;border-radius:50%;background:' + dcolor + ';color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px">' + (dii+1) + '</div>';
-      implHtml += '<div style="flex:1;padding-top:4px">';
-      implHtml += '<div style="font-weight:700;color:#182235;font-size:14px;margin-bottom:6px">' + esc(dim.phase) + '</div>';
-      implHtml += '<div style="color:#667085;font-size:13px;line-height:1.7">' + esc(dim.workContent) + '</div>';
-      implHtml += '<div style="color:#98a2b3;font-size:12px;margin-top:5px">客户配合: ' + esc(dim.customerCooperation) + '</div>';
-      implHtml += '<div style="color:#13b96f;font-size:12px;margin-top:4px">📤 ' + esc(dim.output) + '</div>';
-      implHtml += '</div></div>';
-    }
-  }
-
-  // 甘特图
-  var ganttHtml = '<div style="background:#fff;border:1px solid #e8edf5;border-radius:14px;padding:20px;margin-top:16px;overflow-x:auto">';
-  ganttHtml += '<div style="font-weight:700;color:#182235;font-size:13px;margin-bottom:14px">📅 实施甘特图（参考）</div>';
-  ganttHtml += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:#667085">';
-  ganttHtml += '<div style="width:80px;flex-shrink:0">阶段</div><div style="flex:1;display:flex;gap:3px">';
-  for (var wi = 1; wi <= 8; wi++) ganttHtml += '<div style="flex:1;text-align:center">W' + wi + '</div>';
-  ganttHtml += '</div></div>';
-  var ganttRows = impl.length ? impl : defaultImpl;
-  var ganttColors = ['#1E5AFF','#0d47a1','#13b96f','#ff8a00','#c2410c'];
-  for (var gi = 0; gi < ganttRows.length; gi++) {
-    ganttHtml += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px">';
-    ganttHtml += '<div style="width:80px;flex-shrink:0;color:#182235;font-weight:600">' + esc(ss(ganttRows[gi].phase||'')) + '</div>';
-    ganttHtml += '<div style="flex:1;display:flex;gap:3px">';
-    for (var wj = 1; wj <= 8; wj++) {
-      var filled = (gi === 0 && wj <= 2) || (gi === 1 && wj >= 2 && wj <= 4) || (gi === 2 && wj >= 4 && wj <= 6) || (gi === 3 && wj >= 6);
-      ganttHtml += '<div style="flex:1;height:22px;border-radius:4px;background:' + (filled ? ganttColors[gi] : '#f0f4ff') + ';' + (!filled ? 'border:1px dashed #e8edf5' : '') + '"></div>';
-    }
-    ganttHtml += '</div></div>';
-  }
-  ganttHtml += '</div>';
-
-  // ---- 9. 自动化 + 权限 ----
-  var autoRuleHtml = '';
-  if (autos.length) {
-    for (var ai = 0; ai < autos.length; ai++) {
-      var a = autos[ai];
-      autoRuleHtml += '<div style="margin-bottom:12px;padding:12px 14px;background:#f9faff;border-radius:10px;border-left:3px solid #1E5AFF">';
-      autoRuleHtml += '<div style="font-weight:600;color:#182235;font-size:13px;margin-bottom:4px">' + esc(ss(a.name||'')) + '</div>';
-      autoRuleHtml += '<div style="font-size:12px;color:#667085">触发: ' + esc(ss(a.trigger||'')) + ' → ' + esc(ss(a.action||'')) + '</div>';
-      if (a.notifyTarget) autoRuleHtml += '<div style="font-size:12px;color:#1E5AFF;margin-top:3px">通知: ' + esc(ss(a.notifyTarget)) + '</div>';
-      autoRuleHtml += '</div>';
-    }
-  } else {
-    autoRuleHtml = '<p style="color:#98a2b3;font-size:13px">（暂无自动化规则）</p>';
-  }
-
-  var permHtml = '';
-  if (perms.length) {
-    permHtml += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
-    permHtml += '<thead><tr style="background:#f5f7ff">';
-    permHtml += '<th style="padding:8px 12px;text-align:left;font-weight:600;color:#182235;border-bottom:1px solid #e8edf5">角色</th>';
-    permHtml += '<th style="padding:8px 12px;text-align:left;font-weight:600;color:#182235;border-bottom:1px solid #e8edf5">新增权限</th>';
-    permHtml += '<th style="padding:8px 12px;text-align:left;font-weight:600;color:#182235;border-bottom:1px solid #e8edf5">查看范围</th>';
-    permHtml += '<th style="padding:8px 12px;text-align:left;font-weight:600;color:#182235;border-bottom:1px solid #e8edf5">可编辑字段</th>';
-    permHtml += '</tr></thead><tbody>';
-    for (var pei = 0; pei < perms.length; pei++) {
-      var pe = perms[pei];
-      permHtml += '<tr style="' + (pei%2===1?'background:#fafbff':'') + '">';
-      permHtml += '<td style="padding:8px 12px;border-bottom:1px solid #f0f4ff;color:#182235;font-weight:600">' + esc(ss(pe.role||'')) + '</td>';
-      permHtml += '<td style="padding:8px 12px;border-bottom:1px solid #f0f4ff;color:#667085">' + esc(ss(pe.addScope||'')) + '</td>';
-      permHtml += '<td style="padding:8px 12px;border-bottom:1px solid #f0f4ff;color:#667085">' + esc(ss(pe.viewScope||'')) + '</td>';
-      permHtml += '<td style="padding:8px 12px;border-bottom:1px solid #f0f4ff;color:#667085">' + esc(ss(pe.editableFields||'')) + '</td>';
-      permHtml += '</tr>';
-    }
-    permHtml += '</tbody></table>';
-  } else {
-    permHtml = '<p style="color:#98a2b3;font-size:13px">（暂无权限矩阵）</p>';
-  }
-
-  var autoPermHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">';
-  autoPermHtml += '<div style="background:#fff;border:1px solid #e8edf5;border-radius:14px;padding:18px">';
-  autoPermHtml += '<div style="font-weight:700;color:#182235;font-size:13px;margin-bottom:12px">🤖 自动化规则</div>' + autoRuleHtml + '</div>';
-  autoPermHtml += '<div style="background:#fff;border:1px solid #e8edf5;border-radius:14px;padding:18px">';
-  autoPermHtml += '<div style="font-weight:700;color:#182235;font-size:13px;margin-bottom:12px">🔐 权限矩阵</div>' + permHtml + '</div>';
-  autoPermHtml += '</div>';
-
-  // ---- 10. 待确认问题 ----
-  var oqHtml = '';
-  if (oqs.length) {
-    oqHtml += '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">';
-    oqHtml += '<thead><tr style="background:#fff7f0">';
-    oqHtml += '<th style="padding:8px 12px;text-align:left;font-weight:600;color:#c2410c;border-bottom:1px solid #fed7aa;width:40px">#</th>';
-    oqHtml += '<th style="padding:8px 12px;text-align:left;font-weight:600;color:#c2410c;border-bottom:1px solid #fed7aa">问题</th>';
-    oqHtml += '<th style="padding:8px 12px;text-align:left;font-weight:600;color:#c2410c;border-bottom:1px solid #fed7aa;width:100px">负责人</th>';
-    oqHtml += '<th style="padding:8px 12px;text-align:left;font-weight:600;color:#c2410c;border-bottom:1px solid #fed7aa;width:70px">优先级</th>';
-    oqHtml += '</tr></thead><tbody>';
-    for (var oi = 0; oi < oqs.length; oi++) {
-      var oq = oqs[oi];
-      oqHtml += '<tr style="' + (oi%2===1?'background:#fffbf5':'') + '">';
-      oqHtml += '<td style="padding:10px 12px;border-bottom:1px solid #f0f4ff;color:#182235;font-weight:600">' + (oi+1) + '</td>';
-      oqHtml += '<td style="padding:10px 12px;border-bottom:1px solid #f0f4ff;color:#182235">' + esc(ss(oq.question||'')) + '</td>';
-      oqHtml += '<td style="padding:10px 12px;border-bottom:1px solid #f0f4ff;color:#667085">' + esc(ss(oq.owner||'服务商+客户')) + '</td>';
-      oqHtml += '<td style="padding:10px 12px;border-bottom:1px solid #f0f4ff"><span style="background:#fff7ed;color:#c2410c;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:600">' + esc(ss(oq.priority||'中')) + '</span></td>';
-      oqHtml += '</tr>';
-    }
-    oqHtml += '</tbody></table>';
-  } else {
-    oqHtml += '<p style="color:#98a2b3;font-size:13px;margin-bottom:16px">（暂无待确认问题）</p>';
-  }
-  // 免责声明
-  oqHtml += '<div style="padding:14px 16px;background:#f5f7ff;border-radius:12px;font-size:13px;color:#344054;line-height:1.8">';
-  oqHtml += '<b>声明：</b>本文档为售前需求确认稿，以上待确认项（标注 ⚠️）未纳入一期交付承诺。ERP 系统对接、AI 智能填报、历史数据清洗等未经客户明确确认的能力，不在本次一期交付范围内，建议以二期独立项目评估。';
-  oqHtml += '</div>';
-
-  // ---- 11. 数据看板 ----
-  var dashBoardHtml = '';
-  if (dashes.length) {
-    for (var di = 0; di < dashes.length; di++) {
-      var ds = dashes[di];
-      dashBoardHtml += '<div style="background:#f9faff;border:1px solid #e8edf5;border-radius:14px;padding:18px;margin-bottom:12px">';
-      dashBoardHtml += '<div style="font-weight:700;color:#182235;font-size:14px;margin-bottom:8px">' + esc(ss(ds.dashboardName||'')) + '</div>';
-      dashBoardHtml += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px">';
-      if (ds.users) dashBoardHtml += '<div><b style="color:#667085">使用对象：</b>' + esc(ss(ds.users||'')) + '</div>';
-      if (ds.metrics) dashBoardHtml += '<div><b style="color:#667085">核心指标：</b>' + esc(ss(ds.metrics||'')) + '</div>';
-      if (ds.filters) dashBoardHtml += '<div><b style="color:#667085">筛选维度：</b>' + esc(ss(ds.filters||'')) + '</div>';
-      dashBoardHtml += '</div></div>';
-    }
-  } else {
-    dashBoardHtml = '<p style="color:#98a2b3;font-size:13px">（数据看板待规划，建议以「销售情况看板」起步）</p>';
-  }
-
-  // ---- 12. 组装完整 HTML ----
-  var navHtml = '<div style="position:sticky;top:0;z-index:100;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-bottom:1px solid #e8edf5;padding:0 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 4px rgba(0,0,0,.06)">' +
-    '<div style="display:flex;align-items:center;gap:8px">' +
-    '<div style="width:28px;height:28px;background:#1E5AFF;color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">企</div>' +
-    '<span style="font-weight:600;color:#182235;font-size:13px">企业微信服务商定制开发售前方案</span>' +
-    '</div>' +
-    '<div style="display:flex;gap:20px;font-size:12px">' +
-    '<a href="#hero" style="color:#667085;text-decoration:none">总览</a>' +
-    '<a href="#scope" style="color:#667085;text-decoration:none">建设范围</a>' +
-    '<a href="#tables" style="color:#667085;text-decoration:none">智能表格</a>' +
-    '<a href="#roadmap" style="color:#667085;text-decoration:none">实施路径</a>' +
-    '<a href="#confirm" style="color:#667085;text-decoration:none">待确认</a>' +
-    '</div></div>';
-
-  var sections = '';
-  sections += '<section id="judgement"><div class="section"><h2>01 &nbsp;客户阶段判断</h2>' + judgementHtml + '</div></section>';
-  sections += '<section id="scope"><div class="section"><h2>02 &nbsp;推荐建设范围</h2>' + scopeHtml + '</div></section>';
-  sections += '<section><div class="section"><h2>03 &nbsp;企业微信能力模块</h2>' + modHtml + '</div></section>';
-  sections += '<section id="tables"><div class="section"><h2>04 &nbsp;智能表格交付设计</h2>' + tablesHtml + '</div></section>';
-  sections += '<section><div class="section"><h2>05 &nbsp;自动化与权限</h2>' + autoPermHtml + '</div></section>';
-  sections += '<section><div class="section"><h2>06 &nbsp;方案价值</h2>' + valHtml + '</div></section>';
-  sections += '<section><div class="section"><h2>07 &nbsp;核心功能</h2>' + mockupHtml + '</div></section>';
-  sections += '<section id="roadmap"><div class="section"><h2>08 &nbsp;实施路径</h2>' + implHtml + ganttHtml + '</div></section>';
-  sections += '<section><div class="section"><h2>09 &nbsp;数据看板</h2>' + dashBoardHtml + '</div></section>';
-  sections += '<section id="confirm"><div class="section"><h2>10 &nbsp;待确认问题</h2>' + oqHtml + '</div></section>';
-
-  var footerHtml = '<div style="text-align:center;padding:24px 0;color:#98a2b3;font-size:12px;border-top:1px solid #e8edf5;margin-top:12px">' +
-    (provider ? '由 <b>' + esc(provider) + '</b> 提供 &nbsp;|&nbsp; ' : '') + '输出日期: ' + esc(outputDate) + '</div>';
-
-  var css = '' +
-    'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:#f0f4ff;margin:0;padding:0;color:#182235}' +
-    '.container{max-width:960px;margin:0 auto;padding:24px 20px 40px}' +
-    '.hero{background:linear-gradient(135deg,#1E5AFF,#3D7BFF);border-radius:24px;padding:40px 44px;margin-bottom:24px;color:#fff;position:relative;overflow:hidden}' +
-    '.hero::before{content:"";position:absolute;right:-40px;top:-40px;width:300px;height:300px;background:radial-gradient(circle,rgba(255,255,255,.15) 0%,transparent 70%);pointer-events:none}' +
-    '.section{background:#fff;border-radius:20px;padding:24px;margin-bottom:18px}' +
-    '.section h2{font-size:15px;font-weight:700;color:#182235;margin:0 0 18px;padding-bottom:12px;border-bottom:1px solid #f0f4ff}' +
-    'table{width:100%;border-collapse:collapse}' +
-    'tr:hover{background:#fafbff}' +
-    'body::before{content:"' + esc(watermark) + '";position:fixed;inset:0;z-index:0;pointer-events:none;color:rgba(0,0,0,.03);font-size:48px;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1.4;text-align:center;white-space:pre-wrap}' +
-    '.container,nav{position:relative;z-index:1}' +
-    '@media(max-width:700px){.hero{padding:24px 20px}.section{padding:16px}.section h2{font-size:14px}' +
-    '.hero h1{font-size:26px}' +
-    '.kpi-grid{grid-template-columns:repeat(2,1fr)!important}' +
-    '.auto-perm-grid{grid-template-columns:1fr!important}' +
-    '.scope-flex{display:block!important}' +
-    '.scope-flex > div{margin-bottom:12px}' +
-    '}';
-
-  return '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(customerName) + ' · ' + esc(scenario) + ' · 售前方案</title><style>' + css + '</style></head><body>' +
-    navHtml +
-    '<div class="container" id="hero">' +
-    heroHtml +
-    sections +
-    footerHtml +
-    '</div></body></html>';
+  return '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>' + (data.pageTitle || '售前方案') + '</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f7ff;margin:0;padding:40px 20px;color:#182235}.container{max-width:860px;margin:0 auto}.hero{background:linear-gradient(135deg,#1263e6,#0d47a1);border-radius:24px;padding:40px;color:#fff;margin-bottom:32px}.hero h1{font-size:28px;margin:0 0 12px}.hero p{opacity:0.9;font-size:15px;margin:0 0 16px;line-height:1.6}.tags{margin-top:16px}.section{background:#fff;border-radius:20px;padding:24px;margin-bottom:20px}.section h2{font-size:17px;color:#182235;margin:0 0 16px;padding-bottom:12px;border-bottom:1px solid #f0f4ff}.value-item{display:flex;gap:12px;margin-bottom:12px}</style></head><body><div class="container"><div class="hero"><h1>' + (data.hero && data.hero.title || '') + '</h1><p>' + (data.hero && data.hero.subtitle || '') + '</p><div class="tags">' + tagsHtml + '</div></div><div class="section"><h2>客户现状判断</h2><p>' + (data.customerStageJudgement && data.customerStageJudgement.description || '') + '</p></div><div class="section"><h2>核心痛点</h2>' + painCardsHtml + '</div><div class="section"><h2>推荐方案模块</h2>' + modulesHtml + '</div><div class="section"><h2>价值点</h2>' + valueHtml + '</div><div class="section"><h2>实施路线图</h2>' + roadmapHtml + '</div></div></body></html>';
 }
 
 function doDownloadStep4Word(wordContent, customerName) {
@@ -3613,44 +3205,13 @@ function doDownloadStep4Word(wordContent, customerName) {
   URL.revokeObjectURL(a.href);
 }
 
-// 右侧制品区：下载最新 Word 版（HTML 格式，兼容性好）
+// 右侧制品区：下载最新 Word 版
 function doDownloadLatestWord() {
   var c = getClient(currentClientId);
   var versions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
   var latest = versions[versions.length - 1];
   if (!latest || !latest.content) { showToast('无已生成的 Word 文档'); return; }
   doDownloadStep4Word(latest.content.wordContent || latest.content, c.name || '客户');
-}
-
-// 右侧制品区：下载真正的 .docx 文件（后端 python-docx 生成）
-function doDownloadRealDocx() {
-  var c = getClient(currentClientId);
-  var versions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
-  var latest = versions[versions.length - 1];
-  if (!latest || !latest.content) { showToast('请先生成 Step4 售前方案'); return; }
-  showSimpleLoadingModal('正在生成 docx...', '正在调用 python-docx 生成 Word 文件', function() {
-    fetch(API_BASE + '/api/step4/generate-docx', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ client_id: currentClientId })
-    }).then(function(r) { return r.json(); })
-      .then(function(data) {
-        hideSimpleLoadingModal();
-        if (data.success && data.url) {
-          var link = document.createElement('a');
-          link.href = data.url;
-          link.download = data.filename || (c.name || '客户') + '_需求确认与方案设计表.docx';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } else {
-          showToast(data.error || '生成 docx 失败');
-        }
-      }).catch(function(e) {
-        hideSimpleLoadingModal();
-        showToast('生成 docx 失败：' + e.message);
-      });
-  });
 }
 
 // 右侧制品区：新窗口预览最新 HTML
@@ -3697,7 +3258,7 @@ function buildStep4WordHtml(data, customerName) {
     if (typeof v === 'number' || typeof v === 'boolean') return String(v);
     if (Array.isArray(v)) return v.map(safe).join('、');
     if (typeof v === 'object') {
-      return v.question || v.title || v.name || v.requirement || v.item || v.reason || v.businessTranslation || v.originalQuote || JSON.stringify(v);
+      return v.question || v.title || v.name || v.requirement || v.item || v.reason || JSON.stringify(v);
     }
     return String(v);
   }
@@ -3745,7 +3306,6 @@ function buildStep4WordHtml(data, customerName) {
       } else {
         html += '<li style="font-size:13px;line-height:1.7;margin-bottom:4px"><b>' + safe(item.item || item.title || '') + '</b>';
         if (item.reason) html += '：' + safe(item.reason);
-        if (item.prerequisites) html += '（前提：' + safe(item.prerequisites) + '）';
         if (item.description) html += '：' + safe(item.description);
         html += '</li>';
       }
@@ -3772,9 +3332,9 @@ function buildStep4WordHtml(data, customerName) {
 
   // 顶部标题区
   html += '<h1>' + safe(data.docTitle || '需求确认 & 方案设计表') + '</h1>';
-  html += '<p class="subtitle">企业微信定制开发</p>';
-  html += '<p class="ver">输出日期：' + safe(data.outputDate || '') + '</p>';
-  html += '<div class="notice">本文件用于服务商与客户共同确认需求范围、一期边界、智能表格搭建口径、权限与待确认问题。客户未确认内容不得写入一期交付承诺。</div>';
+  html += '<p class="subtitle">' + safe(data.subtitle || '企业微信定制开发') + '</p>';
+  html += '<p class="ver">版本：' + safe(data.version || 'v1.0') + '</p>';
+  html += '<div class="notice">' + safe(data.introNotice || '本文件用于服务商与客户共同确认需求范围、一期边界、智能表格搭建口径、权限与待确认问题。客户未确认内容不得写入一期交付承诺。') + '</div>';
 
   // 章节一：客户基础信息
   html += '<h2>一、客户基础信息与当前现状</h2>';
@@ -3795,19 +3355,12 @@ function buildStep4WordHtml(data, customerName) {
     html += '<p style="color:#98a2b3">（未提供）</p>';
   }
 
-  // 原话翻译表（新增）
-  var oqt = data.originalQuoteTranslation || [];
-  if (oqt.length > 0) {
-    html += '<h3>客户原话与业务翻译</h3>';
-    html += tbl(oqt, ['客户原话', '业务语言翻译', '确认状态']);
-  }
-
   // 章节二：场景类型判断
   html += '<h2>二、场景类型判断与方案边界</h2>';
   var sb = data.scenarioBoundary || {};
   html += '<h3>场景判断</h3><p style="font-size:13px;background:#f5f7ff;padding:10px 14px;border-radius:6px;margin:8px 0">' + safe(sb.scenarioJudgement || '（未判断）') + '</p>';
   html += phaseBox(sb.phaseOne || [], '#13b96f', '■ 一期建议范围');
-  html += phaseBox(sb.phaseTwo || [], '#ff8a00', '□ 二期 / 试点评估（前提：' + (sb.phaseTwo && sb.phaseTwo[0] && sb.phaseTwo[0].prerequisites ? safe(sb.phaseTwo[0].prerequisites) : '待确认') + '）');
+  html += phaseBox(sb.phaseTwo || [], '#ff8a00', '□ 二期 / 试点评估');
   html += phaseBox(sb.notRecommended || [], '#98a2b3', '× 暂不建议写入一期承诺');
 
   // 章节三：需求优先级
@@ -3823,16 +3376,9 @@ function buildStep4WordHtml(data, customerName) {
   html += '<h2>四、业务流程设计</h2>';
   var procRows = data.processDesignTable || [];
   if (procRows.length > 0) {
-    html += tbl(procRows, ['当前流程', '目标流程']);
+    html += tbl(procRows, ['当前流程', '目标流程', '关键角色', '关键输出']);
   } else {
     html += '<p style="color:#98a2b3">（未提供）</p>';
-  }
-
-  // 流程节点确认表（新增）
-  var nodeRows = data.processNodeTable || [];
-  if (nodeRows.length > 0) {
-    html += '<h3>流程节点确认表</h3>';
-    html += tbl(nodeRows, ['序号', '节点名称', '操作角色', '输入信息', '输出结果', '是否提醒']);
   }
 
   // 章节五：企业微信方案总览
@@ -3848,48 +3394,25 @@ function buildStep4WordHtml(data, customerName) {
   html += '<h2>六、智能表格交付设计</h2>';
   var dlvr = data.smartTableDeliveryTable || [];
   if (dlvr.length > 0) {
-    html += tbl(dlvr, ['表名', '类型', '一期必做']);
+    html += tbl(dlvr, ['表名', '类型', '用途', '使用角色', '一期']);
   } else {
     html += '<p style="color:#98a2b3">（未提供）</p>';
   }
-
-  // 核心字段设计表（更新：字段现在有详细属性）
   var keyFields = data.keyFieldsByTable || [];
   for (var kf = 0; kf < keyFields.length; kf++) {
     var kft = keyFields[kf];
-    var flds = kft.fields || [];
-    var fieldRows = flds.map(function(f) {
-      if (typeof f === 'string') return [f];
-      return [safe(f.fieldName), safe(f.fieldType), safe(f.required), safe(f.role), safe(f.rule)];
-    });
-    html += '<h3>' + safe(kft.tableName || '') + ' — 字段设计</h3>';
-    if (fieldRows.length > 0 && fieldRows[0].length > 1) {
-      html += tbl(fieldRows, ['字段名', '类型', '必填', '填写角色', '规则说明']);
-    } else {
-      html += '<p style="color:#98a2b3">（未提供）</p>';
-    }
+    var flds = (kft.fields || []).join('、');
+    html += '<div style="margin:10px 0;padding:10px 14px;background:#f9fafb;border-radius:8px;font-size:13px">';
+    html += '<b>' + safe(kft.tableName || '') + '</b> 关键字段：' + (flds || '（未提供）');
+    html += '</div>';
   }
 
-  // 表间关联关系表（新增）
-  var relRows = data.tableRelationTable || [];
-  if (relRows.length > 0) {
-    html += '<h3>表间关联关系</h3>';
-    html += tbl(relRows, ['主表', '关联表', '关联字段', '自动带出内容', '注意事项']);
-  }
-
-  // 章节七：审批与自动化设计
+  // 章节七：审批与自动化
   html += '<h2>七、审批与自动化设计</h2>';
-  var apprRows = data.approvalTable || [];
-  if (apprRows.length > 0) {
-    html += '<h3>审批流程</h3>';
-    html += tbl(apprRows, ['审批名称', '发起角色', '审批人', '通过后动作', '同步表格']);
-  }
   var autoRows = data.automationTable || [];
   if (autoRows.length > 0) {
-    html += '<h3>自动化规则</h3>';
-    html += tbl(autoRows, ['规则名称', '触发条件', '动作', '通知对象']);
-  }
-  if (apprRows.length === 0 && autoRows.length === 0) {
+    html += tbl(autoRows, ['规则名称', '触发条件', '动作', '优先级']);
+  } else {
     html += '<p style="color:#98a2b3">（未提供）</p>';
   }
 
@@ -3897,13 +3420,11 @@ function buildStep4WordHtml(data, customerName) {
   html += '<h2>八、权限与数据看板设计</h2>';
   var permRows = data.permissionTable || [];
   if (permRows.length > 0) {
-    html += '<h3>权限设计</h3>';
-    html += tbl(permRows, ['角色', '新增权限', '查看范围', '可编辑字段', '敏感字段']);
+    html += '<h3>权限设计</h3>' + tbl(permRows, ['角色', '查看范围', '可操作内容', '敏感字段']);
   }
   var dashRows = data.dashboardTable || [];
   if (dashRows.length > 0) {
-    html += '<h3>数据看板</h3>';
-    html += tbl(dashRows, ['看板名称', '使用对象', '核心指标', '筛选维度']);
+    html += '<h3>看板设计</h3>' + tbl(dashRows, ['看板', '使用对象', '核心指标', '筛选维度']);
   }
   if (permRows.length === 0 && dashRows.length === 0) {
     html += '<p style="color:#98a2b3">（未提供）</p>';
@@ -3913,62 +3434,36 @@ function buildStep4WordHtml(data, customerName) {
   html += '<h2>九、数据来源、系统对接与交付边界</h2>';
   var dataRows = data.dataBoundaryTable || [];
   if (dataRows.length > 0) {
-    html += tbl(dataRows, ['数据对象', '来源系统', '一期接入方式', '二期评估事项']);
+    html += tbl(dataRows, ['数据对象', '一期方式', '二期评估', '边界说明']);
   } else {
     html += '<p style="color:#98a2b3">（未提供）</p>';
-  }
-
-  // 交付清单（新增）
-  var dlvyList = data.deliveryList || [];
-  if (dlvyList.length > 0) {
-    html += '<h3>交付清单</h3>';
-    html += tbl(dlvyList, ['类别', '交付内容', '是否包含', '备注']);
   }
 
   // 章节十：实施计划
   html += '<h2>十、实施计划、报价口径与变更机制</h2>';
   var planRows = data.implementationPlanTable || [];
   if (planRows.length > 0) {
-    html += tbl(planRows, ['阶段', '工作内容', '客户配合事项', '输出物']);
+    html += tbl(planRows, ['阶段', '工作内容', '客户配合', '输出物']);
   } else {
     html += '<p style="color:#98a2b3">（未提供）</p>';
   }
 
-  // 报价口径表（新增）
-  var quoteRows = data.quoteScopeTable || [];
-  if (quoteRows.length > 0) {
-    html += '<h3>报价口径</h3>';
-    html += tbl(quoteRows, ['费用模块', '范围说明', '是否本次包含', '备注']);
-  }
-
-  // 范围变更机制（新增）
-  var changeRows = data.changeManagementTable || [];
-  if (changeRows.length > 0) {
-    html += '<h3>范围变更机制</h3>';
-    html += tbl(changeRows, ['事项', '是否范围内', '处理方式']);
-  }
-
   // 章节十一：待确认问题
   html += '<h2>十一、待客户确认问题与签署</h2>';
-  // 兼容新旧格式
-  var pqTable = data.pendingQuestionsTable || [];
-  var pqOld = data.pendingQuestions || [];
-  if (pqTable.length > 0) {
-    html += tbl(pqTable, ['编号', '问题', '负责人', '截止时间', '确认结果']);
-  } else if (pqOld.length > 0) {
-    for (var qi = 0; qi < pqOld.length; qi++) {
-      html += '<p style="font-size:13px;margin:6px 0"><b>Q' + (qi + 1) + '：</b>' + safe(pqOld[qi]) + '</p>';
+  var pq = data.pendingQuestions || [];
+  if (pq.length > 0) {
+    for (var qi = 0; qi < pq.length; qi++) {
+      html += '<p style="font-size:13px;margin:6px 0"><b>Q' + (qi + 1) + '：</b>' + safe(pq[qi]) + '</p>';
     }
   } else {
     html += '<p style="color:#98a2b3">（无待确认问题）</p>';
   }
-
-  // 签署区（新增）
-  var sig = data.signatureSection || {};
-  if (sig.customerSign || sig.providerSign) {
-    html += '<div class="confirm-box" style="margin-top:20px">';
-    html += '<p style="font-size:13px;line-height:2">' + safe(sig.customerSign || '') + '</p>';
-    html += '<p style="font-size:13px;line-height:2;margin-top:8px">' + safe(sig.providerSign || '') + '</p>';
+  var confirmItems = data.confirmationItems || [];
+  if (confirmItems.length > 0) {
+    html += '<div class="confirm-box">';
+    for (var ci = 0; ci < confirmItems.length; ci++) {
+      html += '<div class="confirm-item">' + safe(confirmItems[ci]) + '</div>';
+    }
     html += '</div>';
   }
 
@@ -4098,626 +3593,9 @@ function doCreateTechnicalWecomDoc() {
 
 // ==================== STEP 5: Smart Sheet Editor ====================
 
-let _s5Schema = null;        // smartTableSpec 结构
-let _s5CurrentTab = 'tables'; // 'tables' | 'relations' | 'automations' | 'permissions'
-let _s5CurrentTableIdx = 0;
+let _s5Schema = null;
+let _s5CurrentSheet = 0;
 let _s5AgentSuggestions = null;
-
-// 企微 17 种字段类型
-const S5_FIELD_TYPES = [
-  { value: '文本', label: '文本' },
-  { value: '多行文本', label: '多行文本' },
-  { value: '单选', label: '单选' },
-  { value: '多选', label: '多选' },
-  { value: '数字', label: '数字' },
-  { value: '金额', label: '金额' },
-  { value: '日期', label: '日期' },
-  { value: '日期时间', label: '日期时间' },
-  { value: '人员', label: '人员' },
-  { value: '手机', label: '手机' },
-  { value: '附件', label: '附件' },
-  { value: '图片', label: '图片' },
-  { value: '关联记录', label: '关联记录' },
-  { value: '公式', label: '公式' },
-  { value: '自动编号', label: '自动编号' },
-  { value: '进度', label: '进度' },
-  { value: '勾选', label: '勾选' },
-  { value: 'URL', label: 'URL' }
-];
-
-function initS5Editor(schema) {
-  if (!schema) {
-    _s5Schema = {
-      confirmedTables: [],
-      relations: [],
-      views: [],
-      automations: [],
-      permissions: []
-    };
-  } else if (typeof schema === 'string') {
-    try { schema = JSON.parse(schema); } catch(e) { schema = null; }
-  }
-  if (schema) {
-    if (schema.sheets && !schema.confirmedTables) {
-      // 旧 sheets 格式 → 转换为 confirmedTables
-      _s5Schema = convertSheetsToSmartTableSpec(schema);
-    } else {
-      _s5Schema = schema;
-    }
-  } else {
-    _s5Schema = { confirmedTables: [], relations: [], views: [], automations: [], permissions: [] };
-  }
-  _s5CurrentTableIdx = 0;
-  _s5CurrentTab = 'tables';
-  renderS5Editor();
-}
-
-function convertSheetsToSmartTableSpec(oldSchema) {
-  var sheets = oldSchema.sheets || [];
-  var tables = sheets.map(function(s) {
-    return {
-      tableName: s.sheet_name || '未命名',
-      tablePurpose: '',
-      phase: '一期',
-      roles: [],
-      fields: (s.fields || []).map(function(f) {
-        return {
-          fieldName: f.field_title || f.fieldName || '',
-          fieldType: f.field_type || f.fieldType || '文本',
-          required: !!f.required,
-          source: '',
-          rule: ''
-        };
-      }),
-      // 保留样例数据（sheets 格式的核心数据）
-      sample_records: s.sample_records || []
-    };
-  });
-  return { confirmedTables: tables, relations: [], views: [], automations: [], permissions: [] };
-}
-
-function renderS5Editor() {
-  var schema = _s5Schema;
-  var tables = schema && schema.confirmedTables || [];
-  var hasData = tables.length > 0;
-
-  document.getElementById('s5-sheet-count').textContent = (tables.length || 0) + ' 个子表';
-
-  renderS5Tabs();
-  renderS5TabContent();
-}
-
-function renderS5Tabs() {
-  var tabsEl = document.getElementById('s5-sheet-tabs');
-  if (!tabsEl) return;
-  var tables = _s5Schema && _s5Schema.confirmedTables || [];
-  var tabs = [
-    { key: 'tables', label: '📋 表设计' },
-    { key: 'relations', label: '🔗 关联' },
-    { key: 'automations', label: '⚡ 自动化' },
-    { key: 'permissions', label: '🔐 权限' }
-  ];
-  var html = tabs.map(function(t) {
-    var active = t.key === _s5CurrentTab ? ' background:#1263e6;color:#fff;border-color:#1263e6' : ' background:#fff;color:#667085;border-color:#e5e7eb';
-    return '<button onclick="s5SwitchTab(\'' + t.key + '\')" style="height:30px;padding:0 14px;border-radius:8px;border:1px solid;font-size:13px;font-weight:500;cursor:pointer;flex-shrink:0' + active + '">' + t.label + '</button>';
-  }).join('');
-  html += '<div style="flex:1"></div>';
-  if (tables.length > 0) {
-    html += '<button onclick="doAddS5Table()" style="height:30px;padding:0 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;color:#1263e6;font-size:13px;font-weight:500;cursor:pointer">+ 新增子表</button>';
-  }
-  tabsEl.innerHTML = html;
-}
-
-function s5SwitchTab(tab) {
-  _s5CurrentTab = tab;
-  renderS5Editor();
-}
-
-function renderS5TabContent() {
-  var emptyState = document.getElementById('s5-empty-state');
-  var sheetEditor = document.getElementById('s5-sheet-editor');
-  var fieldsTbody = document.getElementById('s5-fields-tbody');
-  var tables = _s5Schema && _s5Schema.confirmedTables || [];
-  var hasData = tables.length > 0;
-
-  if (emptyState) emptyState.style.display = hasData ? 'none' : '';
-  if (fieldsTbody) fieldsTbody.style.display = hasData ? '' : 'none';
-  if (sheetEditor) sheetEditor.style.display = hasData ? '' : 'none';
-
-  if (!hasData) return;
-
-  if (_s5CurrentTab === 'tables') {
-    renderTablesTab();
-  } else if (_s5CurrentTab === 'relations') {
-    renderRelationsTab();
-  } else if (_s5CurrentTab === 'automations') {
-    renderAutomationsTab();
-  } else if (_s5CurrentTab === 'permissions') {
-    renderPermissionsTab();
-  }
-}
-
-// ==================== TAB: 表设计 ====================
-
-function renderTablesTab() {
-  var tables = _s5Schema.confirmedTables;
-  if (!tables.length) return;
-
-  // 左侧：表列表
-  var listEl = document.getElementById('s5-fields-tbody');
-  if (!listEl) return;
-
-  var html = '<div style="display:flex;gap:20px;align-items:flex-start">';
-
-  // 表选择器
-  html += '<div style="width:200px;flex-shrink:0">';
-  html += '<div style="font-size:12px;color:#667085;margin-bottom:8px;font-weight:600">子表列表</div>';
-  html += '<div style="background:#f9fafb;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb">';
-  tables.forEach(function(t, i) {
-    var active = i === _s5CurrentTableIdx ? 'background:#1263e6;color:#fff' : 'background:#fff;color:#182235';
-    var border = i === _s5CurrentTableIdx ? 'border-left:3px solid #1263e6' : '';
-    html += '<div onclick="s5SelectTable(' + i + ')" style="padding:10px 12px;cursor:pointer;font-size:13px;' + border + ';' + active + '">' + escHtml(t.tableName || '未命名') + '</div>';
-  });
-  html += '</div></div>';
-
-  // 右侧：当前表编辑器
-  var tbl = tables[_s5CurrentTableIdx];
-  if (!tbl) return;
-
-  html += '<div style="flex:1;min-width:0">';
-
-  // 表名编辑
-  html += '<div style="margin-bottom:16px">';
-  html += '<input value="' + escHtml(tbl.tableName || '') + '" oninput="onS5TableNameChange(this.value)" placeholder="表名称" style="font-size:20px;font-weight:700;border:none;border-bottom:2px solid #1263e6;outline:none;padding:4px 0;background:transparent;width:100%;max-width:400px">';
-  html += '<div style="display:flex;gap:12px;margin-top:8px">';
-  html += '<input value="' + escHtml(tbl.tablePurpose || '') + '" oninput="onS5TablePropChange(\'tablePurpose\', this.value)" placeholder="表用途说明" style="flex:1;font-size:13px;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px">';
-  var phaseOptions = ['一期', '二期'].map(function(p) {
-    var sel = (tbl.phase || '') === p ? ' selected' : '';
-    return '<option value="' + p + '"' + sel + '>' + p + '</option>';
-  }).join('');
-  html += '<select onchange="onS5TablePropChange(\'phase\', this.value)" style="font-size:13px;border:1px solid #e5e7eb;border-radius:8px;padding:6px 8px"><option value="">阶段</option>' + phaseOptions + '</select>';
-  html += '</div></div>';
-
-  // 字段列表
-  var fields = tbl.fields || [];
-  html += '<div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;margin-bottom:14px">';
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#f9fafb;border-bottom:1px solid #e5e7eb">';
-  html += '<b style="font-size:13px;color:#374151">字段设计 <span style="font-weight:400;color:#98a2b3">(' + fields.length + '个)</span></b>';
-  html += '<button onclick="doAddS5Field()" style="height:26px;padding:0 10px;border-radius:6px;border:1px solid #1263e6;background:#fff;color:#1263e6;font-size:12px;cursor:pointer">+ 添加字段</button>';
-  html += '</div>';
-  html += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
-  html += '<thead><tr style="background:#f9fafb">';
-  html += '<th style="padding:9px 12px;text-align:left;color:#667085;font-weight:500;width:32px">#</th>';
-  html += '<th style="padding:9px 12px;text-align:left;color:#667085;font-weight:500">字段名称</th>';
-  html += '<th style="padding:9px 12px;text-align:left;color:#667085;font-weight:500;width:120px">字段类型</th>';
-  html += '<th style="padding:9px 12px;text-align:center;color:#667085;font-weight:500;width:50px">必填</th>';
-  html += '<th style="padding:9px 12px;text-align:left;color:#667085;font-weight:500;width:140px">来源/规则</th>';
-  html += '<th style="padding:9px 12px;text-align:center;color:#667085;font-weight:500;width:50px">操作</th>';
-  html += '</tr></thead><tbody>';
-  fields.forEach(function(f, i) {
-    var bg = i % 2 === 0 ? '' : 'background:#fafbff';
-    var ftOpts = S5_FIELD_TYPES.map(function(t) {
-      var sel = (f.fieldType || f.field_type || '') === t.value ? ' selected' : '';
-      return '<option value="' + t.value + '"' + sel + '>' + t.label + '</option>';
-    }).join('');
-    html += '<tr style="' + bg + '">';
-    html += '<td style="padding:8px 12px;color:#98a2b3;font-size:12px;text-align:center">' + (i+1) + '</td>';
-    html += '<td style="padding:8px 12px"><input value="' + escHtml(f.fieldName || f.field_title || '') + '" oninput="onS5FieldChange(' + i + ',\'fieldName\',this.value)" style="border:none;outline:none;font-size:13px;width:100%;background:transparent" placeholder="字段名称"></td>';
-    html += '<td style="padding:8px 12px"><select onchange="onS5FieldChange(' + i + ',\'fieldType\',this.value)" style="border:none;outline:none;font-size:13px;background:transparent;width:100%">' + ftOpts + '</select></td>';
-    html += '<td style="padding:8px 12px;text-align:center"><input type="checkbox"' + (f.required ? ' checked' : '') + ' onchange="onS5FieldChange(' + i + ',\'required\',this.checked)"></td>';
-    html += '<td style="padding:8px 12px"><input value="' + escHtml(f.source || f.rule || '') + '" oninput="onS5FieldChange(' + i + ',\'source\',this.value)" style="border:none;outline:none;font-size:12px;width:100%;background:transparent;color:#667085" placeholder="来源或规则"></td>';
-    html += '<td style="padding:8px 12px;text-align:center"><button onclick="doDeleteS5Field(' + i + ')" style="height:24px;padding:0 8px;border-radius:6px;border:1px solid #ef4444;background:#fff;color:#ef4444;font-size:11px;cursor:pointer">删除</button></td>';
-    html += '</tr>';
-  });
-  html += '</tbody></table></div>';
-
-  // 角色标签
-  var roles = tbl.roles || [];
-  html += '<div style="margin-bottom:14px">';
-  html += '<div style="font-size:12px;color:#667085;margin-bottom:6px;font-weight:600">使用角色</div>';
-  html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
-  roles.forEach(function(r) {
-    html += '<span style="background:#eaf1fb;color:#1263e6;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:500">' + escHtml(r) + ' <span onclick="doRemoveS5Role(' + i + ',\'' + escHtml(r) + '\')" style="cursor:pointer;margin-left:4px">×</span></span>';
-  });
-  html += '<input onclick="doAddS5Role(this)" placeholder="+ 添加角色" style="border:1px dashed #d0d5dd;border-radius:6px;padding:3px 10px;font-size:12px;width:100px">';
-  html += '</div></div>';
-
-  // 样例数据展示
-  var sampleRecords = tbl.sample_records || [];
-  html += '<div style="margin-bottom:14px">';
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
-  html += '<div style="font-size:12px;color:#667085;font-weight:600">样例数据 <span style="font-weight:400;color:#98a2b3">(' + sampleRecords.length + '条)</span></div>';
-  html += '<button onclick="doAddS5SampleRecord()" style="height:26px;padding:0 10px;border-radius:6px;border:1px solid #13b96f;background:#fff;color:#13b96f;font-size:12px;cursor:pointer">+ 添加行</button>';
-  html += '</div>';
-  if (sampleRecords.length > 0) {
-    // 表头
-    var firstRec = sampleRecords[0];
-    var sampleFields = Object.keys(firstRec);
-    html += '<div style="background:#fff;border-radius:10px;border:1px solid #e5e7eb;overflow:auto;max-height:220px">';
-    html += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
-    html += '<thead><tr>';
-    sampleFields.forEach(function(fk) {
-      html += '<th style="padding:8px 10px;text-align:left;color:#667085;font-weight:500;background:#f9fafb;position:sticky;top:0;white-space:nowrap;border-bottom:1px solid #e5e7eb">' + escHtml(fk) + '</th>';
-    });
-    html += '<th style="padding:8px 10px;width:40px;background:#f9fafb;position:sticky;top:0;border-bottom:1px solid #e5e7eb"></th>';
-    html += '</tr></thead><tbody>';
-    sampleRecords.forEach(function(rec, ri) {
-      html += '<tr>';
-      sampleFields.forEach(function(fk) {
-        html += '<td style="padding:7px 10px;color:#374151;border-bottom:1px solid #f3f4f6">' + escHtml(rec[fk] != null ? rec[fk] : '') + '</td>';
-      });
-      html += '<td style="padding:7px 10px;text-align:center"><button onclick="doDeleteS5SampleRecord(' + ri + ')" style="height:22px;padding:0 6px;border-radius:4px;border:1px solid #ef4444;background:#fff;color:#ef4444;font-size:10px;cursor:pointer">×</button></td>';
-      html += '</tr>';
-    });
-    html += '</tbody></table></div>';
-  } else {
-    html += '<div style="background:#f9fafb;border-radius:10px;border:1px dashed #d0d5dd;padding:20px;text-align:center;color:#98a2b3;font-size:13px">暂无样例数据，点击"添加行"新增</div>';
-  }
-  html += '</div>';
-
-  html += '</div></div>'; // end flex
-
-  listEl.innerHTML = html;
-}
-
-function s5SelectTable(idx) {
-  _s5CurrentTableIdx = idx;
-  renderS5Editor();
-}
-
-function onS5TableNameChange(name) {
-  if (!_s5Schema.confirmedTables[_s5CurrentTableIdx]) return;
-  _s5Schema.confirmedTables[_s5CurrentTableIdx].tableName = name;
-}
-
-function onS5TablePropChange(prop, val) {
-  if (!_s5Schema.confirmedTables[_s5CurrentTableIdx]) return;
-  _s5Schema.confirmedTables[_s5CurrentTableIdx][prop] = val;
-}
-
-function onS5FieldChange(idx, prop, val) {
-  var fields = _s5Schema.confirmedTables[_s5CurrentTableIdx].fields;
-  if (!fields || !fields[idx]) return;
-  if (prop === 'required') fields[idx][prop] = val;
-  else fields[idx][prop === 'fieldType' ? 'fieldType' : prop] = val;
-}
-
-function doAddS5Field() {
-  var tbl = _s5Schema.confirmedTables[_s5CurrentTableIdx];
-  if (!tbl) return;
-  tbl.fields = tbl.fields || [];
-  var newField = { fieldName: '新字段', fieldType: '文本', required: false, source: '', rule: '' };
-  tbl.fields.push(newField);
-  // 同步到现有样例数据：新增列
-  if (tbl.sample_records && tbl.sample_records.length > 0) {
-    tbl.sample_records.forEach(function(rec) {
-      rec[newField.fieldName] = '';
-    });
-  }
-  renderS5Editor();
-}
-
-function doDeleteS5Field(idx) {
-  var tbl = _s5Schema.confirmedTables[_s5CurrentTableIdx];
-  if (!tbl || !tbl.fields) return;
-  tbl.fields.splice(idx, 1);
-  renderS5Editor();
-}
-
-function doAddS5Table() {
-  _s5Schema.confirmedTables.push({
-    tableName: '新子表',
-    tablePurpose: '',
-    phase: '一期',
-    roles: [],
-    fields: [{ fieldName: '字段1', fieldType: '文本', required: false, source: '', rule: '' }],
-    sample_records: []
-  });
-  _s5CurrentTableIdx = _s5Schema.confirmedTables.length - 1;
-  renderS5Editor();
-}
-
-function doAddS5SampleRecord() {
-  var tbl = _s5Schema.confirmedTables[_s5CurrentTableIdx];
-  if (!tbl) return;
-  tbl.sample_records = tbl.sample_records || [];
-  // 基于字段名生成空白记录
-  var fields = tbl.fields || [];
-  var newRec = {};
-  fields.forEach(function(f) {
-    var fn = f.fieldName || f.field_title || '';
-    newRec[fn] = '';
-  });
-  tbl.sample_records.push(newRec);
-  renderS5Editor();
-}
-
-function doDeleteS5SampleRecord(idx) {
-  var tbl = _s5Schema.confirmedTables[_s5CurrentTableIdx];
-  if (!tbl || !tbl.sample_records) return;
-  tbl.sample_records.splice(idx, 1);
-  renderS5Editor();
-}
-
-function doAddS5Role(input) {
-  var tbl = _s5Schema.confirmedTables[_s5CurrentTableIdx];
-  if (!tbl) return;
-  var val = input.value.trim();
-  if (!val) return;
-  tbl.roles = tbl.roles || [];
-  if (!tbl.roles.includes(val)) tbl.roles.push(val);
-  input.value = '';
-  renderS5Editor();
-}
-
-function doRemoveS5Role(idx, role) {
-  var tbl = _s5Schema.confirmedTables[idx];
-  if (!tbl || !tbl.roles) return;
-  tbl.roles = tbl.roles.filter(function(r) { return r !== role; });
-  renderS5Editor();
-}
-
-// ==================== TAB: 关联设计 ====================
-
-function renderRelationsTab() {
-  var rels = _s5Schema.relations || [];
-  var tables = _s5Schema.confirmedTables || [];
-  var tbNames = tables.map(function(t) { return t.tableName || ''; });
-
-  var html = '<div style="max-width:700px">';
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
-  html += '<div style="font-size:14px;font-weight:600;color:#182235">表间关联关系</div>';
-  html += '<button onclick="doAddS5Relation()" style="height:30px;padding:0 14px;border-radius:8px;border:1px solid #1263e6;background:#1263e6;color:#fff;font-size:13px;cursor:pointer">+ 新增关联</button>';
-  html += '</div>';
-
-  if (!rels.length) {
-    html += '<div style="text-align:center;padding:40px 0;color:#98a2b3;font-size:14px">暂无关联关系，点击上方按钮添加</div>';
-  } else {
-    rels.forEach(function(r, i) {
-      html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px">';
-      html += '<div style="display:grid;grid-template-columns:1fr 40px 1fr;gap:12px;align-items:center;margin-bottom:12px">';
-      var mainOpts = tbNames.map(function(n) {
-        var sel = r.mainTable === n ? ' selected' : '';
-        return '<option value="' + escHtml(n) + '"' + sel + '>' + escHtml(n) + '</option>';
-      }).join('');
-      var relOpts = tbNames.map(function(n) {
-        var sel = r.relatedTable === n ? ' selected' : '';
-        return '<option value="' + escHtml(n) + '"' + sel + '>' + escHtml(n) + '</option>';
-      }).join('');
-      html += '<select onchange="onS5RelationChange(' + i + ',\'mainTable\',this.value)" style="font-size:13px;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">' + mainOpts + '</select>';
-      html += '<div style="text-align:center;font-size:16px;color:#1263e6;font-weight:700">→</div>';
-      html += '<select onchange="onS5RelationChange(' + i + ',\'relatedTable\',this.value)" style="font-size:13px;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">' + relOpts + '</select>';
-      html += '</div>';
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
-      html += '<div><div style="font-size:11px;color:#98a2b3;margin-bottom:4px">关联字段</div>';
-      html += '<input value="' + escHtml(r.relationField || '') + '" onchange="onS5RelationChange(' + i + ',\'relationField\',this.value)" placeholder="如：客户" style="width:100%;font-size:13px;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;box-sizing:border-box"></div>';
-      html += '<div><div style="font-size:11px;color:#98a2b3;margin-bottom:4px">自动带出</div>';
-      html += '<input value="' + escHtml(r.autoFill || '') + '" onchange="onS5RelationChange(' + i + ',\'autoFill\',this.value)" placeholder="如：联系电话" style="width:100%;font-size:13px;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;box-sizing:border-box"></div>';
-      html += '</div>';
-      html += '<button onclick="doDeleteS5Relation(' + i + ')" style="margin-top:8px;height:26px;padding:0 10px;border-radius:6px;border:1px solid #ef4444;background:#fff;color:#ef4444;font-size:12px;cursor:pointer">删除此关联</button>';
-      html += '</div>';
-    });
-  }
-
-  html += '</div>';
-  var el = document.getElementById('s5-fields-tbody');
-  if (el) el.innerHTML = html;
-}
-
-function onS5RelationChange(idx, prop, val) {
-  var rels = _s5Schema.relations;
-  if (!rels || !rels[idx]) return;
-  rels[idx][prop] = val;
-}
-
-function doAddS5Relation() {
-  _s5Schema.relations = _s5Schema.relations || [];
-  _s5Schema.relations.push({ mainTable: '', relatedTable: '', relationField: '', autoFill: '' });
-  renderS5Editor();
-}
-
-function doDeleteS5Relation(idx) {
-  if (!_s5Schema.relations) return;
-  _s5Schema.relations.splice(idx, 1);
-  renderS5Editor();
-}
-
-// ==================== TAB: 自动化 ====================
-
-function renderAutomationsTab() {
-  var autos = _s5Schema.automations || [];
-
-  var html = '<div style="max-width:700px">';
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
-  html += '<div style="font-size:14px;font-weight:600;color:#182235">自动化规则</div>';
-  html += '<button onclick="doAddS5Automation()" style="height:30px;padding:0 14px;border-radius:8px;border:1px solid #1263e6;background:#1263e6;color:#fff;font-size:13px;cursor:pointer">+ 新增规则</button>';
-  html += '</div>';
-
-  if (!autos.length) {
-    html += '<div style="text-align:center;padding:40px 0;color:#98a2b3;font-size:14px">暂无自动化规则，点击上方按钮添加</div>';
-  } else {
-    autos.forEach(function(a, i) {
-      html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px">';
-      html += '<div style="margin-bottom:10px"><input value="' + escHtml(a.name || '') + '" oninput="onS5AutomationChange(' + i + ',\'name\',this.value)" placeholder="规则名称" style="font-size:14px;font-weight:600;border:none;border-bottom:1px solid #e5e7eb;outline:none;width:100%;padding:4px 0;background:transparent"></div>';
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">';
-      html += '<div><div style="font-size:11px;color:#98a2b3;margin-bottom:4px">触发条件</div>';
-      html += '<input value="' + escHtml(a.trigger || '') + '" onchange="onS5AutomationChange(' + i + ',\'trigger\',this.value)" placeholder="如：当记录状态变更时" style="width:100%;font-size:13px;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;box-sizing:border-box"></div>';
-      html += '<div><div style="font-size:11px;color:#98a2b3;margin-bottom:4px">执行动作</div>';
-      html += '<input value="' + escHtml(a.action || '') + '" onchange="onS5AutomationChange(' + i + ',\'action\',this.value)" placeholder="如：推送提醒至负责人" style="width:100%;font-size:13px;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;box-sizing:border-box"></div>';
-      html += '</div>';
-      html += '<div><div style="font-size:11px;color:#98a2b3;margin-bottom:4px">通知对象</div>';
-      html += '<input value="' + escHtml(a.notifyTarget || '') + '" onchange="onS5AutomationChange(' + i + ',\'notifyTarget\',this.value)" placeholder="如：跟单员" style="width:100%;font-size:13px;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;box-sizing:border-box"></div>';
-      html += '</div>';
-      html += '<button onclick="doDeleteS5Automation(' + i + ')" style="margin-top:4px;height:26px;padding:0 10px;border-radius:6px;border:1px solid #ef4444;background:#fff;color:#ef4444;font-size:12px;cursor:pointer">删除此规则</button>';
-      html += '</div>';
-    });
-  }
-
-  html += '</div>';
-  var el = document.getElementById('s5-fields-tbody');
-  if (el) el.innerHTML = html;
-}
-
-function onS5AutomationChange(idx, prop, val) {
-  var autos = _s5Schema.automations;
-  if (!autos || !autos[idx]) return;
-  autos[idx][prop] = val;
-}
-
-function doAddS5Automation() {
-  _s5Schema.automations = _s5Schema.automations || [];
-  _s5Schema.automations.push({ name: '', trigger: '', action: '', notifyTarget: '', priority: '中' });
-  renderS5Editor();
-}
-
-function doDeleteS5Automation(idx) {
-  if (!_s5Schema.automations) return;
-  _s5Schema.automations.splice(idx, 1);
-  renderS5Editor();
-}
-
-// ==================== TAB: 权限 ====================
-
-function renderPermissionsTab() {
-  var perms = _s5Schema.permissions || [];
-  var tables = _s5Schema.confirmedTables || [];
-
-  var html = '<div style="max-width:800px">';
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
-  html += '<div style="font-size:14px;font-weight:600;color:#182235">权限矩阵</div>';
-  html += '<button onclick="doAddS5Permission()" style="height:30px;padding:0 14px;border-radius:8px;border:1px solid #1263e6;background:#1263e6;color:#fff;font-size:13px;cursor:pointer">+ 新增角色</button>';
-  html += '</div>';
-
-  if (!perms.length) {
-    html += '<div style="text-align:center;padding:40px 0;color:#98a2b3;font-size:14px">暂无权限配置，点击上方按钮添加</div>';
-  } else {
-    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb">';
-    html += '<thead><tr style="background:#f9fafb">';
-    html += '<th style="padding:10px 14px;text-align:left;color:#374151;font-weight:600;width:120px">角色</th>';
-    html += '<th style="padding:10px 14px;text-align:left;color:#374151;font-weight:600">新增权限</th>';
-    html += '<th style="padding:10px 14px;text-align:left;color:#374151;font-weight:600">查看范围</th>';
-    html += '<th style="padding:10px 14px;text-align:left;color:#374151;font-weight:600">可编辑字段</th>';
-    html += '<th style="padding:10px 14px;text-align:left;color:#374151;font-weight:600;width:100px">敏感字段</th>';
-    html += '<th style="padding:10px 14px;text-align:center;color:#374151;font-weight:600;width:60px"></th>';
-    html += '</tr></thead><tbody>';
-    perms.forEach(function(p, i) {
-      var bg = i % 2 === 0 ? '' : 'background:#fafbff';
-      html += '<tr style="' + bg + '">';
-      html += '<td style="padding:8px 14px"><input value="' + escHtml(p.role || '') + '" oninput="onS5PermChange(' + i + ',\'role\',this.value)" style="border:none;outline:none;font-size:13px;width:100%;background:transparent;font-weight:600" placeholder="角色名"></td>';
-      html += '<td style="padding:8px 14px"><input value="' + escHtml(p.addScope || '') + '" oninput="onS5PermChange(' + i + ',\'addScope\',this.value)" style="border:none;outline:none;font-size:13px;width:100%;background:transparent" placeholder="本职范围内"></td>';
-      html += '<td style="padding:8px 14px"><input value="' + escHtml(p.viewScope || '') + '" oninput="onS5PermChange(' + i + ',\'viewScope\',this.value)" style="border:none;outline:none;font-size:13px;width:100%;background:transparent" placeholder="全部/本人记录"></td>';
-      html += '<td style="padding:8px 14px"><input value="' + escHtml(p.editableFields || '') + '" oninput="onS5PermChange(' + i + ',\'editableFields\',this.value)" style="border:none;outline:none;font-size:13px;width:100%;background:transparent" placeholder="本职相关字段"></td>';
-      html += '<td style="padding:8px 14px"><input value="' + escHtml(p.sensitiveFields || '') + '" oninput="onS5PermChange(' + i + ',\'sensitiveFields\',this.value)" style="border:none;outline:none;font-size:13px;width:100%;background:transparent" placeholder="——"></td>';
-      html += '<td style="padding:8px 14px;text-align:center"><button onclick="doDeleteS5Perm(' + i + ')" style="height:24px;padding:0 8px;border-radius:6px;border:1px solid #ef4444;background:#fff;color:#ef4444;font-size:11px;cursor:pointer">删除</button></td>';
-      html += '</tr>';
-    });
-    html += '</tbody></table>';
-  }
-
-  html += '</div>';
-  var el = document.getElementById('s5-fields-tbody');
-  if (el) el.innerHTML = html;
-}
-
-function onS5PermChange(idx, prop, val) {
-  var perms = _s5Schema.permissions;
-  if (!perms || !perms[idx]) return;
-  perms[idx][prop] = val;
-}
-
-function doAddS5Permission() {
-  _s5Schema.permissions = _s5Schema.permissions || [];
-  _s5Schema.permissions.push({ role: '', addScope: '本职范围内', viewScope: '全部', editableFields: '本职相关字段', sensitiveFields: '——' });
-  renderS5Editor();
-}
-
-function doDeleteS5Perm(idx) {
-  if (!_s5Schema.permissions) return;
-  _s5Schema.permissions.splice(idx, 1);
-  renderS5Editor();
-}
-
-// ==================== 保存与生成 ====================
-
-function doSaveStep5Schema() {
-  updateClient(currentClientId, { step5_schema: _s5Schema });
-  showToast('已保存');
-  renderS5Editor();
-}
-
-async function createSmartSheet() {
-  var schema = _s5Schema || (getClient(currentClientId) && getClient(currentClientId).step5_schema);
-  if (!schema) { alert('请先生成 Demo'); return; }
-  var schemaObj = typeof schema === 'string' ? JSON.parse(schema) : schema;
-  if (!schemaObj.confirmedTables || !schemaObj.confirmedTables.length) { alert('Demo 无子表数据'); return; }
-
-  window._creatingSheet = true;
-  renderArtifacts();
-  showToast('正在创建智能表格…');
-  try {
-    var resp = await fetch(API_BASE + '/api/create', {
-      method: 'POST', headers: getAuthHeaders(),
-      body: JSON.stringify({ client_id: currentClientId, smartTableSpec: schemaObj })
-    });
-    var data = await resp.json();
-    if (!data.success) throw new Error(data.error || '创建文档失败');
-    updateClient(currentClientId, { demo_url: data.url || '' });
-    showToast('创建成功！' + (data.sheets || []).length + ' 个子表');
-    renderArtifacts();
-    if (data.url) window.open(data.url, '_blank');
-  } catch(e) {
-    alert('创建失败: ' + e.message);
-  } finally {
-    window._creatingSheet = false;
-    renderArtifacts();
-  }
-}
-
-async function doRegenerateStep5(silent) {
-  if (!silent && !confirm('重新生成会覆盖当前的 Demo 方案，确定要重新生成吗？')) return;
-  var c = getClient(currentClientId);
-  var hasPresalesVersions = Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0;
-  var hasTechVersions = Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0;
-  if (!c.step4_presales && !c.step4_report && !c.transcript && !hasPresalesVersions && !hasTechVersions) {
-    alert('请先生成售前方案（Step4）再生成 Demo'); return;
-  }
-  window._generatingStep5 = true;
-  renderArtifacts();
-  let pct = 10;
-  const tick = setInterval(() => {
-    pct = Math.min(pct + 5, 85);
-    window._step5Pct = pct;
-    renderArtifacts();
-  }, 800);
-  try {
-    var resp = await Promise.race([
-      fetch(API_BASE + '/api/step5/generate-demo', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ client_id: currentClientId })
-      }),
-      new Promise(function(_, reject) { setTimeout(function() { reject(new Error('生成超时，请重试')); }, 120000); })
-    ]);
-    clearInterval(tick);
-    var data = await resp.json();
-    window._generatingStep5 = false;
-    window._step5Pct = null;
-    if (data.success && data.demo) {
-      updateClient(currentClientId, { step5_schema: data.demo });
-      initS5Editor(data.demo);
-      showToast('Demo 生成完成！');
-    } else {
-      showToast(data.error || '生成失败');
-    }
-    renderArtifacts();
-  } catch(e) {
-    clearInterval(tick);
-    window._generatingStep5 = false;
-    window._step5Pct = null;
-    showToast('生成失败：' + e.message);
-    renderArtifacts();
-  }
-}
 
 async function doGenerateAgentSuggest(silent) {
   var btn = document.getElementById('s5-agent-btn');
@@ -4786,28 +3664,347 @@ function renderS5Agent() {
   if (empty) empty.style.display = 'none';
 }
 
-function escHtml(str) {
-  if (str == null) return '';
-  str = String(str);
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function loadS5Agent() {
+  var c = getClient(currentClientId);
+  var suggestions = c && c.step5_agent_suggestions;
+  _s5AgentSuggestions = suggestions || null;
+  renderS5Agent();
+}
+
+function markClientDone() {
+  if (!confirm('确认将该客户标记为已完成？完成后可在客户列表查看。')) return;
+  if (!currentClientId) { showToast('客户未选定'); return; }
+  updateClient(currentClientId, { is_completed: true });
+
+  // 1. 更新侧边栏当前客户名的 ✓ 标记
+  var sbNameEl = document.getElementById('sidebar-client-name-text');
+  if (sbNameEl) {
+    var clientName = (getClient(currentClientId) || {}).name || '当前客户';
+    sbNameEl.textContent = clientName + ' ✓';
+  }
+
+  // 2. 刷新侧边栏下拉列表（从后端重新拉最新数据）
+  refreshClientDropdown();
+
+  // 3. 更新按钮样式
+  var btn = document.getElementById('s5-done-btn');
+  if (btn) {
+    btn.textContent = '已完成 ✓';
+    btn.style.background = '#ecfdf3';
+    btn.style.color = '#059669';
+    btn.style.borderColor = '#bbf7d0';
+    btn.disabled = true;
+  }
+
+  showToast('已标记为完成');
+
+  // 4. 跳转到客户列表页（强制刷新以显示最新状态）
+  setTimeout(function() {
+    location.href = 'client_list.html?_t=' + Date.now();
+  }, 800);
 }
 
 function loadStep5(c) {
+  updateCtxBar(c);
   var doneBtn = document.getElementById('s5-done-btn');
-  if (doneBtn) doneBtn.style.display = c && c.is_completed ? 'none' : '';
-  if (c && c.step5_schema) {
+  if (doneBtn) {
+    if (c.is_completed) {
+      doneBtn.textContent = '已完成 ✓';
+      doneBtn.style.background = '#ecfdf3';
+      doneBtn.style.color = '#059669';
+      doneBtn.style.borderColor = '#bbf7d0';
+      doneBtn.style.cursor = 'default';
+      doneBtn.disabled = false;
+    } else {
+      doneBtn.textContent = '已完成';
+      doneBtn.style.background = '#1263e6';
+      doneBtn.style.color = '#fff';
+      doneBtn.style.borderColor = 'transparent';
+      doneBtn.disabled = false;
+    }
+  }
+  if (c.step5_schema) {
     initS5Editor(c.step5_schema);
   } else {
     initS5Editor(null);
   }
 }
 
-function loadS5Agent() {
-  var c = getClient(currentClientId);
-  if (c && c.step5_agent_suggestions) {
-    _s5AgentSuggestions = c.step5_agent_suggestions;
-    renderS5Agent();
+function initS5Editor(schema) {
+  _s5Schema = schema ? (typeof schema === 'string' ? JSON.parse(schema) : schema) : {
+    doc_name: (getClient(currentClientId) && getClient(currentClientId).name || '') + '智能表格',
+    sheets: [],
+    agent_scenarios: []
+  };
+  _s5CurrentSheet = 0;
+  renderS5Editor();
+}
+
+function escHtml(str) {
+  if (str == null) return '';
+  str = String(str);
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderS5Editor() {
+  var schema = _s5Schema;
+  var sheets = schema && schema.sheets || [];
+  var hasData = sheets.length > 0;
+
+  document.getElementById('s5-sheet-count').textContent = (sheets.length || 0) + ' 个子表';
+  var statusEl = document.getElementById('s5-schema-status');
+  if (statusEl) statusEl.textContent = hasData ? '· 已生成' : '· 未生成';
+
+  var tabsEl = document.getElementById('s5-sheet-tabs');
+  if (!hasData) {
+    tabsEl.innerHTML = '<span style="color:#98a2b3;font-size:13px;padding-bottom:6px">暂无子表，请先生成 Demo 方案</span>';
+  } else {
+    var tabsHtml = sheets.map(function(s, i) {
+      var active = i === _s5CurrentSheet ? ' active' : '';
+      var name = escHtml(s.sheet_name || '未命名表');
+      var fcount = s.fields && s.fields.length || 0;
+      var rcount = s.sample_records && s.sample_records.length || 0;
+      return '<button class="demo-nav-item' + active + '" onclick="selectSheet(' + i + ')" style="flex-shrink:0">' +
+        '<b>' + name + '</b><span>' + fcount + '字段 · ' + rcount + '条</span>' +
+      '</button>';
+    }).join('');
+    tabsEl.innerHTML = tabsHtml + '<button class="btn secondary" onclick="doAddSheet()" style="height:30px;font-size:12px;padding:0 12px;flex-shrink:0">+ 新增子表</button>';
   }
+
+  var emptyState = document.getElementById('s5-empty-state');
+  var sheetEditor = document.getElementById('s5-sheet-editor');
+  if (emptyState) emptyState.style.display = hasData ? 'none' : '';
+  if (sheetEditor) sheetEditor.style.display = hasData ? '' : 'none';
+
+  if (hasData) renderCurrentSheet();
+}
+
+function selectSheet(idx) {
+  _s5CurrentSheet = idx;
+  renderS5Editor();
+}
+
+function renderCurrentSheet() {
+  var schema = _s5Schema;
+  var sheets = schema && schema.sheets || [];
+  if (!sheets.length) return;
+  var sheet = sheets[_s5CurrentSheet];
+  if (!sheet) return;
+
+  var nameEl = document.getElementById('s5-sheet-name');
+  if (nameEl) nameEl.value = sheet.sheet_name || '';
+
+  var fields = sheet.fields || [];
+  var tbody = document.getElementById('s5-fields-tbody');
+  if (!tbody) return;
+
+  var fieldTypes = ['text','number','date','select','percent','phone'];
+  var rows = fields.map(function(f, i) {
+    var bg = i % 2 === 0 ? '' : 'background:#f9fafb';
+    var ftOpts = fieldTypes.map(function(t) {
+      return '<option value="' + t + '"' + (f.field_type === t ? ' selected' : '') + '>' + t + '</option>';
+    }).join('');
+    return '<tr style="' + bg + '">' +
+      '<td style="padding:8px 16px;color:#98a2b3;font-size:12px">' + (i + 1) + '</td>' +
+      '<td style="padding:8px 16px"><input value="' + escHtml(f.field_title || '') + '" oninput="onFieldChange(' + i + ',\'field_title\',this.value)" style="border:none;outline:none;font-size:13px;width:100%;background:transparent" placeholder="字段名称"></td>' +
+      '<td style="padding:8px 16px"><select onchange="onFieldChange(' + i + ',\'field_type\',this.value)" style="border:none;outline:none;font-size:13px;background:transparent">' + ftOpts + '</select></td>' +
+      '<td style="padding:8px 16px;text-align:center"><input type="checkbox"' + (f.required ? ' checked' : '') + ' onchange="onFieldChange(' + i + ',\'required\',this.checked)"></td>' +
+      '<td style="padding:8px 16px;text-align:center"><button class="btn danger" onclick="doDeleteField(' + i + ')" style="height:24px;font-size:11px;padding:0 8px">删除</button></td>' +
+    '</tr>';
+  });
+  tbody.innerHTML = rows.join('');
+
+  var records = sheet.sample_records || [];
+  var recCount = document.getElementById('s5-record-count');
+  if (recCount) recCount.textContent = (records.length || 0) + ' 条';
+
+  var recHeader = document.getElementById('s5-records-header');
+  if (recHeader) {
+    recHeader.innerHTML = '<tr style="background:#f3f4f6">' + fields.map(function(f, i) {
+      return '<th style="padding:8px 12px;text-align:left;font-size:12px;color:#667085;white-space:nowrap;border-bottom:1px solid #e5e7eb">' + escHtml(f.field_title || '字段' + (i+1)) + '</th>';
+    }).join('') + '<th style="padding:8px 12px;width:50px;border-bottom:1px solid #e5e7eb"></th></tr>';
+  }
+
+  var recBody = document.getElementById('s5-records-body');
+  if (!recBody) return;
+  var recRows = records.map(function(rec, ri) {
+    var bg = ri % 2 === 0 ? '' : 'background:#f9fafb';
+    var cells = fields.map(function(f, fi) {
+      var val = rec[f.field_title] || '';
+      if (f.field_type === 'select') {
+        var opts = (f.options || []).map(function(o) {
+          return '<option value="' + escHtml(o) + '"' + (val === o ? ' selected' : '') + '>' + escHtml(o) + '</option>';
+        }).join('');
+        return '<td style="padding:6px 12px"><select onchange="onRecordChange(' + ri + ',' + fi + ',this.value)" style="border:none;outline:none;font-size:12px;background:transparent;min-width:80px"><option value="">-</option>' + opts + '</select></td>';
+      } else if (f.field_type === 'number' || f.field_type === 'percent') {
+        return '<td style="padding:6px 12px"><input type="number" value="' + escHtml(val) + '" oninput="onRecordChange(' + ri + ',' + fi + ',this.value)" style="border:none;outline:none;font-size:12px;background:transparent;width:80px" placeholder="0"></td>';
+      } else if (f.field_type === 'date') {
+        return '<td style="padding:6px 12px"><input type="date" value="' + escHtml(val) + '" onchange="onRecordChange(' + ri + ',' + fi + ',this.value)" style="border:none;outline:none;font-size:12px;background:transparent"></td>';
+      } else {
+        return '<td style="padding:6px 12px"><input value="' + escHtml(val) + '" oninput="onRecordChange(' + ri + ',' + fi + ',this.value)" style="border:none;outline:none;font-size:12px;background:transparent;min-width:100px" placeholder="-"></td>';
+      }
+    }).join('');
+    return '<tr style="' + bg + '">' + cells + '<td style="padding:6px 12px;text-align:center"><button class="btn danger" onclick="doDeleteRecord(' + ri + ')" style="height:22px;font-size:11px;padding:0 6px">×</button></td></tr>';
+  });
+  recBody.innerHTML = recRows.join('');
+}
+
+function onSheetNameChange(name) {
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
+  _s5Schema.sheets[_s5CurrentSheet].sheet_name = name;
+}
+
+function onFieldChange(idx, prop, val) {
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
+  _s5Schema.sheets[_s5CurrentSheet].fields[idx][prop] = val;
+  if (prop === 'field_title') renderCurrentSheet();
+}
+
+function doAddField() {
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
+  _s5Schema.sheets[_s5CurrentSheet].fields.push({ field_title: '新字段', field_type: 'text', required: false });
+  renderCurrentSheet();
+}
+
+function doDeleteField(idx) {
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
+  _s5Schema.sheets[_s5CurrentSheet].fields.splice(idx, 1);
+  renderCurrentSheet();
+}
+
+function onRecordChange(ri, fi, val) {
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
+  var sheet = _s5Schema.sheets[_s5CurrentSheet];
+  var field = sheet.fields && sheet.fields[fi];
+  if (!field) return;
+  if (!sheet.sample_records[ri]) sheet.sample_records[ri] = {};
+  sheet.sample_records[ri][field.field_title] = val;
+}
+
+function doAddRecord() {
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
+  _s5Schema.sheets[_s5CurrentSheet].sample_records.push({});
+  renderCurrentSheet();
+}
+
+function doDeleteRecord(idx) {
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
+  _s5Schema.sheets[_s5CurrentSheet].sample_records.splice(idx, 1);
+  renderCurrentSheet();
+}
+
+function doAddSheet() {
+  if (!_s5Schema) return;
+  _s5Schema.sheets = _s5Schema.sheets || [];
+  _s5Schema.sheets.push({ sheet_name: '新子表', fields: [{ field_title: '字段1', field_type: 'text', required: false }], sample_records: [] });
+  _s5CurrentSheet = _s5Schema.sheets.length - 1;
+  renderS5Editor();
+}
+
+function doDeleteCurrentSheet() {
+  if (!_s5Schema || !_s5Schema.sheets || !_s5Schema.sheets[_s5CurrentSheet]) return;
+  if (_s5Schema.sheets.length <= 1) { alert('至少保留一个子表'); return; }
+  if (!confirm('确定删除此子表？')) return;
+  _s5Schema.sheets.splice(_s5CurrentSheet, 1);
+  _s5CurrentSheet = Math.max(0, _s5CurrentSheet - 1);
+  renderS5Editor();
+}
+
+function doSaveStep5Schema() {
+  if (!_s5Schema) return;
+  updateClient(currentClientId, { step5_schema: _s5Schema });
+  showToast('已保存，正在创建企微智能表格…');
+  renderS5Editor();
+  createSmartSheet();
+}
+
+async function doRegenerateStep5(silent) {
+  if (!silent && !confirm('重新生成会覆盖当前的 Demo 方案，确定要重新生成吗？')) return;
+  var c = getClient(currentClientId);
+  var hasPresalesVersions = Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0;
+  var hasTechVersions = Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0;
+  if (!c.step4_presales && !c.step4_report && !c.transcript && !hasPresalesVersions && !hasTechVersions) {
+    alert('请先生成售前方案（Step4）再生成 Demo'); return;
+  }
+  window._generatingStep5 = true;
+  renderArtifacts();
+  let pct = 10;
+  const tick = setInterval(() => {
+    pct = Math.min(pct + Math.random() * 15, 85);
+    window._step5Pct = pct;
+    renderArtifacts();
+  }, 300);
+  try {
+    var schema = await generateDemoSchema(c);
+    window._demoSchema = schema;
+    _s5Schema = schema;
+    updateClient(currentClientId, { step5_schema: schema });
+    renderS5Editor();
+    window._step5Pct = 100;
+    renderArtifacts();
+    showToast('Demo 生成完成');
+  } catch(e) {
+    alert('Demo 生成失败: ' + e.message);
+  } finally {
+    clearInterval(tick);
+    window._generatingStep5 = false;
+    renderArtifacts();
+  }
+}
+
+async function generateDemoSchema(c) {
+  var resp = await fetch(API_BASE + '/api/step5/generate-demo', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ client_id: c.id || currentClientId })
+  });
+  if (!resp.ok) throw new Error('生成失败');
+  var data = await resp.json();
+  if (!data.success || !data.demo) throw new Error(data.error || data.detail || '生成失败');
+  // step5_schema 是 JSON Schema 对象
+  return data.demo;
+}
+
+async function createSmartSheet() {
+  // 优先用用户编辑后的 _s5Schema，否则用 step5_schema
+  var schema = _s5Schema || (getClient(currentClientId) && getClient(currentClientId).step5_schema);
+  if (!schema) { alert('请先生成 Demo'); return; }
+  var schemaObj = typeof schema === 'string' ? JSON.parse(schema) : schema;
+  var sheets = schemaObj && schemaObj.sheets;
+  if (!sheets || !sheets.length) { alert('Demo 无子表数据'); return; }
+
+  // 直接传 sheets 结构（含字段和样例数据）
+  window._creatingSheet = true;
+  renderArtifacts();
+  showToast('正在创建智能表格…');
+  try {
+    var resp = await fetch(API_BASE + '/api/create', {
+      method: 'POST', headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: currentClientId, smartTableSpec: { sheets: sheets } })
+    });
+    var data = await resp.json();
+    if (!data.success) throw new Error(data.error || '创建文档失败');
+    var docid = data.docid;
+    var url = data.url || ('https://doc.wps.cn/s/' + docid);
+    updateClient(currentClientId, { demo_url: url });
+    showToast('创建成功！' + (data.sheets || []).length + ' 个子表');
+    renderArtifacts();
+    window.open(url, '_blank');
+  } catch(e) {
+    alert('创建失败: ' + e.message);
+    renderArtifacts();
+  } finally {
+    window._creatingSheet = false;
+    renderArtifacts();
+  }
+}
+
+function doCopyDemoUrl() {
+  var c = getClient(currentClientId);
+  if (!c || !c.demo_url) return;
+  navigator.clipboard.writeText(c.demo_url).then(function() { showToast('链接已复制'); });
+  var btn = document.getElementById('copy-demo-url-btn');
+  if (btn) { var orig = btn.textContent; btn.textContent = '已复制'; setTimeout(function() { btn.textContent = orig; }, 1500); }
 }
 
 
@@ -4917,7 +4114,7 @@ function addGap() {
           '<option value="低优先级" style="color:#69db7c">低</option>' +
           '<option value="待澄清" style="color:#94a3b8">待</option>' +
         '</select>' +
-        '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px;flex-shrink:0" onclick=\'this.closest(&quot;.gap&quot;).remove()\'>×</div>' +
+        '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px;flex-shrink:0" onclick="this.closest(\'\.gap\').remove()">×</div>' +
       '</div>' +
     '</div>';
   container.appendChild(newGap);
@@ -4996,7 +4193,7 @@ function renderGaps(gaps) {
             '<option value="低优先级" '+(priBar==='low'?'selected':'')+' style="color:#69db7c">低</option>' +
             '<option value="待澄清" '+(priBar==='pending'?'selected':'')+' style="color:#94a3b8">待</option>' +
           '</select>' +
-          '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px;flex-shrink:0" onclick=\'this.closest(&quot;.gap&quot;).remove()\'>×</div>' +
+          '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px;flex-shrink:0" onclick="this.closest('.gap').remove()">×</div>' +
         '</div>' +
         (whyNeed ? '<div style="font-size:12px;color:#64748b;line-height:1.5;padding:6px 12px;background:#f8fafc;border-radius:8px">💡 ' + esc(whyNeed) + '</div>' : '') +
       '</div>' +
@@ -5547,21 +4744,6 @@ function loadStep2(c) {
   if (!c.step1_result) return;
   const data = c.step1_result;
   document.getElementById('s2-profile-text').textContent = data.part1?.company_background || '-';
-  // 客户画像扩展信息：来自 AI 智搜
-  var extraEl = document.getElementById('s2-profile-extra');
-  if (extraEl) {
-    var items = [];
-    var companyType = c.company_type || '';
-    var mainCustomers = c.main_customers || '';
-    var possibleFocus = c.possible_focus || '';
-    var companyIntro = c.company_intro || '';
-    if (companyType) items.push('<div style="background:#f5f7ff;border-radius:10px;padding:10px 14px"><div style="font-size:11px;color:#98a2b3;margin-bottom:4px">客户类型</div><div style="font-size:13px;color:#182235;font-weight:500">' + esc(companyType) + '</div></div>');
-    if (mainCustomers) items.push('<div style="background:#f5f7ff;border-radius:10px;padding:10px 14px"><div style="font-size:11px;color:#98a2b3;margin-bottom:4px">主要客户</div><div style="font-size:13px;color:#182235;font-weight:500">' + esc(mainCustomers) + '</div></div>');
-    if (possibleFocus) items.push('<div style="background:#f5f7ff;border-radius:10px;padding:10px 14px"><div style="font-size:11px;color:#98a2b3;margin-bottom:4px">关注点</div><div style="font-size:13px;color:#182235;font-weight:500;line-height:1.5">' + esc(possibleFocus) + '</div></div>');
-    if (companyIntro && companyIntro !== c.name) items.push('<div style="background:#f5f7ff;border-radius:10px;padding:10px 14px"><div style="font-size:11px;color:#98a2b3;margin-bottom:4px">公司简介</div><div style="font-size:13px;color:#667085;line-height:1.6">' + esc(companyIntro) + '</div></div>');
-    extraEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">' + items.join('') + '</div>';
-    extraEl.style.display = items.length > 0 ? '' : 'none';
-  }
   // pain_points：最多显示 5 条，其余折叠（兼容新旧格式：新={text,sourceType}，旧=string）
   const pains = (data.part1?.pain_points || []).map(function(p) {
     return typeof p === 'string' ? { text: p, sourceType: 'explicit' } : p;
@@ -5570,7 +4752,9 @@ function loadStep2(c) {
   const showPains = pains.slice(0, 5);
   const hiddenCount = pains.length - 5;
   if (pains.length > 0) {
-    painGrid.innerHTML = showPains.map(function(p) { var t = (p.text || '').replace(/\*\*/g, '').replace(/^🟩\s*/, '').replace(/^🟨\s*/, ''); if (t.length > 20) t = t.slice(0, 20) + '…'; return '<div class=\'pain\'><div class=\'pain-row\'><div class=\'pain-text\'>' + esc(t) + '</div></div></div>'; }).join('');
+    painGrid.innerHTML = showPains.map(function(p) { return '<div class=\'pain\'><div class=\'pain-row\'><div class=\'pain-text\'>' + esc(p.text || '') + '</div></div></div>'; }).join('');
+    }).join('');
+
   } else {
     painGrid.innerHTML = '<div class="pain" contenteditable="false">-</div>';
   }
@@ -5976,7 +5160,6 @@ function renderArtifacts() {
       } else if (item.dataKey === 'step4_presales_versions' && Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0) {
         // 技术路线及报价方案（Word）
         actions += '<button class="art-btn" onclick="doDownloadLatestWord()">下载 Word</button>';
-        actions += '<button class="art-btn primary" onclick="doDownloadRealDocx()">📄 下载 docx</button>';
         actions += '<button class="art-btn" onclick="generateStep4Presales()">重新生成</button>';
       } else if (item.dataKey === 'step4_technical_versions' && Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0) {
         // 售前解决方案（HTML）→ 预览 + 分享链接
