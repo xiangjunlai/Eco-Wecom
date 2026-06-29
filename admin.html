@@ -236,9 +236,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
         <span class="nav-icon">👥</span>客户总览
         <span class="nav-badge" id="nav-client-count">0</span>
       </div>
-      <div class="nav-item" data-tab="content" onclick="switchTab('content')">
-        <span class="nav-icon">📋</span>内容查看
-      </div>
       <div class="nav-item" data-tab="ai" onclick="switchTab('ai')">
         <span class="nav-icon">🤖</span>AI 统计
         <span class="nav-badge" id="nav-ai-badge">配额</span>
@@ -420,7 +417,6 @@ function switchTab(name) {
   if (name === 'overview') renderOverview();
   else if (name === 'providers') renderProviders();
   else if (name === 'clients') renderClients();
-  else if (name === 'content') renderContent();
   else if (name === 'ai') renderAI();
   else if (name === 'codes') renderCodes();
 }
@@ -726,11 +722,30 @@ async function deleteProvider(id) {
 }
 
 // ===== Clients Tab =====
+function hasContent(val) {
+  if (!val) return false;
+  if (typeof val === 'string') return val.trim().length > 0;
+  if (typeof val === 'object') return true;
+  return false;
+}
+
 async function renderClients() {
   var body = document.getElementById('main-body');
   body.innerHTML = '<div style="text-align:center;color:var(--text3);padding:80px">加载中…</div>';
-  var clients = await api('/api/admin/clients');
+  var [providers, clients] = await Promise.all([
+    api('/api/admin/users'),
+    api('/api/admin/clients')
+  ]);
   if (!Array.isArray(clients)) clients = [];
+  if (!Array.isArray(providers)) providers = [];
+
+  // 构建 user_id → {username, provider_name} 的映射
+  window._userMap = {};
+  providers.forEach(u => { window._userMap[u.id] = u; });
+
+  window._allClients = clients;
+  window._clientMap = {};
+  clients.forEach(c => { window._clientMap[c.id] = c; });
 
   body.innerHTML = `
     <div class="section">
@@ -739,25 +754,27 @@ async function renderClients() {
         <div class="toolbar-right">
           <div class="search-box">
             <span>🔍</span>
-            <input type="text" placeholder="搜索客户名称…" oninput="filterClients(this.value)">
+            <input type="text" id="client-search" placeholder="搜索客户名 / 服务商 / 账号…" oninput="filterClients()">
           </div>
-          <select class="btn" id="client-status-filter" onchange="filterClients(document.querySelector('#client-search-input').value)" style="font-size:12px">
+          <select class="btn" id="client-status-filter" onchange="filterClients()" style="font-size:12px">
             <option value="">全部状态</option>
             <option value="completed">已完成</option>
             <option value="pending">待完善</option>
           </select>
+          <select class="btn" id="client-step-filter" onchange="filterClients()" style="font-size:12px">
+            <option value="">全部 Step</option>
+            <option value="step1">Step1 客户背景</option>
+            <option value="step2">Step2 调研问题</option>
+            <option value="step3">Step3 沟通记录</option>
+            <option value="step4">Step4 售前方案</option>
+            <option value="step5">Step5 Demo</option>
+          </select>
+          <button class="btn" onclick="exportAllClients()">📥 导出</button>
         </div>
       </div>
       <div id="clients-list"></div>
     </div>
   `;
-
-  window._allClients = clients;
-  window._clientMap = {};
-  clients.forEach(c => { window._clientMap[c.id] = c; });
-
-  document.querySelector('#client-status-filter').insertAdjacentHTML('beforebegin',
-    '<input type="text" id="client-search-input" placeholder="搜索…" oninput="filterClients(this.value)" style="display:none">');
 
   drawClientsList(clients);
 }
@@ -769,43 +786,138 @@ function drawClientsList(clients) {
     return;
   }
   container.innerHTML = clients.map(c => {
+    var userInfo = window._userMap ? window._userMap[c.user_id] : null;
+    var pName = userInfo?.provider_name || c.provider_name || '-';
+    var uName = userInfo?.username || '-';
     var statusBadge = c.is_completed || c._completed ? 'badge-green' : 'badge-gray';
     var statusText = c.is_completed || c._completed ? '已完成' : '待完善';
-    var step1 = hasContent(c.step1_result) ? '✅' : '❌';
-    // Step2: content is in step1_result.part3 (访谈提纲) or step1_result.part2 (gaps)
+
     var s1 = c.step1_result;
-    var step2 = (s1 && (s1.part3 || s1.part2)) ? '✅' : '❌';
-    var step3 = hasContent(c.step3_summary) || hasContent(c.step3_data) ? '✅' : '❌';
-    var step4 = hasContent(c.step4_presales_versions) || hasContent(c.step4_technical_versions) || hasContent(c.step4_presales_content) || hasContent(c.step4_technical_content) ? '✅' : '❌';
-    var step5 = hasContent(c.step5_schema) || hasContent(c.step5_demo_content) ? '✅' : '❌';
+    var step1ok = hasContent(c.step1_result) ? '✅' : '❌';
+    var step2ok = (s1 && (s1.part3 || s1.part2 || s1.must_ask)) ? '✅' : '❌';
+    var step3ok = hasContent(c.step3_summary) || hasContent(c.uploaded_files) ? '✅' : '❌';
+    var step4ok = hasContent(c.step4_presales_versions) || hasContent(c.step4_technical_versions) ? '✅' : '❌';
+    var step5ok = hasContent(c.step5_schema) ? '✅' : '❌';
+
     return `
       <div class="expand-panel" id="client-panel-${c.id}">
         <div class="expand-head" onclick="toggleClientPanel(${c.id})">
           <span class="expand-arrow">▶</span>
-          <div class="expand-info">
-            <span class="fw-bold">${esc(c.name)}</span>
+          <div class="expand-info" style="flex:1;min-width:0">
+            <span class="fw-bold" style="white-space:nowrap">${esc(c.name)}</span>
             <span class="badge ${statusBadge}">${statusText}</span>
-            <span class="text-muted" style="font-size:11px">${esc(c.provider_name)}</span>
-            <span class="text-muted" style="font-size:11px">${esc(c.industry || '-')}</span>
-            <span style="font-size:11px">
-              <span title="Step1">S1${step1}</span>
-              <span title="Step2">S2${step2}</span>
-              <span title="Step3">S3${step3}</span>
-              <span title="Step4">S4${step4}</span>
-              <span title="Step5">S5${step5}</span>
+            <span class="text-muted" style="font-size:11px;white-space:nowrap" title="服务商">🏢${esc(pName)}</span>
+            <span class="text-muted" style="font-size:11px;white-space:nowrap" title="账号">👤${esc(uName)}</span>
+            <span class="text-muted" style="font-size:11px;white-space:nowrap">🏭${esc(c.industry || '-')}</span>
+            <span style="font-size:11px;white-space:nowrap">
+              <span title="Step1" style="color:${step1ok==='✅'?'#13b96f':'#ef4444'}">S1${step1ok}</span>
+              <span title="Step2" style="color:${step2ok==='✅'?'#13b96f':'#ef4444'}">S2${step2ok}</span>
+              <span title="Step3" style="color:${step3ok==='✅'?'#13b96f':'#ef4444'}">S3${step3ok}</span>
+              <span title="Step4" style="color:${step4ok==='✅'?'#13b96f':'#ef4444'}">S4${step4ok}</span>
+              <span title="Step5" style="color:${step5ok==='✅'?'#13b96f':'#ef4444'}">S5${step5ok}</span>
             </span>
           </div>
-          <span class="text-muted" style="font-size:11px">${formatDate(c.created_at)}</span>
-          <button class="btn btn-sm btn-blue" onclick="event.stopPropagation();openClientModal(${c.id})">查看内容</button>
+          <span class="text-muted" style="font-size:11px;white-space:nowrap;flex-shrink:0">${formatDate(c.created_at)}</span>
+          <span class="text-muted" style="font-size:11px;white-space:nowrap;flex-shrink:0;margin-right:8px">更新:${formatDate(c.updated_at)}</span>
         </div>
-        <div class="expand-body">
-          <div style="padding:16px 0">
-            <div style="font-size:12px;color:var(--text3);margin-bottom:8px">点击上方"查看内容"查看完整 Step 数据</div>
-          </div>
+        <div class="expand-body" id="client-body-${c.id}">
+          ${renderClientRowContent(c, {pName, uName})}
         </div>
       </div>
     `;
   }).join('');
+}
+
+function renderClientRowContent(c, userInfo) {
+  var pName = userInfo?.pName || '-';
+  var uName = userInfo?.uName || '-';
+  var steps = [
+    {
+      key: 'step1', label: 'Step1 客户背景', icon: '📋',
+      input: '服务商填写：客户名/行业/规模/标签/初始需求',
+      inputData: { name: c.name, industry: c.industry, initial_demand: c.initial_demand },
+      output: 'AI 客户画像 + 痛点 + 调研问题清单',
+      outputData: c.step1_result
+    },
+    {
+      key: 'step2', label: 'Step2 调研准备', icon: '❓',
+      input: 'AI 生成问题清单（需服务商确认/补充）',
+      inputData: (function(){
+        var s1 = c.step1_result;
+        return s1 ? { gaps: s1.part2 || s1.gaps, must_ask: s1.part3?.must_ask || s1.must_ask } : null;
+      })(),
+      output: '服务商确认后的调研结果 + 痛点 + 需求边界',
+      outputData: c.step2_report
+    },
+    {
+      key: 'step3', label: 'Step3 沟通纪要', icon: '✅',
+      input: '沟通记录原文（上传文件/粘贴文字）',
+      inputData: c.uploaded_files,
+      output: '需求摘要 + 痛点 + 一期二期范围',
+      outputData: c.step3_summary
+    },
+    {
+      key: 'step4', label: 'Step4 售前方案', icon: '📄',
+      input: '需求结构化（方案输入确认单）',
+      inputData: c.step4_input_draft,
+      output: '售前 HTML 链接 + Word 文档 + 需求确认表',
+      outputData: (function(){
+        try {
+          var v = c.step4_presales_versions ? (typeof c.step4_presales_versions === 'string' ? JSON.parse(c.step4_presales_versions) : c.step4_presales_versions) : [];
+          return v.length ? v[v.length-1] : null;
+        } catch(e) { return null; }
+      })()
+    },
+    {
+      key: 'step5', label: 'Step5 Demo 生成', icon: '🎨',
+      input: '智能表格 Schema（从 Step4 派生）',
+      inputData: c.step5_schema,
+      output: 'Demo URL / Agent 建议 / Schema JSON',
+      outputData: { schema: c.step5_schema, suggestions: c.step5_agent_suggestions, demo_url: c.demo_url }
+    }
+  ];
+
+  function fmtJson(data) {
+    if (!data) return '<span style="color:#98a2b3">暂无</span>';
+    try {
+      var s = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+      // 截断长内容
+      if (s.length > 800) s = s.substring(0, 800) + '\n…（已截断，完整内容请在弹窗查看）';
+      return '<pre style="margin:0;font-size:11px;background:#f9fafb;border-radius:8px;padding:10px;max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-all">' + esc(s) + '</pre>';
+    } catch(e) {
+      return '<span style="color:#ef4444">解析失败</span>';
+    }
+  }
+
+  return `
+    <div style="padding:12px 0 16px">
+      <div style="font-size:11px;color:#98a2b3;margin-bottom:12px">
+        服务商：<b>${esc(pName)}</b>　账号：<b>${esc(uName)}</b>　创建时间：<b>${formatDate(c.created_at)}</b>　更新时间：<b>${formatDate(c.updated_at)}</b>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${steps.map(s => {
+          var hasInput = s.inputData && (typeof s.inputData === 'object' ? Object.keys(s.inputData).length > 0 : !!s.inputData);
+          var hasOutput = !!s.outputData;
+          var cardBg = hasOutput ? '#f0f7ff' : '#f9fafb';
+          return `
+            <div style="background:${cardBg};border-radius:10px;border:1px solid ${hasOutput?'#1263e6':'#e5e7eb'};overflow:hidden">
+              <div style="padding:10px 14px;background:${hasOutput?'#e8f0fe':'#f3f4f6'};border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:8px">
+                <span style="font-size:13px;font-weight:700;color:${hasOutput?'#1263e6':'#667085'}">${s.icon} ${s.label}</span>
+                ${hasOutput ? '<span style="font-size:10px;background:#13b96f;color:#fff;padding:1px 6px;border-radius:4px">✅ 有产出</span>' : '<span style="font-size:10px;background:#e5e7eb;color:#667085;padding:1px 6px;border-radius:4px">❌ 待完善</span>'}
+              </div>
+              <div style="padding:10px 14px">
+                <div style="font-size:11px;font-weight:600;color:#667085;margin-bottom:4px">📥 输入</div>
+                <div style="font-size:11px;color:#98a2b3;margin-bottom:6px">${s.input}</div>
+                ${hasInput ? fmtJson(s.inputData) : '<span style="color:#98a2b3;font-size:11px">暂无输入数据</span>'}
+                <div style="font-size:11px;font-weight:600;color:#667085;margin:10px 0 4px">📤 输出</div>
+                ${hasOutput ? fmtJson(s.outputData) : '<span style="color:#98a2b3;font-size:11px">暂无输出数据</span>'}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
 }
 
 function toggleClientPanel(id) {
@@ -814,15 +926,40 @@ function toggleClientPanel(id) {
   panel.classList.toggle('open');
 }
 
-function filterClients(search) {
+function filterClients() {
+  var q = (document.getElementById('client-search')?.value || '').toLowerCase();
   var status = document.getElementById('client-status-filter')?.value || '';
-  var q = search.toLowerCase();
+  var stepFilter = document.getElementById('client-step-filter')?.value || '';
+
   var filtered = window._allClients.filter(c => {
-    var matchQ = !q || (c.name||'').toLowerCase().includes(q) || (c.provider_name||'').toLowerCase().includes(q) || (c.industry||'').toLowerCase().includes(q);
+    var userInfo = window._userMap ? window._userMap[c.user_id] : null;
+    var pName = (userInfo?.provider_name || c.provider_name || '').toLowerCase();
+    var uName = (userInfo?.username || '').toLowerCase();
+    var matchQ = !q || (c.name||'').toLowerCase().includes(q) || pName.includes(q) || uName.includes(q) || (c.industry||'').toLowerCase().includes(q);
     var matchStatus = !status || (status === 'completed' && (c.is_completed || c._completed)) || (status === 'pending' && !c.is_completed && !c._completed);
-    return matchQ && matchStatus;
+    var matchStep = !stepFilter || (function(){
+      if (stepFilter === 'step1') return hasContent(c.step1_result);
+      if (stepFilter === 'step2') { var s1 = c.step1_result; return s1 && (s1.part3 || s1.part2 || s1.must_ask); }
+      if (stepFilter === 'step3') return hasContent(c.step3_summary) || hasContent(c.uploaded_files);
+      if (stepFilter === 'step4') return hasContent(c.step4_presales_versions) || hasContent(c.step4_technical_versions);
+      if (stepFilter === 'step5') return hasContent(c.step5_schema);
+      return true;
+    })();
+    return matchQ && matchStatus && matchStep;
   });
   drawClientsList(filtered);
+}
+
+function exportAllClients() {
+  var data = JSON.stringify(window._allClients || [], null, 2);
+  var blob = new Blob([data], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'clients-export-' + new Date().toISOString().substring(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('导出成功');
 }
 
 function getClientById(id) {
@@ -1016,145 +1153,6 @@ async function saveNote(clientId, step, value) {
     window._clientMap[clientId][field] = value;
   }
   showToast('备注已保存');
-}
-
-// ===== Content Tab =====
-async function renderContent() {
-  var body = document.getElementById('main-body');
-  body.innerHTML = '<div style="text-align:center;color:var(--text3);padding:80px">加载中…</div>';
-
-  var providers = await api('/api/admin/users');
-  var clients = await api('/api/admin/clients');
-  if (!Array.isArray(clients)) clients = [];
-  if (!Array.isArray(providers)) providers = [];
-
-  body.innerHTML = `
-    <div class="section">
-      <div class="toolbar">
-        <div class="toolbar-left">全量内容查阅（共 ${clients.length} 个客户）</div>
-        <div class="toolbar-right">
-          <div class="search-box">
-            <span>🔍</span>
-            <input type="text" id="content-search" placeholder="搜索客户名 / 服务商…" oninput="filterContent()">
-          </div>
-          <select class="btn" id="content-step-filter" onchange="filterContent()" style="font-size:12px">
-            <option value="">全部 Step</option>
-            <option value="step1">Step1 客户背景</option>
-            <option value="step2">Step2 调研问题</option>
-            <option value="step3">Step3 方案确认</option>
-            <option value="step4">Step4 售前方案</option>
-            <option value="step5">Step5 Demo</option>
-          </select>
-          <button class="btn" onclick="exportAllContent()">📥 导出全部</button>
-        </div>
-      </div>
-      <div id="content-list"></div>
-    </div>
-  `;
-
-  window._contentClients = clients;
-  window._contentProviders = providers;
-  window._contentProviderMap = {};
-  window._clientMap = {};
-  clients.forEach(c => { window._clientMap[c.id] = c; });
-  providers.forEach(p => { window._contentProviderMap[p.id] = p; });
-  drawContentList(clients);
-}
-
-function drawContentList(clients) {
-  var container = document.getElementById('content-list');
-  if (!clients.length) {
-    container.innerHTML = '<div class="empty" style="padding:40px">暂无数据</div>';
-    return;
-  }
-  container.innerHTML = clients.map(c => {
-    var pName = window._contentProviderMap ? (window._contentProviderMap[c.user_id]?.provider_name || c.provider_name || '-') : (c.provider_name || '-');
-    return `
-      <div class="expand-panel content-panel" data-id="${c.id}" data-name="${(c.name||'')+' '+(pName||'')}" data-provider="${pName}" data-step-filter="${getStepFilter(c)}">
-        <div class="expand-head" onclick="toggleContentPanel(${c.id})">
-          <span class="expand-arrow">▶</span>
-          <div class="expand-info">
-            <span class="fw-bold">${esc(c.name)}</span>
-            <span class="text-muted" style="font-size:11px">${esc(pName)}</span>
-            <span class="text-muted" style="font-size:11px">${esc(c.industry || '-')}</span>
-            <span class="badge ${c.is_completed || c._completed ? 'badge-green' : 'badge-gray'}">${c.is_completed || c._completed ? '已完成' : '待完善'}</span>
-          </div>
-          <button class="btn btn-sm btn-blue" onclick="event.stopPropagation();openClientModal(${c.id})">查看详情</button>
-        </div>
-        <div class="expand-body" id="content-body-${c.id}">
-          <div style="padding:8px 0 16px">
-            ${renderContentSummary(c)}
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function hasContent(val) {
-  if (!val) return false;
-  if (typeof val === 'string') return val.trim().length > 0;
-  if (typeof val === 'object') return true; // JSON arrays/objects count as content
-  return false;
-}
-
-function getStepFilter(c) {
-  var steps = [];
-  if (hasContent(c.step1_result)) steps.push('step1');
-  // step2 content lives in step1_result.part3/part2
-  var s1 = c.step1_result;
-  if (s1 && (s1.part3 || s1.part2)) steps.push('step2');
-  if (hasContent(c.step3_summary) || hasContent(c.step3_data)) steps.push('step3');
-  if (hasContent(c.step4_presales_versions) || hasContent(c.step4_technical_versions) || hasContent(c.step4_presales_content) || hasContent(c.step4_technical_content)) steps.push('step4');
-  if (hasContent(c.step5_schema) || hasContent(c.step5_demo_content)) steps.push('step5');
-  return steps.join(',');
-}
-
-function renderContentSummary(c) {
-  var items = [];
-  if (hasContent(c.step1_result)) items.push('<span class="badge badge-blue">Step1</span> ');
-  var s1 = c.step1_result;
-  if (s1 && (s1.part3 || s1.part2)) items.push('<span class="badge badge-blue">Step2</span> ');
-  if (hasContent(c.step3_summary) || hasContent(c.step3_data)) items.push('<span class="badge badge-blue">Step3</span> ');
-  if (hasContent(c.step4_presales_versions) || hasContent(c.step4_technical_versions) || hasContent(c.step4_presales_content) || hasContent(c.step4_technical_content)) items.push('<span class="badge badge-green">Step4</span> ');
-  if (hasContent(c.step5_schema) || hasContent(c.step5_demo_content)) items.push('<span class="badge badge-purple">Step5</span> ');
-  return '<div style="font-size:12px;color:var(--text3)">' + items.join(' ') + '</div>';
-}
-
-function toggleContentPanel(id) {
-  // Find the panel for this client
-  var panel = document.querySelector('.content-panel[data-id="' + id + '"]');
-  if (!panel) {
-    // Fallback: find by checking if content-body-{id} is inside it
-    panel = document.getElementById('content-body-' + id)?.closest('.expand-panel');
-  }
-  if (!panel) return;
-  panel.classList.toggle('open');
-}
-
-function filterContent() {
-  var q = (document.getElementById('content-search')?.value || '').toLowerCase();
-  var stepFilter = document.getElementById('content-step-filter')?.value || '';
-  document.querySelectorAll('.content-panel').forEach(panel => {
-    var name = panel.dataset.name || '';
-    var stepF = panel.dataset.stepFilter || '';
-    var matchQ = !q || name.toLowerCase().includes(q);
-    var matchStep = !stepFilter || stepF.includes(stepFilter);
-    panel.closest('.expand-panel').style.display = matchQ && matchStep ? '' : 'none';
-  });
-}
-
-function exportAllContent() {
-  var clients = window._contentClients || [];
-  var data = JSON.stringify(clients, null, 2);
-  var blob = new Blob([data], { type: 'application/json' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'provider-assist-export-' + new Date().toISOString().substring(0,10) + '.json';
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('导出成功');
 }
 
 // ===== AI Tab =====
