@@ -1161,7 +1161,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 			      <div>
 			        <div style="font-size:13px;color:#667085">面向客户汇报，展示方案价值、建设模块与二期预留方向</div>
 			      </div>
-			      <button class="btn primary" id="s4-presales-btn" onclick="generateStep4Technical()" style="height:34px;font-size:13px">生成 HTML</button>
+			      <button class="btn primary" id="s4-presales-btn" onclick="generateHtmlPresales()" style="height:34px;font-size:13px">生成 HTML</button>
 			    </div>
 			    <div id="s4-presales-history" style="display:none">
 			      <div class="history-toggle" onclick="togglePresalesHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;margin-top:4px">
@@ -1183,7 +1183,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 			      <div>
 			        <div style="font-size:13px;color:#667085">正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题</div>
 			      </div>
-			      <button class="btn primary" id="s4-technical-btn" onclick="generateStep4Presales()" style="height:34px;font-size:13px">生成 Word</button>
+			      <button class="btn primary" id="s4-technical-btn" onclick="generateWordPlan()" style="height:34px;font-size:13px">生成 Word</button>
 			    </div>
 			    <div id="s4-technical-history" style="display:none">
 			      <div class="history-toggle" onclick="toggleTechnicalHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;margin-top:4px">
@@ -2969,7 +2969,7 @@ function doSaveStep4Input() {
 }
 
 
-async function generateStep4Presales() {
+async function generateHtmlPresales() {
   var c = getClient(currentClientId);
   if (!c) return;
   var btn = document.getElementById('s4-presales-btn');
@@ -3043,7 +3043,7 @@ async function generateStep4Presales() {
   }
 }
 
-async function generateStep4Technical() {
+async function generateWordPlan() {
   var c = getClient(currentClientId);
   if (!c) return;
   var btn = document.getElementById('s4-technical-btn');
@@ -3222,7 +3222,7 @@ function doDownloadStep4Word(wordContent, customerName) {
 // 右侧制品区：下载最新 Word 版
 function doDownloadLatestWord() {
   var c = getClient(currentClientId);
-  var versions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
+  var versions = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
   var latest = versions[versions.length - 1];
   if (!latest || !latest.content) { showToast('无已生成的 Word 文档'); return; }
   doDownloadStep4Word(latest.content.wordContent || latest.content, c.name || '客户');
@@ -3231,13 +3231,13 @@ function doDownloadLatestWord() {
 // 右侧制品区：新窗口预览最新 HTML
 function doPreviewLatestHtml() {
   var c = getClient(currentClientId);
-  var versions = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
+  var versions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
   var latest = versions[versions.length - 1];
   if (!latest || !latest.content) { showToast('无已生成的 HTML 方案'); return; }
   var hc = latest.content.htmlContent;
   if (!hc) { showToast('HTML 内容为空'); return; }
   var htmlText = (typeof hc === 'string') ? hc : buildStep4HtmlPage(hc);
-  var pubUrl = c._step4_technical_publish_url;
+  var pubUrl = c._step4_publish_url;
   if (pubUrl) {
     window.open(pubUrl, '_blank');
   } else {
@@ -3245,11 +3245,11 @@ function doPreviewLatestHtml() {
     fetch(API_BASE + '/api/step4/publish', {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ client_id: currentClientId, html_content: htmlText, type: 'technical' })
+      body: JSON.stringify({ client_id: currentClientId, html_content: htmlText, type: 'presales' })
     }).then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.success && data.url) {
-          updateClient(currentClientId, { _step4_technical_publish_url: data.url });
+          updateClient(currentClientId, { _step4_publish_url: data.url });
           window.open(data.url, '_blank');
         } else {
           // fallback to blob
@@ -5110,27 +5110,27 @@ function renderArtifacts() {
   const hasNotesWecomDoc = !!(c._notes_wecom_docid && c._notes_wecom_url);
   items.push({ name: '沟通记录库', tag: noteCount > 0 ? '已沉淀' : '待补充', tagCls: noteCount > 0 ? '' : 'todo', pct: notePct, dataKey: 'uploaded_files', desc: '已沉淀 ' + noteCount + ' 次沟通记录。', hasWecomDoc: hasNotesWecomDoc, wecomUrl: c._notes_wecom_url, wecomDocid: c._notes_wecom_docid });
 
-  // 售前解决方案（HTML）→ 排在上面
-  var tv = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
-  var latestTechnical = tv[tv.length - 1];
-  var hasTechnical = tv.length > 0;
-  var isGenTechnical = window._generatingTechnical;
-  var technicalPct = isGenTechnical ? (window._technicalPct || 10) : (hasTechnical ? 100 : 0);
-  var techDesc = hasTechnical && latestTechnical ? new Date(latestTechnical.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestTechnical.version : '面向客户汇报，展示方案价值、建设模块与二期预留方向';
-  var technicalStep = window._technicalStep;
-  var techGenDesc = technicalStep === 1 ? '正在生成需求结构化…' : technicalStep === 2 ? '正在生成可视化方案…' : '正在质检文档…';
-  items.push({ name: '售前解决方案', tag: isGenTechnical ? '生成中' : (hasTechnical ? '已生成' : '待生成'), tagCls: isGenTechnical ? 'editing' : (hasTechnical ? '' : 'todo'), pct: technicalPct, dataKey: 'step4_technical_versions', desc: isGenTechnical ? techGenDesc : techDesc, isGen: isGenTechnical });
-
-  // 技术路线及报价方案（Word）→ 排在下面
+  // 售前解决方案（HTML）→ 排在上面，用 presales_versions
   var pv = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
   var latestPresales = pv[pv.length - 1];
   var hasPresales = pv.length > 0;
   var isGenPresales = window._generatingPresales;
   var presalesPct = isGenPresales ? (window._presalesPct || 10) : (hasPresales ? 100 : 0);
-  var presalesDesc = hasPresales && latestPresales ? new Date(latestPresales.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestPresales.version : '正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题';
+  var presalesDesc = hasPresales && latestPresales ? new Date(latestPresales.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestPresales.version : '面向客户汇报，展示方案价值、建设模块与二期预留方向';
   var presalesStep = window._presalesStep;
-  var presalesGenDesc = presalesStep === 1 ? '正在生成需求结构化…' : presalesStep === 2 ? '正在生成 Word 文档…' : '正在质检文档…';
-  items.push({ name: '技术路线及报价方案', tag: isGenPresales ? '生成中' : (hasPresales ? '已生成' : '待生成'), tagCls: isGenPresales ? 'editing' : (hasPresales ? '' : 'todo'), pct: presalesPct, dataKey: 'step4_presales_versions', desc: isGenPresales ? presalesGenDesc : presalesDesc, isGen: isGenPresales });
+  var presalesGenDesc = presalesStep === 1 ? '正在生成需求结构化…' : presalesStep === 2 ? '正在生成可视化方案…' : '正在质检文档…';
+  items.push({ name: '售前解决方案', tag: isGenPresales ? '生成中' : (hasPresales ? '已生成' : '待生成'), tagCls: isGenPresales ? 'editing' : (hasPresales ? '' : 'todo'), pct: presalesPct, dataKey: 'step4_presales_versions', desc: isGenPresales ? presalesGenDesc : presalesDesc, isGen: isGenPresales });
+
+  // 技术路线及报价方案（Word）→ 排在下面，用 technical_versions
+  var tv = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
+  var latestTechnical = tv[tv.length - 1];
+  var hasTechnical = tv.length > 0;
+  var isGenTechnical = window._generatingTechnical;
+  var technicalPct = isGenTechnical ? (window._technicalPct || 10) : (hasTechnical ? 100 : 0);
+  var techDesc = hasTechnical && latestTechnical ? new Date(latestTechnical.created_at).toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'}) + ' v' + latestTechnical.version : '正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题';
+  var technicalStep = window._technicalStep;
+  var techGenDesc = technicalStep === 1 ? '正在生成需求结构化…' : technicalStep === 2 ? '正在生成 Word 文档…' : '正在质检文档…';
+  items.push({ name: '技术路线及报价方案', tag: isGenTechnical ? '生成中' : (hasTechnical ? '已生成' : '待生成'), tagCls: isGenTechnical ? 'editing' : (hasTechnical ? '' : 'todo'), pct: technicalPct, dataKey: 'step4_technical_versions', desc: isGenTechnical ? techGenDesc : techDesc, isGen: isGenTechnical });
 
   // 智能表格 Demo
   const isGen5 = window._generatingStep5;
@@ -5171,19 +5171,19 @@ function renderArtifacts() {
           actions += '<button class="art-btn" onclick="doCreateNotesWecomDoc()">生成企微文档</button>';
         }
       } else if (item.dataKey === 'step4_presales_versions' && Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0) {
-        // 技术路线及报价方案（Word）
-        actions += '<button class="art-btn" onclick="doDownloadLatestWord()">下载 Word</button>';
-        actions += '<button class="art-btn" onclick="generateStep4Presales()">重新生成</button>';
-      } else if (item.dataKey === 'step4_technical_versions' && Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0) {
         // 售前解决方案（HTML）→ 预览 + 分享链接
         actions += '<button class="art-btn" onclick="doPreviewLatestHtml()">预览</button>';
-        actions += '<button class="art-btn" onclick="generateStep4Technical()">重新生成</button>';
-        if (c._step4_technical_publish_url) {
-          actions += '<a class="art-btn success" href="' + c._step4_technical_publish_url + '" target="_blank">🔗 分享链接</a>';
-          actions += '<button class="art-btn" onclick="copyToClipboard(\'' + (c._step4_technical_publish_url || '') + '\')">复制链接</button>';
+        actions += '<button class="art-btn" onclick="generateHtmlPresales()">重新生成</button>';
+        if (c._step4_publish_url) {
+          actions += '<a class="art-btn success" href="' + c._step4_publish_url + '" target="_blank">🔗 分享链接</a>';
+          actions += '<button class="art-btn" onclick="copyToClipboard(\'' + (c._step4_publish_url || '') + '\')">复制链接</button>';
         } else {
           actions += '<button class="art-btn" onclick="doPreviewLatestHtml()">生成分享链接</button>';
         }
+      } else if (item.dataKey === 'step4_technical_versions' && Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0) {
+        // 技术路线及报价方案（Word）→ 下载 + 重新生成
+        actions += '<button class="art-btn" onclick="doDownloadLatestWord()">下载 Word</button>';
+        actions += '<button class="art-btn" onclick="generateWordPlan()">重新生成</button>';
       }
     }
     if (item.isGen5) {
