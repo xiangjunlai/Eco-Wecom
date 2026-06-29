@@ -4216,10 +4216,12 @@ function s5SwitchTab(tab) {
 function renderS5TabContent() {
   var emptyState = document.getElementById('s5-empty-state');
   var sheetEditor = document.getElementById('s5-sheet-editor');
+  var fieldsTbody = document.getElementById('s5-fields-tbody');
   var tables = _s5Schema && _s5Schema.confirmedTables || [];
   var hasData = tables.length > 0;
 
   if (emptyState) emptyState.style.display = hasData ? 'none' : '';
+  if (fieldsTbody) fieldsTbody.style.display = hasData ? '' : 'none';
   if (sheetEditor) sheetEditor.style.display = hasData ? '' : 'none';
 
   if (!hasData) return;
