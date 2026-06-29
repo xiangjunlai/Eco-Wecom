@@ -2573,6 +2573,583 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
     result["success"] = True
     return result
 
+
+# ==================== Step4 模板化新 API（按钮① HTML / 按钮② Word）====================
+
+# 模板包路径（服务器固定路径）
+TEMPLATE_BASE = "/var/www/provider-assist/templates/双按钮模板包"
+OUTPUTS_BASE = "/var/www/provider-assist/outputs"
+
+
+def _read_template(path: str) -> str:
+    """读取服务器上的模板文件"""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception:
+        return ""
+
+
+def _load_client_context(client: dict, user: dict) -> dict:
+    """从 client 数据中提取所有步骤的完整上下文，返回 dict"""
+    def jload(val):
+        if isinstance(val, str):
+            try:
+                return json.loads(val)
+            except:
+                return val
+        return val
+
+    ctx = {
+        "customer_name": client.get("name", ""),
+        "industry": client.get("industry", ""),
+        "scale": client.get("scale", ""),
+        "tags": client.get("tags", ""),
+        "initial_demand": client.get("initial_demand", ""),
+    }
+
+    # Step1 result
+    s1 = jload(client.get("step1_result")) or {}
+    if isinstance(s1, dict):
+        p1 = s1.get("part1", {}) or {}
+        ctx["company_background"] = p1.get("company_background", "")
+        pains_raw = p1.get("pain_points", []) or []
+        if isinstance(pains_raw, list):
+            ctx["pain_points_text"] = "\n".join(
+                f"- {str(p.get('title',''))}: {str(p.get('description',''))}" if isinstance(p, dict) else f"- {p}"
+                for p in pains_raw if p
+            )
+        else:
+            ctx["pain_points_text"] = str(pains_raw)
+        ctx["pain_points"] = s1.get("part1", {}).get("pain_points", [])
+        gaps_raw = s1.get("part2") or []
+        ctx["gaps_text"] = "\n".join(
+            f"- {g.get('gap','')}" if isinstance(g, dict) else f"- {g}"
+            for g in gaps_raw if g
+        )
+        must_ask_list = (s1.get("part3") or {}).get("must_ask") or []
+        ctx["must_ask_text"] = "\n".join(
+            f"{i+1}. {q.get('question','')}" if isinstance(q, dict) else f"{i+1}. {q}"
+            for i, q in enumerate(must_ask_list) if q
+        )
+        ctx["step1_summary"] = s1.get("summary", "")
+    else:
+        ctx["company_background"] = ""
+        ctx["pain_points_text"] = ""
+        ctx["pain_points"] = []
+        ctx["gaps_text"] = ""
+        ctx["must_ask_text"] = ""
+        ctx["step1_summary"] = ""
+
+    # Step2 report
+    s2 = jload(client.get("step2_report")) or {}
+    if isinstance(s2, dict):
+        ctx["step2_summary"] = s2.get("summary", "") or s2.get("service_summary", "") or s2.get("demand_summary", "") or str(s2)
+    else:
+        ctx["step2_summary"] = str(s2) if s2 else ""
+    ctx["step2_report_full"] = json.dumps(s2, ensure_ascii=False) if isinstance(s2, dict) else (s2 or "")
+
+    # Step2 schema (xlsx sheets)
+    s2schema = jload(client.get("step2_schema")) or {}
+    sheets = (s2schema.get("sheets") or []) if isinstance(s2schema, dict) else []
+    ctx["xlsx_summary"] = ""
+    if sheets:
+        lines = []
+        for sh in sheets:
+            cols = [c.get("name","") for c in (sh.get("columns") or []) if c.get("name")]
+            lines.append(f"表名：{sh.get('name','') if isinstance(sh,dict) else sh}，字段：{', '.join(cols)}")
+        ctx["xlsx_summary"] = "\n".join(lines)
+
+    # Step3: 上传文件内容 + 沟通纪要全文
+    uploaded_files = jload(client.get("uploaded_files")) or []
+    transcript_list = []
+    for f in uploaded_files:
+        if isinstance(f, dict):
+            content = f.get("content", "") or f.get("text", "") or ""
+            name = f.get("name", "记录")
+            if content:
+                transcript_list.append(f"【{name}】\n{content}")
+    transcript_raw = jload(client.get("transcript"))
+    if transcript_raw:
+        if isinstance(transcript_raw, list):
+            for t in transcript_raw:
+                c = t.get("content","") or t.get("text","") or ""
+                n = t.get("name","记录")
+                if c:
+                    transcript_list.append(f"【{n}】\n{c}")
+        elif isinstance(transcript_raw, str) and transcript_raw:
+            transcript_list.append(transcript_raw)
+    ctx["step3_transcript_full"] = "\n\n".join(transcript_list) if transcript_list else "（暂无沟通记录）"
+
+    # Step3 summary
+    s3 = jload(client.get("step3_summary")) or {}
+    if isinstance(s3, dict):
+        parts = []
+        for key in ("customerCurrentState","painPoints","confirmedNeeds","involvedRoles",
+                    "currentProcess","expectedOutcome","phaseOneScope","phaseTwoScope","pendingQuestions"):
+            v = s3.get(key)
+            if v:
+                if isinstance(v, list):
+                    parts.append(f"{key}：\n" + "\n".join(
+                        f"- {x.get('title','') if isinstance(x,dict) else x}" for x in v if x))
+                else:
+                    parts.append(f"{key}：{v}")
+        ctx["step3_summary_full"] = "\n".join(parts) if parts else str(s3)
+    else:
+        ctx["step3_summary_full"] = str(s3) if s3 else ""
+
+    # Step4 input draft（9字段完整 JSON）
+    s4draft = jload(client.get("step4_input_draft")) or {}
+    draft_parts = []
+    if s4draft:
+        for key, label in [
+            ("customerCurrentState","客户现状"),
+            ("painPoints","核心问题"),
+            ("confirmedNeeds","已确认需求"),
+            ("involvedRoles","涉及角色"),
+            ("currentProcess","当前流程"),
+            ("expectedOutcome","期望效果"),
+            ("phaseOneScope","一期范围"),
+            ("phaseTwoScope","二期评估"),
+            ("pendingQuestions","待确认问题"),
+        ]:
+            v = s4draft.get(key)
+            if v:
+                if isinstance(v, list):
+                    draft_parts.append(f"【{label}】\n" + "\n".join(f"- {x.get('title','') if isinstance(x,dict) else x}" for x in v if x))
+                else:
+                    draft_parts.append(f"【{label}】\n{v}")
+    ctx["step4_input_draft_full"] = "\n\n".join(draft_parts) if draft_parts else "（暂无 Step4 方案输入确认内容）"
+    ctx["step4_input_draft_json"] = json.dumps(s4draft, ensure_ascii=False, indent=2) if s4draft else "{}"
+
+    ctx["provider_name"] = user.get("provider_name", "")
+
+    return ctx
+
+
+def _build_html_prompt(template_html: str, golden_rules: str, example_html: str, ctx: dict) -> tuple:
+    """构建 HTML 生成的 prompt，返回 (system_prompt, user_prompt)"""
+    system = (
+        "你是企业微信定制开发服务商的方案专家。请严格使用我给的 HTML 模板骨架，"
+        "只替换 {{双花括号}} 占位符为真实业务内容，禁止改动任何 CSS/版式/配色/章节结构。\n"
+        "产物中不允许残留任何 {{}} 占位符或'（待补充）'/'（待识别）'/'（暂无）'等空壳话术。\n"
+        "务必参考我给的范例风格（Hero 仿真看板、分层架构图、厚场景卡）。\n"
+        "黄金规则：\n" + golden_rules
+    )
+    user = (
+        "【模板骨架】\n" + template_html + "\n\n"
+        "【客户材料正文】\n"
+        f"客户名称：{ctx['customer_name']}\n"
+        f"所属行业：{ctx['industry']}\n"
+        f"企业规模：{ctx['scale']}\n"
+        f"客户标签：{ctx['tags']}\n"
+        f"初始需求：{ctx['initial_demand']}\n\n"
+        f"【Step1 客户背景与痛点】\n{ctx['company_background']}\n\n"
+        f"【Step1 痛点列表】\n{ctx['pain_points_text']}\n\n"
+        f"【Step1 调研缺口】\n{ctx['gaps_text']}\n\n"
+        f"【Step1 必问问题清单】\n{ctx['must_ask_text']}\n\n"
+        f"【Step2 调研结果摘要】\n{ctx['step2_summary']}\n\n"
+        f"【Step2 调研完整记录】\n{ctx['step2_report_full']}\n\n"
+        f"【Step2 XLSX 表格结构】\n{ctx['xlsx_summary']}\n\n"
+        f"【Step3 沟通记录全文】\n{ctx['step3_transcript_full']}\n\n"
+        f"【Step3 需求摘要】\n{ctx['step3_summary_full']}\n\n"
+        f"【Step4 方案输入确认内容】\n{ctx['step4_input_draft_full']}\n\n"
+        "【参考范例（城邦美商 HTML）】\n" + example_html + "\n\n"
+        "【任务】\n"
+        "请基于以上客户材料，把模板填充成完整的售前 HTML 方案。"
+        "所有 {{}} 占位符必须全部替换为真实内容，禁止残留任何占位符或空壳话术。"
+    )
+    return system, user
+
+
+def _build_word_prompt(template_docx_path: str, golden_rules: str, example_word_text: str, ctx: dict) -> tuple:
+    """构建 Word 生成的 prompt，返回 (system_prompt, user_prompt)"""
+    system = (
+        "你是企业微信定制开发服务商的需求确认文档专家。请严格按 11 节结构输出内容，"
+        "每节内按表填充，格式为：【节标题】\\n字段名=内容。\n"
+        "禁止输出任何 {{}} 占位符，必须全部替换为真实内容。\n"
+        "禁止使用'（待补充）'/'（暂无）'/'（待确认）'等空壳话术。\n"
+        "黄金规则：\n" + golden_rules
+    )
+    user = (
+        "【Word 模板结构（锁死骨架，不许改表头）】\n"
+        "一、客户基础信息与当前现状\n"
+        "  1.1 客户基础信息确认表：公司全称、所属行业、企业规模、企业微信使用情况、已有业务系统、对接人/决策人、本次诉求一句话\n"
+        "  1.2 当前业务运转方式：环节、当前做法、主要问题\n"
+        "  1.3 核心痛点与优先级：痛点编号、痛点描述、业务影响、优先级\n"
+        "二、场景类型判断与方案边界\n"
+        "  2.1 场景类型判断：判断项、内容\n"
+        "  2.2 一期/二期/不建议范围：类型、范围说明、原因\n"
+        "三、需求理解与优先级确认\n"
+        "  3.1 需求清单：需求项、客户描述、业务影响、优先级、一期/二期、企业微信实现方式\n"
+        "  3.2 客户原话与业务翻译：客户原话、业务语言翻译、是否已确认\n"
+        "四、业务流程设计\n"
+        "  4.1 当前流程与目标流程：阶段、当前流程、优化后流程、企业微信动作\n"
+        "  4.2 流程节点确认表：节点序号、节点名称、操作角色、输入信息、输出结果、是否提醒\n"
+        "五、企业微信方案总览\n"
+        "  5.1 能力架构：层级、能力、本项目使用方式\n"
+        "六、智能表格交付设计\n"
+        "  6.1 智能表格总览：表名、表类型、用途、使用对象、一期必做\n"
+        "  6.2 核心字段设计表：所属表、字段分组、字段名称、字段类型、是否必填、填写角色、规则说明\n"
+        "  6.3 表间关联关系：主表、关联表、关联字段、自动带出/汇总内容、注意事项\n"
+        "七、审批与自动化设计\n"
+        "  7.1 自动化规则表：规则名称、触发条件、执行动作、通知对象、优先级\n"
+        "  7.2 审批流程设计：审批名称、发起角色、审批人、通过后动作、同步表格\n"
+        "八、权限与数据看板设计\n"
+        "  8.1 权限矩阵：角色、新增、查看范围、可编辑字段、看板权限、敏感字段\n"
+        "  8.2 数据看板设计：看板名称、使用对象、核心指标、筛选维度、是否支持下钻\n"
+        "九、数据来源、系统对接与交付边界\n"
+        "  9.1 数据来源与接入方式：数据对象、来源系统/来源方式、一期接入方式、二期评估事项\n"
+        "  9.2 交付清单：类别、交吽内容、是否包含、备注\n"
+        "十、实施计划、报价口径与变更机制\n"
+        "  10.1 实施计划：阶段、工作内容、客户配合事项、输出物\n"
+        "  10.2 报价口径建议：费用模块、范围说明、是否本次包含、备注\n"
+        "  10.3 范围变更机制：事项、是否范围内、处理方式\n"
+        "十一、待客户确认问题与签署\n"
+        "  11.1 待确认问题清单：问题编号、待确认问题、负责人、截止时间、确认结果\n"
+        "  11.2 客户确认：确认事项、确认说明\n\n"
+        "【客户材料正文】\n"
+        f"客户名称：{ctx['customer_name']}\n"
+        f"所属行业：{ctx['industry']}\n"
+        f"企业规模：{ctx['scale']}\n"
+        f"服务商名称：{ctx['provider_name']}\n\n"
+        f"【Step1 客户背景与痛点】\n{ctx['company_background']}\n\n"
+        f"【Step1 痛点列表】\n{ctx['pain_points_text']}\n\n"
+        f"【Step2 调研结果摘要】\n{ctx['step2_summary']}\n\n"
+        f"【Step2 调研完整记录】\n{ctx['step2_report_full']}\n\n"
+        f"【Step3 沟通记录全文】\n{ctx['step3_transcript_full']}\n\n"
+        f"【Step3 需求摘要】\n{ctx['step3_summary_full']}\n\n"
+        f"【Step4 方案输入确认内容】\n{ctx['step4_input_draft_full']}\n\n"
+        "【参考范例（省心住 Word 文档结构）】\n" + example_word_text + "\n\n"
+        "【任务】\n"
+        "请基于以上客户材料，按 11 节结构输出 Word 文档内容。"
+        "格式：【节标题】\\n字段名=内容，字段名与 docx 模板表头对齐。"
+    )
+    return system, user
+
+
+@app.post("/api/step4/generate-html")
+async def generate_step4_html(body: dict, user: dict = Depends(require_auth)):
+    """按钮①：生成 HTML 售前解决方案（模板 + 黄金规则 + 真实材料）"""
+    client_id = body.get("client_id")
+    if not client_id:
+        raise HTTPException(status_code=400, detail="client_id is required")
+
+    # 取客户数据
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM clients WHERE id = ? AND user_id = ?", (client_id, user["user_id"]))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="客户不存在")
+
+    client = dict(row)
+
+    # 读模板文件
+    template_html = _read_template(TEMPLATE_BASE + "/templates/售前解决方案_HTML模板.html")
+    golden_rules = _read_template(TEMPLATE_BASE + "/黄金规则.md")
+    example_html = _read_template(TEMPLATE_BASE + "/examples/范例1_城邦美商_HTML.html")
+
+    if not template_html or not golden_rules:
+        return {"success": False, "error": "模板文件读取失败，请在服务器上确认模板包已正确上传"}
+
+    # 构建上下文
+    ctx = _load_client_context(client, user)
+
+    # 构建 prompt
+    system_prompt, user_prompt = _build_html_prompt(template_html, golden_rules, example_html, ctx)
+
+    # 调用 minimax（最多重试1次）
+    html_content = None
+    for attempt in range(2):
+        raw = call_minimax(system_prompt, user_prompt, max_tokens=12000)
+        if raw.startswith("Error:"):
+            if attempt == 0:
+                continue  # 重试一次
+            return {"success": False, "error": raw}
+
+        # 检查残留占位符
+        import subprocess, tempfile, os
+        with tempfile.NamedTemporaryFile(suffix=".html", mode="w", encoding="utf-8", delete=False) as tmp:
+            tmp.write(raw)
+            tmp_path = tmp.name
+        try:
+            result = subprocess.run(
+                ["bash", TEMPLATE_BASE + "/scripts/check_placeholder.sh", tmp_path],
+                capture_output=True, text=True, timeout=60
+            )
+            placeholder_ok = (result.returncode == 0)
+        except Exception:
+            placeholder_ok = True  # 自检失败不阻止
+        finally:
+            os.unlink(tmp_path)
+
+        if placeholder_ok:
+            html_content = raw
+            break
+
+        if attempt == 0:
+            # 重试，换个方式请求
+            continue
+
+    if not html_content:
+        return {"success": False, "error": "生成内容未通过自检（残留占位符），请稍后重试"}
+
+    # 保存文件
+    client_id_str = str(client_id)
+    output_dir = OUTPUTS_BASE + "/" + client_id_str
+    os.makedirs(output_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"售前解决方案_{ctx['customer_name']}_{timestamp}.html"
+    filepath = os.path.join(output_dir, filename)
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+    file_url = "/outputs/" + client_id_str + "/" + filename
+
+    # 更新版本数组
+    now = datetime.now().isoformat()
+    versions = client.get("step4_presales_versions") or []
+    if isinstance(versions, str):
+        try:
+            versions = json.loads(versions)
+        except:
+            versions = []
+    next_ver = len(versions) + 1
+    versions.append({
+        "version": next_ver,
+        "content": {"htmlContent": html_content},
+        "created_at": now,
+        "file_url": file_url,
+        "filename": filename,
+    })
+    conn2 = get_db()
+    cursor2 = conn2.cursor()
+    cursor2.execute(
+        "UPDATE clients SET step4_presales_versions = ? WHERE id = ?",
+        (json.dumps(versions, ensure_ascii=False), client_id)
+    )
+    conn2.commit()
+    conn2.close()
+
+    return {
+        "success": True,
+        "file_url": file_url,
+        "filename": filename,
+        "version": next_ver,
+        "html_content": html_content,
+    }
+
+
+@app.post("/api/step4/generate-word")
+async def generate_step4_word(body: dict, user: dict = Depends(require_auth)):
+    """按钮②：生成 Word 报价方案（模板 + 黄金规则 + 真实材料 → minimax → 回填 docx）"""
+    client_id = body.get("client_id")
+    if not client_id:
+        raise HTTPException(status_code=400, detail="client_id is required")
+
+    # 取客户数据
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM clients WHERE id = ? AND user_id = ?", (client_id, user["user_id"]))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="客户不存在")
+
+    client = dict(row)
+
+    # 读模板文件
+    golden_rules = _read_template(TEMPLATE_BASE + "/黄金规则.md")
+    example_word_text = _read_template(TEMPLATE_BASE + "/examples/范例2_省心住_Word.docx")
+    # example_word 是 docx，需要提取文本
+    try:
+        from docx import Document
+        doc_ex = Document(TEMPLATE_BASE + "/examples/范例2_省心住_Word.docx")
+        example_word_text = "\n".join(p.text for p in doc_ex.paragraphs if p.text.strip())
+    except Exception:
+        example_word_text = golden_rules  # fallback
+
+    if not golden_rules:
+        return {"success": False, "error": "模板文件读取失败，请在服务器上确认模板包已正确上传"}
+
+    # 构建上下文
+    ctx = _load_client_context(client, user)
+
+    # 构建 prompt
+    system_prompt, user_prompt = _build_word_prompt("", golden_rules, example_word_text, ctx)
+
+    # 调用 minimax（最多重试1次）
+    word_text_raw = None
+    for attempt in range(2):
+        raw = call_minimax(system_prompt, user_prompt, max_tokens=15000)
+        if raw.startswith("Error:"):
+            if attempt == 0:
+                continue
+            return {"success": False, "error": raw}
+        word_text_raw = raw
+        break
+
+    if not word_text_raw:
+        return {"success": False, "error": "Word 内容生成失败，请稍后重试"}
+
+    # ---- 三轮混合回填 ----
+    try:
+        from docx import Document
+        from docx.shared import Pt, RGBColor, Cm
+        from docx.oxml.ns import qn
+        from docx.oxml import OxmlElement
+
+        doc = Document(TEMPLATE_BASE + "/templates/技术路线及报价方案_Word模板.docx")
+    except Exception as e:
+        return {"success": False, "error": f"Word 模板读取失败: {str(e)}"}
+
+    # 第一轮：全局精确替换（出现在1~2处的占位符）
+    # 收集所有占位符出现次数
+    placeholder_counts = {}
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                text = cell.text
+                phs = re.findall(r'\{\{[^}]+\}\}', text)
+                for ph in phs:
+                    placeholder_counts[ph] = placeholder_counts.get(ph, 0) + 1
+
+    # 全局无歧义替换（出现1次的占位符）
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    for run in paragraph.runs:
+                        for ph, count in placeholder_counts.items():
+                            if count <= 2 and ph in run.text:
+                                # 从模型输出中查找该占位符对应的值
+                                key = ph[2:-2]  # 去掉 {{
+                                pattern = re.compile(
+                                    r'(?:【[^】]*】\s*)?' + re.escape(key) + r'\s*=\s*(.+)',
+                                    re.DOTALL
+                                )
+                                m = pattern.search(word_text_raw)
+                                if m:
+                                    replacement = m.group(1).strip().split('\n')[0].strip()
+                                    run.text = run.text.replace(ph, replacement)
+
+    # 第二轮：节内批量替换（同节内同名占位符批量填入）
+    # 按节分段
+    sections = re.split(r'【(一|二|三|四|五|六|七|八|九|十|十一|\d+)[.。、]', word_text_raw)
+    # sections[0]是前言，后面是 [节号, 节内容, 节号2, 节内容2, ...]
+
+    def fill_section(section_text: str):
+        """解析节内的 field=content 对，替换全文中同名占位符"""
+        # 匹配 field=内容（多行）
+        lines = section_text.split('\n')
+        mapping = {}
+        current_key = None
+        current_val = []
+        for line in lines:
+            m = re.match(r'([^=【】\n]+?)\s*=\s*(.+)', line)
+            if m:
+                if current_key:
+                    mapping[current_key] = '\n'.join(current_val).strip()
+                current_key = m.group(1).strip()
+                current_val = [m.group(2).strip()]
+            elif current_key and line.strip():
+                current_val.append(line.strip())
+        if current_key:
+            mapping[current_key] = '\n'.join(current_val).strip()
+
+        # 收集该节的所有占位符
+        section_phs = set()
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    if re.search(re.escape(section_text[:200]), cell.text):
+                        phs = re.findall(r'\{\{[^}]+\}\}', cell.text)
+                        for ph in phs:
+                            section_phs.add(ph)
+
+        for ph in section_phs:
+            key = ph[2:-2]
+            if key in mapping:
+                val = mapping[key].split('\n')[0].strip()
+                for table in doc.tables:
+                    for row in table.rows:
+                        for cell in row.cells:
+                            for paragraph in cell.paragraphs:
+                                for run in paragraph.runs:
+                                    if ph in run.text and run.text.count('{{') == 1:
+                                        run.text = run.text.replace(ph, val)
+
+    # 解析节文本并批量处理
+    section_pattern = re.compile(r'【(一|二|三|四|五|六|七|八|九|十|十一|\d+)[.。、、]\s*([^】]+)】\s*([\s\S]*?)(?=【(?:一|二|三|四|五|六|七|八|九|十|十一|\d+)】|$)')
+    for m in section_pattern.finditer(word_text_raw):
+        section_content = m.group(3)
+        fill_section(section_content)
+
+    # 第三轮：兜底全局替换（剩余占位符用同名字段首值填充）
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    for run in paragraph.runs:
+                        remaining = re.findall(r'\{\{([^}]+)\}\}', run.text)
+                        for key in remaining:
+                            ph = '{{' + key + '}}'
+                            # 从模型输出找
+                            pattern = re.compile(
+                                r'(?:【[^】]*】\s*)?' + re.escape(key) + r'\s*=\s*(.+)',
+                                re.DOTALL
+                            )
+                            mv = pattern.search(word_text_raw)
+                            if mv:
+                                replacement = mv.group(1).strip().split('\n')[0].strip()
+                                run.text = run.text.replace(ph, replacement)
+
+    # 保存文件
+    client_id_str = str(client_id)
+    output_dir = OUTPUTS_BASE + "/" + client_id_str
+    os.makedirs(output_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"技术路线及报价方案_{ctx['customer_name']}_{timestamp}.docx"
+    filepath = os.path.join(output_dir, filename)
+    doc.save(filepath)
+
+    file_url = "/outputs/" + client_id_str + "/" + filename
+
+    # 更新版本数组
+    now = datetime.now().isoformat()
+    versions = client.get("step4_technical_versions") or []
+    if isinstance(versions, str):
+        try:
+            versions = json.loads(versions)
+        except:
+            versions = []
+    next_ver = len(versions) + 1
+    versions.append({
+        "version": next_ver,
+        "content": {"wordText": word_text_raw},
+        "created_at": now,
+        "file_url": file_url,
+        "filename": filename,
+    })
+    conn2 = get_db()
+    cursor2 = conn2.cursor()
+    cursor2.execute(
+        "UPDATE clients SET step4_technical_versions = ? WHERE id = ?",
+        (json.dumps(versions, ensure_ascii=False), client_id)
+    )
+    conn2.commit()
+    conn2.close()
+
+    return {
+        "success": True,
+        "file_url": file_url,
+        "filename": filename,
+        "version": next_ver,
+    }
+
+
 # ==================== Step4 Word .docx 生成 ====================
 @app.post("/api/step4/generate-docx")
 async def generate_step4_docx(body: dict, user: dict = Depends(require_auth)):

@@ -2988,39 +2988,38 @@ async function generateStep4Presales() {
   }, 15000);
   try {
     var resp = await Promise.race([
-      fetch(API_BASE + '/api/step4/generate', {
+      fetch(API_BASE + '/api/step4/generate-html', {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ client_id: currentClientId, type: 'presales' })
+        body: JSON.stringify({ client_id: currentClientId })
       }),
       new Promise(function(_, reject) { setTimeout(function() { reject(new Error('请求超时（320秒），请稍后重试')); }, 320000); })
     ]);
     var data = await resp.json();
-    if (data.success && data.requirementData) {
-      var now = new Date().toISOString();
-      // 重新读取最新数据，确保是数组（防止被JSON字符串污染）
+    if (data.success) {
+      // 新 API：文件已保存到 /outputs/，直接下载 + 预览
+      var fileUrl = (data.file_url || '').startsWith('http') ? data.file_url : (API_BASE + data.file_url);
+      // 触发浏览器下载
+      var a = document.createElement('a');
+      a.href = fileUrl;
+      a.download = data.filename || (c.name + '_售前方案.html');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      // 同时新窗口预览
+      if (data.html_content) {
+        window.open(URL.createObjectURL(new Blob([data.html_content], {type:'text/html;charset=utf-8'})), '_blank');
+      }
+      // 重新读取最新版本
       var c2 = getClient(currentClientId);
       var versions = Array.isArray(c2.step4_presales_versions) ? c2.step4_presales_versions.slice() : [];
-      var version = versions.length + 1;
-      versions.push({
-        content: { requirementData: data.requirementData, wordContent: data.wordContent, htmlContent: data.htmlContent },
-        created_at: now,
-        version: version
-      });
-      updateClient(currentClientId, { step4_presales_versions: versions });
-      if (data.htmlContent) doPreviewStep4Html(data.htmlContent, c2.name || c.name || '客户');
-      if (data.wordContent) doDownloadStep4Word(data.wordContent, c2.name || c.name || '客户');
-      renderStep4LatestPresales(versions[versions.length - 1], versions.length);
+      renderStep4LatestPresales(versions[versions.length - 1] || {}, versions.length);
       renderStep4History('presales', versions);
       window._presalesPct = 100;
       renderArtifacts();
       showToast('售前解决方案生成完成');
     } else {
-      var errMsg = data.error || '未知错误';
-      if (data.validation && data.validation.errors && data.validation.errors.length > 0) {
-        errMsg = '质检未通过：\n' + data.validation.errors.join('\n');
-      }
-      showToast(errMsg.length > 100 ? errMsg.substring(0, 97) + '…' : errMsg);
+      showToast(data.error || '生成失败，请稍后重试');
     }
   } catch(e) {
     showToast('生成失败：' + e.message);
@@ -3053,38 +3052,33 @@ async function generateStep4Technical() {
   }, 15000);
   try {
     var resp = await Promise.race([
-      fetch(API_BASE + '/api/step4/generate', {
+      fetch(API_BASE + '/api/step4/generate-word', {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ client_id: currentClientId, type: 'html' })
+        body: JSON.stringify({ client_id: currentClientId })
       }),
       new Promise(function(_, reject) { setTimeout(function() { reject(new Error('请求超时（320秒），请稍后重试')); }, 320000); })
     ]);
     var data = await resp.json();
     if (data.success) {
-      var now = new Date().toISOString();
-      // 重新读取最新数据，确保是数组（防止被JSON字符串污染）
+      // 新 API：文件已保存到 /outputs/，直接下载
+      var fileUrl = (data.file_url || '').startsWith('http') ? data.file_url : (API_BASE + data.file_url);
+      var a = document.createElement('a');
+      a.href = fileUrl;
+      a.download = data.filename || (c.name + '_技术路线报价方案.docx');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      // 重新读取最新版本
       var c2 = getClient(currentClientId);
       var versions = Array.isArray(c2.step4_technical_versions) ? c2.step4_technical_versions.slice() : [];
-      var version = versions.length + 1;
-      versions.push({
-        content: { requirementData: data.requirementData, htmlContent: data.htmlContent },
-        created_at: now,
-        version: version
-      });
-      updateClient(currentClientId, { step4_technical_versions: versions });
-      if (data.htmlContent) doPreviewStep4Html(data.htmlContent, c2.name || c.name || '客户', 'technical');
-      renderStep4LatestTechnical(versions[versions.length - 1]);
+      renderStep4LatestTechnical(versions[versions.length - 1] || {});
       renderStep4History('technical', versions);
       window._technicalPct = 100;
       renderArtifacts();
       showToast('技术路线及报价方案生成完成');
     } else {
-      var errMsg = data.error || '未知错误';
-      if (data.validation && data.validation.errors && data.validation.errors.length > 0) {
-        errMsg = '质检未通过：\n' + data.validation.errors.join('\n');
-      }
-      showToast(errMsg.length > 100 ? errMsg.substring(0, 97) + '…' : errMsg);
+      showToast(data.error || '生成失败，请稍后重试');
     }
   } catch(e) {
     showToast('生成失败：' + e.message);
