@@ -2206,7 +2206,8 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
 
     step1 = client.get("step1_result", {}) or {}
     company_background = step1.get("part1", {}).get("company_background", "") or ""
-    pain_points = "\n".join(step1.get("part1", {}).get("pain_points", []) or [])
+    pain_points_raw = step1.get("part1", {}).get("pain_points", []) or []
+    pain_points = "\n".join(str(p) if isinstance(p, dict) else p for p in pain_points_raw)
     gaps = "\n".join([f"- {g.get('gap', '')}" for g in (step1.get("part2") or [])])
     must_ask = step1.get("part3", {}) or {}
     must_ask_text = "\n".join([f"{i+1}. {q.get('question', '')}" for i, q in enumerate(must_ask.get("must_ask", []) or [])])
@@ -2447,10 +2448,710 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
         if html_content:
             result["htmlContent"] = html_content
 
+    # ====== 推断补全（对 requirementData 空白字段做 fallback ======
+    rd = result.get("requirementData") or {}
+    meta2 = rd.get("meta") or {}
+    facts2 = rd.get("customerFacts") or {}
+    bp2 = rd.get("businessProcess") or {}
+    st2 = rd.get("smartTableSpec") or {}
+    scope2 = rd.get("scope") or {}
+    modules2 = rd.get("moduleRecommendation") or []
+    pains2 = rd.get("painPoints") or []
+    reqs2 = rd.get("requirements") or []
+    oqs2 = rd.get("openQuestions") or []
+    roles2 = facts2.get("involvedRoles") or []
+    confirmed_tables2 = (st2.get("confirmedTables") or []) if st2 else []
+    fields_by_table2 = (st2.get("fieldsByTable") or []) if st2 else []
+    fields_map2 = {ft.get("tableName", ""): ft.get("fields", []) for ft in fields_by_table2} if fields_by_table2 else {}
+    if isinstance(modules2, dict): modules2 = [modules2]
+    if isinstance(pains2, dict): pains2 = [pains2]
+    if isinstance(reqs2, dict): reqs2 = [reqs2]
+    if isinstance(oqs2, dict): oqs2 = [oqs2]
+    if isinstance(roles2, dict): roles2 = [roles2]
+    if isinstance(confirmed_tables2, dict): confirmed_tables2 = [confirmed_tables2]
+
+    def _l2(v): return v if isinstance(v, list) else ([v] if v else [])
+    def _s2(v):
+        if not v or isinstance(v, bool): return ""
+        if isinstance(v, (int, float)): return str(v)
+        if isinstance(v, str): return v.strip()
+        if isinstance(v, list): return "、".join(_s2(x) for x in v if x)
+        if isinstance(v, dict): return v.get("title") or v.get("name") or v.get("item") or str(v)
+        return str(v)
+
+    # 1. painPoints 为空 → 从 currentFlow.problem 推断
+    if not pains2:
+        for f in _l2(bp2.get("currentFlow", [])):
+            prob = f.get("problem", "")
+            if prob:
+                pains2.append({"title": _s2(prob)[:30], "description": "当前流程中存在该问题。", "businessImpact": "影响整体效率。", "priority": "P1"})
+        rd["painPoints"] = pains2
+
+    # 2. requirements 为空但有 confirmed_tables → 从表推断需求
+    if not reqs2 and confirmed_tables2:
+        for t in confirmed_tables2:
+            tn = _s2(t.get("tableName", ""))
+            ph = _s2(t.get("phase", "一期"))
+            reqs2.append({"requirementName": "搭建" + tn + "智能表格", "customerExpression": "需要管理" + tn + "相关数据。", "businessTranslation": "通过企业微信智能表格实现" + tn + "在线化管理。", "priority": "P1", "phase": ph, "confirmedStatus": "AI推断"})
+        rd["requirements"] = reqs2
+
+    # 3. businessProcess.processNodes 为空 → 从 currentFlow/targetFlow 推断
+    nodes2 = _l2(bp2.get("processNodes", []))
+    cur_flow2 = _l2(bp2.get("currentFlow", []))
+    tgt_flow2 = _l2(bp2.get("targetFlow", []))
+    if not nodes2 and (cur_flow2 or tgt_flow2):
+        for i, cf in enumerate(cur_flow2):
+            ti = tgt_flow2[i] if i < len(tgt_flow2) else {}
+            nodes2.append({
+                "nodeName": _s2(cf.get("stepName", "")),
+                "responsibleRole": _s2(cf.get("role", "")),
+                "input": _s2(cf.get("input", "")),
+                "output": _s2(cf.get("output", "")),
+                "systemAction": _s2(ti.get("systemAction", cf.get("currentMethod", ""))),
+                "reminderNeeded": bool(ti.get("reminderNeeded", False))
+            })
+        bp2["processNodes"] = nodes2
+
+    # 4. automations 为空 → 从 painPoints 推断标准自动化
+    if not _l2(st2.get("automations", [])) and pains2:
+        autos2 = []
+        for p in pains2[:3]:
+            autos2.append({"name": "「" + _s2(p.get("title", "")) + "」跟进提醒", "trigger": "当记录状态变更时", "action": "推送提醒至负责人", "notifyTarget": "、".join(roles2[:2]) if roles2 else "负责人", "priority": "中"})
+        st2["automations"] = autos2
+
+    # 5. permissions 为空 → 从 roles + confirmed_tables 推断
+    if not _l2(st2.get("permissions", [])) and roles2:
+        perms2 = []
+        for r in roles2:
+            perms2.append({"role": _s2(r), "addScope": "本职范围内", "viewScope": "、".join(_s2(t.get("tableName", "")) for t in confirmed_tables2[:3]), "editableFields": "本职相关字段", "sensitiveFields": "——"})
+        st2["permissions"] = perms2
+
+    # 6. dashboards 为空 → 从 confirmed_tables 推断
+    if not _l2(st2.get("dashboards", [])) and confirmed_tables2:
+        st2["dashboards"] = [{"dashboardName": _s2(meta2.get("mainScenario", "业务")) + "管理看板", "users": "、".join(roles2[:2]) if roles2 else "业务负责人", "metrics": "记录数量、跟进状态、转化率", "filters": "时间范围"}]
+
+    # 7. openQuestions 为空 → 从 pains 推断
+    if not oqs2 and pains2:
+        oqs2 = [{"question": "如何量化评估「" + _s2(p.get("title", "")) + "」的改善效果？", "whyAsk": "用于设定实施目标", "owner": "服务商+客户", "priority": "中"} for p in pains2[:3]]
+        rd["openQuestions"] = oqs2
+
+    # 8. implementationPlanTable 为空 → 标准4阶段
+    if not _l2(rd.get("implementationPlanTable", [])):
+        rd["implementationPlanTable"] = [
+            {"phase": "需求确认", "workContent": "确认需求范围、一期二期边界、智能表格结构", "customerCooperation": "提供业务需求，参与评审", "output": "需求确认文档"},
+            {"phase": "智能表格搭建", "workContent": "按确认的字段设计搭建智能表格", "customerCooperation": "参与字段确认、提供基础数据", "output": "可用的智能表格 Demo"},
+            {"phase": "规则配置", "workContent": "配置自动化规则、审批流、权限", "customerCooperation": "参与规则评审、测试确认", "output": "配置完成的规则"},
+            {"phase": "试运行与优化", "workContent": "上线试运行，收集反馈并优化", "customerCooperation": "提供试运行数据、反馈问题", "output": "上线文档+优化建议"},
+        ]
+
+    # 9. quoteScopeTable 为空 → 从 confirmed_tables 生成口径
+    if not _l2(rd.get("quoteScopeTable", [])) and confirmed_tables2:
+        qt2 = []
+        for t in confirmed_tables2:
+            ph = _s2(t.get("phase", ""))
+            if "一期" in ph and "二期" not in ph:
+                qt2.append({"feeModule": _s2(t.get("tableName", "")), "scope": "智能表格搭建及基础配置", "included": "是", "note": "费用口径待与服务商确认"})
+        rd["quoteScopeTable"] = qt2
+
+    # 10. changeManagementTable 为空 → 标准变更机制
+    if not _l2(rd.get("changeManagementTable", [])):
+        rd["changeManagementTable"] = [
+            {"item": "新增智能表格字段", "inScope": "否", "handling": "评估后进入变更单处理"},
+            {"item": "跨表关联新增", "inScope": "否", "handling": "评估工作量后单独报价"},
+            {"item": "自动化规则增加", "inScope": "否", "handling": "评估后进入变更单处理"},
+        ]
+
+    # 11. deliveryList 为空 → 从 confirmed_tables 生成
+    if not _l2(rd.get("deliveryList", [])) and confirmed_tables2:
+        dl2 = []
+        for t in confirmed_tables2:
+            ph = _s2(t.get("phase", ""))
+            dl2.append({"category": "企业微信智能表格", "content": _s2(t.get("tableName", "")), "included": "✅ 一期" if "一期" in ph and "二期" not in ph else "🔄 二期", "note": _s2(t.get("tablePurpose", ""))})
+        rd["deliveryList"] = dl2
+
+    result["requirementData"] = rd
     result["success"] = True
     return result
 
-# ==================== Step5 企业微信智能表格 Schema 生成 ====================
+# ==================== Step4 Word .docx 生成 ====================
+@app.post("/api/step4/generate-docx")
+async def generate_step4_docx(body: dict, user: dict = Depends(require_auth)):
+    """用 python-docx 生成真正的 .docx，对齐 11 节主结构"""
+    client_id = body.get("client_id")
+    if not client_id:
+        return {"success": False, "error": "缺少 client_id"}
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM clients WHERE id = ? AND user_id = ?", (client_id, user["user_id"]))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="客户不存在")
+    client = dict(row)
+    for field in ("step4_presales_versions",):
+        if client.get(field) and isinstance(client[field], str):
+            try:
+                client[field] = json.loads(client[field])
+            except:
+                pass
+    versions = client.get("step4_presales_versions") or []
+    if not versions:
+        return {"success": False, "error": "请先生成 Step4 售前方案"}
+    latest = versions[-1]
+    wc = latest.get("content", {})
+    if isinstance(wc, str):
+        try:
+            wc = json.loads(wc)
+        except:
+            return {"success": False, "error": "方案内容格式异常"}
+    rd = wc.get("requirementData") or {}
+    cust_name = rd.get("meta", {}).get("customerName", client.get("name", "客户"))
+    sp_name = user.get("provider_name", "{{SP_FULL_NAME}}")
+    output_date = datetime.now().strftime("%Y年%m月%d日")
+    try:
+        from docx import Document
+        from docx.shared import Pt, RGBColor, Cm
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        from docx.oxml.ns import qn
+        from docx.oxml import OxmlElement
+    except ImportError:
+        return {"success": False, "error": "服务器未安装 python-docx"}
+
+    def ls(v):
+        return v if isinstance(v, list) else ([v] if v else [])
+
+    def ss(v):
+        if not v or isinstance(v, bool):
+            return ""
+        if isinstance(v, (int, float)):
+            return str(v)
+        if isinstance(v, str):
+            return v.strip()
+        if isinstance(v, list):
+            return "、".join(ss(x) for x in v if x)
+        if isinstance(v, dict):
+            return v.get("title") or v.get("name") or v.get("item") or str(v)
+        return str(v)
+
+    def yn(v):
+        if isinstance(v, bool):
+            return "是" if v else "否"
+        t = ss(v).lower()
+        if t in ("true", "yes", "是"):
+            return "是"
+        if t in ("false", "no", "否"):
+            return "否"
+        return ss(v)
+
+    def shd(cell, fill):
+        tc = cell._tc
+        pr = tc.get_or_add_tcPr()
+        s = OxmlElement("w:shd")
+        s.set(qn("w:val"), "clear")
+        s.set(qn("w:color"), "auto")
+        s.set(qn("w:fill"), fill)
+        pr.append(s)
+
+    def add_t(headers, rows):
+        if not rows:
+            return
+        tb = doc.add_table(rows=1, cols=len(headers))
+        tb.style = "Table Grid"
+        for i, h in enumerate(headers):
+            c = tb.rows[0].cells[i]
+            c.text = ""
+            r = c.paragraphs[0].add_run(ss(h))
+            r.bold = True
+            r.font.size = Pt(10)
+            r.font.color.rgb = RGBColor(255, 255, 255)
+            shd(c, "1E5AFF")
+        for ri, row in enumerate(rows):
+            cs = tb.add_row().cells
+            for ci, val in enumerate(row):
+                if ci < len(cs):
+                    cs[ci].text = ss(val)
+                    if cs[ci].paragraphs[0].runs:
+                        cs[ci].paragraphs[0].runs[0].font.size = Pt(10)
+                    if ri % 2 == 1:
+                        shd(cs[ci], "F7F8FA")
+        doc.add_paragraph("").paragraph_format.space_after = Pt(2)
+
+    def h1(t):
+        p = doc.add_heading(t, level=1)
+        for r in p.runs:
+            r.font.size = Pt(15)
+            r.font.color.rgb = RGBColor(0x1E, 0x5A, 0xFF)
+        p.paragraph_format.space_before = Pt(14)
+        p.paragraph_format.space_after = Pt(6)
+
+    def h2(t):
+        p = doc.add_heading(t, level=2)
+        for r in p.runs:
+            r.font.size = Pt(12)
+            r.font.color.rgb = RGBColor(0x18, 0x22, 0x35)
+        p.paragraph_format.space_before = Pt(8)
+        p.paragraph_format.space_after = Pt(4)
+
+    def txt(t, bold=False, sz=10, color=None, align=None):
+        p = doc.add_paragraph()
+        if align:
+            p.alignment = align
+        r = p.add_run(ss(t))
+        r.font.size = Pt(sz)
+        r.bold = bold
+        if color:
+            r.font.color.rgb = RGBColor(*color)
+        p.paragraph_format.space_after = Pt(4)
+
+    def sp():
+        p = doc.add_paragraph("")
+        p.paragraph_format.space_after = Pt(6)
+
+    doc = Document()
+    s = doc.sections[0]
+    s.page_width = Cm(21)
+    s.page_height = Cm(29.7)
+    s.left_margin = Cm(2)
+    s.right_margin = Cm(2)
+    s.top_margin = Cm(2.5)
+    s.bottom_margin = Cm(2.5)
+
+    # Cover
+    txt("企业微信定制开发", bold=True, sz=20, color=(0x1E, 0x5A, 0xFF), align=WD_ALIGN_PARAGRAPH.CENTER)
+    txt("需求确认 & 方案设计表", bold=True, sz=16, color=(0x18, 0x22, 0x35), align=WD_ALIGN_PARAGRAPH.CENTER)
+    scenario = ss(rd.get("meta", {}).get("mainScenario", ""))
+    cust_name_val = ss(rd.get("meta", {}).get("customerName", cust_name))
+    txt(cust_name_val + "｜" + scenario, sz=11, color=(0x66, 0x70, 0x85), align=WD_ALIGN_PARAGRAPH.CENTER)
+    sp()
+
+    meta = rd.get("meta", {})
+    facts = rd.get("customerFacts", {})
+    industry = ss(meta.get("industry", ""))
+    scale = ss(meta.get("companyScale", ""))
+    roles3 = ls(facts.get("involvedRoles", []))
+    existing_tools = ls(facts.get("existingTools", []))
+    add_t(
+        ["信息项", "内容"],
+        [
+            ("客户名称", cust_name_val),
+            ("所属行业", industry),
+            ("公司规模", scale),
+            ("项目场景", scenario),
+            ("服务商名称", sp_name),
+            ("文档版本", ss(meta.get("version", "V1.0"))),
+            ("编制日期", output_date),
+        ]
+    )
+    notice = doc.add_paragraph()
+    r = notice.add_run("本文件用于服务商与客户共同确认需求范围、一期边界、智能表格口径、权限与待确认问题。客户未确认内容不得写入一期交付承诺。")
+    r.font.size = Pt(9)
+    r.font.color.rgb = RGBColor(0x7C, 0x59, 0x14)
+    pr = notice._p.get_or_add_pPr()
+    ns = OxmlElement("w:shd")
+    ns.set(qn("w:val"), "clear")
+    ns.set(qn("w:color"), "auto")
+    ns.set(qn("w:fill"), "FFFBE6")
+    pr.append(ns)
+    notice.paragraph_format.space_after = Pt(12)
+
+    # 一
+    h1("一、客户基础信息与当前现状")
+    h2("1.1 客户基础信息确认表")
+    current_state = ss(facts.get("customerCurrentState", ""))
+    current_state_status = "已确认" if current_state else "⚠️ 待确认"
+    add_t(
+        ["信息项", "确认内容", "状态"],
+        [
+            ("行业", industry, "已确认"),
+            ("规模", scale, "已确认"),
+            ("现有系统", "、".join(existing_tools) if existing_tools else "⚠️ 待确认", "⚠️ 待确认"),
+            ("核心团队角色", "、".join(roles3) if roles3 else "⚠️ 待确认", "⚠️ 待确认"),
+            ("当前业务现状", current_state, current_state_status),
+        ]
+    )
+
+    h2("1.2 当前业务运转方式")
+    pains3 = ls(rd.get("painPoints", []))
+    bp3 = rd.get("businessProcess", {})
+    cur3 = ls(bp3.get("currentFlow", []))
+    tgt3 = ls(bp3.get("targetFlow", []))
+    proc3 = []
+    for i, cf in enumerate(cur3):
+        ti = tgt3[i] if i < len(tgt3) else {}
+        proc3.append([
+            ss(cf.get("stepName", "")),
+            ss(cf.get("currentMethod", "")),
+            ss(ti.get("systemAction", cf.get("currentMethod", ""))),
+            ss(cf.get("role", ""))
+        ])
+    if proc3:
+        add_t(["环节", "当前做法", "企业微信动作", "操作角色"], proc3)
+    else:
+        txt("（业务流程待从 Step3 补充）")
+
+    h2("1.3 核心痛点与优先级")
+    if pains3:
+        pr2 = []
+        for i, p in enumerate(pains3):
+            ev = ss(p.get("evidence", ""))[:40]
+            pr2.append([
+                str(i + 1),
+                ss(p.get("title", "")),
+                ss(p.get("description", "")),
+                ss(p.get("businessImpact", "")),
+                ss(p.get("priority", "")),
+                ev
+            ])
+        add_t(["痛点编号", "痛点（业务语言）", "描述", "业务影响", "优先级", "依据"], pr2)
+    else:
+        txt("（未识别出痛点）")
+
+    # 二
+    h1("二、场景类型判断与方案边界")
+    h2("2.1 场景类型判断")
+    if scenario:
+        txt("本项目应识别为「" + scenario + "」场景。")
+    else:
+        txt("⚠️ 场景类型待确认。")
+
+    h2("2.2 方案边界")
+    scope3 = rd.get("scope", {})
+    bdry = []
+    for it in ls(scope3.get("phaseOne", [])):
+        bdry.append(["✅ 本期范围内", ss(it.get("item", "")), ss(it.get("reason", ""))])
+    for it in ls(scope3.get("phaseTwo", [])):
+        bdry.append(["🔄 二期扩展", ss(it.get("item", "")), ss(it.get("prerequisites", ""))])
+    for it in ls(scope3.get("notRecommended", [])):
+        bdry.append(["❌ 暂不建议", ss(it.get("item", "")), ss(it.get("reason", ""))])
+    if bdry:
+        add_t(["类型", "内容", "前提/原因"], bdry)
+    else:
+        txt("（一期/二期边界待确认）")
+
+    # 三
+    h1("三、需求理解与优先级确认")
+    h2("3.1 需求清单")
+    reqs3 = ls(rd.get("requirements", []))
+    if reqs3:
+        rr = []
+        for r in reqs3:
+            rr.append([
+                ss(r.get("requirementName", "")),
+                ss(r.get("customerExpression", "")),
+                ss(r.get("businessTranslation", "")),
+                ss(r.get("priority", "")),
+                ss(r.get("phase", "")),
+                ss(r.get("confirmedStatus", ""))
+            ])
+        add_t(["需求", "客户表达", "业务语言", "优先级", "一期/二期", "确认状态"], rr)
+    else:
+        txt("（需求待从 Step2/3 补充）")
+
+    h2("3.2 客户原话与业务翻译")
+    oqt_src = []
+    for r in reqs3:
+        ce = ss(r.get("customerExpression", ""))
+        if ce:
+            oqt_src.append([
+                ce,
+                ss(r.get("businessTranslation", "")),
+                ss(r.get("confirmedStatus", "⚠️ 待确认"))
+            ])
+    if oqt_src:
+        add_t(["客户原话", "业务翻译", "确认状态"], oqt_src)
+    elif reqs3:
+        txt("（原话翻译待补充）")
+    else:
+        txt("（需求原话待补充）")
+
+    # 四
+    h1("四、业务流程设计")
+    h2("4.1 当前流程与目标流程")
+    if proc3:
+        add_t(["环节", "当前做法", "企业微信动作", "操作角色"], proc3)
+    else:
+        txt("（业务流程待补充）")
+
+    h2("4.2 流程节点确认表")
+    nodes3 = ls(bp3.get("processNodes", []))
+    if nodes3:
+        nr = []
+        for i, n in enumerate(nodes3):
+            nr.append([
+                str(i + 1),
+                ss(n.get("nodeName", "")),
+                ss(n.get("responsibleRole", "")),
+                ss(n.get("input", "")),
+                ss(n.get("output", "")),
+                yn(n.get("reminderNeeded", False))
+            ])
+        add_t(["序号", "节点名称", "操作角色", "输入信息", "输出结果", "是否提醒"], nr)
+    else:
+        txt("（流程节点待补充）")
+
+    # 五
+    h1("五、企业微信方案总览")
+    mods = ls(rd.get("moduleRecommendation", []))
+    if mods:
+        mr = []
+        for m in mods:
+            mr.append([
+                ss(m.get("moduleType", "")),
+                ss(m.get("moduleName", "")),
+                ss(m.get("notes", ""))
+            ])
+        add_t(["能力层", "模块名称", "本项目使用方式"], mr)
+    else:
+        txt("企业微信入口 + 智能表格数据底座 + 审批 / 自动化 / 权限 / 看板轻量定制方案。")
+
+    # 六
+    st3 = rd.get("smartTableSpec", {})
+    tabs3 = ls(st3.get("confirmedTables", []))
+    h1("六、智能表格交付设计")
+    h2("6.1 智能表格总览")
+    if tabs3:
+        tr = []
+        for t in tabs3:
+            phase_val = ss(t.get("phase", ""))
+            phase_label = "✅ 一期" if "一期" in phase_val and "二期" not in phase_val else "🔄 二期"
+            tr.append([
+                ss(t.get("tableName", "")),
+                ss(t.get("tablePurpose", "")),
+                "、".join(ls(t.get("roles", []))),
+                phase_label
+            ])
+        add_t(["表名", "用途", "使用角色", "一期/二期"], tr)
+    else:
+        txt("（智能表格待从 Step2 xlsx 补充）")
+
+    h2("6.2 核心字段设计表")
+    fmap = {}
+    for ft in ls(st3.get("fieldsByTable", [])):
+        ft_name = ss(ft.get("tableName", ""))
+        fmap[ft_name] = ls(ft.get("fields", []))
+    for t in tabs3:
+        tn = ss(t.get("tableName", ""))
+        if not tn:
+            continue
+        txt("  " + tn, bold=True, sz=11, color=(0x18, 0x22, 0x35))
+        flds = ls(fmap.get(tn, []))
+        if flds:
+            fr = []
+            for f in flds:
+                fr.append([
+                    ss(f.get("fieldName", "")),
+                    ss(f.get("fieldType", "")),
+                    yn(f.get("required", False)),
+                    ss(f.get("source", "")),
+                    ss(f.get("rule", ""))
+                ])
+            add_t(["字段名称", "字段类型", "必填", "维护角色", "规则说明"], fr)
+        else:
+            txt("（字段待补充）")
+
+    h2("6.3 表间关联关系")
+    rels = ls(st3.get("relations", []))
+    if rels:
+        rr2 = []
+        for r in rels:
+            rr2.append([
+                ss(r.get("mainTable", "")),
+                ss(r.get("relatedTable", "")),
+                ss(r.get("relationField", "")),
+                ss(r.get("autoFill", "")),
+                ss(r.get("note", ""))
+            ])
+        add_t(["主表", "关联表", "关联字段", "自动带出", "注意事项"], rr2)
+    else:
+        txt("（表间关联关系待补充）")
+
+    # 七
+    h1("七、审批与自动化设计")
+    autos3 = ls(st3.get("automations", []))
+    if autos3:
+        ar = []
+        for a in autos3:
+            ar.append([
+                ss(a.get("name", "")),
+                ss(a.get("trigger", "")),
+                ss(a.get("action", "")),
+                ss(a.get("notifyTarget", "")),
+                ss(a.get("priority", "中"))
+            ])
+        add_t(["规则名称", "触发条件", "执行动作", "通知对象", "优先级"], ar)
+    else:
+        txt("（自动化规则待补充，可结合审批流配置）")
+
+    if mods:
+        phase_one_mods = [m for m in mods if "一期" in ss(m.get("phase", ""))]
+        if phase_one_mods:
+            names = "、".join(ss(m.get("moduleName", "")) for m in phase_one_mods)
+            txt("建议对「" + names + "」配置审批流程，具体审批节点待与客户确认。")
+
+    # 八
+    h1("八、权限与数据看板设计")
+    h2("8.1 权限矩阵")
+    perms3 = ls(st3.get("permissions", []))
+    if perms3:
+        pr3 = []
+        for p in perms3:
+            pr3.append([
+                ss(p.get("role", "")),
+                ss(p.get("addScope", "")),
+                ss(p.get("viewScope", "")),
+                ss(p.get("editableFields", "")),
+                ss(p.get("sensitiveFields", ""))
+            ])
+        add_t(["角色", "新增权限", "查看范围", "可编辑字段", "敏感字段"], pr3)
+    elif roles3:
+        pr3 = []
+        table_names = "、".join(ss(t.get("tableName", "")) for t in tabs3[:3])
+        for r in roles3:
+            pr3.append([ss(r), "本职范围内", table_names, "本职相关字段", "——"])
+        add_t(["角色", "新增权限", "查看范围", "可编辑字段", "敏感字段"], pr3)
+        txt("（以上为推断值，建议根据实际情况调整）", sz=9, color=(0x98, 0xA2, 0xB3))
+    else:
+        txt("（权限矩阵待补充）")
+
+    h2("8.2 数据看板设计")
+    dashes = ls(st3.get("dashboards", []))
+    if dashes:
+        dr = []
+        for d in dashes:
+            dr.append([
+                ss(d.get("dashboardName", "")),
+                ss(d.get("users", "")),
+                ss(d.get("metrics", "")),
+                ss(d.get("filters", ""))
+            ])
+        add_t(["看板名称", "使用对象", "核心指标", "筛选维度"], dr)
+    else:
+        txt("（数据看板待规划，建议以「销售情况看板」起步）")
+
+    # 九
+    h1("九、数据来源、系统对接与交付边界")
+    h2("9.1 数据来源与接入方式")
+    if tabs3:
+        dr2 = []
+        for t in tabs3:
+            phase_val = ss(t.get("phase", ""))
+            phase_one = "一期" in phase_val and "二期" not in phase_val
+            phase_two = "二期" in phase_val
+            dr2.append([
+                ss(t.get("tableName", "")),
+                "客户现有 Excel/企微智能表格",
+                "一期接入" if phase_one else "⚠️ 待评估",
+                "ERP对接" if phase_two else "——"
+            ])
+        add_t(["数据对象", "来源", "一期处理方式", "二期评估"], dr2)
+    else:
+        txt("（数据来源待补充）")
+
+    h2("9.2 交付边界说明")
+    for it in ls(scope3.get("phaseOne", [])):
+        txt("✅ " + ss(it.get("item", "")) + " — " + ss(it.get("reason", "")))
+    for it in ls(scope3.get("phaseTwo", [])):
+        item = ss(it.get("item", ""))
+        prereq = ss(it.get("prerequisites", ""))
+        if prereq:
+            txt("🔄 " + item + "（前提：" + prereq + "）")
+        else:
+            txt("🔄 " + item)
+
+    # 十
+    h1("十、实施计划、报价口径与变更机制")
+    h2("10.1 实施计划")
+    impl3 = ls(rd.get("implementationPlanTable", []))
+    if impl3:
+        ir = []
+        for p in impl3:
+            ir.append([
+                ss(p.get("phase", "")),
+                ss(p.get("workContent", "")),
+                ss(p.get("customerCooperation", "")),
+                ss(p.get("output", ""))
+            ])
+        add_t(["阶段", "工作内容", "客户配合事项", "输出物"], ir)
+    else:
+        add_t(["阶段", "工作内容", "客户配合事项", "输出物"], [
+            ("需求确认", "确认需求范围、一期二期边界、智能表格结构", "提供需求，参与评审", "需求确认文档"),
+            ("智能表格搭建", "按确认的字段设计搭建智能表格", "参与字段确认、提供基础数据", "可用的智能表格 Demo"),
+            ("规则配置", "配置自动化规则、审批流、权限", "参与规则评审、测试确认", "配置完成的规则"),
+            ("试运行与优化", "上线试运行，收集反馈并优化", "提供试运行数据、反馈问题", "上线文档+优化建议"),
+        ])
+
+    h2("10.2 报价口径建议（只写口径，不写金额）")
+    qt3 = ls(rd.get("quoteScopeTable", []))
+    if qt3:
+        qr = []
+        for q in qt3:
+            qr.append([
+                ss(q.get("feeModule", "")),
+                ss(q.get("scope", "")),
+                yn(q.get("included", "")),
+                ss(q.get("note", ""))
+            ])
+        add_t(["费用模块", "范围说明", "是否本次包含", "备注"], qr)
+    else:
+        txt("（报价口径待与服务商确认，⚠️ 本文仅提供口径说明，不写具体金额）", color=(0xFF, 0x6B, 0x35))
+
+    h2("10.3 范围变更机制")
+    chg = ls(rd.get("changeManagementTable", []))
+    if chg:
+        chr_list = []
+        for c in chg:
+            chr_list.append([
+                ss(c.get("item", "")),
+                yn(c.get("inScope", "")),
+                ss(c.get("handling", ""))
+            ])
+        add_t(["事项", "是否范围内", "处理方式"], chr_list)
+    else:
+        add_t(["事项", "是否范围内", "处理方式"], [
+            ("新增智能表格字段", "否", "评估后进入变更单处理"),
+            ("跨表关联新增", "否", "评估工作量后单独报价"),
+            ("自动化规则增加", "否", "评估后进入变更单处理"),
+        ])
+
+    # 十一
+    h1("十一、待客户确认问题与签署")
+    h2("11.1 待确认问题")
+    oqs3 = ls(rd.get("openQuestions", []))
+    if oqs3:
+        oq3r = []
+        for i, o in enumerate(oqs3):
+            oq3r.append([
+                str(i + 1),
+                ss(o.get("question", "")),
+                ss(o.get("owner", "服务商")),
+                ss(o.get("priority", "中"))
+            ])
+        add_t(["编号", "问题", "负责人", "优先级"], oq3r)
+    else:
+        txt("（暂无待确认问题，或从 Step3 沟通记录补充）")
+
+    h2("11.2 确认说明")
+    note_p = doc.add_paragraph()
+    note_r = note_p.add_run("声明：本文档为售前需求确认稿，以上待确认项（标注 ⚠️）未纳入一期交付承诺。ERP 系统对接、AI 智能填报、历史数据清洗等未经客户明确确认的能力，不在本次一期交付范围内，建议以二期独立项目评估。感谢贵司信任。")
+    note_r.font.size = Pt(10)
+    note_r.font.color.rgb = RGBColor(0x34, 0x40, 0x54)
+    note_p.paragraph_format.space_after = Pt(12)
+
+    h2("11.3 签署")
+    add_t(["确认方", "姓名/职务", "确认意见", "日期"], [
+        ["客户方", "", "", ""],
+        ["服务商方", "", "", ""]
+    ])
+
+    # 保存
+    import os
+    filename = cust_name_val + "_需求确认与方案设计表.docx"
+    savedir = "/var/www/provider-assist/step4-docx"
+    os.makedirs(savedir, exist_ok=True)
+    filepath = os.path.join(savedir, filename)
+    doc.save(filepath)
+    return {"success": True, "url": "/step4-docx/" + filename, "filename": filename, "customer": cust_name_val}
+
 
 STEP5_SCHEMA_SYSTEM_PROMPT = """你是一个企业微信智能表格搭建专家。请基于需求确认数据中的 smartTableSpec，生成可直接用于建表的 JSON Schema。
 
