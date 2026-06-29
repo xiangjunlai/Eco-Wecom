@@ -3010,10 +3010,20 @@ async function generateStep4Presales() {
       if (data.html_content) {
         window.open(URL.createObjectURL(new Blob([data.html_content], {type:'text/html;charset=utf-8'})), '_blank');
       }
-      // 重新读取最新版本
+      // 构造新版本，手动更新 localStorage（API已存DB，前端同步更新本地缓存）
+      var now = new Date().toISOString();
+      var newVersion = {
+        version: data.version || 1,
+        content: { htmlContent: data.html_content },
+        created_at: now,
+        file_url: data.file_url,
+        filename: data.filename
+      };
       var c2 = getClient(currentClientId);
       var versions = Array.isArray(c2.step4_presales_versions) ? c2.step4_presales_versions.slice() : [];
-      renderStep4LatestPresales(versions[versions.length - 1] || {}, versions.length);
+      versions.push(newVersion);
+      updateClient(currentClientId, { step4_presales_versions: versions });
+      renderStep4LatestPresales(newVersion, versions.length);
       renderStep4History('presales', versions);
       window._presalesPct = 100;
       renderArtifacts();
@@ -3069,10 +3079,20 @@ async function generateStep4Technical() {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      // 重新读取最新版本
+      // 构造新版本，手动更新 localStorage（API已存DB，前端同步更新本地缓存）
+      var now = new Date().toISOString();
+      var newVersion = {
+        version: data.version || 1,
+        content: { wordText: '' },
+        created_at: now,
+        file_url: data.file_url,
+        filename: data.filename
+      };
       var c2 = getClient(currentClientId);
       var versions = Array.isArray(c2.step4_technical_versions) ? c2.step4_technical_versions.slice() : [];
-      renderStep4LatestTechnical(versions[versions.length - 1] || {});
+      versions.push(newVersion);
+      updateClient(currentClientId, { step4_technical_versions: versions });
+      renderStep4LatestTechnical(newVersion);
       renderStep4History('technical', versions);
       window._technicalPct = 100;
       renderArtifacts();
