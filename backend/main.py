@@ -3430,7 +3430,7 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
     doc_name = (client.get("name", "") if client else "") + " - 需求智能表格"
     create_resp = call_mcp("create_doc", {
         "doc_name": doc_name,
-        "doc_type": 10  # 智能表格
+        "doc_type": "10"  # 智能表格（必须是字符串）
     })
     if create_resp.get("error"):
         return {"success": False, "error": "创建文档失败：" + create_resp["error"]}
