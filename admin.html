@@ -831,49 +831,59 @@ function drawClientsList(clients) {
 function renderClientRowContent(c, userInfo) {
   var pName = userInfo?.pName || '-';
   var uName = userInfo?.uName || '-';
+
+  // JSON 字符串安全解析（数据库字段是字符串，前端当对象用）
+  function jparse(val) {
+    if (!val) return null;
+    if (typeof val === 'object') return val;
+    try { return JSON.parse(val); } catch(e) { return null; }
+  }
+
+  var s1 = jparse(c.step1_result);  // S1 输出（已解析）
+  var step2Report = jparse(c.step2_report);
+  var step3Sum = jparse(c.step3_summary);
+  var step5Schema = jparse(c.step5_schema);
+  var step5Suggestions = jparse(c.step5_agent_suggestions);
+
+  // S4 最新版本
+  var s4Versions = jparse(c.step4_presales_versions) || [];
+  var s4Latest = Array.isArray(s4Versions) && s4Versions.length > 0 ? s4Versions[s4Versions.length - 1] : null;
+
   var steps = [
     {
       key: 'step1', label: 'Step1 客户背景', icon: '📋',
       input: '服务商填写：客户名/行业/规模/标签/初始需求',
-      inputData: { name: c.name, industry: c.industry, initial_demand: c.initial_demand },
+      inputData: { name: c.name, industry: c.industry, scale: c.scale || '', tags: c.tags || '', initial_demand: c.initial_demand || '' },
       output: 'AI 客户画像 + 痛点 + 调研问题清单',
-      outputData: c.step1_result
+      outputData: s1
     },
     {
       key: 'step2', label: 'Step2 调研准备', icon: '❓',
       input: 'AI 生成问题清单（需服务商确认/补充）',
-      inputData: (function(){
-        var s1 = c.step1_result;
-        return s1 ? { gaps: s1.part2 || s1.gaps, must_ask: s1.part3?.must_ask || s1.must_ask } : null;
-      })(),
+      inputData: s1 ? { gaps: s1.part2 || s1.gaps || [], must_ask: s1.part3?.must_ask || s1.must_ask || [] } : null,
       output: '服务商确认后的调研结果 + 痛点 + 需求边界',
-      outputData: c.step2_report
+      outputData: step2Report
     },
     {
       key: 'step3', label: 'Step3 沟通纪要', icon: '✅',
       input: '沟通记录原文（上传文件/粘贴文字）',
       inputData: c.uploaded_files,
       output: '需求摘要 + 痛点 + 一期二期范围',
-      outputData: c.step3_summary
+      outputData: step3Sum
     },
     {
       key: 'step4', label: 'Step4 售前方案', icon: '📄',
       input: '需求结构化（方案输入确认单）',
       inputData: c.step4_input_draft,
       output: '售前 HTML 链接 + Word 文档 + 需求确认表',
-      outputData: (function(){
-        try {
-          var v = c.step4_presales_versions ? (typeof c.step4_presales_versions === 'string' ? JSON.parse(c.step4_presales_versions) : c.step4_presales_versions) : [];
-          return v.length ? v[v.length-1] : null;
-        } catch(e) { return null; }
-      })()
+      outputData: s4Latest
     },
     {
       key: 'step5', label: 'Step5 Demo 生成', icon: '🎨',
       input: '智能表格 Schema（从 Step4 派生）',
-      inputData: c.step5_schema,
-      output: 'Demo URL / Agent 建议 / Schema JSON',
-      outputData: { schema: c.step5_schema, suggestions: c.step5_agent_suggestions, demo_url: c.demo_url }
+      inputData: step5Schema,
+      output: 'Demo URL / Agent 建议',
+      outputData: step5Suggestions
     }
   ];
 
@@ -881,7 +891,6 @@ function renderClientRowContent(c, userInfo) {
     if (!data) return '<span style="color:#98a2b3">暂无</span>';
     try {
       var s = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
-      // 截断长内容
       if (s.length > 800) s = s.substring(0, 800) + '\n…（已截断，完整内容请在弹窗查看）';
       return '<pre style="margin:0;font-size:11px;background:#f9fafb;border-radius:8px;padding:10px;max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-all">' + esc(s) + '</pre>';
     } catch(e) {
