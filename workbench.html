@@ -4193,7 +4193,7 @@ function renderGaps(gaps) {
             '<option value="低优先级" '+(priBar==='low'?'selected':'')+' style="color:#69db7c">低</option>' +
             '<option value="待澄清" '+(priBar==='pending'?'selected':'')+' style="color:#94a3b8">待</option>' +
           '</select>' +
-          '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px;flex-shrink:0" onclick="this.closest('.gap').remove()">×</div>' +
+          '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px;flex-shrink:0" onclick="this.closest(\'.gap\').remove()">×</div>' +
         '</div>' +
         (whyNeed ? '<div style="font-size:12px;color:#64748b;line-height:1.5;padding:6px 12px;background:#f8fafc;border-radius:8px">💡 ' + esc(whyNeed) + '</div>' : '') +
       '</div>' +
@@ -4753,7 +4753,6 @@ function loadStep2(c) {
   const hiddenCount = pains.length - 5;
   if (pains.length > 0) {
     painGrid.innerHTML = showPains.map(function(p) { return '<div class=\'pain\'><div class=\'pain-row\'><div class=\'pain-text\'>' + esc(p.text || '') + '</div></div></div>'; }).join('');
-    }).join('');
 
   } else {
     painGrid.innerHTML = '<div class="pain" contenteditable="false">-</div>';
