@@ -2994,117 +2994,140 @@ async def generate_step4_word(body: dict, user: dict = Depends(require_auth)):
     if not word_text_raw:
         return {"success": False, "error": "Word 内容生成失败，请稍后重试"}
 
-    # ---- 三轮混合回填 ----
+    # ---- 极简回填：只替换单元格内容恰好等于 {{key}} 的情况 ----
     try:
         from docx import Document
-        from docx.shared import Pt, RGBColor, Cm
-        from docx.oxml.ns import qn
-        from docx.oxml import OxmlElement
-
-        doc = Document(TEMPLATE_BASE + "/templates/技术路线及报价方案_Word模板.docx")
     except Exception as e:
         return {"success": False, "error": f"Word 模板读取失败: {str(e)}"}
 
-    # 第一轮：全局精确替换（出现在1~2处的占位符）
-    # 收集所有占位符出现次数
-    placeholder_counts = {}
+    doc = Document(TEMPLATE_BASE + "/templates/技术路线及报价方案_Word模板.docx")
+
+    # 解析模型输出，构建 key→value 映射
+    key_map = {}
+    for line in word_text_raw.split('\n'):
+        line = line.strip()
+        if not line or line.startswith('【'):
+            continue
+        eq_idx = line.find('=')
+        if eq_idx > 0:
+            key = line[:eq_idx].strip()
+            val = line[eq_idx+1:].strip()
+            if key and val and val != 'None' and key not in key_map:
+                key_map[key] = val
+
+    # docx 占位符名 → 模型输出字段名 的别名映射（完全覆盖所有90+占位符）
+    alias = {
+        # 封面/基本信息
+        "客户名": "公司全称", "服务商名": "服务商名称", "行业": "所属行业",
+        "日期": "输出日期", "联系人": "客户联系人", "第几次沟通": "沟通阶段",
+        "人数/门店数": "企业规模",
+        "是否已用、用到什么程度": "企业微信使用情况",
+        "系统名，如装修云管家/ERP": "已有业务系统",
+        "角色": "对接人/决策人", "老板最想要的": "本次诉求一句话",
+        "项目场景": "项目场景",
+        # 1.2 当前业务运转
+        "环节1": "环节", "环节2": "环节", "环节3": "环节", "环节4": "环节",
+        "当前做法": "当前做法", "当前": "当前流程", "优化后": "优化后流程",
+        "企微动作": "企业微信动作",
+        # 1.3 痛点
+        "问题": "主要问题", "影响": "业务影响", "方案": "对应企微方案",
+        # 2.1 场景
+        "如：客户销售管理/订单交付/数据看板": "场景大类",
+        "前端看板 / 全流程线上化 / 局部优化": "本期定位",
+        "不替代什么、不重建什么": "交付边界",
+        # 2.2 范围
+        "下一阶段": "范围说明", "暂不做": "范围说明",
+        "为什么先做": "原因", "为什么放二期": "原因", "为什么不做什么": "原因",
+        # 3.1 需求
+        "描述": "客户描述", "实现方式": "企业微信实现方式",
+        # 3.2 原话翻译
+        "客户原话": "客户原话", "翻译成业务需求": "业务语言翻译",
+        # 4.1 流程
+        "阶段1": "阶段", "阶段2": "阶段", "阶段3": "阶段", "阶段4": "阶段",
+        # 4.2 节点
+        "节点": "节点名称", "输入": "输入信息", "输出": "输出结果",
+        # 5.1 能力架构
+        "怎么用": "本项目使用方式",
+        # 6.1 表格总览
+        "表1": "表名", "表2": "表名", "表3": "表名", "表名": "表名",
+        "用途": "用途",
+        # 6.2 字段
+        "字段": "字段名称",
+        # 6.3 关联
+        "主表": "主表", "关联表": "关联表", "带出内容": "自动带出/汇总内容", "注意": "注意事项",
+        # 7.1 自动化
+        "触发": "触发条件", "动作": "执行动作", "对象": "通知对象",
+        "规则1": "规则名称", "规则2": "规则名称", "规则3": "规则名称",
+        "规则": "规则名称",
+        # 7.2 审批
+        "审批1": "审批名称", "审批2": "审批名称", "发起角色": "发起角色", "审批人": "审批人",
+        "表": "同步表格",
+        # 8.1 权限
+        "部门负责人": "角色", "一线员工": "角色", "本人": "查看范围", "本部门": "查看范围",
+        "看板": "看板权限", "脱敏规则": "敏感字段",
+        # 8.2 看板
+        "看板1": "看板名称", "看板2": "看板名称", "看板3": "看板名称",
+        "指标": "核心指标", "维度": "筛选维度",
+        # 9.1 数据来源
+        "对象1": "数据对象", "对象2": "数据对象", "对象3": "数据对象",
+        "源系统": "来源系统/来源方式",
+        # 9.2 交付清单
+        "底表+字段配置": "交付内容", "看板列表": "交付内容",
+        "规则/审批": "交付内容", "角色权限": "交付内容",
+        # 10.1 实施计划
+        "字段口径确认": "工作内容", "底表搭建": "工作内容",
+        "看板与权限配置": "工作内容", "试跑与培训": "工作内容",
+        "确认表": "输出物", "表+字段": "输出物", "操作说明": "输出物",
+        "安排试用人员": "客户配合事项", "提供枚举/样例数据": "客户配合事项",
+        # 10.2 报价
+        "表数量与字段": "范围说明", "看板数量": "范围说明",
+        "规则数量": "范围说明", "对接复杂度": "范围说明", "运维方式": "范围说明",
+        "报价或口径": "备注", "是/否": "是否本次包含", "是/否 + 系统名": "是否已有源系统",
+        # 10.3 变更
+        "视情况": "是否范围内", "走变更评估、单独报价": "处理方式",
+        # 11.1 问题清单
+        "客户方": "负责人",
+        # 11.2 确认
+        "客户签字确认一期范围": "确认说明",
+        "客户确认报价方式": "确认说明", "客户确认接入方式": "确认说明",
+        "客户确认排期": "确认说明",
+        # 特殊
+        "一期必做": "一期必做", "二期评估": "二期评估事项",
+        "按计划交付": "处理方式", "培训次数": "范围说明", "培训说明": "备注",
+        "确认验收": "输出物",
+        "汇总内容": "自动带出/汇总内容",
+        "需求1": "需求项", "需求2": "需求项", "需求3": "需求项", "需求4": "需求项",
+        "本次必做": "范围说明",
+    }
+
+    skip_keys = {'来源', '备注', '注意', '自动带出/汇总内容', '一期必做', '确认说明', '处理方式', '是否范围内'}
+
+    # 直接替换：单元格文字恰好等于 {{key}} 时才替换
+    filled_count = 0
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
-                text = cell.text
-                phs = re.findall(r'\{\{[^}]+\}\}', text)
-                for ph in phs:
-                    placeholder_counts[ph] = placeholder_counts.get(ph, 0) + 1
-
-    # 全局无歧义替换（出现1次的占位符）
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                for paragraph in cell.paragraphs:
-                    for run in paragraph.runs:
-                        for ph, count in placeholder_counts.items():
-                            if count <= 2 and ph in run.text:
-                                # 从模型输出中查找该占位符对应的值
-                                key = ph[2:-2]  # 去掉 {{
-                                pattern = re.compile(
-                                    r'(?:【[^】]*】\s*)?' + re.escape(key) + r'\s*=\s*(.+)',
-                                    re.DOTALL
-                                )
-                                m = pattern.search(word_text_raw)
-                                if m:
-                                    replacement = m.group(1).strip().split('\n')[0].strip()
-                                    run.text = run.text.replace(ph, replacement)
-
-    # 第二轮：节内批量替换（同节内同名占位符批量填入）
-    # 按节分段
-    sections = re.split(r'【(一|二|三|四|五|六|七|八|九|十|十一|\d+)[.。、]', word_text_raw)
-    # sections[0]是前言，后面是 [节号, 节内容, 节号2, 节内容2, ...]
-
-    def fill_section(section_text: str):
-        """解析节内的 field=content 对，替换全文中同名占位符"""
-        # 匹配 field=内容（多行）
-        lines = section_text.split('\n')
-        mapping = {}
-        current_key = None
-        current_val = []
-        for line in lines:
-            m = re.match(r'([^=【】\n]+?)\s*=\s*(.+)', line)
-            if m:
-                if current_key:
-                    mapping[current_key] = '\n'.join(current_val).strip()
-                current_key = m.group(1).strip()
-                current_val = [m.group(2).strip()]
-            elif current_key and line.strip():
-                current_val.append(line.strip())
-        if current_key:
-            mapping[current_key] = '\n'.join(current_val).strip()
-
-        # 收集该节的所有占位符
-        section_phs = set()
-        for table in doc.tables:
-            for row in table.rows:
-                for cell in row.cells:
-                    if re.search(re.escape(section_text[:200]), cell.text):
-                        phs = re.findall(r'\{\{[^}]+\}\}', cell.text)
-                        for ph in phs:
-                            section_phs.add(ph)
-
-        for ph in section_phs:
-            key = ph[2:-2]
-            if key in mapping:
-                val = mapping[key].split('\n')[0].strip()
-                for table in doc.tables:
-                    for row in table.rows:
-                        for cell in row.cells:
-                            for paragraph in cell.paragraphs:
-                                for run in paragraph.runs:
-                                    if ph in run.text and run.text.count('{{') == 1:
-                                        run.text = run.text.replace(ph, val)
-
-    # 解析节文本并批量处理
-    section_pattern = re.compile(r'【(一|二|三|四|五|六|七|八|九|十|十一|\d+)[.。、、]\s*([^】]+)】\s*([\s\S]*?)(?=【(?:一|二|三|四|五|六|七|八|九|十|十一|\d+)】|$)')
-    for m in section_pattern.finditer(word_text_raw):
-        section_content = m.group(3)
-        fill_section(section_content)
-
-    # 第三轮：兜底全局替换（剩余占位符用同名字段首值填充）
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                for paragraph in cell.paragraphs:
-                    for run in paragraph.runs:
-                        remaining = re.findall(r'\{\{([^}]+)\}\}', run.text)
-                        for key in remaining:
-                            ph = '{{' + key + '}}'
-                            # 从模型输出找
-                            pattern = re.compile(
-                                r'(?:【[^】]*】\s*)?' + re.escape(key) + r'\s*=\s*(.+)',
-                                re.DOTALL
-                            )
-                            mv = pattern.search(word_text_raw)
-                            if mv:
-                                replacement = mv.group(1).strip().split('\n')[0].strip()
-                                run.text = run.text.replace(ph, replacement)
+                cell_text = cell.text.strip()
+                if cell_text.startswith('{{') and cell_text.endswith('}}') and cell_text.count('{{') == 1:
+                    ph_key = cell_text[2:-2]
+                    resolved_key = None
+                    if ph_key in key_map:
+                        resolved_key = ph_key
+                    elif ph_key in alias and alias[ph_key] in key_map:
+                        resolved_key = alias[ph_key]
+                    if resolved_key:
+                        for para in cell.paragraphs:
+                            for run in para.runs:
+                                if run.text == cell_text or run.text == '{{' + ph_key + '}}':
+                                    run.text = key_map[resolved_key]
+                                    filled_count += 1
+                                    break
+                    elif ph_key not in skip_keys:
+                        for para in cell.paragraphs:
+                            for run in para.runs:
+                                if run.text == cell_text or run.text == '{{' + ph_key + '}}':
+                                    run.text = '⚠️ 待确认'
+                                    break
 
     # 保存文件
     client_id_str = str(client_id)
