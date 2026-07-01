@@ -1026,17 +1026,31 @@ async def list_clients(user: dict = Depends(require_auth)):
     conn = get_db()
     cursor = conn.cursor()
     # 只查列表页需要的字段，避免返回巨大的 uploaded_files / transcript / step4_report
-    cursor.execute("""
-        SELECT id, user_id, name, industry, initial_demand, status,
-               step1_result, step2_report, step2_todo, step2_schema,
-               step4_presales, step4_technical, step5_schema,
-               created_at, updated_at, demo_url, _completed, _saved,
-               0 AS note_count
-        FROM clients WHERE user_id = ? ORDER BY updated_at DESC
-    """, (user["user_id"],))
+    # 测试账号 devuser 可以查看所有客户
+    if user.get("is_test_user"):
+        cursor.execute("""
+            SELECT id, user_id, name, industry, initial_demand, status,
+                   step1_result, step2_report, step2_todo, step2_schema,
+                   step4_presales, step4_technical, step5_schema,
+                   step4_presales_versions, step4_technical_versions,
+                   created_at, updated_at, demo_url, _completed, _saved,
+                   0 AS note_count
+            FROM clients ORDER BY updated_at DESC
+        """)
+    else:
+        cursor.execute("""
+            SELECT id, user_id, name, industry, initial_demand, status,
+                   step1_result, step2_report, step2_todo, step2_schema,
+                   step4_presales, step4_technical, step5_schema,
+                   step4_presales_versions, step4_technical_versions,
+                   created_at, updated_at, demo_url, _completed, _saved,
+                   0 AS note_count
+            FROM clients WHERE user_id = ? ORDER BY updated_at DESC
+        """, (user["user_id"],))
     cols = ["id", "user_id", "name", "industry", "initial_demand", "status",
             "step1_result", "step2_report", "step2_todo", "step2_schema",
             "step4_presales", "step4_technical", "step5_schema",
+            "step4_presales_versions", "step4_technical_versions",
             "created_at", "updated_at", "demo_url", "_completed", "_saved", "note_count"]
     clients = []
     for row in cursor.fetchall():
@@ -1068,10 +1082,11 @@ async def get_client(client_id: str, user: dict = Depends(require_auth)):
     """获取客户详情"""
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute(
-        "SELECT * FROM clients WHERE id = ? AND user_id = ?",
-        (client_id, user["user_id"])
-    )
+    # 测试账号 devuser 可以查看所有客户
+    if user.get("is_test_user"):
+        cursor.execute("SELECT * FROM clients WHERE id = ?", (client_id,))
+    else:
+        cursor.execute("SELECT * FROM clients WHERE id = ? AND user_id = ?", (client_id, user["user_id"]))
     row = cursor.fetchone()
     conn.close()
 
@@ -1099,8 +1114,11 @@ async def update_client(client_id: str, data: dict, user: dict = Depends(require
     conn = get_db()
     cursor = conn.cursor()
 
-    # 检查所有权
-    cursor.execute("SELECT id FROM clients WHERE id = ? AND user_id = ?", (client_id, user["user_id"]))
+    # 检查所有权（测试账号 devuser 可以更新任何客户）
+    if user.get("is_test_user"):
+        cursor.execute("SELECT id FROM clients WHERE id = ?", (client_id,))
+    else:
+        cursor.execute("SELECT id FROM clients WHERE id = ? AND user_id = ?", (client_id, user["user_id"]))
     if not cursor.fetchone():
         raise HTTPException(status_code=404, detail="客户不存在")
 
@@ -2592,6 +2610,9 @@ def _read_template(path: str) -> str:
 
 def _load_client_context(client: dict, user: dict) -> dict:
     """从 client 数据中提取所有步骤的完整上下文，返回 dict"""
+    import logging
+    logger = logging.getLogger("uvicorn")
+
     def jload(val):
         if isinstance(val, str):
             try:
@@ -2607,6 +2628,8 @@ def _load_client_context(client: dict, user: dict) -> dict:
         "tags": client.get("tags", ""),
         "initial_demand": client.get("initial_demand", ""),
     }
+
+    logger.info(f"[Word诊断] client_id={client.get('id')} name={client.get('name')} step1_result=exists:{bool(client.get('step1_result'))} step2_report=exists:{bool(client.get('step2_report'))} step2_schema=exists:{bool(client.get('step2_schema'))} step3_summary=exists:{bool(client.get('step3_summary'))} step4_input_draft=exists:{bool(client.get('step4_input_draft'))}")
 
     # Step1 result
     s1 = jload(client.get("step1_result")) or {}
@@ -2724,7 +2747,138 @@ def _load_client_context(client: dict, user: dict) -> dict:
 
     ctx["provider_name"] = user.get("provider_name", "")
 
+    logger.info(f"[Word诊断] ctx构建完成: company_background长度={len(ctx.get('company_background',''))} pain_points_text长度={len(ctx.get('pain_points_text',''))} step2_summary长度={len(ctx.get('step2_summary',''))} xlsx_summary长度={len(ctx.get('xlsx_summary',''))} step3_transcript_full长度={len(ctx.get('step3_transcript_full',''))} step3_summary_full长度={len(ctx.get('step3_summary_full',''))} step4_input_draft_full长度={len(ctx.get('step4_input_draft_full',''))}")
+
     return ctx
+
+
+def _build_requirement_data_from_context(ctx: dict) -> dict:
+    """
+    从 client 上下文中构建 requirementData（供 Step5 generate-demo 使用）。
+    新流程（generate-html / generate-word）不走旧的 /api/step4/generate，
+    因此 requirementData 不会自动产生，需要在此手动构建。
+    """
+    import logging
+    logger = logging.getLogger("uvicorn")
+
+    s4draft_str = ctx.get("step4_input_draft_json", "{}")
+    s4draft = {}
+    try:
+        s4draft = json.loads(s4draft_str) if s4draft_str and s4draft_str != "{}" else {}
+    except:
+        s4draft = {}
+
+    s3_str = ctx.get("step3_summary_full", "")
+    # step3_summary_full 是拼接的文本，不是 JSON，跳过
+
+    # 从 step4_input_draft 提取字段
+    def safe_list(val):
+        if not val:
+            return []
+        if isinstance(val, list):
+            return val
+        return [val]
+
+    confirmed_needs = safe_list(s4draft.get("confirmedNeeds", []))
+    pain_points = safe_list(s4draft.get("painPoints", []))
+    involved_roles = safe_list(s4draft.get("involvedRoles", []))
+    phase_one = safe_list(s4draft.get("phaseOneScope", []))
+    phase_two = safe_list(s4draft.get("phaseTwoScope", []))
+    pending_questions = safe_list(s4draft.get("pendingQuestions", []))
+
+    # 从 step3_summary_full 尝试提取表格信息（文本片段匹配）
+    # 实际表格字段由 AI 在 Step5 prompt 中生成，这里只构建结构
+    confirmed_tables = []
+    fields_by_table = []
+
+    # 构建 confirmedNeeds 为 requirements 格式
+    requirements = []
+    for i, n in enumerate(confirmed_needs):
+        title = n.get("title", "") if isinstance(n, dict) else str(n)
+        desc = n.get("description", "") if isinstance(n, dict) else ""
+        requirements.append({
+            "requirementId": f"REQ-{i+1}",
+            "title": title,
+            "description": desc,
+            "priority": "高",
+            "phase": "一期",
+            "status": "confirmed"
+        })
+
+    # 构建 painPoints
+    parsed_pains = []
+    for i, p in enumerate(pain_points):
+        title = p.get("title", "") if isinstance(p, dict) else str(p)
+        desc = p.get("description", "") if isinstance(p, dict) else ""
+        parsed_pains.append({
+            "painId": f"PAIN-{i+1}",
+            "title": title,
+            "description": desc,
+            "priority": "high"
+        })
+
+    # 构建 scope
+    def scope_item_builder(items, phase):
+        result = []
+        for it in items:
+            if isinstance(it, dict):
+                result.append({
+                    "item": it.get("item", "") or it.get("title", ""),
+                    "description": it.get("description", ""),
+                    "reason": it.get("reason", ""),
+                    "phase": phase
+                })
+            else:
+                result.append({"item": str(it), "description": "", "reason": "", "phase": phase})
+        return result
+
+    phase_one_scope = scope_item_builder(phase_one, "一期")
+    phase_two_scope = scope_item_builder(phase_two, "二期评估")
+
+    # roles
+    roles_list = []
+    for r in involved_roles:
+        if isinstance(r, dict):
+            roles_list.append({"role": r.get("role", ""), "responsibility": r.get("responsibility", "")})
+        else:
+            roles_list.append({"role": str(r), "responsibility": ""})
+
+    requirement_data = {
+        "meta": {
+            "customerName": ctx.get("customer_name", ""),
+            "mainScenario": ctx.get("industry", ""),
+        },
+        "customerFacts": {
+            "involvedRoles": roles_list,
+            "currentProcess": s4draft.get("currentProcess", ""),
+            "expectedOutcome": s4draft.get("expectedOutcome", ""),
+        },
+        "smartTableSpec": {
+            "scenarioComplexity": "简单流程型",
+            "confirmedTables": confirmed_tables,
+            "fieldsByTable": fields_by_table,
+            "suggestedTables": [],
+            "phaseTwoTables": [],
+            "automations": [],
+            "permissions": [],
+            "dashboards": [],
+        },
+        "scope": {
+            "phaseOne": phase_one_scope,
+            "phaseTwo": phase_two_scope,
+            "notRecommended": []
+        },
+        "requirements": requirements,
+        "painPoints": parsed_pains,
+        "openQuestions": [{"question": str(q)} for q in pending_questions],
+        "implementationPlanTable": [],
+        "quoteScopeTable": [],
+        "changeManagementTable": [],
+        "deliveryList": []
+    }
+
+    logger.info(f"[requirementData] built from context: confirmedTables={len(confirmed_tables)}, requirements={len(requirements)}, phaseOne={len(phase_one_scope)}")
+    return requirement_data
 
 
 def _build_html_prompt(template_html: str, golden_rules: str, example_html: str, ctx: dict) -> tuple:
@@ -2908,7 +3062,7 @@ async def generate_step4_html(body: dict, user: dict = Depends(require_auth)):
 
     file_url = "/outputs/" + client_id_str + "/" + filename
 
-    # 更新版本数组
+    # 更新版本数组（同时构建 requirementData 供 Step5 使用）
     now = datetime.now().isoformat()
     versions = client.get("step4_presales_versions") or []
     if isinstance(versions, str):
@@ -2917,9 +3071,11 @@ async def generate_step4_html(body: dict, user: dict = Depends(require_auth)):
         except:
             versions = []
     next_ver = len(versions) + 1
+    # 从 ctx 构建 requirementData（新流程无旧数据，需手动构建）
+    requirement_data = _build_requirement_data_from_context(ctx)
     versions.append({
         "version": next_ver,
-        "content": {"htmlContent": html_content},
+        "content": {"htmlContent": html_content, "requirementData": requirement_data},
         "created_at": now,
         "file_url": file_url,
         "filename": filename,
@@ -2993,6 +3149,10 @@ async def generate_step4_word(body: dict, user: dict = Depends(require_auth)):
 
     if not word_text_raw:
         return {"success": False, "error": "Word 内容生成失败，请稍后重试"}
+
+    import logging
+    logger = logging.getLogger("uvicorn")
+    logger.info(f"[Word诊断] 模型原始输出长度={len(word_text_raw)} 前500字={word_text_raw[:500]}")
 
     # ---- 极简回填：只替换单元格内容恰好等于 {{key}} 的情况 ----
     try:
@@ -3140,7 +3300,7 @@ async def generate_step4_word(body: dict, user: dict = Depends(require_auth)):
 
     file_url = "/outputs/" + client_id_str + "/" + filename
 
-    # 更新版本数组
+    # 更新版本数组（同时构建 requirementData 供 Step5 使用）
     now = datetime.now().isoformat()
     versions = client.get("step4_technical_versions") or []
     if isinstance(versions, str):
@@ -3149,9 +3309,11 @@ async def generate_step4_word(body: dict, user: dict = Depends(require_auth)):
         except:
             versions = []
     next_ver = len(versions) + 1
+    # 从 ctx 构建 requirementData（供 Step5 generate-demo 使用）
+    requirement_data = _build_requirement_data_from_context(ctx)
     versions.append({
         "version": next_ver,
-        "content": {"wordText": word_text_raw},
+        "content": {"wordText": word_text_raw, "requirementData": requirement_data},
         "created_at": now,
         "file_url": file_url,
         "filename": filename,
@@ -3813,23 +3975,89 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
     if not client:
         return {"success": False, "error": "客户不存在"}
 
+    import logging
+    logger = logging.getLogger("uvicorn")
+    logger.warning(f"[Step5Demo] client_id={client_id} client_name={client.get('name')} client_keys={list(client.keys())}")
+    logger.warning(f"[Step5Demo] step2_schema type={type(client.get('step2_schema'))} step3_summary type={type(client.get('step3_summary'))}")
+    s2 = client.get("step2_schema")
+    if isinstance(s2, dict):
+        logger.warning(f"[Step5Demo] step2_schema sheets={s2.get('sheets')}")
+    elif isinstance(s2, str) and s2:
+        try:
+            parsed = json.loads(s2)
+            logger.warning(f"[Step5Demo] step2_schema parsed sheets={parsed.get('sheets')}")
+        except:
+            logger.warning(f"[Step5Demo] step2_schema parse failed, raw={s2[:200]}")
+
     # 从 Step4 产物1的最新版本获取 requirementSolutionData.smartTableSpec
     presales_versions = client.get("step4_presales_versions") or []
+    logger.warning(f"[Step5Demo] presales_versions count={len(presales_versions)}")
     if not presales_versions:
         return {"success": False, "error": "请先生成 Step4 售前方案"}
 
     latest = presales_versions[-1]
     content = latest.get("content") or {}
+    logger.warning(f"[Step5Demo] content keys={list(content.keys()) if isinstance(content, dict) else type(content)}")
     requirement_data = content.get("requirementData")
+    logger.warning(f"[Step5Demo] requirementData from presales={bool(requirement_data)}")
 
+    # Fallback: 从 step2_schema 和 step3_summary 构建 requirementData
     if not requirement_data:
-        return {"success": False, "error": "Step4 产物中无 requirementData，请重新生成售前方案"}
+        step2_schema = client.get("step2_schema") or {}
+        step3_summary = client.get("step3_summary") or {}
+        logger.warning(f"[Step5Demo] fallback step2_schema keys={list(step2_schema.keys()) if isinstance(step2_schema, dict) else 'not_dict'}")
+        logger.warning(f"[Step5Demo] fallback step3_summary keys={list(step3_summary.keys()) if isinstance(step3_summary, dict) else 'not_dict'}")
+        if isinstance(step2_schema, str):
+            try: step2_schema = json.loads(step2_schema)
+            except: step2_schema = {}
+        if isinstance(step3_summary, str):
+            try: step3_summary = json.loads(step3_summary)
+            except: step3_summary = {}
+
+        confirmed_tables = []
+        fields_by_table = []
+        sheets = step2_schema.get("sheets") or []
+        for s in sheets:
+            name = s.get("name", "") or s.get("sheet_name", "")
+            cols = s.get("columns") or s.get("fields") or []
+            if not name: continue
+            confirmed_tables.append({"tableName": name, "tablePurpose": "业务管理表", "source": "xlsx", "phase": "一期", "roles": []})
+            fields = []
+            for c in cols:
+                fname = c.get("name", "") or c.get("field_title", "") or c.get("fieldName", "")
+                ftype = c.get("type", "") or c.get("field_type", "") or "文本"
+                if not fname: continue
+                ft_map = {"文本":"文本","text":"文本","多行文本":"多行文本","NUMBER":"数字","数字":"数字","SINGLE_SELECT":"单选","单选":"单选","DATE":"日期","日期":"日期","DATE_TIME":"日期时间","金额":"金额","CURRENCY":"金额"}
+                fields.append({"fieldName": fname, "fieldType": ft_map.get(ftype, "文本"), "required": False, "rule": "", "source": "xlsx"})
+            if fields:
+                fields_by_table.append({"tableName": name, "fields": fields})
+
+        phase_one_scope = step3_summary.get("phaseOneScope") or step3_summary.get("phase_one_scope") or []
+        if isinstance(phase_one_scope, list):
+            phase_one_scope = [{"item": (i.get("item") or i.get("title") or str(i)), "reason": "", "deliveryForm": "智能表格"} for i in phase_one_scope]
+
+        requirement_data = {
+            "smartTableSpec": {
+                "scenarioComplexity": "简单流程型",
+                "confirmedTables": confirmed_tables,
+                "fieldsByTable": fields_by_table,
+                "suggestedTables": [],
+                "phaseTwoTables": []
+            },
+            "scope": {
+                "phaseOne": phase_one_scope,
+                "phaseTwo": [],
+                "notRecommended": []
+            }
+        }
+        logger.warning(f"[Step5Demo] fallback built requirement_data confirmedTables={len(confirmed_tables)} fieldsByTable={len(fields_by_table)}")
 
     smart_table_spec = requirement_data.get("smartTableSpec") or {}
     scope = requirement_data.get("scope") or {}
+    logger.warning(f"[Step5Demo] smart_table_spec confirmedTables={len(smart_table_spec.get('confirmedTables', []))}")
 
-    if not smart_table_spec:
-        return {"success": False, "error": "Step4 产物中无 smartTableSpec，请重新生成售前方案"}
+    if not smart_table_spec or not smart_table_spec.get("confirmedTables"):
+        return {"success": False, "error": "Step2 调研表格为空，请先完成调研"}
 
     user_prompt = STEP5_SCHEMA_USER_PROMPT.replace(
         "{smart_table_spec}", json.dumps(smart_table_spec, ensure_ascii=False, indent=2)
