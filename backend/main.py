@@ -34,19 +34,16 @@ MINIMAX_API_KEY = "sk-cp-FxfZUSUHnTWn7eCtl1V-5CI1jFpfF3XLI0jxHZJ7U0p16_cea_FTQqx
 # ==================== 通用辅助函数 ====================
 
 def call_mcp(tool_name: str, arguments: dict) -> dict:
-    """调用企微 API（通过 wecom-cli，支持扫码和 API Key 两种认证）"""
+    """调用企微 API（通过本地认证的 wecom-cli）"""
     import subprocess, json as jsonmod
 
-    # 使用 wecom-cli 调用（通过本地认证）
     cmd = ["wecom-cli", "doc", tool_name, "--json", jsonmod.dumps(arguments, ensure_ascii=False)]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         output = result.stdout
         if result.returncode != 0 and result.stderr:
-            # 如果是 create_doc 工具且 wecom-cli 认证过期，返回兼容格式让前端知道
-            if "authorization expired" in result.stderr.lower() or "expired" in result.stderr.lower():
+            if "authorization expired" in result.stderr.lower():
                 return {"errcode": 851014, "errmsg": "authorization expired", "help_message": "请重新运行 wecom-cli init 授权"}
-        # 解析 wecom-cli 输出
         try:
             outer = jsonmod.loads(output)
             content = outer.get("result", {}).get("content", [{}])[0].get("text", "{}")
