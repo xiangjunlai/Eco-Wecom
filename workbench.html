@@ -1211,7 +1211,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             <h3 style="font-size:18px">智能表格设计器</h3>
             <div style="display:flex;gap:8px;align-items:center">
               <span id="s5-sheet-count" style="font-size:12px;color:#98a2b3;background:#f3f4f6;padding:2px 8px;border-radius:10px">0 个子表</span>
-              <button class="btn secondary" id="s5-regen-btn" onclick="doRegenerateStep5()" style="height:30px;font-size:12px">重新生成</button>
+              <button class="btn secondary" id="s5-regen-btn" onclick="doRegenerateStep5()" style="height:30px;font-size:12px;display:flex;align-items:center;gap:5px">
+                <span id="s5-regen-spinner" style="display:none;font-size:13px;animation:spin 1s linear infinite">⟳</span>
+                <span id="s5-regen-btn-text">重新生成</span>
+              </button>
               <button class="btn primary" id="s5-save-btn" onclick="doSaveStep5Schema()" style="height:30px;font-size:12px">保存修改</button>
             </div>
           </div>
@@ -1279,7 +1282,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
           <div class="card-accent accent-green"></div>
           <div class="prep-card-head" style="margin-bottom:10px">
             <h3>💡 Agent 建议</h3>
-            <button class="btn secondary" id="s5-agent-btn" onclick="doGenerateAgentSuggest()" style="height:32px;font-size:13px">生成建议</button>
+            <button class="btn secondary" id="s5-agent-btn" onclick="doGenerateAgentSuggest()" style="height:32px;font-size:13px;display:flex;align-items:center;gap:6px">
+              <span id="s5-agent-spinner" style="display:none;font-size:14px;animation:spin 1s linear infinite">⟳</span>
+              <span id="s5-agent-btn-text">生成建议</span>
+            </button>
           </div>
           <div id="s5-agent-loading" style="display:none;text-align:center;padding:16px 0;color:#98a2b3;font-size:13px">正在生成…</div>
           <div id="s5-agent-list" style="display:flex!important;flex-direction:column;gap:16px"></div>
@@ -3224,8 +3230,17 @@ function doDownloadLatestWord() {
   var c = getClient(currentClientId);
   var versions = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
   var latest = versions[versions.length - 1];
-  if (!latest || !latest.content) { showToast('无已生成的 Word 文档'); return; }
-  doDownloadStep4Word(latest.content.wordContent || latest.content, c.name || '客户');
+  if (!latest || !latest.file_url) { showToast('无已生成的 Word 文档'); return; }
+  // 直接下载服务器上保存的真正 .docx 文件
+  var fileUrl = (latest.file_url || '').startsWith('http')
+    ? latest.file_url
+    : (API_BASE + latest.file_url);
+  var a = document.createElement('a');
+  a.href = fileUrl;
+  a.download = latest.filename || (c.name + '_技术路线及报价方案.docx');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 // 右侧制品区：新窗口预览最新 HTML
@@ -3616,7 +3631,13 @@ async function doGenerateAgentSuggest(silent) {
   var loading = document.getElementById('s5-agent-loading');
   var list = document.getElementById('s5-agent-list');
   var empty = document.getElementById('s5-agent-empty');
-  if (btn && !silent) { btn.classList.add('loading'); btn.disabled = true; btn.textContent = '生成中…'; }
+  var spinner = document.getElementById('s5-agent-spinner');
+  var btnText = document.getElementById('s5-agent-btn-text');
+  if (btn && !silent) {
+    btn.classList.add('loading'); btn.disabled = true;
+    if (spinner) spinner.style.display = '';
+    if (btnText) btnText.textContent = '生成中…';
+  }
   if (loading) loading.style.display = '';
   if (list) list.style.display = 'none';
   if (empty) empty.style.display = 'none';
@@ -3642,7 +3663,9 @@ async function doGenerateAgentSuggest(silent) {
     showToast('生成失败：' + e.message);
     if (empty) { empty.style.display = ''; empty.textContent = '生成失败，点击重试'; }
   } finally {
-    if (btn) { btn.classList.remove('loading'); btn.disabled = false; btn.textContent = '重新生成'; }
+    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    if (spinner) spinner.style.display = 'none';
+    if (btnText) btnText.textContent = '重新生成';
     if (loading) loading.style.display = 'none';
   }
 }
@@ -3940,6 +3963,12 @@ async function doRegenerateStep5(silent) {
   if (!c.step4_presales && !c.step4_report && !c.transcript && !hasPresalesVersions && !hasTechVersions) {
     alert('请先生成售前方案（Step4）再生成 Demo'); return;
   }
+  var regenBtn = document.getElementById('s5-regen-btn');
+  var regenSpinner = document.getElementById('s5-regen-spinner');
+  var regenBtnText = document.getElementById('s5-regen-btn-text');
+  if (regenBtn) { regenBtn.disabled = true; regenBtn.classList.add('loading'); }
+  if (regenSpinner) regenSpinner.style.display = '';
+  if (regenBtnText) regenBtnText.textContent = '生成中…';
   window._generatingStep5 = true;
   renderArtifacts();
   let pct = 10;
@@ -3962,6 +3991,9 @@ async function doRegenerateStep5(silent) {
   } finally {
     clearInterval(tick);
     window._generatingStep5 = false;
+    if (regenBtn) { regenBtn.disabled = false; regenBtn.classList.remove('loading'); }
+    if (regenSpinner) regenSpinner.style.display = 'none';
+    if (regenBtnText) regenBtnText.textContent = '重新生成';
     renderArtifacts();
   }
 }
@@ -4128,7 +4160,7 @@ function addGap() {
           '<option value="低优先级" style="color:#69db7c">低</option>' +
           '<option value="待澄清" style="color:#94a3b8">待</option>' +
         '</select>' +
-        '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px;flex-shrink:0" onclick="this.closest(\'\.gap\').remove()">×</div>' +
+        '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px;flex-shrink:0" onclick="deleteGap(this)">×</div>' +
       '</div>' +
     '</div>';
   container.appendChild(newGap);
@@ -4137,12 +4169,18 @@ function addGap() {
 }
 
 
+function deleteGap(btn) {
+  btn.closest('.gap').remove();
+  saveStep2Part2();
+}
+
 function onGapPriorityChange(sel) {
   var priMap = {高优先级:'high',中优先级:'medium',低优先级:'low',待澄清:'pending',高:'high',中:'medium',低:'low'};
   var colorMap = {high:'#ff6b6b',medium:'#ffa94d',low:'#69db7c',pending:'#94a3b8'};
   var bar = sel.closest('.gap').querySelector('.gap-bar');
   if (bar) { bar.className = 'gap-bar ' + (priMap[sel.value] || 'high'); }
   sel.style.color = colorMap[priMap[sel.value]] || '#ff6b6b';
+  saveStep2Part2();
 }
 
 function toggleMoreGaps() {
@@ -4200,14 +4238,14 @@ function renderGaps(gaps) {
       '<div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px;flex:1">' +
         '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
           '<div class="check" style="flex-shrink:0;margin-top:1px"></div>' +
-          '<div style="flex:1;font-size:14px;color:#182235;font-weight:500;line-height:1.4">' + esc(g.gap || g.text || g.question || g.item || '-') + '</div>' +
+          '<div class="gap-text" style="flex:1;font-size:14px;color:#182235;font-weight:500;line-height:1.4"><b>' + esc(g.gap || g.text || g.question || g.item || '-') + '</b></div>' +
           '<select onchange="onGapPriorityChange(this)" style="border:1px solid #e8edf5;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;background:#fff;cursor:pointer;outline:none;color:' + barColor + '">' +
             '<option value="高优先级" '+(priBar==='high'?'selected':'')+' style="color:#ff6b6b">高</option>' +
             '<option value="中优先级" '+(priBar==='medium'?'selected':'')+' style="color:#ffa94d">中</option>' +
             '<option value="低优先级" '+(priBar==='low'?'selected':'')+' style="color:#69db7c">低</option>' +
             '<option value="待澄清" '+(priBar==='pending'?'selected':'')+' style="color:#94a3b8">待</option>' +
           '</select>' +
-          '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px;flex-shrink:0" onclick="this.closest(\'.gap\').remove()">×</div>' +
+          '<div style="color:#98a2b3;font-size:14px;cursor:pointer;padding:4px;flex-shrink:0" onclick="deleteGap(this)">×</div>' +
         '</div>' +
         (whyNeed ? '<div style="font-size:12px;color:#64748b;line-height:1.5;padding:6px 12px;background:#f8fafc;border-radius:8px">💡 ' + esc(whyNeed) + '</div>' : '') +
       '</div>' +
@@ -4256,6 +4294,8 @@ function initGapDragDrop() {
         } else {
           gap.parentNode.insertBefore(dragged, gap);
         }
+        // 拖拽排序后保存
+        saveStep2Part2();
       }
     });
   });
@@ -5170,15 +5210,19 @@ function renderArtifacts() {
         } else {
           actions += '<button class="art-btn" onclick="doCreateNotesWecomDoc()">生成企微文档</button>';
         }
-      } else if (item.dataKey === 'step4_presales_versions' && Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0) {
-        // 售前解决方案（HTML）→ 预览 + 分享链接
-        actions += '<button class="art-btn" onclick="doPreviewLatestHtml()">预览</button>';
-        actions += '<button class="art-btn" onclick="generateHtmlPresales()">重新生成</button>';
-        if (c._step4_publish_url) {
-          actions += '<a class="art-btn success" href="' + c._step4_publish_url + '" target="_blank">🔗 分享链接</a>';
-          actions += '<button class="art-btn" onclick="copyToClipboard(\'' + (c._step4_publish_url || '') + '\')">复制链接</button>';
-        } else {
-          actions += '<button class="art-btn" onclick="doPreviewLatestHtml()">生成分享链接</button>';
+      } else if (item.dataKey === 'step4_presales_versions') {
+        // 售前解决方案（HTML）
+        if (item.pct === 0) {
+          actions += '<button class="art-btn" onclick="generateHtmlPresales()">生成售前解决方案</button>';
+        } else if (item.isGen) {
+          actions += '<button class="art-btn" disabled style="opacity:0.6">生成中…</button>';
+        } else if (Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0) {
+          // 生成完成后：分享链接 + 复制链接 + 再次生成
+          if (c._step4_publish_url) {
+            actions += '<a class="art-btn success" href="' + c._step4_publish_url + '" target="_blank">分享链接</a>';
+            actions += '<button class="art-btn" onclick="copyToClipboard(\'' + (c._step4_publish_url || '') + '\')">复制链接</button>';
+          }
+          actions += '<button class="art-btn" onclick="generateHtmlPresales()">再次生成</button>';
         }
       } else if (item.dataKey === 'step4_technical_versions' && Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0) {
         // 技术路线及报价方案（Word）→ 下载 + 重新生成
@@ -5928,11 +5972,6 @@ function logout() {
   }
   } // end finishInit
 })();
-
-// Chip toggle
-document.querySelectorAll('#s1-chips .chip').forEach(c => {
-  c.addEventListener('click', () => c.classList.toggle('active'));
-});
 
 // Auto-save on edit (debounced 2s)
 function enableAutoSave() {

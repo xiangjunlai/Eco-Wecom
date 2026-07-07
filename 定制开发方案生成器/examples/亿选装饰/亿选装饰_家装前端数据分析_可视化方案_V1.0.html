@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>亿选装饰 · 家装 · 前端数据分析 可视化方案 V1.0</title>
+<style>
+
+  :root {
+    --primary: #1E5AFF;
+    --primary-light: #3D7BFF;
+    --success: #00C853;
+    --warning: #FF6B35;
+    --danger: #E53935;
+    --text-1: #1A1A1A;
+    --text-2: #5A5A5A;
+    --text-3: #8A8A8A;
+    --border: #E5E7EB;
+    --bg-card: #FFFFFF;
+    --bg-page: #FAFBFC;
+    --bg-soft: #F7F8FA;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Source Han Sans CN", sans-serif;
+    background: var(--bg-page);
+    color: var(--text-1);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  /* 顶部导航 */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-weight: 800; color: var(--primary); font-size: 20px; }
+  .nav-meta { color: var(--text-2); font-size: 14px; }
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #1E5AFF 0%, #3D7BFF 100%);
+    color: #FFF;
+    padding: 96px 48px 80px;
+    text-align: center;
+  }
+  .hero h1 { font-size: 44px; font-weight: 800; margin-bottom: 16px; line-height: 1.2; }
+  .hero .sub { font-size: 20px; opacity: 0.9; margin-bottom: 32px; }
+  .hero .ctas { display: flex; gap: 16px; justify-content: center; }
+  .btn {
+    display: inline-block; padding: 14px 28px; border-radius: 8px;
+    font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-primary { background: #FFF; color: var(--primary); }
+  .btn-secondary { background: transparent; color: #FFF; border: 2px solid #FFF; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+  /* Section 通用 */
+  section { padding: 80px 48px; max-width: 1280px; margin: 0 auto; }
+  .section-title {
+    font-size: 32px; font-weight: 700; text-align: center; margin-bottom: 12px;
+  }
+  .section-sub { text-align: center; color: var(--text-2); margin-bottom: 48px; font-size: 16px; }
+  /* 痛点卡片 */
+  .pain-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+  }
+  .pain-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    transition: all 0.2s;
+  }
+  .pain-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
+  .pain-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: rgba(255,107,53,0.1); color: var(--warning);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; margin-bottom: 16px;
+  }
+  .pain-card h3 { font-size: 18px; margin-bottom: 8px; }
+  .pain-card p { color: var(--text-2); font-size: 14px; }
+  .pain-impact {
+    margin-top: 12px; padding: 8px 12px; background: var(--bg-soft);
+    border-radius: 6px; font-size: 13px; color: var(--warning);
+  }
+  /* 流程时间线 */
+  .timeline { display: flex; justify-content: space-between; align-items: flex-start; position: relative; }
+  .timeline::before {
+    content: ''; position: absolute; top: 24px; left: 5%; right: 5%;
+    height: 2px; background: var(--border); z-index: 0;
+  }
+  .timeline-node { text-align: center; flex: 1; position: relative; z-index: 1; }
+  .timeline-circle {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--primary); color: #FFF;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px; font-weight: 700;
+    box-shadow: 0 4px 12px rgba(30,90,255,0.3);
+  }
+  .timeline-circle.pain { background: var(--warning); box-shadow: 0 4px 12px rgba(255,107,53,0.3); }
+  .timeline-name { font-weight: 600; margin-bottom: 4px; }
+  .timeline-desc { font-size: 13px; color: var(--text-2); }
+  /* 角色泳道 */
+  .swimlane { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+  .swimlane-row { display: flex; border-bottom: 1px solid var(--border); }
+  .swimlane-row:last-child { border-bottom: none; }
+  .swimlane-role {
+    width: 120px; padding: 16px; background: var(--bg-soft);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; border-right: 1px solid var(--border);
+  }
+  .swimlane-track { flex: 1; padding: 12px; display: flex; gap: 8px; min-height: 80px; align-items: center; }
+  .swimlane-step {
+    padding: 8px 12px; background: var(--primary); color: #FFF;
+    border-radius: 6px; font-size: 13px;
+  }
+  .swimlane-step.pain { background: var(--warning); }
+  /* Mockup */
+  .mockup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+  .mockup {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; transition: all 0.2s;
+  }
+  .mockup:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
+  .mockup-header {
+    background: var(--bg-soft); padding: 10px 16px;
+    display: flex; gap: 6px; align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .mockup-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+  .mockup-dot.red { background: #FF5F57; }
+  .mockup-dot.yellow { background: #FFBD2E; }
+  .mockup-dot.green { background: #28C840; }
+  .mockup-body { padding: 16px; min-height: 200px; }
+  .mockup-title { font-weight: 600; margin-bottom: 12px; font-size: 14px; }
+  /* 表格视图 */
+  .table-view {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; margin-bottom: 16px;
+  }
+  .table-view-header {
+    background: var(--primary); color: #FFF; padding: 12px 16px; font-weight: 600;
+  }
+  .table-view table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .table-view th { background: var(--bg-soft); padding: 8px 12px; text-align: left; font-weight: 600; }
+  .table-view td { padding: 8px 12px; border-top: 1px solid var(--border); }
+  .status-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px;
+  }
+  .status-done { background: #E5F7EC; color: var(--success); }
+  .status-doing { background: #FFF4E5; color: var(--warning); }
+  .status-pending { background: #E5E7EB; color: var(--text-2); }
+  /* KPI 看板 */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .kpi-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px;
+  }
+  .kpi-label { color: var(--text-2); font-size: 13px; margin-bottom: 8px; }
+  .kpi-value { font-size: 32px; font-weight: 800; color: var(--primary); }
+  .kpi-target { color: var(--text-3); font-size: 12px; margin-top: 4px; }
+  .kpi-target span { color: var(--success); }
+  /* 甘特图 */
+  .gantt { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; overflow-x: auto; }
+  .gantt-row { display: flex; align-items: center; margin-bottom: 8px; }
+  .gantt-label { width: 100px; font-size: 13px; }
+  .gantt-bar { height: 24px; border-radius: 4px; background: var(--primary); }
+  .gantt-weeks { display: flex; gap: 2px; }
+  .gantt-week { width: 40px; height: 24px; border: 1px dashed var(--border); }
+  /* CTA */
+  .cta-section {
+    background: linear-gradient(135deg, #1E5AFF 0%, #3D7BFF 100%);
+    color: #FFF; padding: 80px 48px; text-align: center;
+  }
+  .cta-section h2 { font-size: 36px; margin-bottom: 16px; }
+  .cta-section p { font-size: 18px; opacity: 0.9; margin-bottom: 32px; }
+  /* Footer */
+  footer {
+    background: #1A1A1A; color: #999; padding: 32px 48px; text-align: center; font-size: 13px;
+  }
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .hero { padding: 64px 24px 48px; }
+    .hero h1 { font-size: 28px; }
+    section { padding: 48px 24px; }
+    .nav { padding: 12px 24px; }
+    .timeline { flex-direction: column; gap: 24px; }
+    .timeline::before { display: none; }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- 导航 -->
+<div class="nav">
+  <div class="logo">杭州装企云网络科技有限公司</div>
+  <div class="nav-meta">亿选装饰 · 家装 · V1.0</div>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>家装 · 前端数据分析<br>一站式智能化解决方案</h1>
+  <p class="sub">帮助 亿选装饰 解决 <strong>5</strong> 个核心痛点 · 实现 <strong>前端数据一屏掌控 + 决策从经验走向数据</strong></p>
+  <div class="ctas">
+    <a href="#pain" class="btn btn-primary">查看痛点分析</a>
+    <a href="#solution" class="btn btn-secondary">了解方案</a>
+  </div>
+</div>
+
+<!-- 痛点 -->
+<section id="pain">
+  <h2 class="section-title">客户核心痛点</h2>
+  <p class="section-sub">基于 1 次需求沟通，提炼出的 5 个最关键问题</p>
+  <div class="pain-grid">
+
+    <div class="pain-card">
+      <div class="pain-icon">1</div>
+      <h3>客户来源散落多平台</h3>
+      <p>巨量、百度、美团、小程序、线下门店、客服会话等线索分散在 6+ 系统，无法统一沉淀</p>
+      <div class="pain-impact">📉 30% 线索因跟进不及时流失</div>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">2</div>
+      <h3>客户画像严重缺失</h3>
+      <p>业主信息只存 Excel，面积/户型/预算/风格全靠销售口头描述，无结构化数据支撑精准营销</p>
+      <div class="pain-impact">📉 复购率仅 8%，远低于行业 20%</div>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">3</div>
+      <h3>漏斗转化不清晰</h3>
+      <p>咨询→量房→报价→签约→施工→竣工各阶段无统一看板，无法定位流失环节</p>
+      <div class="pain-impact">📉 签约转化率 12%，有 8% 提升空间</div>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">4</div>
+      <h3>工地进度不透明</h3>
+      <p>47 个在施工地分散在贵阳/遵义/六盘水等 8 个区域，业主无法实时查看进度</p>
+      <div class="pain-impact">📉 业主投诉率 18%，口碑转介率下滑</div>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">5</div>
+      <h3>经营决策靠经验</h3>
+      <p>老板拍脑袋定投放预算/选区域/排工期，缺数据支撑，月度营收波动 ±20%</p>
+      <div class="pain-impact">📉 投放 ROI 仅 1.8，决策周期 2 周+</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 流程时间线 -->
+<section>
+  <h2 class="section-title">前端数据分析端到端流程</h2>
+  <p class="section-sub">红色节点表示当前痛点集中的环节</p>
+  <div class="timeline">
+
+    <div class="timeline-node">
+      <div class="timeline-circle">1</div>
+      <div class="timeline-name">线索登记</div>
+      <div class="timeline-desc">广告/客服/到店</div>
+    </div>
+    <div class="timeline-node">
+      <div class="timeline-circle pain">2</div>
+      <div class="timeline-name">来源打标</div>
+      <div class="timeline-desc">运营 · ⚠ P1 痛点</div>
+    </div>
+    <div class="timeline-node">
+      <div class="timeline-circle">3</div>
+      <div class="timeline-name">量房</div>
+      <div class="timeline-desc">设计师+业主</div>
+    </div>
+    <div class="timeline-node">
+      <div class="timeline-circle pain">4</div>
+      <div class="timeline-name">报价签约</div>
+      <div class="timeline-desc">销售+业主 · ⚠ P1</div>
+    </div>
+    <div class="timeline-node">
+      <div class="timeline-circle pain">5</div>
+      <div class="timeline-name">施工</div>
+      <div class="timeline-desc">工长+项目经理 · ⚠ P2</div>
+    </div>
+    <div class="timeline-node">
+      <div class="timeline-circle">6</div>
+      <div class="timeline-name">竣工</div>
+      <div class="timeline-desc">业主+工程部</div>
+    </div>
+    <div class="timeline-node">
+      <div class="timeline-circle pain">7</div>
+      <div class="timeline-name">复购转介</div>
+      <div class="timeline-desc">运营+全员 · ⚠ P2</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 角色泳道 -->
+<section>
+  <h2 class="section-title">角色协同</h2>
+  <p class="section-sub">各角色在流程中的责任分工（橙色为痛点集中环节）</p>
+  <div class="swimlane">
+
+    <div class="swimlane-row">
+      <div class="swimlane-role">业主</div>
+      <div class="swimlane-track">
+        <div class="swimlane-step">咨询</div>
+        <div class="swimlane-step pain">量房</div>
+        <div class="swimlane-step">报价</div>
+        <div class="swimlane-step pain">看工地</div>
+        <div class="swimlane-step">付款</div>
+        <div class="swimlane-step">验收</div>
+      </div>
+    </div>
+    <div class="swimlane-row">
+      <div class="swimlane-role">销售</div>
+      <div class="swimlane-track">
+        <div class="swimlane-step pain">线索跟进</div>
+        <div class="swimlane-step pain">客户打标</div>
+        <div class="swimlane-step">报价谈判</div>
+        <div class="swimlane-step">签约回款</div>
+      </div>
+    </div>
+    <div class="swimlane-row">
+      <div class="swimlane-role">设计师</div>
+      <div class="swimlane-track">
+        <div class="swimlane-step">预约</div>
+        <div class="swimlane-step pain">量房</div>
+        <div class="swimlane-step">出方案</div>
+        <div class="swimlane-step">施工图</div>
+      </div>
+    </div>
+    <div class="swimlane-row">
+      <div class="swimlane-role">工长</div>
+      <div class="swimlane-track">
+        <div class="swimlane-step">开工准备</div>
+        <div class="swimlane-step pain">拆改/水电</div>
+        <div class="swimlane-step pain">泥木/油漆</div>
+        <div class="swimlane-step">软装</div>
+        <div class="swimlane-step pain">验收交付</div>
+      </div>
+    </div>
+    <div class="swimlane-row">
+      <div class="swimlane-role">运营</div>
+      <div class="swimlane-track">
+        <div class="swimlane-step pain">数据源接入</div>
+        <div class="swimlane-step">维度配置</div>
+        <div class="swimlane-step">报表分发</div>
+        <div class="swimlane-step">周会</div>
+      </div>
+    </div>
+    <div class="swimlane-row">
+      <div class="swimlane-role">财务</div>
+      <div class="swimlane-track">
+        <div class="swimlane-step">收款</div>
+        <div class="swimlane-step pain">分阶段对账</div>
+        <div class="swimlane-step">开票</div>
+        <div class="swimlane-step">成本归集</div>
+      </div>
+    </div>
+    <div class="swimlane-row">
+      <div class="swimlane-role">老板</div>
+      <div class="swimlane-track">
+        <div class="swimlane-step" style="background:#5A5A5A;">查看看板</div>
+        <div class="swimlane-step" style="background:#5A5A5A;">投放决策</div>
+        <div class="swimlane-step" style="background:#5A5A5A;">异常介入</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 页面 mockup -->
+<section id="solution">
+  <h2 class="section-title">核心功能展示</h2>
+  <p class="section-sub">企微工作台 + 智能表格 + 数据看板</p>
+  <div class="mockup-grid">
+
+    <div class="mockup">
+      <div class="mockup-header">
+        <div class="mockup-dot red"></div>
+        <div class="mockup-dot yellow"></div>
+        <div class="mockup-dot green"></div>
+        <span style="margin-left:8px; font-size:12px; color:#8A8A8A;">数据驾驶舱 · 企微工作台</span>
+      </div>
+      <div class="mockup-body">
+        <div class="mockup-title">📊 家装前端数据驾驶舱</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:12px;">
+          <div style="background:#F7F8FA; padding:6px; border-radius:6px; text-align:center;">
+            <div style="color:#8A8A8A; font-size:10px;">在施工地</div>
+            <div style="color:#1E5AFF; font-size:18px; font-weight:700;">127</div>
+          </div>
+          <div style="background:#F7F8FA; padding:6px; border-radius:6px; text-align:center;">
+            <div style="color:#8A8A8A; font-size:10px;">待签约</div>
+            <div style="color:#FF6B35; font-size:18px; font-weight:700;">34</div>
+          </div>
+          <div style="background:#F7F8FA; padding:6px; border-radius:6px; text-align:center;">
+            <div style="color:#8A8A8A; font-size:10px;">异常工地</div>
+            <div style="color:#E53935; font-size:18px; font-weight:700;">5</div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:#5A5A5A;">6 大 KPI · 状态分布 · 工地预警 一屏掌握</p>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">
+        <div class="mockup-dot red"></div>
+        <div class="mockup-dot yellow"></div>
+        <div class="mockup-dot green"></div>
+        <span style="margin-left:8px; font-size:12px; color:#8A8A8A;">数据源管理 · 企微智能表格</span>
+      </div>
+      <div class="mockup-body">
+        <div class="mockup-title">🔌 数据源接入</div>
+        <table style="width:100%; font-size:11px; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#1E5AFF; color:#FFF;">
+              <th style="padding:4px;">数据源</th><th style="padding:4px;">类型</th><th style="padding:4px;">状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:4px;">巨量引擎</td><td>广告投放</td><td><span style="color:#00C853; font-weight:700;">✅ 正常</span></td></tr>
+            <tr style="background:#FFF4E5;"><td style="padding:4px;">美团/大众点评</td><td>本地生活</td><td><span style="color:#00C853; font-weight:700;">✅ 正常</span></td></tr>
+            <tr style="background:#FFE5E5;"><td style="padding:4px;">线下到店登记</td><td>门店</td><td><span style="color:#FF6B35; font-weight:700;">⚠ 滞后</span></td></tr>
+            <tr><td style="padding:4px;">金蝶云财务</td><td>财务</td><td><span style="color:#00C853; font-weight:700;">✅ 正常</span></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:12px; color:#5A5A5A; margin-top:8px;">10 类数据源自动/手工同步，状态实时</p>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">
+        <div class="mockup-dot red"></div>
+        <div class="mockup-dot yellow"></div>
+        <div class="mockup-dot green"></div>
+        <span style="margin-left:8px; font-size:12px; color:#8A8A8A;">维度配置 · 智能表格</span>
+      </div>
+      <div class="mockup-body">
+        <div class="mockup-title">⚙️ 分析维度</div>
+        <div style="font-size:12px;">
+          <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #E5E7EB;">
+            <span style="background:#E5F7EC; color:#00C853; padding:1px 6px; border-radius:3px; font-size:10px;">默认</span>
+            <span style="flex:1;">客户来源</span>
+            <span style="color:#8A8A8A; font-size:10px;">投放 ROI</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #E5E7EB;">
+            <span style="background:#E5F7EC; color:#00C853; padding:1px 6px; border-radius:3px; font-size:10px;">默认</span>
+            <span style="flex:1;">户型 / 面积段</span>
+            <span style="color:#8A8A8A; font-size:10px;">客单价分层</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #E5E7EB;">
+            <span style="background:#E5F7EC; color:#00C853; padding:1px 6px; border-radius:3px; font-size:10px;">默认</span>
+            <span style="flex:1;">工期 / 阶段</span>
+            <span style="color:#8A8A8A; font-size:10px;">漏斗分析</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; padding:6px 0;">
+            <span style="background:#F7F8FA; color:#8A8A8A; padding:1px 6px; border-radius:3px; font-size:10px;">可选</span>
+            <span style="flex:1;">流失原因</span>
+            <span style="color:#8A8A8A; font-size:10px;">流失分析</span>
+          </div>
+        </div>
+        <p style="font-size:12px; color:#5A5A5A; margin-top:8px;">12 个维度随需启用，灵活组合</p>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">
+        <div class="mockup-dot red"></div>
+        <div class="mockup-dot yellow"></div>
+        <div class="mockup-dot green"></div>
+        <span style="margin-left:8px; font-size:12px; color:#8A8A8A;">工地管理 · 智能表格</span>
+      </div>
+      <div class="mockup-body">
+        <div class="mockup-title">🏗️ 工地实时跟踪</div>
+        <div style="font-size:12px;">
+          <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #E5E7EB;">
+            <span style="width:8px; height:8px; border-radius:50%; background:#00C853;"></span>
+            <span style="flex:1;">GZ-2026-038 · 王女士/云岩</span>
+            <span style="color:#00C853; font-size:11px;">施工中 75%</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #E5E7EB; background:#FFE5E5;">
+            <span style="width:8px; height:8px; border-radius:50%; background:#E53935;"></span>
+            <span style="flex:1;">GZ-2026-029 · 陈女士/南明</span>
+            <span style="color:#E53935; font-size:11px; font-weight:700;">油漆超期 7 天</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #E5E7EB;">
+            <span style="width:8px; height:8px; border-radius:50%; background:#FF6B35;"></span>
+            <span style="flex:1;">GZ-2026-045 · 张总/遵义</span>
+            <span style="color:#FF6B35; font-size:11px;">泥木待验收</span>
+          </div>
+        </div>
+        <p style="font-size:12px; color:#5A5A5A; margin-top:8px;">8 个区域、47 个工地、阶段/进度/异常一表管</p>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">
+        <div class="mockup-dot red"></div>
+        <div class="mockup-dot yellow"></div>
+        <div class="mockup-dot green"></div>
+        <span style="margin-left:8px; font-size:12px; color:#8A8A8A;">客户档案 · 智能表格</span>
+      </div>
+      <div class="mockup-body">
+        <div class="mockup-title">👥 业主画像</div>
+        <div style="font-size:12px;">
+          <div style="padding:8px; background:#F7F8FA; border-radius:6px; margin-bottom:6px;">
+            <div style="font-weight:600;">王女士 <span style="background:#E5F7EC; color:#00C853; font-size:10px; padding:1px 6px; border-radius:3px; margin-left:4px;">A 级</span></div>
+            <div style="color:#8A8A8A; font-size:11px;">140m²三室 · 28万 · 贵阳云岩</div>
+          </div>
+          <div style="padding:8px; background:#F7F8FA; border-radius:6px; margin-bottom:6px;">
+            <div style="font-weight:600;">张总 <span style="background:#E5F7EC; color:#00C853; font-size:10px; padding:1px 6px; border-radius:3px; margin-left:4px;">A 级</span></div>
+            <div style="color:#8A8A8A; font-size:11px;">260m²别墅 · 85万 · 复购</div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:#5A5A5A; margin-top:8px;">结构化画像 + 复购/转介标识</p>
+      </div>
+    </div>
+    <div class="mockup">
+      <div class="mockup-header">
+        <div class="mockup-dot red"></div>
+        <div class="mockup-dot yellow"></div>
+        <div class="mockup-dot green"></div>
+        <span style="margin-left:8px; font-size:12px; color:#8A8A8A;">趋势分析 · 智能表格</span>
+      </div>
+      <div class="mockup-body">
+        <div class="mockup-title">📈 月度趋势</div>
+        <table style="width:100%; font-size:11px; border-collapse:collapse;">
+          <tr style="background:#F7F8FA;"><td style="padding:4px;">2026-01</td><td style="padding:4px; text-align:right;">12 单</td><td style="padding:4px; text-align:right; color:#8A8A8A;">28 万</td></tr>
+          <tr><td style="padding:4px;">2026-02</td><td style="padding:4px; text-align:right;">15 单</td><td style="padding:4px; text-align:right; color:#8A8A8A;">32 万</td></tr>
+          <tr style="background:#F7F8FA;"><td style="padding:4px;">2026-03</td><td style="padding:4px; text-align:right;">18 单</td><td style="padding:4px; text-align:right; color:#8A8A8A;">42 万</td></tr>
+          <tr><td style="padding:4px;">2026-04</td><td style="padding:4px; text-align:right;">22 单</td><td style="padding:4px; text-align:right; color:#8A8A8A;">58 万</td></tr>
+          <tr style="background:#FFF4E5;"><td style="padding:4px;">2026-05</td><td style="padding:4px; text-align:right; font-weight:700;">28 单</td><td style="padding:4px; text-align:right; font-weight:700; color:#FF6B35;">186 万</td></tr>
+        </table>
+        <p style="font-size:12px; color:#5A5A5A; margin-top:8px;">线索/营收/签约/流失 一图全览</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 表格视图 -->
+<section>
+  <h2 class="section-title">智能表格设计</h2>
+  <p class="section-sub">7 个 Sheet 覆盖业务全流程</p>
+
+    <div class="table-view">
+      <div class="table-view-header">🔌 数据源管理 · 主配置表</div>
+      <table>
+        <thead>
+          <tr><th>数据源</th><th>类型</th><th>频率</th><th>字段数</th><th>状态</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>巨量引擎投放后台</td><td>广告投放</td><td>每小时</td><td>18</td><td><span class="status-tag status-done">✅ 正常</span></td></tr>
+          <tr><td>美团/大众点评</td><td>本地生活</td><td>每日</td><td>9</td><td><span class="status-tag status-done">✅ 正常</span></td></tr>
+          <tr><td>微信客服会话</td><td>在线咨询</td><td>实时</td><td>11</td><td><span class="status-tag status-done">✅ 正常</span></td></tr>
+          <tr><td>线下到店登记</td><td>门店</td><td>每日</td><td>12</td><td><span class="status-tag status-doing">⚠ 滞后</span></td></tr>
+          <tr><td>金蝶云财务</td><td>财务</td><td>实时</td><td>7</td><td><span class="status-tag status-done">✅ 正常</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-view">
+      <div class="table-view-header">🏗️ 工地管理 · 核心业务表</div>
+      <table>
+        <thead>
+          <tr><th>工地编号</th><th>客户/区域</th><th>阶段</th><th>进度</th><th>状态</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>GZ-2026-038</td><td>王女士/云岩</td><td>泥木</td><td>75%</td><td><span class="status-tag status-doing">施工中</span></td></tr>
+          <tr><td>GZ-2026-029</td><td>陈女士/南明</td><td>油漆</td><td>85%</td><td><span class="status-tag status-pending">超期 7 天</span></td></tr>
+          <tr><td>GZ-2026-045</td><td>张总/遵义</td><td>泥木</td><td>90%</td><td><span class="status-tag status-doing">待验收</span></td></tr>
+          <tr><td>GZ-2026-033</td><td>赵女士/花溪</td><td>软装</td><td>60%</td><td><span class="status-tag status-doing">施工中</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-view">
+      <div class="table-view-header">👥 客户档案 · 主数据表</div>
+      <table>
+        <thead>
+          <tr><th>客户</th><th>区域</th><th>户型</th><th>金额</th><th>等级</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>王女士</td><td>贵阳云岩</td><td>140m²三室</td><td>¥ 280,000</td><td><span class="status-tag status-done">A</span></td></tr>
+          <tr><td>张总</td><td>遵义</td><td>260m²别墅</td><td>¥ 850,000</td><td><span class="status-tag status-done">A</span></td></tr>
+          <tr><td>陈女士</td><td>贵阳南明</td><td>95m²两室</td><td>¥ 165,000</td><td><span class="status-tag status-doing">B</span></td></tr>
+          <tr><td>周总</td><td>安顺</td><td>320m²别墅</td><td>¥ 1,200,000</td><td><span class="status-tag status-done">A</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+</section>
+
+<!-- 价值 KPI -->
+<section>
+  <h2 class="section-title">预期价值</h2>
+  <p class="section-sub">基于行业基准与贵司现状估算</p>
+  <div class="kpi-grid">
+
+    <div class="kpi-card">
+      <div class="kpi-label">线索转化率</div>
+      <div class="kpi-value">+30%</div>
+      <div class="kpi-target">目标 <span>+25%</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">数据归集人力</div>
+      <div class="kpi-value">-1.5 FTE</div>
+      <div class="kpi-target">目标 <span>-1 FTE</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">工地投诉率</div>
+      <div class="kpi-value">-60%</div>
+      <div class="kpi-target">目标 <span>-50%</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">决策周期</div>
+      <div class="kpi-value">2 天</div>
+      <div class="kpi-target">当前 <span>14 天</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 实施计划 -->
+<section>
+  <h2 class="section-title">实施计划</h2>
+  <p class="section-sub">6 周交付，预计 2026-07 上线</p>
+  <div class="gantt">
+
+    <div class="gantt-row">
+      <div class="gantt-label">需求确认</div>
+      <div class="gantt-weeks">
+        <div class="gantt-week" style="background:#1E5AFF;"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="gantt-label">原型设计</div>
+      <div class="gantt-weeks">
+        <div class="gantt-week"></div>
+        <div class="gantt-week" style="background:#3D7BFF;"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="gantt-label">开发实施</div>
+      <div class="gantt-weeks">
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week" style="background:#00C853;"></div>
+        <div class="gantt-week" style="background:#00C853;"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="gantt-label">测试验证</div>
+      <div class="gantt-weeks">
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week" style="background:#FF6B35;"></div>
+        <div class="gantt-week"></div>
+      </div>
+    </div>
+    <div class="gantt-row">
+      <div class="gantt-label">上线培训</div>
+      <div class="gantt-weeks">
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week"></div>
+        <div class="gantt-week" style="background:#1A1A1A;"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section">
+  <h2>下一步</h2>
+  <p>请于 3 个工作日内反馈确认，我们即可启动开发</p>
+  <a href="mailto:contact@example.com" class="btn btn-primary">联系我们</a>
+</div>
+
+<footer>
+  © 杭州装企云网络科技有限公司 · V1.0 · 2026-05-22
+</footer>
+
+</body>
+</html>

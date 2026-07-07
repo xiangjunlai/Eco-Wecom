@@ -105,6 +105,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 def require_auth(user: dict = Depends(get_current_user)) -> dict:
     if not user or "sub" not in user:
         raise HTTPException(status_code=401, detail="请先登录")
+    # 测试账号 devuser 可以跨用户查看所有客户
+    if user.get("username") == "devuser":
+        user["is_test_user"] = True
     return user
 
 def validate_invitation_code(code: str, provider_name: str = None) -> tuple:

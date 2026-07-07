@@ -247,6 +247,7 @@ def init_db_legacy():
         "admin_note_step4 TEXT",
         "admin_note_step5 TEXT",
         "ai_call_count INTEGER DEFAULT 0",
+        "token_count INTEGER DEFAULT 0",
     ]:
         col_name = col_def.split()[0]
         try:

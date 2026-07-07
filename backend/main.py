@@ -5,6 +5,8 @@ Provider Assist 后端API - FastAPI
 import os
 import json
 import re
+import zipfile
+import io
 from pathlib import Path
 from string import Template
 from datetime import datetime
@@ -12,7 +14,7 @@ from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 
 from database import get_db, init_db, init_kb_db
 from auth import (
@@ -77,8 +79,9 @@ def extract_mcp(mcp_resp: dict):
 
 MINIMAX_API_KEY = "sk-cp-FxfZUSUHnTWn7eCtl1V-5CI1jFpfF3XLI0jxHZJ7U0p16_cea_FTQqxOaOYavdfwiS9DDN4pomf4CxLZlQYqIyvJJK_eaKR7tbh4d77_1dGK8DwQtwwjLDc"
 
-def call_minimax(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -> str:
-    """调用 MiniMax API，300秒超时，最多一次重试"""
+def call_minimax(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -> dict:
+    """调用 MiniMax API，300秒超时，最多一次重试
+    返回 {"content": str, "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}"""
     import httpx
 
     def _do_request():
@@ -100,20 +103,43 @@ def call_minimax(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -
             timeout=httpx.Timeout(300.0, connect=15.0)
         )
         result = response.json()
-        return result["choices"][0]["message"]["content"]
+        content = result["choices"][0]["message"]["content"]
+        # 提取 usage（MiniMax 返回结构）
+        usage = result.get("usage", {}) or {}
+        return {
+            "content": content,
+            "usage": {
+                "prompt_tokens": usage.get("prompt_tokens", 0) or 0,
+                "completion_tokens": usage.get("completion_tokens", 0) or 0,
+                "total_tokens": usage.get("total_tokens", 0) or 0,
+            }
+        }
 
     try:
         return _do_request()
     except httpx.TimeoutException:
-        # 重试一次
         try:
             return _do_request()
         except httpx.TimeoutException:
-            return "Error: MiniMax API 请求超时（300秒），请稍后重试"
+            return {"content": "Error: MiniMax API 请求超时（300秒），请稍后重试", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
         except Exception as e:
-            return f"Error: {str(e)}"
+            return {"content": f"Error: {str(e)}", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
     except Exception as e:
-        return f"Error: {str(e)}"
+        return {"content": f"Error: {str(e)}", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
+
+
+def record_ai_tokens(client_id: int, tokens: int):
+    """将 AI 消耗的 token 数累加到客户的 token_count"""
+    if not client_id or not tokens:
+        return
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE clients SET token_count = COALESCE(token_count, 0) + ? WHERE id = ?", (tokens, client_id))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
 
 
 app = FastAPI(title="Provider Assist API", version="1.0.0")
@@ -600,23 +626,53 @@ async def admin_stats(user: dict = Depends(require_auth)):
     # 服务商平均客户数
     avg_clients = round(total_clients / total_users, 1) if total_users > 0 else 0
 
-    # AI 调用相关
+    # AI 调用相关（改用 token_count）
     cursor.execute("""
         SELECT
             COUNT(*) as ai_calls,
-            SUM(COALESCE(ai_call_count, 0)) as total_tokens
+            SUM(COALESCE(token_count, 0)) as total_tokens
         FROM clients
-        WHERE step4_report IS NOT NULL OR step5_schema IS NOT NULL
+        WHERE token_count > 0
     """)
     ai_row = cursor.fetchone()
     total_ai_calls = ai_row["ai_calls"] or 0
     total_tokens = ai_row["total_tokens"] or 0
 
-    # Step 完成率
+    # Step S1-S5 漏斗（真实数量）
+    cursor.execute("SELECT COUNT(*) FROM clients WHERE step1_result IS NOT NULL AND step1_result != ''")
+    s1_count = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM clients WHERE step2_report IS NOT NULL AND step2_report != ''")
+    s2_count = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM clients WHERE step3_summary IS NOT NULL AND step3_summary != ''")
-    step3_count = cursor.fetchone()[0]
+    s3_count = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM clients WHERE step4_input_draft IS NOT NULL AND step4_input_draft != ''")
+    s4_count = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM clients WHERE step5_schema IS NOT NULL AND step5_schema != ''")
-    step5_count = cursor.fetchone()[0]
+    s5_count = cursor.fetchone()[0]
+
+    # 按服务商 Token 排行
+    cursor.execute("""
+        SELECT u.provider_name,
+               SUM(COALESCE(c.token_count, 0)) as tokens,
+               COUNT(c.id) as client_count
+        FROM clients c JOIN users u ON c.user_id = u.id
+        WHERE c.token_count > 0
+        GROUP BY u.provider_name
+        ORDER BY tokens DESC
+        LIMIT 10
+    """)
+    provider_rank = [dict(r) for r in cursor.fetchall()]
+
+    # 按客户 Token 排行（只看有消耗的）
+    cursor.execute("""
+        SELECT c.id, c.name, u.provider_name,
+               COALESCE(c.token_count, 0) as tokens
+        FROM clients c JOIN users u ON c.user_id = u.id
+        WHERE c.token_count > 0
+        ORDER BY tokens DESC
+        LIMIT 10
+    """)
+    client_rank = [dict(r) for r in cursor.fetchall()]
 
     conn.close()
     return {
@@ -629,15 +685,18 @@ async def admin_stats(user: dict = Depends(require_auth)):
             "registered": total_users,
             "clients": total_clients,
             "completed": completed,
+            "s1": s1_count,
+            "s2": s2_count,
+            "s3": s3_count,
+            "s4": s4_count,
+            "s5": s5_count,
         },
         "active_clients_7d": active_7d,
         "clients_per_provider_avg": avg_clients,
         "total_ai_calls": total_ai_calls,
         "total_tokens": total_tokens,
-        "step_completion": {
-            "step3": round(step3_count / total_clients * 100) if total_clients > 0 else 0,
-            "step5": round(step5_count / total_clients * 100) if total_clients > 0 else 0,
-        },
+        "provider_ai_rank": provider_rank,
+        "client_ai_rank": client_rank,
     }
 
 @app.get("/api/admin/users")
@@ -680,18 +739,20 @@ async def admin_delete_user(uid: int, user: dict = Depends(require_auth)):
 
 @app.get("/api/admin/clients")
 async def admin_list_clients(user: dict = Depends(require_auth)):
-    """所有客户列表（完整字段）"""
+    """客户列表（不含大字段，速度快）"""
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
         SELECT c.id, c.name, c.industry, c.status, c.created_at, c.updated_at,
                c.user_id, c.is_completed, c.is_saved,
                c.step1_result, c.step2_report, c.step3_summary,
-               c.step4_report, c.step4_presales, c.step4_technical,
-               c.step4_presales_versions, c.step4_technical_versions,
-               c.step5_schema, c.step5_agent_suggestions,
-               c.admin_note_step1, c.admin_note_step2, c.admin_note_step3,
-               c.admin_note_step4, c.admin_note_step5,
+               c.step4_input_draft, c.step5_schema, c.step5_agent_suggestions,
+               c.scale, c.tags, c.initial_demand,
+               (c.step1_result IS NOT NULL AND c.step1_result != '') AS has_step1,
+               (c.step2_report IS NOT NULL AND c.step2_report != '') AS has_step2,
+               ((c.step3_summary IS NOT NULL AND c.step3_summary != '') OR (c.uploaded_files IS NOT NULL AND c.uploaded_files != '')) AS has_step3,
+               ((c.step4_presales_versions IS NOT NULL AND c.step4_presales_versions != '') OR (c.step4_technical_versions IS NOT NULL AND c.step4_technical_versions != '') OR (c.step4_input_draft IS NOT NULL AND c.step4_input_draft != '')) AS has_step4,
+               (c.step5_schema IS NOT NULL AND c.step5_schema != '') AS has_step5,
                u.provider_name
         FROM clients c JOIN users u ON c.user_id = u.id
         ORDER BY c.id DESC LIMIT 500
@@ -709,31 +770,244 @@ async def admin_list_clients(user: dict = Depends(require_auth)):
         "is_completed": bool(r["is_completed"]),
         "is_saved": bool(r["is_saved"]),
         "provider_name": r["provider_name"],
-        "step1_data": r["step1_result"] or "",
-        "step2_data": r["step2_report"] or "",
-        "step3_data": r["step3_summary"] or "",
+        "scale": r["scale"] or "",
+        "tags": r["tags"] or "",
+        "initial_demand": r["initial_demand"] or "",
+        "hasStep1": bool(r["has_step1"]),
+        "hasStep2": bool(r["has_step2"]),
+        "hasStep3": bool(r["has_step3"]),
+        "hasStep4": bool(r["has_step4"]),
+        "hasStep5": bool(r["has_step5"]),
+        # 大字段：空字符串占位，详情从 /api/admin/clients/{id} 获取
+        "step1_result": r["step1_result"] or "",
+        "step2_report": r["step2_report"] or "",
         "step3_summary": r["step3_summary"] or "",
-        "step4_report": r["step4_report"] or "",
-        "step4_presales_content": r["step4_presales"] or "",
-        "step4_presales_versions": r["step4_presales_versions"] or "",
-        "step4_technical_content": r["step4_technical"] or "",
-        "step4_technical_versions": r["step4_technical_versions"] or "",
+        "step4_input_draft": r["step4_input_draft"] or "",
         "step5_schema": r["step5_schema"] or "",
-        "step5_demo_content": r["step5_agent_suggestions"] or "",
-        "admin_note_step1": r["admin_note_step1"] or "",
-        "admin_note_step2": r["admin_note_step2"] or "",
-        "admin_note_step3": r["admin_note_step3"] or "",
-        "admin_note_step4": r["admin_note_step4"] or "",
-        "admin_note_step5": r["admin_note_step5"] or "",
+        "step5_agent_suggestions": r["step5_agent_suggestions"] or "",
     } for r in rows]
+
+
+@app.get("/api/admin/clients/{client_id}")
+async def admin_get_client(client_id: int, user: dict = Depends(require_auth)):
+    """客户详情（含所有大字段）"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT c.*, u.provider_name
+        FROM clients c JOIN users u ON c.user_id = u.id
+        WHERE c.id = ?
+    """, (client_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return {"error": "客户不存在"}
+    return {k: (v or "") for k, v in dict(row).items()}
+
+
+@app.get("/api/admin/kb/files/{file_id}/download")
+async def admin_download_kb_file(file_id: str, user: dict = Depends(require_auth)):
+    """管理员下载任意知识库文件（不受 user_id 限制）"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT filepath, original_filename FROM kb_files WHERE id = ?",
+        (file_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="文件不存在")
+    filepath = row["filepath"]
+    filename = row["original_filename"]
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="文件不存在")
+    return FileResponse(filepath, filename=filename, media_type="application/octet-stream")
+
+
+@app.get("/api/admin/kb/files/{file_id}/content")
+async def admin_get_kb_file_content(file_id: str, user: dict = Depends(require_auth)):
+    """获取 KB 文件内容（用于预览）"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT filepath, original_filename FROM kb_files WHERE id = ?",
+        (file_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="文件不存在")
+    filepath = row["filepath"]
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="文件不存在")
+    # Try to read as text
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return {"content": content, "filename": row["original_filename"]}
+    except:
+        raise HTTPException(status_code=422, detail="该文件不支持预览")
+
+
+@app.delete("/api/admin/kb/files/{file_id}")
+async def admin_delete_kb_file(file_id: str, user: dict = Depends(require_auth)):
+    """删除 KB 文件"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, filepath FROM kb_files WHERE id = ?", (file_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="文件不存在")
+    cursor.execute("DELETE FROM kb_files WHERE id = ?", (file_id,))
+    conn.commit()
+    conn.close()
+    # Optionally delete the physical file
+    # os.remove(row["filepath"])  # 保留原文件，只删数据库记录
+    return {"success": True}
+
+
+@app.patch("/api/admin/kb/files/{file_id}")
+async def admin_rename_kb_file(file_id: str, display_name: str = Form(...), user: dict = Depends(require_auth)):
+    """重命名 KB 文件"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM kb_files WHERE id = ?", (file_id,))
+    if not cursor.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="文件不存在")
+    cursor.execute("UPDATE kb_files SET display_name = ? WHERE id = ?", (display_name, file_id))
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+
+@app.get("/api/admin/kb/providers/{provider_name}/download-all")
+async def admin_download_provider_kb(provider_name: str, user: dict = Depends(require_auth)):
+    """管理员一键下载指定服务商的所有知识库文件（打包成zip）"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT k.filepath, k.original_filename, k.display_name, k.category,
+               k.industry, k.created_at, u.provider_name
+        FROM kb_files k
+        JOIN users u ON k.user_id = u.id
+        WHERE u.provider_name = ?
+        ORDER BY k.created_at DESC
+    """, (provider_name,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="该服务商暂无知识库文件")
+
+    # Create zip in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for row in rows:
+            filepath = row["filepath"]
+            original_filename = row["original_filename"] or "未命名"
+            if os.path.exists(filepath):
+                # Read file content and add to zip
+                with open(filepath, 'rb') as f:
+                    file_data = f.read()
+                # Use display_name if available, otherwise original filename
+                display_name = row["display_name"] or original_filename
+                # Preserve original extension
+                ext = os.path.splitext(original_filename)[1]
+                if ext and not display_name.endswith(ext):
+                    display_name += ext
+                # Ensure filename is ASCII-safe for zip compatibility
+                safe_name = str(display_name).encode('ascii', 'replace').decode('ascii')
+                zf.writestr(safe_name, file_data)
+            else:
+                # File missing on disk — add a placeholder text file
+                placeholder = f"【提示】原始文件已丢失: {original_filename}\n路径: {filepath}"
+                zf.writestr(f"[丢失]_{original_filename}.txt", placeholder.encode('utf-8'))
+
+    zip_buffer.seek(0)
+    import urllib.parse
+    safe_name = re.sub(r'[^\w\-_. ]', '_', provider_name)
+    zip_name = f"kb_{safe_name}.zip"
+    cd_value = f"attachment; filename*=UTF-8''{urllib.parse.quote(zip_name)}"
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": cd_value}
+    )
+
+
+@app.get("/api/kb/files/{file_id}/download")
+async def download_kb_file(file_id: str, user: dict = Depends(require_auth)):
+    """下载知识库文件"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT filepath, original_filename FROM kb_files WHERE id = ? AND user_id = ?",
+        (file_id, user["user_id"])
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="文件不存在")
+    filepath = row["filepath"]
+    filename = row["original_filename"]
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="文件不存在")
+    return FileResponse(filepath, filename=filename, media_type="application/octet-stream")
+
+
+@app.get("/api/admin/knowledge")
+async def admin_list_knowledge(user: dict = Depends(require_auth)):
+    """所有服务商知识库文件（按服务商分组）"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT k.id, k.original_filename, k.display_name, k.category, k.industry,
+               k.status, k.progress, k.char_count, k.created_at,
+               k.user_id, u.provider_name
+        FROM kb_files k
+        JOIN users u ON k.user_id = u.id
+        ORDER BY u.provider_name, k.created_at DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    # 按 provider_name 分组
+    grouped = {}
+    for r in rows:
+        pname = r["provider_name"] or "未知服务商"
+        item = {
+            "id": r["id"],
+            "original_filename": r["original_filename"],
+            "display_name": r["display_name"],
+            "category": r["category"],
+            "industry": r["industry"] or "",
+            "status": r["status"],
+            "progress": r["progress"],
+            "char_count": r["char_count"],
+            "created_at": r["created_at"],
+            "user_id": r["user_id"],
+        }
+        if pname not in grouped:
+            grouped[pname] = []
+        grouped[pname].append(item)
+    return [{"provider_name": p, "files": grouped[p]} for p in sorted(grouped.keys())]
+
 
 @app.get("/api/admin/invitation-codes")
 async def admin_list_codes(user: dict = Depends(require_auth)):
     """受邀码列表"""
     conn = get_db()
     cursor = conn.cursor()
+    # 先查每 provider_name 注册了多少人和用户名列表
+    cursor.execute("SELECT provider_name, COUNT(*) as cnt, GROUP_CONCAT(username) as usernames FROM users GROUP BY provider_name")
+    provider_info = {row["provider_name"]: {"cnt": row["cnt"], "usernames": row["usernames"] or ""} for row in cursor.fetchall()}
+
+    # 修复历史 NULL created_at：用该 provider 下最早用户创建时间
+    cursor.execute("UPDATE invitation_codes SET created_at = (SELECT MIN(u.created_at) FROM users u WHERE u.provider_name = invitation_codes.provider_name) WHERE created_at IS NULL")
+
     cursor.execute("""
         SELECT ic.id, ic.code, ic.provider_name, ic.used, ic.max_users, ic.created_at,
+               ic.used_by,
                u.username as used_by_username
         FROM invitation_codes ic
         LEFT JOIN users u ON ic.used_by = u.id
@@ -742,7 +1016,10 @@ async def admin_list_codes(user: dict = Depends(require_auth)):
     rows = cursor.fetchall()
     conn.close()
     return [{"id": r["id"], "code": r["code"], "provider_name": r["provider_name"],
-             "used": r["used"], "max_users": r["max_users"] or 1,
+             "used": r["used"],
+             "registered_count": provider_info.get(r["provider_name"], {}).get("cnt", 0),
+             "registered_users": provider_info.get(r["provider_name"], {}).get("usernames", "") or "-",
+             "max_users": r["max_users"] or 1,
              "created_at": r["created_at"],
              "used_by_username": r["used_by_username"] or "-"} for r in rows]
 
@@ -964,7 +1241,8 @@ async def get_kb_enhancement(user: dict = Depends(require_auth)):
 
     user_prompt = f"知识库内容概览：\n{kb_summary}\n\n根据以上内容，生成3个有说服力的售前示例。"
 
-    result = call_minimax(system_prompt, user_prompt)
+    ai_result = call_minimax(system_prompt, user_prompt)
+    result = ai_result["content"]
 
     # 解析JSON结果
     import json
@@ -1031,8 +1309,10 @@ async def list_clients(user: dict = Depends(require_auth)):
         cursor.execute("""
             SELECT id, user_id, name, industry, initial_demand, status,
                    step1_result, step2_report, step2_todo, step2_schema,
-                   step4_presales, step4_technical, step5_schema,
+                   step3_summary, uploaded_files, transcript,
+                   step4_report, step4_presales, step4_technical,
                    step4_presales_versions, step4_technical_versions,
+                   step4_input_draft, step5_schema, step5_agent_suggestions,
                    created_at, updated_at, demo_url, _completed, _saved,
                    0 AS note_count
             FROM clients ORDER BY updated_at DESC
@@ -1041,16 +1321,20 @@ async def list_clients(user: dict = Depends(require_auth)):
         cursor.execute("""
             SELECT id, user_id, name, industry, initial_demand, status,
                    step1_result, step2_report, step2_todo, step2_schema,
-                   step4_presales, step4_technical, step5_schema,
+                   step3_summary, uploaded_files, transcript,
+                   step4_report, step4_presales, step4_technical,
                    step4_presales_versions, step4_technical_versions,
+                   step4_input_draft, step5_schema, step5_agent_suggestions,
                    created_at, updated_at, demo_url, _completed, _saved,
                    0 AS note_count
             FROM clients WHERE user_id = ? ORDER BY updated_at DESC
         """, (user["user_id"],))
     cols = ["id", "user_id", "name", "industry", "initial_demand", "status",
             "step1_result", "step2_report", "step2_todo", "step2_schema",
-            "step4_presales", "step4_technical", "step5_schema",
+            "step3_summary", "uploaded_files", "transcript",
+            "step4_report", "step4_presales", "step4_technical",
             "step4_presales_versions", "step4_technical_versions",
+            "step4_input_draft", "step5_schema", "step5_agent_suggestions",
             "created_at", "updated_at", "demo_url", "_completed", "_saved", "note_count"]
     clients = []
     for row in cursor.fetchall():
@@ -1309,7 +1593,8 @@ async def generate_report(body: dict, user: dict = Depends(require_auth)):
         user_prompt = f"{kb_context}## 客户沟通记录\n\n{transcript}\n\n请基于以上沟通记录，生成结构化的需求分析报告。"
         max_tokens = 4000
 
-    result = call_minimax(system_prompt, user_prompt, max_tokens=max_tokens)
+    ai_result = call_minimax(system_prompt, user_prompt, max_tokens=max_tokens)
+    result = ai_result["content"]
 
     # 解析JSON（如果是schema）
     demo_json = None
@@ -2174,7 +2459,9 @@ async def question_list(body: dict, user: dict = Depends(require_auth)):
         company_intro=company_intro or "暂无"
     )
 
-    raw = call_minimax(STEP1_SYSTEM_PROMPT, user_prompt, max_tokens=6000)
+    ai_result = call_minimax(STEP1_SYSTEM_PROMPT, user_prompt, max_tokens=6000)
+    raw = ai_result["content"]
+    record_ai_tokens(client_id, ai_result["usage"]["total_tokens"])
     if raw.startswith("Error:"):
         return {"success": False, "error": raw}
 
@@ -2427,7 +2714,9 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
 
     # ====== Step 1: Prompt 3 → requirementSolutionData ======
     req_prompt = build_context(STEP4_REQUIREMENT_PROMPT)
-    req_raw = call_minimax(STEP4_REQUIREMENT_PROMPT, req_prompt, max_tokens=15000)
+    req_ai = call_minimax(STEP4_REQUIREMENT_PROMPT, req_prompt, max_tokens=15000)
+    req_raw = req_ai["content"]
+    record_ai_tokens(client_id, req_ai["usage"]["total_tokens"])
     requirement_data = parse_json_response(req_raw)
     if not requirement_data:
         return {"success": False, "error": "Prompt 3 生成失败（输出被截断或格式异常），请稍后重试。详情：" + (req_raw[:300] if req_raw else "空响应")}
@@ -2440,7 +2729,9 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
         word_prompt = STEP4_WORD_PROMPT.replace("{requirement_data}", req_json_str)
         word_content = None
         for attempt in range(3):
-            word_raw = call_minimax(STEP4_WORD_PROMPT, word_prompt, max_tokens=8000)
+            word_ai = call_minimax(STEP4_WORD_PROMPT, word_prompt, max_tokens=8000)
+            word_raw = word_ai["content"]
+            record_ai_tokens(client_id, word_ai["usage"]["total_tokens"])
             word_content = parse_json_response(word_raw)
             if word_content:
                 v = validate_requirement_doc(word_content, requirement_data)
@@ -2461,7 +2752,9 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
     # ====== Step 3: Prompt 5 → HTML 内容 ======
     if artifact_type in ("both", "html"):
         html_prompt = STEP4_HTML_PROMPT.replace("{requirement_data}", req_json_str)
-        html_raw = call_minimax(STEP4_HTML_PROMPT, html_prompt, max_tokens=8000)
+        html_ai = call_minimax(STEP4_HTML_PROMPT, html_prompt, max_tokens=8000)
+        html_raw = html_ai["content"]
+        record_ai_tokens(client_id, html_ai["usage"]["total_tokens"])
         html_content = parse_json_response(html_raw)
         if html_content:
             result["htmlContent"] = html_content
@@ -3017,7 +3310,9 @@ async def generate_step4_html(body: dict, user: dict = Depends(require_auth)):
     # 调用 minimax（最多重试1次）
     html_content = None
     for attempt in range(2):
-        raw = call_minimax(system_prompt, user_prompt, max_tokens=12000)
+        ai_result = call_minimax(system_prompt, user_prompt, max_tokens=12000)
+        raw = ai_result["content"]
+        record_ai_tokens(client_id, ai_result["usage"]["total_tokens"])
         if raw.startswith("Error:"):
             if attempt == 0:
                 continue  # 重试一次
@@ -3139,7 +3434,9 @@ async def generate_step4_word(body: dict, user: dict = Depends(require_auth)):
     # 调用 minimax（最多重试1次）
     word_text_raw = None
     for attempt in range(2):
-        raw = call_minimax(system_prompt, user_prompt, max_tokens=15000)
+        ai_result = call_minimax(system_prompt, user_prompt, max_tokens=15000)
+        raw = ai_result["content"]
+        record_ai_tokens(client_id, ai_result["usage"]["total_tokens"])
         if raw.startswith("Error:"):
             if attempt == 0:
                 continue
@@ -3934,7 +4231,7 @@ notRecommended：{not_recommended_scope}
 
 请严格按以下 JSON Schema 输出（直接输出 JSON，不要任何前缀）：
 
-【重要】每个子表的 sample_records 至少填写 10 条真实业务数据，数据要贴合行业和客户场景，禁止填虚假或无关数据。
+【强制要求】每个子表的 sample_records 必须恰好填写 10 条真实业务数据，数据要贴合行业和客户场景，禁止填虚假或无关数据。少于 10 条视为不合格，必须补齐。
 
 {
   "doc_name": "智能表格名称",
@@ -3949,8 +4246,16 @@ notRecommended：{not_recommended_scope}
         }
       ],
       "sample_records": [
-        { "字段名": "示例值" },
-        { "字段名": "示例值" }
+        { "字段1": "示例值1", "字段2": "示例值2", "字段3": "示例值3" },
+        { "字段1": "示例值1", "字段2": "示例值2", "字段3": "示例值3" },
+        { "字段1": "示例值1", "字段2": "示例值2", "字段3": "示例值3" },
+        { "字段1": "示例值1", "字段2": "示例值2", "字段3": "示例值3" },
+        { "字段1": "示例值1", "字段2": "示例值2", "字段3": "示例值3" },
+        { "字段1": "示例值1", "字段2": "示例值2", "字段3": "示例值3" },
+        { "字段1": "示例值1", "字段2": "示例值2", "字段3": "示例值3" },
+        { "字段1": "示例值1", "字段2": "示例值2", "字段3": "示例值3" },
+        { "字段1": "示例值1", "字段2": "示例值2", "字段3": "示例值3" },
+        { "字段1": "示例值1", "字段2": "示例值2", "字段3": "示例值3" }
       ]
     }
   ]
@@ -3960,7 +4265,7 @@ notRecommended：{not_recommended_scope}
 1. 只包含 phase = "一期" 的表，不包含二期评估
 2. 每个字段的 field_type 必须从上述类型列表中选择
 3. 每个子表至少有 2-3 个字段
-4. sample_records 填入贴合业务场景的示例值
+4. sample_records 必须恰好 10 条，不足 10 条视为不合格，请补齐真实业务数据
 5. 字段数量不要超过 15 个/表（轻量交付原则）"""
 
 
@@ -4054,23 +4359,61 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
 
     smart_table_spec = requirement_data.get("smartTableSpec") or {}
     scope = requirement_data.get("scope") or {}
-    logger.warning(f"[Step5Demo] smart_table_spec confirmedTables={len(smart_table_spec.get('confirmedTables', []))}")
+    confirmed_tables = smart_table_spec.get("confirmedTables") or []
+    logger.warning(f"[Step5Demo] smart_table_spec confirmedTables={len(confirmed_tables)}, scope phaseOne={len(scope.get('phaseOne', []))}")
 
-    if not smart_table_spec or not smart_table_spec.get("confirmedTables"):
-        return {"success": False, "error": "Step2 调研表格为空，请先完成调研"}
+    # confirmedTables 为空时（未上传XLSX），改为让AI根据scope和requirements自行推断表结构
+    if not confirmed_tables:
+        logger.warning("[Step5Demo] confirmedTables为空，改用scope推断模式")
+        user_prompt = STEP5_SCHEMA_USER_PROMPT.replace(
+            "{smart_table_spec}",
+            json.dumps({
+                "scenarioComplexity": smart_table_spec.get("scenarioComplexity", "简单流程型"),
+                "confirmedTables": [],  # AI根据scope自行推断
+                "scope": scope
+            }, ensure_ascii=False, indent=2)
+        ).replace(
+            "{phase_one_scope}", json.dumps(scope.get("phaseOne") or [], ensure_ascii=False, indent=2)
+        ).replace(
+            "{phase_two_scope}", json.dumps(scope.get("phaseTwo") or [], ensure_ascii=False, indent=2)
+        ).replace(
+            "{not_recommended_scope}", json.dumps(scope.get("notRecommended") or [], ensure_ascii=False, indent=2)
+        )
+        # 追加推断指令
+        user_prompt += "\n\n【重要】confirmedTables为空，请根据phaseOne scope中的交付项和行业场景，自行推断需要创建哪些智能表格（建议2-4张），并生成对应的JSON Schema。"
+    else:
+        user_prompt = STEP5_SCHEMA_USER_PROMPT.replace(
+            "{smart_table_spec}", json.dumps(smart_table_spec, ensure_ascii=False, indent=2)
+        ).replace(
+            "{phase_one_scope}", json.dumps(scope.get("phaseOne") or [], ensure_ascii=False, indent=2)
+        ).replace(
+            "{phase_two_scope}", json.dumps(scope.get("phaseTwo") or [], ensure_ascii=False, indent=2)
+        ).replace(
+            "{not_recommended_scope}", json.dumps(scope.get("notRecommended") or [], ensure_ascii=False, indent=2)
+        )
 
-    user_prompt = STEP5_SCHEMA_USER_PROMPT.replace(
-        "{smart_table_spec}", json.dumps(smart_table_spec, ensure_ascii=False, indent=2)
-    ).replace(
-        "{phase_one_scope}", json.dumps(scope.get("phaseOne") or [], ensure_ascii=False, indent=2)
-    ).replace(
-        "{phase_two_scope}", json.dumps(scope.get("phaseTwo") or [], ensure_ascii=False, indent=2)
-    ).replace(
-        "{not_recommended_scope}", json.dumps(scope.get("notRecommended") or [], ensure_ascii=False, indent=2)
-    )
-
-    raw = call_minimax(STEP5_SCHEMA_SYSTEM_PROMPT, user_prompt, max_tokens=15000)
+    ai_result = call_minimax(STEP5_SCHEMA_SYSTEM_PROMPT, user_prompt, max_tokens=25000)
+    raw = ai_result["content"]
+    record_ai_tokens(client_id, ai_result["usage"]["total_tokens"])
     schema = parse_json_response(raw)
+
+    # 后处理：确保每表恰好 10 条样例数据
+    if schema and schema.get("sheets"):
+        import logging
+        logger2 = logging.getLogger("uvicorn")
+        for sheet in schema["sheets"]:
+            records = sheet.get("sample_records") or []
+            field_names = [f.get("field_title") for f in (sheet.get("fields") or []) if f.get("field_title")]
+            current = len(records)
+            if current < 10:
+                logger2.warning(f"[Step5Demo] sheet '{sheet.get('sheet_name','')}' only has {current} records, padding to 10")
+                # 用第一条记录的结构复制补齐
+                template = records[0] if records else {}
+                while len(records) < 10:
+                    new_record = {k: (v + "_补" if isinstance(v, str) else v) for k, v in template.items()}
+                    records.append(new_record)
+                sheet["sample_records"] = records
+            logger2.info(f"[Step5Demo] sheet '{sheet.get('sheet_name','')}' final record count: {len(sheet.get('sample_records', []))}")
 
     if not schema:
         return {"success": False, "error": "Step5 Schema 生成失败：" + (raw[:200] if raw else "空响应")}
@@ -4168,7 +4511,9 @@ async def step5_agent_suggest(body: dict, user: dict = Depends(require_auth)):
         schema_summary=schema_summary
     )
 
-    raw = call_minimax(STEP5_AGENT_PROMPT, user_prompt, max_tokens=4000)
+    ai_result = call_minimax(STEP5_AGENT_PROMPT, user_prompt, max_tokens=4000)
+    raw = ai_result["content"]
+    record_ai_tokens(client_id, ai_result["usage"]["total_tokens"])
     if raw.startswith("Error:"):
         return {"success": False, "error": raw}
 
@@ -4488,6 +4833,8 @@ async def create_agent_demo(body: dict, user: dict = Depends(require_auth)):
 请基于以上信息，生成一个展示 AI 售前助手能力的 H5 页面。"""
 
     result = call_minimax(AGENT_DEMO_SYSTEM_PROMPT, user_prompt, max_tokens=8000)
+    record_ai_tokens(client_id, result["usage"]["total_tokens"])
+    result = result["content"]
 
     # 保存到 public 目录
     import uuid, os
@@ -4530,7 +4877,8 @@ async def generate_profile(body: dict, user: dict = Depends(require_auth)):
     if not company_name:
         return {"error": "缺少客户名称"}
     user_prompt = f"客户名称：{company_name}\n行业：{industry or '未指定'}\n原始需求：{initial_demand or '暂无'}\n请生成客户画像 JSON。"
-    raw = call_minimax(PROFILE_GENERATE_PROMPT, user_prompt, max_tokens=1000)
+    ai_result = call_minimax(PROFILE_GENERATE_PROMPT, user_prompt, max_tokens=1000)
+    raw = ai_result["content"]
     if raw.startswith("Error:"):
         return {"error": raw}
     result = parse_json_response(raw)
@@ -4560,6 +4908,7 @@ async def company_search(body: dict, user: dict = Depends(require_auth)):
         return {"error": "缺少公司名称"}
     user_prompt = f"客户名称：{company_name}\n行业：{industry or '未指定'}\n请分析生成 JSON。"
     raw = call_minimax(COMPANY_SEARCH_PROMPT, user_prompt, max_tokens=800)
+    raw = raw["content"] if isinstance(raw, dict) else raw
     if raw.startswith("Error:"):
         return {"error": raw}
     result = parse_json_response(raw)

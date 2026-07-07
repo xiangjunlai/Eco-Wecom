@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>福鸿客户｜制造业改善提报与积分激励方案</title>
+<style>
+:root {
+  --blue:#1f6bff; --blue2:#0ea5e9; --green:#16b982; --ink:#12213f; --muted:#65758b;
+  --line:#dbe7f8; --bg:#f4f8ff; --card:#ffffff; --orange:#ff8a00;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;background:linear-gradient(180deg,#f3f8ff 0%,#ffffff 46%,#f7fbff 100%);color:var(--ink);}
+.nav{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav-inner{max-width:1180px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;gap:12px;align-items:center;font-weight:800}
+.logo{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,var(--blue),#22c55e);color:#fff;display:grid;place-items:center}
+.nav a{color:#42607f;text-decoration:none;margin-left:22px;font-size:14px}
+.hero{max-width:1180px;margin:30px auto 18px;padding:0 24px}
+.hero-card{position:relative;overflow:hidden;border:1px solid #d9e8ff;border-radius:30px;background:linear-gradient(135deg,#fff 0%,#eef6ff 100%);box-shadow:0 20px 60px rgba(31,107,255,.12);padding:46px}
+.hero h1{font-size:42px;line-height:1.12;margin:0 0 14px;font-weight:900;letter-spacing:-1px}
+.hero p{font-size:17px;color:var(--muted);max-width:760px;line-height:1.8;margin:0}
+.hero-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+.tag{background:#fff;border:1px solid #cfe3ff;color:#195fd1;border-radius:999px;padding:9px 14px;font-weight:700;font-size:13px}
+.hero-visual{position:absolute;right:36px;top:36px;width:300px;height:220px;border-radius:24px;background:rgba(255,255,255,.7);border:1px solid #d7e8ff;padding:20px;display:grid;gap:12px}
+.mini{border:1px solid #e0eaff;background:#fff;border-radius:16px;padding:12px}
+.bar{height:8px;background:#eaf1fb;border-radius:99px;overflow:hidden;margin-top:8px}
+.bar span{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:99px}
+section{max-width:1180px;margin:0 auto;padding:22px 24px}
+.section-title{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.section-title h2{font-size:26px;margin:0;font-weight:900}
+.section-title p{color:var(--muted);margin:0;font-size:14px}
+.grid{display:grid;gap:16px}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.card{background:var(--card);border:1px solid #dfeaff;border-radius:22px;padding:22px;box-shadow:0 14px 36px rgba(40,80,140,.08)}
+.card h3{margin:0 0 10px;font-size:18px}
+.card p{color:#55677f;line-height:1.7;margin:0;font-size:14px}
+.kpi{font-size:32px;font-weight:900;color:var(--blue);margin:6px 0}
+.flow{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.step{background:#fff;border:1px solid #dbe8fa;border-radius:18px;padding:16px;position:relative;min-height:120px}
+.step strong{display:block;color:var(--blue);margin-bottom:8px}
+.step small{color:var(--muted);line-height:1.6}
+.table-list{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.table-card{border:1px solid #dfeaff;border-radius:20px;padding:18px;background:linear-gradient(180deg,#fff,#f8fbff)}
+.table-card .type{font-size:12px;color:var(--blue);font-weight:800;background:#eaf3ff;display:inline-block;padding:5px 9px;border-radius:999px;margin-bottom:10px}
+.modules{display:grid;gap:12px}
+.module{display:grid;grid-template-columns:180px 1fr 90px;gap:16px;align-items:center;border:1px solid #dfeaff;background:#fff;border-radius:18px;padding:16px}
+.pill{display:inline-block;border-radius:999px;padding:6px 10px;font-weight:800;font-size:12px;background:#eef8f4;color:#0b8b61}
+.warn{background:#fff7ed;color:#c25a00}
+.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.timeline .card{border-left:5px solid var(--blue)}
+.footer{text-align:center;color:#7a8ba0;padding:36px}
+@media(max-width:960px){.hero-visual{display:none}.grid-3,.grid-2,.table-list,.timeline,.flow{grid-template-columns:1fr}.module{grid-template-columns:1fr}.hero h1{font-size:30px}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="brand"><div class="logo">企</div><span>企业微信服务商定制开发售前方案</span></div>
+    <div>
+      <a href="#insight">需求洞察</a><a href="#solution">方案架构</a><a href="#tables">智能表格</a><a href="#roadmap">实施路径</a>
+    </div>
+  </div>
+</nav>
+<div class="hero">
+  <div class="hero-card">
+    <h1>福鸿客户<br/>制造业改善提报与积分激励方案</h1>
+    <p>以企业微信为员工入口，用智能表格承载改善提报、积分核算、奖品库存、采购入库和兑换领取，帮助企业把“车间改善建议”变成可统计、可激励、可复盘的数字化闭环。</p>
+    <div class="hero-tags">
+      <span class="tag">改善提报</span><span class="tag">积分激励</span><span class="tag">奖品库存</span><span class="tag">部门排名</span><span class="tag">企微智能表格</span>
+    </div>
+    <div class="hero-visual">
+      <div class="mini"><b>提报积分</b><div class="bar"><span style="width:88%"></span></div></div>
+      <div class="mini"><b>奖品库存</b><div class="bar"><span style="width:62%"></span></div></div>
+      <div class="mini"><b>部门排名</b><div class="bar"><span style="width:74%"></span></div></div>
+    </div>
+  </div>
+</div>
+<section id="insight">
+  <div class="section-title"><h2>01｜客户阶段判断</h2><p>当前是轻量流程闭环，不是重型系统建设</p></div>
+  <div class="grid grid-3">
+    <div class="card"><h3>当前现状</h3><p>改善建议、落实、积分、奖品库存此前依赖人工台账或分散表格维护，统计与追溯成本较高。</p></div>
+    <div class="card"><h3>核心问题</h3><p>提报字段不统一、积分人工核算、奖品库存不准确、人员姓名与企微通讯录需强一致。</p></div>
+    <div class="card"><h3>建设目标</h3><p>员工极简提报、双重积分自动计算、奖品兑换闭环、部门横向排名、库存实时准确。</p></div>
+  </div>
+</section>
+<section>
+  <div class="section-title"><h2>02｜需求洞察</h2><p>把“提建议”变成“有积分、有排名、有奖品”的激励机制</p></div>
+  <div class="grid grid-3">
+    <div class="card"><h3>提报标准化</h3><div class="kpi">6 张表</div><p>改善提报、部门排名、人员积分、奖品库存、采购入库、奖品领取。</p></div>
+    <div class="card"><h3>积分自动化</h3><div class="kpi">+1 / +1</div><p>提报人默认 +1 分，落实人默认 +1 分，可按后续规则调整。</p></div>
+    <div class="card"><h3>库存闭环</h3><div class="kpi">入 - 领</div><p>现库存由初始数量、采购入库、奖品领取自动联动计算。</p></div>
+  </div>
+</section>
+<section id="solution">
+  <div class="section-title"><h2>03｜核心流程拆解</h2><p>员工提报 → 落实 → 积分 → 兑换 → 库存</p></div>
+  <div class="flow">
+    <div class="step"><strong>1 员工提报</strong><small>填写提报日期、提报人、部门、改善内容、改善类型。</small></div>
+    <div class="step"><strong>2 价值量化</strong><small>改善金额 / 改善节省时间二选一必填。</small></div>
+    <div class="step"><strong>3 落实确认</strong><small>勾选是否落实，选择落实人，可与提报人相同。</small></div>
+    <div class="step"><strong>4 积分汇总</strong><small>建议积分、落实积分自动进入人员积分表。</small></div>
+    <div class="step"><strong>5 奖品兑换</strong><small>选择奖品，自动带出所需积分并扣减。</small></div>
+    <div class="step"><strong>6 库存联动</strong><small>采购入库加库存，奖品领取减库存。</small></div>
+  </div>
+</section>
+<section id="tables">
+  <div class="section-title"><h2>04｜建议建设模块</h2><p>按 xlsx 交付结构收敛，不发散成复杂系统</p></div>
+  <div class="table-list">
+    <div class="table-card"><span class="type">业务主表</span><h3>改善提报</h3><p>登记员工改善建议及落实情况，自动产生提报/落实积分</p></div><div class="table-card"><span class="type">统计表</span><h3>部门排名表</h3><p>按部门自动统计建议条数并排名</p></div><div class="table-card"><span class="type">汇总表</span><h3>人员积分表</h3><p>统计员工历史积分、建议积分、落实积分、已用积分、剩余积分</p></div><div class="table-card"><span class="type">库存表</span><h3>奖品库存</h3><p>登记奖品名称、单位、积分、初始/入库/领取/现库存</p></div><div class="table-card"><span class="type">业务明细表</span><h3>采购入库</h3><p>登记奖品采购入库，回写奖品库存</p></div><div class="table-card"><span class="type">业务明细表</span><h3>奖品领取</h3><p>登记奖品兑换领取，扣减积分并减少库存</p></div>
+  </div>
+</section>
+<section>
+  <div class="section-title"><h2>05｜自动化与权限</h2><p>关键是积分与库存联动，而不是复杂审批</p></div>
+  <div class="modules">
+    <div class="module"><b>提报自动加分</b><p>改善提报提交后，提报人 +1；若已落实，落实人 +1。</p><span class="pill">一期</span></div>
+    <div class="module"><b>奖品领取扣减</b><p>确认领取后扣减领取人积分，并同步减少奖品库存。</p><span class="pill">一期</span></div>
+    <div class="module"><b>采购入库加库存</b><p>采购入库提交后，自动增加库存数量，现库存实时重算。</p><span class="pill">一期</span></div>
+    <div class="module"><b>安全库存提醒</b><p>库存为 0 标红；安全库存阈值提醒可作为二期增强。</p><span class="pill warn">二期</span></div>
+  </div>
+</section>
+<section id="roadmap">
+  <div class="section-title"><h2>06｜实施路径建议</h2><p>先跑通闭环，再做增强</p></div>
+  <div class="timeline">
+    <div class="card"><h3>字段确认</h3><p>确认改善类型、部门枚举、奖品清单、积分规则和人员名单。</p></div>
+    <div class="card"><h3>表格搭建</h3><p>搭建 6 张智能表格，配置关联、公式、视图和极简表单。</p></div>
+    <div class="card"><h3>自动化配置</h3><p>配置提报加分、领取扣分、采购入库加库存等联动规则。</p></div>
+    <div class="card"><h3>试运行上线</h3><p>小范围测试提报、落实、兑换、库存流程，确认后正式上线。</p></div>
+  </div>
+</section>
+<section>
+  <div class="section-title"><h2>07｜待确认问题</h2><p>这些问题确认后即可进入最终搭建</p></div>
+  <div class="grid grid-2">
+    <div class="card"><p>改善类型下拉选项需要客户最终确认，例如安全、效率、质量、成本、现场管理等。</p></div><div class="card"><p>改善节省时间单位采用“分钟”还是“小时”，以及是否允许小数，需要确认。</p></div><div class="card"><p>部门枚举以当前组织为准，但是否由提报人手动选择还是按通讯录自动带出，需要最终确认。</p></div><div class="card"><p>提报人/落实人默认各 +1 分是否固定，后续是否按改善金额或改善类型阶梯加分，需要确认。</p></div><div class="card"><p>奖品同名不同积分档位是否按“名称 + 单位 + 所需积分”分行维护，需要确认。</p></div><div class="card"><p>奖品领取是否只需管理员勾选确认，还是后续改为审批流程，需要确认。</p></div>
+  </div>
+</section>
+<div class="footer">企业微信入口 + 智能表格数据底座 + 自动化积分 + 奖品库存联动 + 数据看板</div>
+</body>
+</html>

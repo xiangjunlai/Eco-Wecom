@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>长谊新材料（上海）有限公司｜销售线索 CRM 可视化方案</title>
+<style>
+:root {
+  --blue:#1d6bff;--cyan:#10b6b0;--dark:#0f172a;--muted:#64748b;
+  --bg:#f4f8ff;--line:#d9e6fb;--card:#ffffff;--orange:#f97316;--green:#15b981;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif;background:linear-gradient(180deg,#eef6ff 0%,#f7fafc 42%,#fff 100%);color:var(--dark);}
+.wrapper{max-width:1180px;margin:0 auto;padding:28px 28px 60px}
+.nav{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.86);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:24px;padding:14px 18px;position:sticky;top:16px;z-index:10;box-shadow:0 18px 45px rgba(30,105,255,.08)}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800}
+.logo{width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:grid;place-items:center;color:white;font-weight:900}
+.nav a{color:#334155;text-decoration:none;margin-left:18px;font-size:14px}
+.hero{margin-top:24px;border-radius:34px;background:linear-gradient(135deg,#0e63ff 0%,#36c1f2 58%,#18c6a7 100%);padding:38px;min-height:330px;color:white;display:grid;grid-template-columns:1.15fr .85fr;gap:32px;overflow:hidden;position:relative}
+.hero:after{content:"";position:absolute;right:-100px;top:-100px;width:360px;height:360px;border-radius:50%;background:rgba(255,255,255,.18)}
+.eyebrow{display:inline-flex;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 14px;font-size:13px;margin-bottom:18px}
+h1{font-size:42px;line-height:1.12;margin:0 0 16px;font-weight:900;letter-spacing:-.5px}
+.hero p{font-size:17px;line-height:1.85;margin:0;color:rgba(255,255,255,.92)}
+.hero-panel{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);border-radius:28px;padding:22px;z-index:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.funnel{display:grid;gap:12px;margin-top:14px}
+.step{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.94);color:#0f172a;border-radius:18px;padding:14px 16px}
+.num{width:30px;height:30px;border-radius:11px;background:#e8f1ff;color:#1d6bff;display:grid;place-items:center;font-weight:900}
+.section{margin-top:28px}
+.sec-title{display:flex;align-items:end;justify-content:space-between;margin-bottom:16px}
+.sec-title h2{font-size:26px;margin:0}
+.sec-title span{color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:0 14px 35px rgba(15,23,42,.06)}
+.card h3{margin:0 0 10px;font-size:18px}
+.card p,.card li{color:#475569;line-height:1.75;font-size:14px}
+.badge{display:inline-flex;border-radius:999px;background:#eff6ff;color:#1d6bff;padding:6px 12px;font-weight:700;font-size:12px;margin-bottom:10px}
+.badge.orange{background:#fff7ed;color:#f97316}
+.badge.green{background:#ecfdf5;color:#0f9f76}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.flow .node{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;position:relative}
+.flow .node b{display:block;margin-bottom:8px}
+.flow .node p{margin:0;color:#64748b;font-size:13px;line-height:1.6}
+.modules{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.module{display:flex;gap:14px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:22px;padding:18px}
+.icon{width:42px;height:42px;border-radius:15px;background:linear-gradient(135deg,#eaf2ff,#dffcf6);display:grid;place-items:center;color:#1d6bff;font-weight:900;flex:0 0 auto}
+.table-list{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.table-item{background:#f8fbff;border:1px solid #dbeafe;border-radius:18px;padding:14px}
+.table-item b{font-size:15px}
+.table-item small{display:block;color:#64748b;margin-top:6px;line-height:1.55}
+.roadmap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.road{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px}
+.road strong{display:block;color:#1d6bff;margin-bottom:8px}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi div{background:#0f172a;color:white;border-radius:22px;padding:18px}
+.kpi b{font-size:26px;display:block}
+.kpi span{color:#cbd5e1;font-size:13px}
+.note{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:18px;padding:16px;line-height:1.8}
+footer{margin-top:36px;color:#94a3b8;text-align:center;font-size:13px}
+@media(max-width:900px){.hero{grid-template-columns:1fr}.grid,.modules,.table-list,.roadmap,.flow,.kpi{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <nav class="nav">
+    <div class="brand"><div class="logo">企</div><div>企业微信服务商定制开发售前方案<br><small style="color:#64748b;font-weight:500">长谊新材料 · 销售线索 CRM</small></div></div>
+    <div>
+      <a href="#insight">需求洞察</a><a href="#scenario">业务场景</a><a href="#modules">建设模块</a><a href="#roadmap">实施路径</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div>
+      <div class="eyebrow">销售线索收集 · 派工跟进 · 转化看板 · ERP 预留</div>
+      <h1>把分散在 Excel 和旧 CRM 里的销售线索，沉淀为可追踪的企业微信业务看板</h1>
+      <p>面向长谊新材料的造纸/新材料销售场景，建议以企业微信智能表格为轻量数据底座，先打通市场线索、业务派工、跟进日报、客户状态与转化统计，再评估 ERP 订单和收款数据同步。</p>
+    </div>
+    <div class="hero-panel">
+      <h3 style="margin:0 0 8px">核心闭环</h3>
+      <div class="funnel">
+        <div class="step"><div class="num">1</div><div><b>市场收集</b><br><small>展会 / 名片 / 客户需求进入线索池</small></div></div>
+        <div class="step"><div class="num">2</div><div><b>线索派工</b><br><small>按规则或人工分配给业务员</small></div></div>
+        <div class="step"><div class="num">3</div><div><b>销售跟进</b><br><small>日报即跟进记录，状态回写线索</small></div></div>
+        <div class="step"><div class="num">4</div><div><b>成交看板</b><br><small>统计线索量、跟进量、转化率与业绩</small></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="insight" class="section">
+    <div class="sec-title"><h2>01｜客户阶段判断</h2><span>当前重点不是替代 ERP，而是补齐销售过程管理</span></div>
+    <div class="grid">
+      <div class="card"><span class="badge">客户现状</span><h3>线索量大但过程分散</h3><p>市场部每月约 500-600 条线索，通过 Excel 整理后分配给业务员；ERP 只承载成交客户和订单，潜在客户与销售过程沉淀不足。</p></div>
+      <div class="card"><span class="badge orange">核心痛点</span><h3>老板看不到转化过程</h3><p>管理层只能看到最终成交业绩，看不到业务员跟进了多少线索、哪些线索在推进、转化率如何。</p></div>
+      <div class="card"><span class="badge green">建设目标</span><h3>轻量销售漏斗</h3><p>以企业微信智能表格承载线索池、派工、日报、项目立项、打卡和看板，形成从线索到成交的可视化漏斗。</p></div>
+    </div>
+  </section>
+
+  <section id="scenario" class="section">
+    <div class="sec-title"><h2>02｜核心业务场景拆解</h2><span>从市场线索到成交标记的销售闭环</span></div>
+    <div class="flow">
+      <div class="node"><b>线索登记</b><p>登记客户、联系人、来源、活动、地区、需求等基础信息。</p></div>
+      <div class="node"><b>线索派工</b><p>市场部直接选择归属业务员，记录分配时间并自动提醒。</p></div>
+      <div class="node"><b>跟进日报</b><p>业务员关联线索填写拜访内容、客户状态、下一步计划。</p></div>
+      <div class="node"><b>项目立项</b><p>达到意向要求后进入项目立项，关联报价、样品或产品提案。</p></div>
+      <div class="node"><b>转化看板</b><p>按人员、部门、活动、状态统计跟进量、成交量和转化率。</p></div>
+    </div>
+  </section>
+
+  <section id="modules" class="section">
+    <div class="sec-title"><h2>03｜建议建设模块</h2><span>一期聚焦销售过程，二期再接 ERP/审批</span></div>
+    <div class="modules">
+      <div class="module"><div class="icon">A</div><div><h3>基础资料与分配规则</h3><p>组织架构、客户档案、客户地区、样品名称、产品名称、省市地区、分配规则，支撑线索归属和统计口径。</p></div></div>
+      <div class="module"><div class="icon">B</div><div><h3>销售线索与项目推进</h3><p>市场活动、线索客户、项目立项、拜访打卡、销售日报，形成销售漏斗主链路。</p></div></div>
+      <div class="module"><div class="icon">C</div><div><h3>ERP 同步预留</h3><p>业务订单、销售订单、销退单、收款单作为二期同步底表，用于成交标记、销售额和回款统计。</p></div></div>
+      <div class="module"><div class="icon">D</div><div><h3>审批数据预留</h3><p>出差申请、费用报销、报价确认、产品提案、客诉处理按模板和审批流确认后再同步。</p></div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="sec-title"><h2>04｜智能表格结构</h2><span>沿用交付表结构，避免模型自由发散</span></div>
+    <div class="table-list">
+      <div class="table-item"><b>基础信息层</b><small>组织架构、客户档案、客户地区、样品名称、产品名称、省市地区、分配规则</small></div>
+      <div class="table-item"><b>销售业务层</b><small>市场活动、线索客户、项目立项、拜访打卡、销售日报</small></div>
+      <div class="table-item"><b>ERP 同步层</b><small>业务订单、销售订单、销退单、收款单。本期建议先预留字段和手动导入，接口同步二期评估。</small></div>
+      <div class="table-item"><b>审批同步层</b><small>出差申请、费用报销、报价确认、产品提案、客诉处理。需确认模板和审批流。</small></div>
+    </div>
+  </section>
+
+  <section id="roadmap" class="section">
+    <div class="sec-title"><h2>05｜实施路径建议</h2><span>先跑通线索闭环，再做数据对接</span></div>
+    <div class="roadmap">
+      <div class="road"><strong>阶段 1</strong><b>字段与范围确认</b><p>确认线索字段、状态枚举、日报模板、权限角色、看板指标。</p></div>
+      <div class="road"><strong>阶段 2</strong><b>销售智能表搭建</b><p>完成基础资料、线索、派工、日报、打卡、看板和提醒。</p></div>
+      <div class="road"><strong>阶段 3</strong><b>试运行与调整</b><p>导入真实线索，小范围试跑，优化字段和视图。</p></div>
+      <div class="road"><strong>阶段 4</strong><b>ERP/审批评估</b><p>根据接口和模板情况评估同步成本和二期计划。</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="sec-title"><h2>06｜方案价值</h2><span>让老板看到成交前发生了什么</span></div>
+    <div class="kpi">
+      <div><b>500+</b><span>月度线索可统一管理</span></div>
+      <div><b>7-8</b><span>业务员按权限跟进</span></div>
+      <div><b>漏斗</b><span>线索→跟进→意向→成交</span></div>
+      <div><b>看板</b><span>活动、人员、部门转化</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="note"><b>边界提醒：</b>ERP 销售额、应收账款、收款单以及审批数据同步需要确认接口、字段、账号权限和同步频率。当前建议一期先完成销售线索闭环，ERP/审批同步作为二期评估或预留底表，不直接承诺实时双向同步。</div>
+  </section>
+
+  <footer>企业微信服务商定制开发售前方案 · 2026-06-22</footer>
+</div>
+</body>
+</html>
