@@ -33,28 +33,35 @@ MINIMAX_API_KEY = "sk-cp-FxfZUSUHnTWn7eCtl1V-5CI1jFpfF3XLI0jxHZJ7U0p16_cea_FTQqx
 
 # ==================== 通用辅助函数 ====================
 
+MCP_URL = "https://qyapi.weixin.qq.com/mcp/robot-doc?apikey=S0RW0Ke7TfR0_NcWgTXq2Ht_BColuWjRzRVM9LMO3jHoIdKwI3gEPiNPnNxgkiPqhNXtAtM1_86okTOj8R5R8Q"
+
 def call_mcp(tool_name: str, arguments: dict) -> dict:
-    """调用企微 CLI API"""
-    import subprocess, json
-    args_str = json.dumps(arguments, ensure_ascii=False)
-    cmd = [str(Path(__file__).parent / "node_modules" / ".bin" / "wecom-cli"), "doc", tool_name, args_str]
+    """调用企微 MCP API（直接 HTTP，不依赖 wecom-cli）"""
+    import urllib.request, json as jsonmod
+    payload = jsonmod.dumps(
+        {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": tool_name, "arguments": arguments}},
+        ensure_ascii=False
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        MCP_URL, data=payload,
+        headers={"Content-Type": "application/json; charset=utf-8", "Accept": "application/json, text/event-stream"}
+    )
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-        if result.returncode != 0:
-            return {"error": result.stderr or "CLI error"}
-        output = result.stdout.strip()
-        # CLI returns JSON-RPC format
-        try:
-            resp = json.loads(output)
-            if resp.get("isError"):
-                return {"error": resp.get("id", "")}
-            content = resp.get("result", {}).get("content", [])
-            if content and isinstance(content, list):
-                text = content[0].get("text", "{}")
-                return json.loads(text)
-            return resp.get("result", {})
-        except json.JSONDecodeError:
-            return {"error": output}
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            ct = resp.headers.get("Content-Type", "")
+            body = resp.read().decode("utf-8")
+            if "text/event-stream" in ct:
+                result = None
+                for line in body.split("\n"):
+                    line = line.strip()
+                    if line.startswith("data: "):
+                        try:
+                            result = jsonmod.loads(line[6:])
+                        except:
+                            pass
+                return result or {"error": "no result"}
+            else:
+                return jsonmod.loads(body)
     except Exception as e:
         return {"error": str(e)}
 
