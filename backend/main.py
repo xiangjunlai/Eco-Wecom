@@ -59,9 +59,11 @@ def call_mcp(tool_name: str, arguments: dict) -> dict:
                             result = jsonmod.loads(line[6:])
                         except:
                             pass
-                return result or {"error": "no result"}
+                raw = result
             else:
-                return jsonmod.loads(body)
+                raw = jsonmod.loads(body)
+            # 自动 extract：返回 result.content[0].text 解析后的对象
+            return extract_mcp(raw)
     except Exception as e:
         return {"error": str(e)}
 
@@ -4608,34 +4610,36 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
     # ---- 1. 创建智能表格文档 ----
     client = db_get_client(client_id)
     doc_name = (client.get("name", "") if client else "") + " - 需求智能表格"
-    create_resp = call_mcp("create_doc", {
+    r = call_mcp("create_doc", {
         "doc_name": doc_name,
-        "doc_type": "10"  # 智能表格（必须是字符串）
+        "doc_type": 10  # 智能表格（整数）
     })
-    if create_resp.get("error"):
-        return {"success": False, "error": "创建文档失败：" + create_resp["error"]}
+    if not r or (isinstance(r, dict) and r.get("errcode", 0) != 0):
+        import logging
+        logging.warning(f"[create_wecom_sheet] MCP create_doc resp: {r}")
+        return {"success": False, "error": "创建文档失败：" + (r.get("errmsg", str(r)) if isinstance(r, dict) else str(r))}
 
-    docid = create_resp.get("docid", "")
-    doc_url = create_resp.get("url", "")
+    docid = r.get("docid", "")
+    doc_url = r.get("url", "")
     if not docid:
         return {"success": False, "error": "创建文档失败，未返回 docid"}
 
     created_sheets = []
 
     # ---- 2. 获取默认子表的 sheet_id ----
-    sheet_resp = call_mcp("smartsheet_get_sheet", {"docid": docid})
-    if sheet_resp.get("error"):
-        return {"success": False, "error": "获取子表失败：" + sheet_resp["error"]}
-    sheets = sheet_resp.get("sheet_list", []) or sheet_resp.get("sheets", []) or []
+    sr = call_mcp("smartsheet_get_sheet", {"docid": docid})
+    if not sr or sr.get("error"):
+        return {"success": False, "error": "获取子表失败：" + (sr.get("error") or str(sr))}
+    sheets = sr.get("sheet_list", []) or sr.get("sheets", []) or []
     if not sheets:
         return {"success": False, "error": "未找到子表"}
     first_sheet_id = sheets[0].get("sheet_id", "")
 
     # ---- 2b. 获取默认子表的字段（含默认 field_id）----
-    fields_resp = call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": first_sheet_id})
+    fr = call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": first_sheet_id})
     default_field_id = ""
-    if not fields_resp.get("error") and fields_resp.get("fields"):
-        default_field_id = fields_resp["fields"][0].get("field_id", "")
+    if fr and not fr.get("error") and fr.get("fields"):
+        default_field_id = fr["fields"][0].get("field_id", "")
 
     # ---- 3a. 使用 sheets 结构（直接包含字段和样例数据）----
     if sheets_data:
@@ -4668,19 +4672,19 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
                     call_mcp("smartsheet_add_records", {"docid": docid, "sheet_id": sheet_id, "records": records_formatted})
             else:
                 # ---- 新增子表 ----
-                add_sheet_resp = call_mcp("smartsheet_add_sheet", {"docid": docid})
-                if add_sheet_resp.get("error"):
+                add_resp = call_mcp("smartsheet_add_sheet", {"docid": docid})
+                if not add_resp or add_resp.get("errcode", 0) != 0:
                     continue
-                new_props = add_sheet_resp.get("properties", {})
-                new_sheet_id = new_props.get("sheet_id", "") or (add_sheet_resp.get("sheet_list", [{}])[0].get("sheet_id", "") if add_sheet_resp.get("sheet_list") else "") or ""
+                # 云函数版: {"errcode": 0, "sheet_id": "xxx"} 或 {"errcode": 0, "properties": {"sheet_id": "xxx"}}
+                new_sheet_id = add_resp.get("sheet_id") or (add_resp.get("properties", {}) or {}).get("sheet_id", "") or ""
                 if not new_sheet_id:
                     continue
                 sheet_id = new_sheet_id
                 # 获取新子表的默认 field_id
-                new_fields_resp = call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": sheet_id})
+                new_fr = call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": sheet_id})
                 new_default_field_id = ""
-                if not new_fields_resp.get("error") and new_fields_resp.get("fields"):
-                    new_default_field_id = new_fields_resp["fields"][0].get("field_id", "")
+                if new_fr and not new_fr.get("error") and new_fr.get("fields"):
+                    new_default_field_id = new_fr["fields"][0].get("field_id", "")
                 # 重命名 + 设字段
                 if fields_list and new_default_field_id:
                     first_field = fields_list[0]
@@ -4727,19 +4731,18 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
                         call_mcp("smartsheet_add_fields", {"docid": docid, "sheet_id": sheet_id, "fields": add_fields})
                 call_mcp("smartsheet_update_sheet", {"docid": docid, "properties": {"sheet_id": sheet_id, "title": table_name}})
             else:
-                add_sheet_resp = call_mcp("smartsheet_add_sheet", {"docid": docid})
-                if add_sheet_resp.get("error"):
+                add_resp = call_mcp("smartsheet_add_sheet", {"docid": docid})
+                if not add_resp or add_resp.get("errcode", 0) != 0:
                     continue
-                new_props = add_sheet_resp.get("properties", {})
-                new_sheet_id = new_props.get("sheet_id", "") or (add_sheet_resp.get("sheet_list", [{}])[0].get("sheet_id", "") if add_sheet_resp.get("sheet_list") else "") or ""
+                new_sheet_id = add_resp.get("sheet_id") or (add_resp.get("properties", {}) or {}).get("sheet_id", "") or ""
                 if not new_sheet_id:
                     continue
                 sheet_id = new_sheet_id
                 # 获取新子表的默认 field_id
-                new_fields_resp = call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": sheet_id})
+                new_fr = call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": sheet_id})
                 new_default_field_id = ""
-                if not new_fields_resp.get("error") and new_fields_resp.get("fields"):
-                    new_default_field_id = new_fields_resp["fields"][0].get("field_id", "")
+                if new_fr and not new_fr.get("error") and new_fr.get("fields"):
+                    new_default_field_id = new_fr["fields"][0].get("field_id", "")
                 if fields_def and new_default_field_id:
                     first_field = fields_def[0]
                     first_ft = _map_field_type(first_field.get("fieldType", "文本"))
