@@ -27,3 +27,4 @@ test-results/
 # Temp
 *.tmp
 *.bak
+test_ai_comparison/
