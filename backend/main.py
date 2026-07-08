@@ -125,6 +125,35 @@ def call_minimax(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -
         return {"content": f"Error: {str(e)}", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
 
 
+def call_codebuddy(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -> dict:
+    """调用 CodeBuddy CLI（单行模式），300秒超时，最多一次重试
+    返回 {"content": str, "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}"""
+    import subprocess
+
+    full_prompt = f"{system_prompt}\n\n---\n\n{user_prompt}"
+
+    def _do_request():
+        result = subprocess.run(
+            ["codebuddy", full_prompt, "-p", "--output-format", "text"],
+            capture_output=True, text=True, timeout=300
+        )
+        # 如果 stdout 为空，尝试 stderr（有些版本错误输出在 stderr）
+        content = result.stdout.strip() if result.stdout.strip() else result.stderr.strip()
+        return {"content": content, "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
+
+    try:
+        return _do_request()
+    except subprocess.TimeoutExpired:
+        try:
+            return _do_request()
+        except subprocess.TimeoutExpired:
+            return {"content": "Error: CodeBuddy CLI 执行超时（300秒），请稍后重试", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
+        except Exception as e:
+            return {"content": f"Error: {str(e)}", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
+    except Exception as e:
+        return {"content": f"Error: {str(e)}", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
+
+
 def record_ai_tokens(client_id: int, tokens: int):
     """将 AI 消耗的 token 数累加到客户的 token_count"""
     if not client_id or not tokens:
@@ -175,6 +204,11 @@ init_kb_db()
 public_dir = Path(__file__).parent / "public"
 public_dir.mkdir(exist_ok=True)
 app.mount("/public", StaticFiles(directory=str(public_dir)), name="public")
+
+# outputs 目录（存放生成的 Word/HTML 等产物）
+outputs_dir = Path(__file__).parent.parent / "outputs"
+outputs_dir.mkdir(exist_ok=True)
+app.mount("/outputs", StaticFiles(directory=str(outputs_dir)), name="outputs")
 
 # 初始化测试用受邀码
 seed_invitation_codes()
@@ -1872,6 +1906,31 @@ JSON 结构如下：
 }
 
 ====================
+【JSON 完整性强制要求】
+====================
+
+**所有字段（除 explicitly optional 标注外）必须完整填写，不得留空字符串、不得留空数组、不得留空对象。**
+
+字段缺失时的处理规则（按优先级）：
+1. 有值 → 直接使用
+2. 无值但有原材料 → 从原材料推理填入（引用证据到 sourceTrace）
+3. 无值且无原材料 → 填入 "待确认" 或合理的占位描述
+
+**严禁以下行为**：
+- 字段留空（""）、留空数组（[]）、留空对象（{}）
+- 把对象或数组当成字符串写入（如写成 "[object Object]"）
+- 仅复制输入材料而不做结构化整合
+- 用省略号 "..." 代替完整内容
+
+**JSON 结构完整性自检（输出前必查）**：
+- meta 全部字段非空
+- confirmedTables 每个 table 有 tableName + tablePurpose + roles（非空数组）
+- fieldsByTable 每个 field 有 fieldName + fieldType + required
+- requirements 每个 item 有 requirementName + priority + phase + reasonForPhase
+- openQuestions 每个 item 的 question + whyAsk + impactIfUnknown 为非空字符串
+- 数组类型字段（如 painPoints、requirements）最少有 1 条（无内容填 "待补充" + 说明原因）
+
+====================
 【范围判断规则】
 ====================
 
@@ -2031,14 +2090,21 @@ STEP4_WORD_PROMPT = """你是一个企业微信智能表格售前方案顾问。
 }
 
 ## 填写规则
-1. customerInfoTable：value 全部从 requirementSolutionData.meta 和 customerFacts 读取，不得留空
-2. currentPainTable：businessArea 为业务面（如"项目立项"/"开票回款"），currentStateOrPain 描述现状或痛点
+1. customerInfoTable：value 全部从 requirementSolutionData.meta 和 customerFacts 读取，不得留空字符串（用"待确认"填充）
+2. currentPainTable：businessArea 为业务面（如"项目立项"/"开票回款"），currentStateOrPain 描述现状或痛点；最少 1 条，无内容填"【待补充】暂无明确痛点记录"
 3. scenarioBoundary.scenarioJudgement：必填，写明场景判断（如"设计/景观建筑-跨国多区域项目管理"）
-4. requirementPriorityTable：**严禁**将 AI 能力、机器人自动写表、OA 对接写成 P0；requirements 为空时本章填写"【待补充】需求列表为空，请返回 Step3 补充沟通记录"
-5. smartTableDeliveryTable：phaseOne="是"的表必须全部来自 smartTableSpec.confirmedTables，且 phase="一期"
-6. keyFieldsByTable：每张表的字段列表，字段数量 5-15 个
-7. pendingQuestions：每个问题必须是字符串，不得出现 [object Object]
-8. 所有表格的每个单元格都必须是字符串，不得留空字符串（用"待确认"填充）
+4. scenarioBoundary.phaseOne/phaseTwo/notRecommended：每个最少 1 条，无内容填"暂无"（不能为空数组）
+5. requirementPriorityTable：**严禁**将 AI 能力、机器人自动写表、OA 对接写成 P0；requirements 为空时本章填写"[{"requirement": "【待补充】需求列表为空，请返回 Step3 补充沟通记录", "priority": "P0", "phase": "待确认", "implementationApproach": ""}]"
+6. smartTableDeliveryTable：phaseOne="是"的表必须全部来自 smartTableSpec.confirmedTables，且 phase="一期"；每条必须有 tableName + type + purpose + roles（非空）
+7. keyFieldsByTable：每张表的字段列表，字段数量 5-15 个；每条字段 fieldName 不能为空
+8. automationTable：每条 ruleName + trigger + action 不能为空；如无自动化填"暂无"
+9. permissionTable：每条 role + viewScope + operation 不能为空；如无特殊权限填"待确认"
+10. dashboardTable：每条 dashboard + users + metrics 不能为空；如无看板填"暂无"
+11. dataBoundaryTable：每条 dataObject + phaseOneMethod 不能为空
+12. implementationPlanTable：最少 2 条（一期 + 二期各 1 条），每条字段完整
+13. pendingQuestions：每个问题必须是字符串，如无填"暂无待确认问题"
+14. **所有表格的每个单元格都必须是字符串，不得留空字符串（用"待确认"填充），不得出现 [object Object]**
+15. 输出前自检：遍历所有数组字段，空数组用至少 1 条占位内容替代；所有对象的所有键值对检查是否为字符串
 
 直接输出有效 JSON，不要 markdown 代码块包裹。"""
 
@@ -2117,7 +2183,31 @@ STEP4_HTML_PROMPT = """你是一个企业微信智能表格可视化方案顾问
   "pendingQuestions": []
 }
 
-内容要求：少字高信息密度、不堆砌字段、突出客户现状和核心痛点、不确定内容写"待确认"或"二期评估"。直接输出 JSON。"""
+内容要求：少字高信息密度、不堆砌字段、突出客户现状和核心痛点、不确定内容写"待确认"或"二期评估"。直接输出 JSON。
+
+## 强化要求
+1. **scenarioBreakdown 必须生成 3-5 个具体业务场景**，每个场景必须同时包含：
+   - scenarioName：具体业务场景名（如"项目立项审批"/"供应商报价管理"）
+   - currentProblem：客户当前面临的具体问题（引用客户原话或痛点描述）
+   - targetState：使用企业微信智能表格后的目标状态（具体可衡量）
+   - wecomSolution：具体解决方案（智能表格+审批+自动化+机器人AI的组合）
+   - value：带给客户的量化或质化价值
+2. **architecture.layers 必须生成 4 层**，对应企业微信智能表格标准架构：
+   - 企业微信入口层（消息通知/工作台/分享）
+   - 智能表格数据层（多表关联/数据录入）
+   - 自动化与提醒层（自动化规则/机器人推送）
+   - 权限与看板层（角色权限/数据看板）
+3. **recommendedModules 最少 2 条**，区分一期/二期
+4. **roadmap 最少 2 条**（一期 + 二期各 1 条）
+5. **painCards 最少 2 条**，每条 impact 必须量化或具体描述
+6. 所有字符串字段不得为空（用"待确认"填充），数组不得为空（至少 1 条占位）
+
+**【强制禁止】**：
+- 输出内容必须以 `{` 开头，以 `}` 结尾，不允许在 JSON 前后出现任何其他文字
+- 禁止输出任何解释、说明、注释、markdown 代码块包裹
+- 如果输出内容被截断导致 JSON 不完整，必须在截断处停止，不要补全或续写
+
+直接输出有效 JSON，不要 markdown 代码块包裹，不要有任何开场白或结尾语。"""
 
 def parse_json_response(raw):
     """解析 MiniMax 返回的 JSON，处理各种异常情况"""
@@ -2458,7 +2548,7 @@ async def question_list(body: dict, user: dict = Depends(require_auth)):
 
     ai_result = call_minimax(STEP1_SYSTEM_PROMPT, user_prompt, max_tokens=6000)
     raw = ai_result["content"]
-    record_ai_tokens(client_id, ai_result["usage"]["total_tokens"])
+    # Note: question_list doesn't have client_id, skip token recording here
     if raw.startswith("Error:"):
         return {"success": False, "error": raw}
 
@@ -2711,7 +2801,7 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
 
     # ====== Step 1: Prompt 3 → requirementSolutionData ======
     req_prompt = build_context(STEP4_REQUIREMENT_PROMPT)
-    req_ai = call_minimax(STEP4_REQUIREMENT_PROMPT, req_prompt, max_tokens=15000)
+    req_ai = call_codebuddy(STEP4_REQUIREMENT_PROMPT, req_prompt, max_tokens=15000)
     req_raw = req_ai["content"]
     record_ai_tokens(client_id, req_ai["usage"]["total_tokens"])
     requirement_data = parse_json_response(req_raw)
@@ -2726,7 +2816,7 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
         word_prompt = STEP4_WORD_PROMPT.replace("{requirement_data}", req_json_str)
         word_content = None
         for attempt in range(3):
-            word_ai = call_minimax(STEP4_WORD_PROMPT, word_prompt, max_tokens=8000)
+            word_ai = call_codebuddy(STEP4_WORD_PROMPT, word_prompt, max_tokens=8000)
             word_raw = word_ai["content"]
             record_ai_tokens(client_id, word_ai["usage"]["total_tokens"])
             word_content = parse_json_response(word_raw)
@@ -2749,7 +2839,7 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
     # ====== Step 3: Prompt 5 → HTML 内容 ======
     if artifact_type in ("both", "html"):
         html_prompt = STEP4_HTML_PROMPT.replace("{requirement_data}", req_json_str)
-        html_ai = call_minimax(STEP4_HTML_PROMPT, html_prompt, max_tokens=8000)
+        html_ai = call_codebuddy(STEP4_HTML_PROMPT, html_prompt, max_tokens=8000)
         html_raw = html_ai["content"]
         record_ai_tokens(client_id, html_ai["usage"]["total_tokens"])
         html_content = parse_json_response(html_raw)
@@ -2884,9 +2974,9 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
 
 # ==================== Step4 模板化新 API（按钮① HTML / 按钮② Word）====================
 
-# 模板包路径（服务器固定路径）
-TEMPLATE_BASE = "/var/www/provider-assist/templates/双按钮模板包"
-OUTPUTS_BASE = "/var/www/provider-assist/outputs"
+# 模板包路径
+TEMPLATE_BASE = str(Path(__file__).parent / "templates" / "双按钮模板包")
+OUTPUTS_BASE = str(Path(__file__).parent.parent / "outputs")
 
 
 def _read_template(path: str) -> str:
@@ -3304,10 +3394,10 @@ async def generate_step4_html(body: dict, user: dict = Depends(require_auth)):
     # 构建 prompt
     system_prompt, user_prompt = _build_html_prompt(template_html, golden_rules, example_html, ctx)
 
-    # 调用 minimax（最多重试1次）
+    # 调用 CodeBuddy（最多重试1次）
     html_content = None
     for attempt in range(2):
-        ai_result = call_minimax(system_prompt, user_prompt, max_tokens=12000)
+        ai_result = call_codebuddy(system_prompt, user_prompt, max_tokens=12000)
         raw = ai_result["content"]
         record_ai_tokens(client_id, ai_result["usage"]["total_tokens"])
         if raw.startswith("Error:"):
@@ -3428,10 +3518,10 @@ async def generate_step4_word(body: dict, user: dict = Depends(require_auth)):
     # 构建 prompt
     system_prompt, user_prompt = _build_word_prompt("", golden_rules, example_word_text, ctx)
 
-    # 调用 minimax（最多重试1次）
+    # 调用 CodeBuddy（最多重试1次）
     word_text_raw = None
     for attempt in range(2):
-        ai_result = call_minimax(system_prompt, user_prompt, max_tokens=15000)
+        ai_result = call_codebuddy(system_prompt, user_prompt, max_tokens=15000)
         raw = ai_result["content"]
         record_ai_tokens(client_id, ai_result["usage"]["total_tokens"])
         if raw.startswith("Error:"):
@@ -4228,7 +4318,7 @@ notRecommended：{not_recommended_scope}
 
 请严格按以下 JSON Schema 输出（直接输出 JSON，不要任何前缀）：
 
-【强制要求】每个子表的 sample_records 必须恰好填写 10 条真实业务数据，数据要贴合行业和客户场景，禁止填虚假或无关数据。少于 10 条视为不合格，必须补齐。
+【强制要求 - 最高优先级】每个子表的 sample_records 必须恰好填写 10 条真实业务数据，数据要贴合行业和客户场景，禁止填虚假或无关数据。少于 10 条视为严重不合格，必须补齐。输出前必须自检每张表的 sample_records 数量是否 == 10。
 
 {
   "doc_name": "智能表格名称",
@@ -4258,12 +4348,15 @@ notRecommended：{not_recommended_scope}
   ]
 }
 
-要求：
-1. 只包含 phase = "一期" 的表，不包含二期评估
-2. 每个字段的 field_type 必须从上述类型列表中选择
-3. 每个子表至少有 2-3 个字段
-4. sample_records 必须恰好 10 条，不足 10 条视为不合格，请补齐真实业务数据
-5. 字段数量不要超过 15 个/表（轻量交付原则）"""
+【填写规则 - 必须遵守】
+1. **只包含 phase = "一期" 的表**，不包含二期评估
+2. 每个字段的 field_type 必须从以下列表选择：**文本/多行文本/单选/多选/数字/金额/日期/日期时间/人员/手机/附件/图片/关联记录/公式/自动编号/进度/勾选/URL**
+3. 每个子表字段数量 **2-15 个**（轻量交付原则，不要超过 15 个）
+4. **sample_records 必须恰好 10 条，不足 10 条视为严重不合格，必须补齐真实业务数据**
+5. **行业贴合**：字段值要贴合 {industry} 行业的实际业务场景（如设计行业用"项目名称/设计师/客户名称/阶段"；制造行业用"批次/工序/物料"）
+6. **每条记录都要有实际业务意义**，不能是重复的占位数据（如"测试1"/"测试2"）
+
+直接输出有效 JSON，不要 markdown 代码块包裹。"""
 
 
 @app.post("/api/step5/generate-demo")
@@ -4338,6 +4431,26 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
         if isinstance(phase_one_scope, list):
             phase_one_scope = [{"item": (i.get("item") or i.get("title") or str(i)), "reason": "", "deliveryForm": "智能表格"} for i in phase_one_scope]
 
+        # 如果 phase_one_scope 仍为空，尝试从 step3_summary 的其他字段推断
+        if not phase_one_scope:
+            industry = client.get("industry") or ""
+            summary_raw = step3_summary.get("_raw", "") if isinstance(step3_summary, dict) else str(step3_summary or "")
+            # 从 confirmedNeeds 和 painPoints 推断一期范围
+            confirmed_needs = step3_summary.get("confirmedNeeds") or step3_summary.get("confirmed_needs") or []
+            pain_points = step3_summary.get("painPoints") or step3_summary.get("pain_points") or []
+            # 通用建表需求（无任何数据时）
+            phase_one_scope = [
+                {"item": "客户信息管理表", "reason": f"基础客户信息管理", "deliveryForm": "智能表格"},
+                {"item": "跟进记录管理表", "reason": "记录销售跟进过程", "deliveryForm": "智能表格"}
+            ]
+            if confirmed_needs:
+                for n in (confirmed_needs if isinstance(confirmed_needs, list) else [confirmed_needs]):
+                    title = n.get("title") or n.get("name") or ""
+                    if title and len(phase_one_scope) < 5:
+                        phase_one_scope.append({"item": title, "reason": "客户确认需求", "deliveryForm": "智能表格"})
+            if industry and len(phase_one_scope) < 3:
+                phase_one_scope.append({"item": f"{industry}业务主表", "reason": f"基于行业({industry})的核心业务管理", "deliveryForm": "智能表格"})
+
         requirement_data = {
             "smartTableSpec": {
                 "scenarioComplexity": "简单流程型",
@@ -4389,7 +4502,7 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
             "{not_recommended_scope}", json.dumps(scope.get("notRecommended") or [], ensure_ascii=False, indent=2)
         )
 
-    ai_result = call_minimax(STEP5_SCHEMA_SYSTEM_PROMPT, user_prompt, max_tokens=25000)
+    ai_result = call_codebuddy(STEP5_SCHEMA_SYSTEM_PROMPT, user_prompt, max_tokens=25000)
     raw = ai_result["content"]
     record_ai_tokens(client_id, ai_result["usage"]["total_tokens"])
     schema = parse_json_response(raw)
@@ -4453,15 +4566,14 @@ async def publish_step4_report(body: dict, user: dict = Depends(require_auth)):
     if not html_content:
         return {"success": False, "error": "缺少 html_content"}
 
-    # 保存到 /var/www/provider-assist/public/s/{client_id}_step4.html（默认）
-    # 或 {client_id}_step4_technical.html（type=technical）
-    share_dir = Path("/var/www/provider-assist/public/s")
+    # 保存到本地 public/s/ 目录（用于本地预览）
+    share_dir = Path(__file__).parent / "public" / "s"
     share_dir.mkdir(parents=True, exist_ok=True)
     suffix = "_technical" if doc_type == "technical" else ""
     filepath = share_dir / f"{client_id}_step4{suffix}.html"
     filepath.write_text(html_content, encoding="utf-8")
 
-    url = f"http://sining.cloud/s/{client_id}_step4{suffix}.html"
+    url = f"/public/s/{client_id}_step4{suffix}.html"
     return {"success": True, "url": url}
 
 
@@ -4508,7 +4620,7 @@ async def step5_agent_suggest(body: dict, user: dict = Depends(require_auth)):
         schema_summary=schema_summary
     )
 
-    ai_result = call_minimax(STEP5_AGENT_PROMPT, user_prompt, max_tokens=4000)
+    ai_result = call_codebuddy(STEP5_AGENT_PROMPT, user_prompt, max_tokens=4000)
     raw = ai_result["content"]
     record_ai_tokens(client_id, ai_result["usage"]["total_tokens"])
     if raw.startswith("Error:"):
@@ -4527,6 +4639,41 @@ async def step5_agent_suggest(body: dict, user: dict = Depends(require_auth)):
 # ==================== 创建企业微信智能表格（从 smartTableSpec） ====================
 
 # 字段类型映射：我们的规范 → WeCom field_type id
+def _build_field_option_map(fields_resp: dict) -> dict:
+    """从 smartsheet_get_fields 响应中，构建 {field_title: {option_id: option_text}} 的映射"""
+    option_map = {}
+    for f in (fields_resp.get("fields") or []):
+        title = f.get("field_title", "")
+        ft = f.get("field_type", "")
+        # 只有单选/多选字段有 options
+        prop = f.get("property_single_select") or f.get("property_select") or {}
+        opts = prop.get("options") or f.get("options") or []
+        if ft in ("FIELD_TYPE_SINGLE_SELECT", "FIELD_TYPE_SELECT") and opts:
+            option_map[title] = {opt.get("id", ""): opt.get("text", "") for opt in opts}
+    return option_map
+
+
+def _convert_select_values(record: dict, option_map: dict) -> dict:
+    """将单选/多选字段的文本值转换为 option_id；如果 option_id 为空则保留原文字值"""
+    for field_title, options in option_map.items():
+        if field_title in record:
+            val = record[field_title]
+            if isinstance(val, list):
+                # 多选：转成 [option_id, ...]，option_id 为空则保留文字
+                record[field_title] = [oid if oid else otxt for oid, otxt in options.items() if otxt in val] or [v for v in val if v]
+            else:
+                # 单选：找 option_id，找不到则保留原文字值
+                matched = False
+                for oid, otxt in options.items():
+                    if otxt == val:
+                        record[field_title] = oid if oid else val
+                        matched = True
+                        break
+                if not matched:
+                    record[field_title] = val  # 保留原文字值，让企微自己匹配
+    return record
+
+
 FIELD_TYPE_MAP = {
     # WeCom API 格式（FIELD_TYPE_ 前缀）
     "文本": "FIELD_TYPE_TEXT",
@@ -4623,7 +4770,7 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
         return {"success": False, "error": "未找到子表"}
     first_sheet_id = sheets[0].get("sheet_id", "")
 
-    # ---- 2b. 获取默认子表的字段（含默认 field_id）----
+    # ---- 2b. 获取默认子表的字段（含默认 field_id 和选项）----
     fr = call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": first_sheet_id})
     default_field_id = ""
     if fr and not fr.get("error") and fr.get("fields"):
@@ -4631,10 +4778,15 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
 
     # ---- 3a. 使用 sheets 结构（直接包含字段和样例数据）----
     if sheets_data:
+        # 为第一个子表构建 option_map（用于单选/多选值转换）
+        first_sheet_option_map = _build_field_option_map(fr) if fr and not fr.get("error") else {}
+
         for idx, sheet in enumerate(sheets_data):
             sheet_name = sheet.get("sheet_name", f"子表{idx + 1}")
             fields_list = sheet.get("fields") or []
             sample_records = sheet.get("sample_records") or []
+            # 每个子表用各自字段构建 option_map（新增子表时从其字段响应获取）
+            sheet_option_map = first_sheet_option_map if idx == 0 else {}
 
             if idx == 0:
                 # ---- 用默认子表 ----
@@ -4652,12 +4804,78 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
                     if len(fields_list) > 1:
                         add_fields = [{"field_title": f.get("field_title") or f.get("fieldName") or "", "field_type": _map_field_type(f.get("field_type") or f.get("fieldType") or "文本")} for f in fields_list[1:]]
                         call_mcp("smartsheet_add_fields", {"docid": docid, "sheet_id": sheet_id, "fields": add_fields})
+                    # 添加字段后重新获取字段列表（含新字段的 option_id）
+                    fr_after = call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": sheet_id})
+                    import logging
+                    logger4 = logging.getLogger("uvicorn")
+                    logger4.warning(f"[create_wecom_sheet] fr_after: {fr_after}")
+                    first_sheet_option_map = _build_field_option_map(fr_after) if fr_after and not fr_after.get("error") else {}
+                    # 如果选项为空，从 sample_records 中提取不重复的单选/多选值，自动创建选项
+                    if not first_sheet_option_map and sample_records:
+                        all_option_values = set()
+                        for rec in sample_records:
+                            for k, v in rec.items():
+                                if isinstance(v, str):
+                                    all_option_values.add(v)
+                        if all_option_values:
+                            # 为每个有选项需求的字段创建选项
+                            select_fields_to_options = {}
+                            for f in fields_list:
+                                ft = _map_field_type(f.get("field_type") or f.get("fieldType") or "文本")
+                                if ft in ("FIELD_TYPE_SINGLE_SELECT", "FIELD_TYPE_SELECT"):
+                                    # 从所有记录中提取该字段出现过的值作为选项
+                                    opts = []
+                                    for rec in sample_records:
+                                        val = rec.get(f.get("field_title") or f.get("fieldName", ""))
+                                        if val:
+                                            opts.append({"text": val, "color": 0})
+                                    if opts:
+                                        select_fields_to_options[f.get("field_title") or f.get("fieldName", "")] = opts
+                            logger4.warning(f"[create_wecom_sheet] auto_create_options: {select_fields_to_options}")
+                            # 更新这些字段的选项，并直接从更新响应中提取 option_id
+                            for field_title, options in select_fields_to_options.items():
+                                # 找到该字段的 field_id 和原始 field_type
+                                field_id = None
+                                orig_ft = "FIELD_TYPE_TEXT"
+                                for f in (fr_after.get("fields") or []):
+                                    if f.get("field_title") == field_title:
+                                        field_id = f.get("field_id")
+                                        orig_ft = f.get("field_type", "FIELD_TYPE_TEXT")
+                                        break
+                                if field_id:
+                                    upd = call_mcp("smartsheet_update_fields", {
+                                        "docid": docid,
+                                        "sheet_id": sheet_id,
+                                        "fields": [{"field_id": field_id, "field_title": field_title, "field_type": orig_ft, "property_single_select": {"is_multiple": False, "options": options}}]
+                                    })
+                                    logger4.warning(f"[create_wecom_sheet] set_options resp for '{field_title}': {upd}")
+                                    # 直接从更新响应中提取 option_id 映射（不依赖 get_fields 重新获取）
+                                    if upd and upd.get("fields"):
+                                        for updated_field in upd["fields"]:
+                                            ps = updated_field.get("property_single_select") or updated_field.get("property_select") or {}
+                                            opts = ps.get("options") or []
+                                            if opts:
+                                                first_sheet_option_map[field_title] = {opt.get("id", ""): opt.get("text", "") for opt in opts}
+                                    sheet_option_map = first_sheet_option_map
+                            # 不再重新 get_fields，直接用 update 响应中的 option_id
+                    logger4.warning(f"[create_wecom_sheet] first_sheet_option_map: {first_sheet_option_map}")
+                    sheet_option_map = first_sheet_option_map
                 # 重命名子表
                 call_mcp("smartsheet_update_sheet", {"docid": docid, "properties": {"sheet_id": sheet_id, "title": sheet_name}})
-                # 添加样例数据（需包装为 {"values": {...}}）
+                # 添加样例数据（需先转换单选/多选字段值）
                 if sample_records:
-                    records_formatted = [{"values": rec} for rec in sample_records]
-                    call_mcp("smartsheet_add_records", {"docid": docid, "sheet_id": sheet_id, "records": records_formatted})
+                    # 转换单选/多选字段的文本值为 option_id
+                    import logging
+                    logger3 = logging.getLogger("uvicorn")
+                    converted_records = [_convert_select_values(dict(rec), sheet_option_map) for rec in sample_records]
+                    logger3.warning(f"[create_wecom_sheet] converted_records: {converted_records}")
+                    logger3.warning(f"[create_wecom_sheet] sheet_option_map: {sheet_option_map}")
+                    records_formatted = [{"values": rec} for rec in converted_records]
+                    logger3.warning(f"[create_wecom_sheet] records_formatted: {records_formatted}")
+                    add_records_resp = call_mcp("smartsheet_add_records", {"docid": docid, "sheet_id": sheet_id, "records": records_formatted})
+                    logger3.warning(f"[create_wecom_sheet] add_records resp: {add_records_resp}")
+                    if add_records_resp and add_records_resp.get("errcode", 0) != 0:
+                        logger3.error(f"[create_wecom_sheet] add_records failed: {add_records_resp}")
             else:
                 # ---- 新增子表 ----
                 add_resp = call_mcp("smartsheet_add_sheet", {"docid": docid})
@@ -4668,11 +4886,15 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
                 if not new_sheet_id:
                     continue
                 sheet_id = new_sheet_id
-                # 获取新子表的默认 field_id
+                # 获取新子表的默认 field_id 和字段选项
                 new_fr = call_mcp("smartsheet_get_fields", {"docid": docid, "sheet_id": sheet_id})
                 new_default_field_id = ""
                 if new_fr and not new_fr.get("error") and new_fr.get("fields"):
                     new_default_field_id = new_fr["fields"][0].get("field_id", "")
+                    # 为新子表构建 option_map
+                    sheet_option_map = _build_field_option_map(new_fr)
+                else:
+                    sheet_option_map = {}
                 # 重命名 + 设字段
                 if fields_list and new_default_field_id:
                     first_field = fields_list[0]
@@ -4687,10 +4909,16 @@ async def create_wecom_sheet(body: dict, user: dict = Depends(require_auth)):
                         call_mcp("smartsheet_add_fields", {"docid": docid, "sheet_id": sheet_id, "fields": add_fields})
                 # 重命名子表
                 call_mcp("smartsheet_update_sheet", {"docid": docid, "properties": {"sheet_id": sheet_id, "title": sheet_name}})
-                # 添加样例数据（需包装为 {"values": {...}}）
+                # 添加样例数据（需先转换单选/多选字段值）
                 if sample_records:
-                    records_formatted = [{"values": rec} for rec in sample_records]
-                    call_mcp("smartsheet_add_records", {"docid": docid, "sheet_id": sheet_id, "records": records_formatted})
+                    converted_records = [_convert_select_values(dict(rec), sheet_option_map) for rec in sample_records]
+                    records_formatted = [{"values": rec} for rec in converted_records]
+                    add_records_resp = call_mcp("smartsheet_add_records", {"docid": docid, "sheet_id": sheet_id, "records": records_formatted})
+                    import logging
+                    logger3 = logging.getLogger("uvicorn")
+                    logger3.warning(f"[create_wecom_sheet] add_records resp: {add_records_resp}")
+                    if add_records_resp and add_records_resp.get("errcode", 0) != 0:
+                        logger3.error(f"[create_wecom_sheet] add_records failed: {add_records_resp}")
 
             created_sheets.append(sheet_name)
 

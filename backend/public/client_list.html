@@ -365,7 +365,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 <div class="header">
   <div class="header-left">
     <a class="logo-wrap" href="client_list.html">
-      <img class="logo-icon" src="/logo.jpg" style="border-radius:10px;object-fit:cover;width:36px;height:36px">
+      <img class="logo-icon" src="/public/logo.jpg" style="border-radius:10px;object-fit:cover;width:36px;height:36px">
     </a>
     <div class="header-title">服务商售前助手 <span style="font-size:12px;color:#999;font-weight:normal">v2.5.2</span></div>
   </div>
@@ -557,7 +557,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 </div>
 
 <script>
-var API_BASE = 'http://sining.cloud';
+var API_BASE = 'http://localhost:8002';
 var TOKEN_KEY = 'provider-token';
 var STORAGE_KEY = 'provider-assist-clients';
 var KB_STORAGE_KEY = 'provider-kb-files';
@@ -643,46 +643,31 @@ function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
 function getAuthHeaders() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }; }
 
 function autoLogin() {
-  // 8秒超时保护：如果后端响应慢，跳转到登录页
-  var loginTimeout = setTimeout(function() {
-    localStorage.removeItem(TOKEN_KEY);
-    location.href = 'login.html';
-  }, 8000);
-
-  function onSuccess(data) {
-    clearTimeout(loginTimeout);
-    document.getElementById('user-greet').textContent = '你好！' + (data.user && (data.user.provider_name || data.user.username) || '服务商');
-    loadClientsFromBackend();
-    loadKbData();
-  }
-
-  function onFail() {
-    clearTimeout(loginTimeout);
-    localStorage.removeItem(TOKEN_KEY);
-    location.href = 'login.html';
-  }
-
-  // 先尝试 auto-login（验证已有token）
   fetch(API_BASE + '/api/auth/auto-login', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' },
     body: '{}'
   }).then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
     .then(function(d) {
-      onSuccess(d);
+      document.getElementById('user-greet').textContent = '你好！' + (d.user && (d.user.provider_name || d.user.username) || '服务商');
+      loadClientsFromBackend();
+      loadKbData();
     }).catch(function(e) {
-      // auto-login失败，尝试 test-login（开发者快捷登录）
       fetch(API_BASE + '/api/test-login', { method: 'POST' })
         .then(function(r) { return r.json(); })
         .then(function(data) {
           if (data.access_token) {
             localStorage.setItem(TOKEN_KEY, data.access_token);
-            onSuccess(data);
+            document.getElementById('user-greet').textContent = '你好！' + (data.user && data.user.provider_name || '服务商');
+            loadClientsFromBackend();
+            loadKbData();
           } else {
-            onFail();
+            localStorage.removeItem(TOKEN_KEY);
+            location.href = 'login.html';
           }
         }).catch(function() {
-          onFail();
+          localStorage.removeItem(TOKEN_KEY);
+          location.href = 'login.html';
         });
     });
 }

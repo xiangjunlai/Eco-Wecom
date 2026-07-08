@@ -1,0 +1,202 @@
+```html
+<!doctype html>
+<!--
+========================================================================
+   福鸿化工企业微信定制开发售前解决方案 HTML 模板（锁死骨架版）
+   对应工作台按钮：【售前解决方案】（生成 HTML）
+========================================================================
+   使用说明（给 agent / minimax）：
+   1. 本文件的 <style> 整段是「视觉基因」，已锁死，禁止改动任何颜色/圆角/阴影/渐变/布局。
+   2. 你的任务 = 只替换 {{双花括号}} 里的业务文字，结构标签一律保留。
+   3. 章节顺序固定为 8 节（01~08），不得删节、不得改 kicker 的英文编号。
+   4. 列表/卡片/表格行数可按真实信息「增减」，但每个区块至少保留模板给的条数，
+      宁可多写真实内容，也禁止留下 {{变量}} 或「待补充/待识别/暂无」这类空壳话术。
+   5. 凡是客户已有系统的源数据底表，沿用标杆写法「禁止修改！xxx」命名。
+   ⛔ 绝对不能改的 5 个视觉基因（详见 黄金规则.md）：
+      ① 主色 #1677ff 企业微信蓝 + 光晕 radial-gradient 背景
+      ② Hero 右侧「仿真经营看板」(KPI 三连卡 + 迷你数据表 + 彩色 tag)
+      ③ 04 章「分层架构图」(4 个横向 layer，左标签右 cells)
+      ④ 场景用「厚 module 卡」(左侧大序号 + 右侧三点钉 points)
+      ⑤ 章节标题用「英文 kicker (01 / Stage)」+ 中文大标题
+========================================================================
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>福鸿化工｜企业微信定制开发售前方案</title>
+<style>
+/* ===== 视觉基因：以下整段锁死，禁止修改 ===== */
+:root{
+   --wx:#1677ff; --wx2:#12b5ff; --ink:#101828; --text:#344054; --muted:#667085;
+   --line:#e5edf7; --bg:#f5f8fc; --card:#fff; --green:#17b26a; --orange:#f79009;
+   --shadow:0 18px 48px rgba(16,24,40,.08); --shadow2:0 12px 28px rgba(22,119,255,.12);
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);
+background:radial-gradient(circle at 10% -10%,rgba(22,119,255,.14),transparent 30%),linear-gradient(180deg,#f8fbff 0%,#f5f8fc 42%,#f6f8fb 100%);line-height:1.7}
+.page{max-width:1180px;margin:0 auto;padding:24px 24px 72px}
+.topbar{height:58px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.brand{display:flex;gap:12px;align-items:center;font-weight:900;color:var(--ink)}
+.logo{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,var(--wx),#1fc7f4);box-shadow:0 10px 24px rgba(22,119,255,.25);display:grid;place-items:center;color:#fff;font-weight:900}
+.nav{display:flex;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px;box-shadow:0 8px 20px rgba(16,24,40,.04)}
+.nav a{font-size:13px;color:#516174;text-decoration:none;padding:8px 12px;border-radius:999px}
+.nav a:hover{background:#eef7ff;color:var(--wx)}
+.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#fff 0%,#eef7ff 100%);border:1px solid rgba(22,119,255,.14);border-radius:30px;box-shadow:var(--shadow2);padding:42px;display:grid;grid-template-columns:1.04fr .96fr;gap:34px;align-items:center}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:7px 12px;border-radius:999px;background:#eaf4ff;color:#1263d1;font-weight:900;font-size:13px;margin-bottom:16px}
+.eyebrow i{width:8px;height:8px;background:var(--wx);border-radius:50%;box-shadow:0 0 0 4px rgba(22,119,255,.12)}
+h1{margin:0;color:var(--ink);font-size:42px;line-height:1.15;letter-spacing:-1px}.hero p{font-size:17px;color:#475467;margin:18px 0 24px;max-width:620px}
+.chips{display:flex;gap:10px;flex-wrap:wrap}.chip{border:1px solid #dcecff;background:rgba(255,255,255,.75);border-radius:999px;padding:7px 11px;color:#456074;font-size:13px}
+.board{background:rgba(255,255,255,.86);border:1px solid #ddecff;border-radius:26px;box-shadow:0 26px 60px rgba(22,119,255,.14);padding:18px}
+.board-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.board-title{font-weight:900;color:#18314f}.dots{display:flex;gap:5px}.dots i{width:8px;height:8px;border-radius:50%;background:#d5e2ef}.dots i:first-child{background:#17b26a}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.kpi{background:#f6fbff;border:1px solid #e4f0ff;border-radius:16px;padding:14px}.kpi b{display:block;color:#102a43;font-size:24px}.kpi span{font-size:12px;color:var(--muted)}
+.fake-table{border:1px solid #e6edf7;border-radius:16px;overflow:hidden;background:#fff}.row{display:grid;grid-template-columns:1fr .8fr .8fr .6fr;gap:10px;padding:11px 12px;border-bottom:1px solid #edf2f7;font-size:12px;color:#52677d}.row:last-child{border-bottom:0}.row.head{background:#f1f8ff;color:#1c558f;font-weight:900}
+.tag{display:inline-flex;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900}.blue{background:#eef7ff;color:#1677ff}.green{background:#ecfdf3;color:#079455}.orange{background:#fff7ed;color:#dc6803}
+section{margin-top:38px}.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:18px}.kicker{font-size:12px;color:var(--wx);letter-spacing:.1em;font-weight:900;text-transform:uppercase}.section-title h2{margin:5px 0 0;color:var(--ink);font-size:30px;line-height:1.25}.section-desc{max-width:560px;color:var(--muted);margin:0}
+.grid{display:grid;gap:16px}.grid-3{grid-template-columns:repeat(3,1fr)}.grid-2{grid-template-columns:repeat(2,1fr)}.grid-4{grid-template-columns:repeat(4,1fr)}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:22px}.card h3{margin:0 0 8px;color:var(--ink);font-size:18px}.card p{margin:0;color:var(--muted);font-size:14px}
+.insight{display:grid;grid-template-columns:.95fr 1.05fr;gap:16px}.main-insight{background:linear-gradient(135deg,#1677ff,#24b9f2);color:#fff;border-radius:26px;padding:28px;box-shadow:0 18px 42px rgba(22,119,255,.22)}.main-insight h3{margin:0 0 10px;color:#fff;font-size:25px;line-height:1.25}.main-insight p{color:rgba(255,255,255,.88)}
+.list{display:grid;gap:12px}.item{display:grid;grid-template-columns:42px 1fr;gap:12px;padding:18px;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 8px 20px rgba(16,24,40,.04)}.num{width:42px;height:42px;border-radius:14px;background:#eef7ff;color:var(--wx);display:grid;place-items:center;font-weight:900}.item b{display:block;color:var(--ink);margin-bottom:4px}.item span{font-size:14px;color:var(--muted)}
+.arch{background:#fff;border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);padding:22px}.layer{display:grid;grid-template-columns:150px 1fr;gap:12px;margin-bottom:12px}.label{background:linear-gradient(135deg,#1677ff,#21b8f2);color:#fff;border-radius:16px;display:grid;place-items:center;font-weight:900;text-align:center;padding:14px}.cells{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.cell{background:#f7fbff;border:1px solid #e2efff;border-radius:15px;padding:12px;text-align:center;font-weight:800;color:#264761;font-size:14px}
+.module{display:grid;grid-template-columns:180px 1fr;gap:16px;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:20px}.module-side{background:#f1f8ff;border:1px solid #deecff;border-radius:18px;padding:16px}.module-side b{display:block;color:#1677ff;font-size:28px}.module-body h3{margin:0;color:var(--ink);font-size:20px}.points{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.point{background:#f8fbff;border:1px solid #e7f1ff;border-radius:14px;padding:12px;font-size:13px}.point b{display:block;color:#203c5e}
+.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.phase{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:20px;position:relative}.phase:before{content:"";position:absolute;left:20px;top:0;width:42px;height:4px;background:linear-gradient(90deg,#1677ff,#21c8f6);border-radius:999px}.phase span{display:inline-block;background:#eef7ff;color:#1677ff;border-radius:999px;font-size:12px;font-weight:900;padding:5px 10px;margin-bottom:10px}.phase h3{margin:0 0 8px;color:var(--ink)}.phase p{font-size:14px;color:var(--muted);margin:0}
+.table{overflow:hidden;border:1px solid var(--line);border-radius:22px;background:#fff;box-shadow:var(--shadow)}table{width:100%;border-collapse:collapse}th,td{padding:13px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px}th{background:#f1f8ff;color:#1e477d;font-size:13px}tr:last-child td{border-bottom:0}
+.cta{margin-top:42px;background:linear-gradient(135deg,#1267e8,#22b8ff);border-radius:28px;padding:30px;color:#fff;display:flex;justify-content:space-between;gap:20px;align-items:center;box-shadow:0 20px 46px rgba(22,119,255,.22)}.cta h2{margin:0 0 6px;color:#fff}.cta p{margin:0;color:rgba(255,255,255,.86)}
+@media(max-width:900px){.hero,.insight,.module{grid-template-columns:1fr}.grid-4,.grid-3,.grid-2,.timeline{grid-template-columns:1fr 1fr}.cells{grid-template-columns:1fr 1fr}.nav{display:none}.section-head{display:block}.section-desc{margin-top:8px}}
+@media(max-width:620px){.page{padding:16px}.hero{padding:26px}h1{font-size:30px}.grid-4,.grid-3,.grid-2,.timeline{grid-template-columns:1fr}.kpis{grid-template-columns:1fr}.layer{grid-template-columns:1fr}.points{grid-template-columns:1fr}.row{grid-template-columns:1fr 1fr}.cta{display:block}}
+/* ===== 视觉基因结束 ===== */
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ███ 顶栏（锁死品牌区，nav 文字可对应章节微调）███ -->
+<header class="topbar">
+   <div class="brand"><div class="logo">企</div><span>企业微信服务商定制开发售前方案</span></div>
+   <nav class="nav"><a href="#stage">客户阶段判断</a><a href="#insight">需求洞察</a><a href="#scenario">场景方案</a><a href="#table">智能表格</a><a href="#roadmap">实施路径</a></nav>
+</header>
+
+<!-- ███ Hero（锁死结构：左文案 + 右仿真看板。看板里的 KPI/数据行用真实业务数估算填充）███ -->
+<section class="hero">
+   <div>
+     <div class="eyebrow"><i></i>化工材料 · 销售线索管理 · 积分奖励</div>
+     <h1>福鸿化工<br>企业微信智能表格解决方案</h1>
+     <p>本方案旨在帮助福鸿化工通过企业微信智能表格实现销售线索的自动化管理，提升工作效率，实现数据实时统计与分析，并提供销售日报生成工具，以便管理层实时了解销售团队的工作进展。</p>
+     <div class="chips">
+       <span class="chip">销售线索自动化</span>
+       <span class="chip">销售数据统计分析</span>
+       <span class="chip">销售日报生成</span>
+       <span class="chip">ERP系统对接</span>
+       <span class="chip">积分奖励系统</span>
+     </div>
+   </div>
+   <div class="board">
+     <div class="board-head"><div class="board-title">销售管理看板</div><div class="dots"><i></i><i></i><i></i></div></div>
+     <div class="kpis">
+       <div class="kpi"><b>128</b><span>提报总数</span></div>
+       <div class="kpi"><b>36</b><span>已签约</span></div>
+       <div class="kpi"><b>86万</b><span>签约产值</span></div>
+     </div>
+     <div class="fake-table">
+       <div class="row head"><span>客户编号</span><span>状态</span><span>跟进人</span><span>状态</span></div>
+       <div class="row"><span>001</span><span>跟进中</span><span>张三</span><span><i class="tag green">已加积分</i></span></div>
+       <div class="row"><span>002</span><span>已成交</span><span>李四</span><span><i class="tag blue">待积分兑换</i></span></div>
+       <div class="row"><span>003</span><span>跟进中</span><span>王五</span><span><i class="tag orange">需跟进</i></span></div>
+     </div>
+   </div>
+</section>
+
+<!-- ███ 01 客户阶段判断（锁死：4 张 card）███ -->
+<section id="stage">
+   <div class="section-head"><div class="section-title"><div class="kicker">01 / Stage</div><h2>客户阶段判断</h2></div><p class="section-desc">福鸿化工目前处于销售线索管理与积分奖励系统建设初期，需建立自动化流程以提升效率。</p></div>
+   <div class="grid grid-4">
+     <div class="card"><h3>已有系统现状</h3><p>使用Excel表格进行销售线索管理，存在操作繁琐、不便等问题。</p></div>
+     <div class="card"><h3>核心对象</h3><p>业务员负责线索收集、分配、跟进，管理层负责审批流程和业绩统计。</p></div>
+     <div class="card"><h3>管理诉求</h3><p>实现销售线索的自动化管理，提升工作效率，实时统计销售数据。</p></div>
+     <div class="card"><h3>交付边界</h3><p>明确不替代现有ERP系统，仅建立前端看板与自动化提醒。</p></div>
+   </div>
+</section>
+
+<!-- ███ 02 需求洞察（锁死：左蓝色主判断卡 + 右编号列表）列表条数可 3~5 条 ███ -->
+<section id="insight">
+   <div class="section-head"><div class="section-title"><div class="kicker">02 / Insight</div><h2>需求洞察</h2></div><p class="section-desc">福鸿化工客户需要的不仅是一套系统，而是通过自动化工具改善销售线索管理，提升工作效率。</p></div>
+   <div class="insight">
+     <div class="main-insight"><h3>核心判断：销售线索的自动化管理</h3><p>通过企业微信的智能表格功能可以实现销售线索的自动化管理，提高工作效率。</p></div>
+     <div class="list">
+       <div class="item"><div class="num">1</div><div><b>线索管理效率低</b><span>使用Excel表格进行销售线索管理存在操作繁琐、不便等问题。</span></div></div>
+       <div class="item"><div class="num">2</div><div><b>积分奖励系统缺失</b><span>缺少自动化积分奖励机制来激励业务人员。</span></div></div>
+       <div class="item"><div class="num">3</div><div><b>数据实时统计与分析</b><span>需要与ERP系统对接，实现销售数据的实时统计与分析。</span></div></div>
+     </div>
+   </div>
+</section>
+
+<!-- ███ 03 核心业务场景拆解（锁死：厚 module 卡，每卡左侧大序号 + 右侧三点钉）卡片数 2~4 个 ███ -->
+<section id="scenario">
+   <div class="section-head"><div class="section-title"><div class="kicker">03 / Scenarios</div><h2>核心业务场景拆解</h2></div><p class="section-desc">围绕销售线索管理与积分奖励，展开销售流程的自动化和数据统计。</p></div>
+   <div class="grid">
+     <div class="module"><div class="module-side"><b>01</b><span>销售线索管理</span></div><div class="module-body"><h3>销售线索自动化登记</h3><p>建立销售线索登记、分配、跟进和转化的自动化流程。</p><div class="points"><div class="point"><b>数据源</b>Excel表格</div><div class="point"><b>维度</b>客户信息、跟进状态</div><div class="point"><b>使用对象</b>业务员、管理层</div></div></div></div>
+     <div class="module"><div class="module-side"><b>02</b><span>积分奖励系统</span></div><div class="module-body"><h3>积分奖励自动化</h3><p>建立积分奖励规则，自动为提报人和落实人加分，积分可兑换奖品。</p><div class="points"><div class="point"><b>能力</b>自动化加积分</div><div class="point"><b>价值</b>激励业务人员</div><div class="point"><b>边界</b>不替代原有奖励机制</div></div></div></div>
+   </div>
+</section>
+
+<!-- ███ 04 企业微信能力与定制服务架构（锁死：4 层分层架构图）层数固定 4 层，每层 4 cell ███ -->
+<section>
+   <div class="section-head"><div class="section-title"><div class="kicker">04 / Architecture</div><h2>企业微信能力与定制服务架构</h2></div><p class="section-desc">采用企业微信生态下的智能表格，实现销售线索的自动化管理和数据统计分析。</p></div>
+   <div class="arch">
+     <div class="layer"><div class="label">业务系统层</div><div class="cells"><div class="cell">CRM系统</div><div class="cell">ERP系统</div><div class="cell">积分奖励机制</div><div class="cell">审批流程</div></div></div>
+     <div class="layer"><div class="label">智能表格层</div><div class="cells"><div class="cell">销售线索管理表</div><div class="cell">积分记录表</div><div class="cell">奖品兑换表</div><div class="cell">权限保护</div></div></div>
+     <div class="layer"><div class="label">看板分析层</div><div class="cells"><div class="cell">销售线索看板</div><div class="cell">积分统计看板</div><div class="cell">奖品库存看板</div><div class="cell">报表分析</div></div></div>
+     <div class="layer"><div class="label">扩展能力层</div><div class="cells"><div class="cell">系统集成</div><div class="cell">自动化提醒</div><div class="cell">报表定制</div><div class="cell">移动应用</div></div></div>
+   </div>
+</section>
+
+<!-- ███ 05 建议建设模块（锁死：表格）行数按真实表/看板数量增减 ███ -->
+<section id="table">
+   <div class="section-head"><div class="section-title"><div class="kicker">05 / Modules</div><h2>建议建设模块</h2></div><p class="section-desc">一期建设销售线索管理表和积分奖励表，二期扩展至ERP系统对接和报表分析。</p></div>
+   <div class="table"><table><thead><tr><th>表/看板</th><th>定位</th><th>使用对象</th><th>阶段</th></tr></thead><tbody>
+     <tr><td>销售线索管理表</td><td>销售线索的自动化登记、分配、跟进和转化</td><td>业务员、管理层</td><td>一期</td></tr>
+     <tr><td>积分奖励表</td><td>积分的自动化记录、统计和兑换管理</td><td>业务员、管理层</td><td>一期</td></tr>
+     <tr><td>销售数据看板</td><td>实时销售数据统计与分析</td><td>管理层</td><td>二期</td></tr>
+   </tbody></table></div>
+</section>
+
+<!-- ███ 06 实施路径建议（锁死：4 个 phase 时间线）阶段数固定 4 ███ -->
+<section id="roadmap">
+   <div class="section-head"><div class="section-title"><div class="kicker">06 / Roadmap</div><h2>实施路径建议</h2></div><p class="section-desc">建议一期建设基础自动化流程，二期扩展数据分析和系统集成。</p></div>
+   <div class="timeline">
+     <div class="phase"><span>第 1 阶段</span><h3>需求梳理与方案设计</h3><p>与客户沟通需求，设计企业微信智能表格解决方案。</p></div>
+     <div class="phase"><span>第 2 阶段</span><h3>原型开发与测试</h3><p>开发原型并进行测试，确保功能满足客户业务需求。</p></div>
+     <div class="phase"><span>第 3 阶段</h3><h3>功能迭代与优化</h3><p>根据测试反馈进行功能迭代与优化。</p></div>
+     <div class="phase"><span>第 4 阶段</h3><h3>培训与上线</h3><p>对客户进行系统培训并正式上线。</p></div>
+   </div>
+</section>
+
+<!-- ███ 07 方案价值（锁死：6 张 card）███ -->
+<section>
+   <div class="section-head"><div class="section-title"><div class="kicker">07 / Value</div><h2>方案价值</h2></div><p class="section-desc">通过自动化工具改善销售线索管理，提升工作效率，实现数据实时统计与分析。</p></div>
+   <div class="grid grid-3">
+     <div class="card"><h3>提升工作效率</h3><p>自动化管理销售线索，减少手动操作，提升业务流程效率。</p></div>
+     <div class="card"><h3>实时数据统计</h3><p>通过智能表格实时统计销售数据，支持管理层决策。</p></div>
+     <div class="card"><h3>销售流程自动化</h3><p>自动分配线索给业务员，自动记录跟进情况，简化工作流程。</p></div>
+     <div class="card"><h3>积分奖励系统</h3><p>建立积分奖励规则，自动记录积分，提升员工积极性。</p></div>
+     <div class="card"><h3>系统集成与扩展</h3><p>与ERP系统对接，实现数据共享，支持后期功能扩展和定制。</p></div>
+     <div class="card"><h3>移动端操作支持</h3><p>支持移动设备操作，方便业务员外出工作时使用。</p></div>
+   </div>
+</section>
+
+<!-- ███ 08 待确认问题（锁死：表格）行数按真实问题增减；此处可保留「⚠️ 待确认」语义但内容必须是真实问题 ███ -->
+<section>
+   <div class="section-head"><div class="section-title"><div class="kicker">08 / Confirm</div><h2>待确认问题</h2></div><p class="section-desc">以下内容会影响一期交付范围、字段数量和自动化复杂度，建议在原型前确认。</p></div>
+   <div class="table"><table><thead><tr><th>问题</th><th>为什么要确认</th><th>建议处理</th></tr></thead><tbody>
+     <tr><td>是否需要与CRM系统进行数据同步？</td><td>影响数据准确性和系统集成复杂度</td><td>一期确认是否集成CRM系统</td></tr>
+     <tr><td>积分奖励规则的具体计算方式是什么？</td><td>影响积分记录表设计</td><td>一期确认积分规则</td></tr>
+     <tr><td>ERP系统对接的详细需求和对接点是什么？</td><td>确定对接细节和资源需求</td><td>一期明确ERP对接需求</td></tr>
+     <tr><td>奖品库存管理的自动化程度如何？</td><td>影响库存数据的准确性和及时性</td><td>一期设计奖品库存自动化流程</td></tr>
+   </tbody></table></div>
+</section>
+
+<!-- ███ CTA（锁死结构）███ -->
+<div class="cta"><div><h2>建议一期聚焦于销售线索自动化管理与积分奖励系统建设</h2><p>先通过智能表格实现销售线索的自动化管理，积分奖励系统的初步搭建，后续再逐步扩展至ERP系统对接和报表分析。</p></div></div>
+
+</div>
+</body></html>
+```

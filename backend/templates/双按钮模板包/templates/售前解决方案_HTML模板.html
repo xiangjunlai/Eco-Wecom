@@ -1,0 +1,204 @@
+<!doctype html>
+<!--
+========================================================================
+  企业微信定制开发 · 售前解决方案 HTML 模板（锁死骨架版）
+  对应工作台按钮：【售前解决方案】（生成 HTML）
+========================================================================
+  使用说明（给 agent / minimax）：
+  1. 本文件的 <style> 整段是「视觉基因」，已锁死，禁止改动任何颜色/圆角/阴影/渐变/布局。
+  2. 你的任务 = 只替换 {{双花括号}} 里的业务文字，结构标签一律保留。
+  3. 章节顺序固定为 8 节（01~08），不得删节、不得改 kicker 的英文编号。
+  4. 列表/卡片/表格行数可按真实信息「增减」，但每个区块至少保留模板给的条数，
+     宁可多写真实内容，也禁止留下 {{变量}} 或「待补充/待识别/暂无」这类空壳话术。
+  5. 凡是客户已有系统的源数据底表，沿用标杆写法「禁止修改！xxx」命名。
+  ⛔ 绝对不能改的 5 个视觉基因（详见 黄金规则.md）：
+     ① 主色 #1677ff 企业微信蓝 + 光晕 radial-gradient 背景
+     ② Hero 右侧「仿真经营看板」(KPI 三连卡 + 迷你数据表 + 彩色 tag)
+     ③ 04 章「分层架构图」(4 个横向 layer，左标签右 cells)
+     ④ 场景用「厚 module 卡」(左侧大序号 + 右侧三点钉 points)
+     ⑤ 章节标题用「英文 kicker (01 / Stage)」+ 中文大标题
+========================================================================
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{客户名}}｜{{方案标题}}</title>
+<style>
+/* ===== 视觉基因：以下整段锁死，禁止修改 ===== */
+:root{
+  --wx:#1677ff;--wx2:#12b5ff;--ink:#101828;--text:#344054;--muted:#667085;
+  --line:#e5edf7;--bg:#f5f8fc;--card:#fff;--green:#17b26a;--orange:#f79009;
+  --shadow:0 18px 48px rgba(16,24,40,.08);--shadow2:0 12px 28px rgba(22,119,255,.12);
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);
+background:radial-gradient(circle at 10% -10%,rgba(22,119,255,.14),transparent 30%),linear-gradient(180deg,#f8fbff 0%,#f5f8fc 42%,#f6f8fb 100%);line-height:1.7}
+.page{max-width:1180px;margin:0 auto;padding:24px 24px 72px}
+.topbar{height:58px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.brand{display:flex;gap:12px;align-items:center;font-weight:900;color:var(--ink)}
+.logo{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,var(--wx),#1fc7f4);box-shadow:0 10px 24px rgba(22,119,255,.25);display:grid;place-items:center;color:#fff;font-weight:900}
+.nav{display:flex;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px;box-shadow:0 8px 20px rgba(16,24,40,.04)}
+.nav a{font-size:13px;color:#516174;text-decoration:none;padding:8px 12px;border-radius:999px}
+.nav a:hover{background:#eef7ff;color:var(--wx)}
+.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#fff 0%,#eef7ff 100%);border:1px solid rgba(22,119,255,.14);border-radius:30px;box-shadow:var(--shadow2);padding:42px;display:grid;grid-template-columns:1.04fr .96fr;gap:34px;align-items:center}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:7px 12px;border-radius:999px;background:#eaf4ff;color:#1263d1;font-weight:900;font-size:13px;margin-bottom:16px}
+.eyebrow i{width:8px;height:8px;background:var(--wx);border-radius:50%;box-shadow:0 0 0 4px rgba(22,119,255,.12)}
+h1{margin:0;color:var(--ink);font-size:42px;line-height:1.15;letter-spacing:-1px}.hero p{font-size:17px;color:#475467;margin:18px 0 24px;max-width:620px}
+.chips{display:flex;gap:10px;flex-wrap:wrap}.chip{border:1px solid #dcecff;background:rgba(255,255,255,.75);border-radius:999px;padding:7px 11px;color:#456074;font-size:13px}
+.board{background:rgba(255,255,255,.86);border:1px solid #ddecff;border-radius:26px;box-shadow:0 26px 60px rgba(22,119,255,.14);padding:18px}
+.board-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.board-title{font-weight:900;color:#18314f}.dots{display:flex;gap:5px}.dots i{width:8px;height:8px;border-radius:50%;background:#d5e2ef}.dots i:first-child{background:#17b26a}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.kpi{background:#f6fbff;border:1px solid #e4f0ff;border-radius:16px;padding:14px}.kpi b{display:block;color:#102a43;font-size:24px}.kpi span{font-size:12px;color:var(--muted)}
+.fake-table{border:1px solid #e6edf7;border-radius:16px;overflow:hidden;background:#fff}.row{display:grid;grid-template-columns:1fr .8fr .8fr .6fr;gap:10px;padding:11px 12px;border-bottom:1px solid #edf2f7;font-size:12px;color:#52677d}.row:last-child{border-bottom:0}.row.head{background:#f1f8ff;color:#1c558f;font-weight:900}
+.tag{display:inline-flex;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900}.blue{background:#eef7ff;color:#1677ff}.green{background:#ecfdf3;color:#079455}.orange{background:#fff7ed;color:#dc6803}
+section{margin-top:38px}.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:18px}.kicker{font-size:12px;color:var(--wx);letter-spacing:.1em;font-weight:900;text-transform:uppercase}.section-title h2{margin:5px 0 0;color:var(--ink);font-size:30px;line-height:1.25}.section-desc{max-width:560px;color:var(--muted);margin:0}
+.grid{display:grid;gap:16px}.grid-3{grid-template-columns:repeat(3,1fr)}.grid-2{grid-template-columns:repeat(2,1fr)}.grid-4{grid-template-columns:repeat(4,1fr)}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:22px}.card h3{margin:0 0 8px;color:var(--ink);font-size:18px}.card p{margin:0;color:var(--muted);font-size:14px}
+.insight{display:grid;grid-template-columns:.95fr 1.05fr;gap:16px}.main-insight{background:linear-gradient(135deg,#1677ff,#24b9f2);color:#fff;border-radius:26px;padding:28px;box-shadow:0 18px 42px rgba(22,119,255,.22)}.main-insight h3{margin:0 0 10px;color:#fff;font-size:25px;line-height:1.25}.main-insight p{color:rgba(255,255,255,.88)}
+.list{display:grid;gap:12px}.item{display:grid;grid-template-columns:42px 1fr;gap:12px;padding:18px;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 8px 20px rgba(16,24,40,.04)}.num{width:42px;height:42px;border-radius:14px;background:#eef7ff;color:var(--wx);display:grid;place-items:center;font-weight:900}.item b{display:block;color:var(--ink);margin-bottom:4px}.item span{font-size:14px;color:var(--muted)}
+.arch{background:#fff;border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);padding:22px}.layer{display:grid;grid-template-columns:150px 1fr;gap:12px;margin-bottom:12px}.layer:last-child{margin-bottom:0}.label{background:linear-gradient(135deg,#1677ff,#21b8f2);color:#fff;border-radius:16px;display:grid;place-items:center;font-weight:900;text-align:center;padding:14px}.cells{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.cell{background:#f7fbff;border:1px solid #e2efff;border-radius:15px;padding:12px;text-align:center;font-weight:800;color:#264761;font-size:14px}
+.module{display:grid;grid-template-columns:180px 1fr;gap:16px;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:20px}.module-side{background:#f1f8ff;border:1px solid #deecff;border-radius:18px;padding:16px}.module-side b{display:block;color:#1677ff;font-size:28px}.module-body h3{margin:0;color:var(--ink);font-size:20px}.points{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.point{background:#f8fbff;border:1px solid #e7f1ff;border-radius:14px;padding:12px;font-size:13px}.point b{display:block;color:#203c5e}
+.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.phase{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:20px;position:relative}.phase:before{content:"";position:absolute;left:20px;top:0;width:42px;height:4px;background:linear-gradient(90deg,#1677ff,#21c8f6);border-radius:999px}.phase span{display:inline-block;background:#eef7ff;color:#1677ff;border-radius:999px;font-size:12px;font-weight:900;padding:5px 10px;margin-bottom:10px}.phase h3{margin:0 0 8px;color:var(--ink)}.phase p{font-size:14px;color:var(--muted);margin:0}
+.table{overflow:hidden;border:1px solid var(--line);border-radius:22px;background:#fff;box-shadow:var(--shadow)}table{width:100%;border-collapse:collapse}th,td{padding:13px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px}th{background:#f1f8ff;color:#1e477d;font-size:13px}tr:last-child td{border-bottom:0}
+.cta{margin-top:42px;background:linear-gradient(135deg,#1267e8,#22b8ff);border-radius:28px;padding:30px;color:#fff;display:flex;justify-content:space-between;gap:20px;align-items:center;box-shadow:0 20px 46px rgba(22,119,255,.22)}.cta h2{margin:0 0 6px;color:#fff}.cta p{margin:0;color:rgba(255,255,255,.86)}
+@media(max-width:900px){.hero,.insight,.module{grid-template-columns:1fr}.grid-4,.grid-3,.grid-2,.timeline{grid-template-columns:1fr 1fr}.cells{grid-template-columns:1fr 1fr}.nav{display:none}.section-head{display:block}.section-desc{margin-top:8px}}
+@media(max-width:620px){.page{padding:16px}.hero{padding:26px}h1{font-size:30px}.grid-4,.grid-3,.grid-2,.timeline{grid-template-columns:1fr}.kpis{grid-template-columns:1fr}.layer{grid-template-columns:1fr}.points{grid-template-columns:1fr}.row{grid-template-columns:1fr 1fr}.cta{display:block}}
+/* ===== 视觉基因结束 ===== */
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ███ 顶栏（锁死品牌区，nav 文字可对应章节微调）███ -->
+<header class="topbar">
+  <div class="brand"><div class="logo">企</div><span>企业微信服务商定制开发售前方案</span></div>
+  <nav class="nav"><a href="#stage">客户判断</a><a href="#insight">需求洞察</a><a href="#scenario">场景方案</a><a href="#table">智能表格</a><a href="#roadmap">实施路径</a></nav>
+</header>
+
+<!-- ███ Hero（锁死结构：左文案 + 右仿真看板。看板里的 KPI/数据行用真实业务数估算填充）███ -->
+<section class="hero">
+  <div>
+    <div class="eyebrow"><i></i>{{行业}} · {{核心场景关键词1}} · {{核心场景关键词2}}</div>
+    <h1>{{客户名}}<br>{{方案一句话标题}}</h1>
+    <p>{{方案概述：围绕客户最关心的经营问题，说明在不重建原有业务流程的前提下，用企业微信智能表格能拿到什么结果。60~120字}}</p>
+    <div class="chips">
+      <span class="chip">{{标签1：客户已有系统}}</span>
+      <span class="chip">{{标签2}}</span>
+      <span class="chip">{{标签3}}</span>
+      <span class="chip">{{标签4}}</span>
+      <span class="chip">{{标签5}}</span>
+    </div>
+  </div>
+  <div class="board">
+    <div class="board-head"><div class="board-title">{{看板名称，如：管理层经营看板}}</div><div class="dots"><i></i><i></i><i></i></div></div>
+    <div class="kpis">
+      <div class="kpi"><b>{{KPI1数值}}</b><span>{{KPI1名称}}</span></div>
+      <div class="kpi"><b>{{KPI2数值}}</b><span>{{KPI2名称}}</span></div>
+      <div class="kpi"><b>{{KPI3数值}}</b><span>{{KPI3名称}}</span></div>
+    </div>
+    <div class="fake-table">
+      <div class="row head"><span>{{列1}}</span><span>{{列2}}</span><span>{{列3}}</span><span>状态</span></div>
+      <div class="row"><span>{{行1列1}}</span><span>{{行1列2}}</span><span>{{行1列3}}</span><span><i class="tag green">{{状态}}</i></span></div>
+      <div class="row"><span>{{行2列1}}</span><span>{{行2列2}}</span><span>{{行2列3}}</span><span><i class="tag blue">{{状态}}</i></span></div>
+      <div class="row"><span>{{行3列1}}</span><span>{{行3列2}}</span><span>{{行3列3}}</span><span><i class="tag orange">{{状态}}</i></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ███ 01 客户阶段判断（锁死：4 张 card）███ -->
+<section id="stage">
+  <div class="section-head"><div class="section-title"><div class="kicker">01 / Stage</div><h2>客户阶段判断</h2></div><p class="section-desc">{{阶段判断结论：客户当前缺的是什么、本期该做什么、不该做什么。一句话}}</p></div>
+  <div class="grid grid-4">
+    <div class="card"><h3>{{已有系统/现状}}</h3><p>{{说明}}</p></div>
+    <div class="card"><h3>{{核心对象}}</h3><p>{{说明}}</p></div>
+    <div class="card"><h3>{{管理诉求}}</h3><p>{{说明}}</p></div>
+    <div class="card"><h3>{{交付边界}}</h3><p>{{说明：明确不替代什么、不重建什么}}</p></div>
+  </div>
+</section>
+
+<!-- ███ 02 需求洞察（锁死：左蓝色主判断卡 + 右编号列表）列表条数可 3~5 条 ███ -->
+<section id="insight">
+  <div class="section-head"><div class="section-title"><div class="kicker">02 / Insight</div><h2>需求洞察</h2></div><p class="section-desc">{{需求洞察导语：客户真实需求不是再做一套系统，而是……}}</p></div>
+  <div class="insight">
+    <div class="main-insight"><h3>核心判断：{{一句最关键的方案判断}}</h3><p>{{展开说明，为什么这样判断，对应客户哪句原话}}</p></div>
+    <div class="list">
+      <div class="item"><div class="num">1</div><div><b>{{痛点1标题}}</b><span>{{痛点1说明}}</span></div></div>
+      <div class="item"><div class="num">2</div><div><b>{{痛点2标题}}</b><span>{{痛点2说明}}</span></div></div>
+      <div class="item"><div class="num">3</div><div><b>{{痛点3标题}}</b><span>{{痛点3说明}}</span></div></div>
+      <div class="item"><div class="num">4</div><div><b>{{痛点4标题}}</b><span>{{痛点4说明}}</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ███ 03 核心业务场景拆解（锁死：厚 module 卡，每卡左侧大序号 + 右侧三点钉）卡片数 2~4 个 ███ -->
+<section id="scenario">
+  <div class="section-head"><div class="section-title"><div class="kicker">03 / Scenarios</div><h2>核心业务场景拆解</h2></div><p class="section-desc">{{场景导语：围绕哪几个经营问题展开}}</p></div>
+  <div class="grid">
+    <div class="module"><div class="module-side"><b>01</b><span>{{场景1简称}}</span></div><div class="module-body"><h3>{{场景1标题}}</h3><p>{{场景1说明}}</p><div class="points"><div class="point"><b>数据源</b>{{对象}}</div><div class="point"><b>维度</b>{{维度}}</div><div class="point"><b>使用对象</b>{{角色}}</div></div></div></div>
+    <div class="module"><div class="module-side"><b>02</b><span>{{场景2简称}}</span></div><div class="module-body"><h3>{{场景2标题}}</h3><p>{{场景2说明}}</p><div class="points"><div class="point"><b>数据源</b>{{对象}}</div><div class="point"><b>维度</b>{{维度}}</div><div class="point"><b>使用对象</b>{{角色}}</div></div></div></div>
+    <div class="module"><div class="module-side"><b>03</b><span>{{场景3简称}}</span></div><div class="module-body"><h3>{{场景3标题}}</h3><p>{{场景3说明}}</p><div class="points"><div class="point"><b>能力</b>{{能力}}</div><div class="point"><b>价值</b>{{价值}}</div><div class="point"><b>边界</b>{{边界}}</div></div></div></div>
+  </div>
+</section>
+
+<!-- ███ 04 企业微信能力与定制服务架构（锁死：4 层分层架构图）层数固定 4 层，每层 4 cell ███ -->
+<section>
+  <div class="section-head"><div class="section-title"><div class="kicker">04 / Architecture</div><h2>企业微信能力与定制服务架构</h2></div><p class="section-desc">{{架构导语：采用什么样的轻量架构链路}}</p></div>
+  <div class="arch">
+    <div class="layer"><div class="label">业务系统层</div><div class="cells"><div class="cell">{{源对象1}}</div><div class="cell">{{源对象2}}</div><div class="cell">{{源对象3}}</div><div class="cell">{{源对象4}}</div></div></div>
+    <div class="layer"><div class="label">智能表格层</div><div class="cells"><div class="cell">{{底表1}}</div><div class="cell">{{底表2}}</div><div class="cell">{{底表3}}</div><div class="cell">{{权限保护}}</div></div></div>
+    <div class="layer"><div class="label">看板分析层</div><div class="cells"><div class="cell">{{看板1}}</div><div class="cell">{{看板2}}</div><div class="cell">{{看板3}}</div><div class="cell">{{下钻能力}}</div></div></div>
+    <div class="layer"><div class="label">扩展能力层</div><div class="cells"><div class="cell">{{扩展1}}</div><div class="cell">{{扩展2}}</div><div class="cell">{{扩展3}}</div><div class="cell">{{扩展4}}</div></div></div>
+  </div>
+</section>
+
+<!-- ███ 05 建议建设模块（锁死：表格）行数按真实表/看板数量增减 ███ -->
+<section id="table">
+  <div class="section-head"><div class="section-title"><div class="kicker">05 / Modules</div><h2>建议建设模块</h2></div><p class="section-desc">{{模块导语：本期核心建几张表 + 几个看板}}</p></div>
+  <div class="table"><table><thead><tr><th>表/看板</th><th>定位</th><th>使用对象</th><th>阶段</th></tr></thead><tbody>
+    <tr><td>{{表1}}</td><td>{{定位}}</td><td>{{对象}}</td><td>{{一期/二期}}</td></tr>
+    <tr><td>{{表2}}</td><td>{{定位}}</td><td>{{对象}}</td><td>{{一期/二期}}</td></tr>
+    <tr><td>{{表3}}</td><td>{{定位}}</td><td>{{对象}}</td><td>{{一期/二期}}</td></tr>
+    <tr><td>{{看板1}}</td><td>{{定位}}</td><td>{{对象}}</td><td>{{一期/二期}}</td></tr>
+    <tr><td>{{看板2}}</td><td>{{定位}}</td><td>{{对象}}</td><td>{{一期/二期}}</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- ███ 06 实施路径建议（锁死：4 个 phase 时间线）阶段数固定 4 ███ -->
+<section id="roadmap">
+  <div class="section-head"><div class="section-title"><div class="kicker">06 / Roadmap</div><h2>实施路径建议</h2></div><p class="section-desc">{{实施路径导语}}</p></div>
+  <div class="timeline">
+    <div class="phase"><span>第 1 阶段</span><h3>{{阶段1标题}}</h3><p>{{阶段1内容}}</p></div>
+    <div class="phase"><span>第 2 阶段</span><h3>{{阶段2标题}}</h3><p>{{阶段2内容}}</p></div>
+    <div class="phase"><span>第 3 阶段</span><h3>{{阶段3标题}}</h3><p>{{阶段3内容}}</p></div>
+    <div class="phase"><span>第 4 阶段</span><h3>{{阶段4标题}}</h3><p>{{阶段4内容}}</p></div>
+  </div>
+</section>
+
+<!-- ███ 07 方案价值（锁死：6 张 card）███ -->
+<section>
+  <div class="section-head"><div class="section-title"><div class="kicker">07 / Value</div><h2>方案价值</h2></div><p class="section-desc">{{价值导语}}</p></div>
+  <div class="grid grid-3">
+    <div class="card"><h3>{{价值1标题}}</h3><p>{{价值1说明}}</p></div>
+    <div class="card"><h3>{{价值2标题}}</h3><p>{{价值2说明}}</p></div>
+    <div class="card"><h3>{{价值3标题}}</h3><p>{{价值3说明}}</p></div>
+    <div class="card"><h3>{{价值4标题}}</h3><p>{{价值4说明}}</p></div>
+    <div class="card"><h3>{{价值5标题}}</h3><p>{{价值5说明}}</p></div>
+    <div class="card"><h3>{{价值6标题}}</h3><p>{{价值6说明}}</p></div>
+  </div>
+</section>
+
+<!-- ███ 08 待确认问题（锁死：表格）行数按真实问题增减；此处可保留「⚠️ 待确认」语义但内容必须是真实问题 ███ -->
+<section>
+  <div class="section-head"><div class="section-title"><div class="kicker">08 / Confirm</div><h2>待确认问题</h2></div><p class="section-desc">{{待确认导语}}</p></div>
+  <div class="table"><table><thead><tr><th>问题</th><th>为什么要确认</th><th>优先级</th></tr></thead><tbody>
+    <tr><td>{{问题1}}</td><td>{{原因1}}</td><td>{{高/中/低}}</td></tr>
+    <tr><td>{{问题2}}</td><td>{{原因2}}</td><td>{{高/中/低}}</td></tr>
+    <tr><td>{{问题3}}</td><td>{{原因3}}</td><td>{{高/中/低}}</td></tr>
+    <tr><td>{{问题4}}</td><td>{{原因4}}</td><td>{{高/中/低}}</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- ███ CTA（锁死结构）███ -->
+<div class="cta"><div><h2>{{结尾行动建议标题：建议一期聚焦……}}</h2><p>{{结尾说明：先跑通什么，再扩展什么}}</p></div></div>
+
+</div>
+</body></html>

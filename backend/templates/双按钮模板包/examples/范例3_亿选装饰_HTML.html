@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>贵州亿选装饰｜家装前端数据分析可视化方案</title>
+<style>
+:root{
+  --wx:#1677ff;--wx2:#12b5ff;--ink:#101828;--text:#344054;--muted:#667085;
+  --line:#e5edf7;--bg:#f5f8fc;--card:#fff;--green:#17b26a;--orange:#f79009;
+  --shadow:0 18px 48px rgba(16,24,40,.08);--shadow2:0 12px 28px rgba(22,119,255,.12);
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);
+background:radial-gradient(circle at 10% -10%,rgba(22,119,255,.14),transparent 30%),linear-gradient(180deg,#f8fbff 0%,#f5f8fc 42%,#f6f8fb 100%);line-height:1.7}
+.page{max-width:1180px;margin:0 auto;padding:24px 24px 72px}
+.topbar{height:58px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.brand{display:flex;gap:12px;align-items:center;font-weight:900;color:var(--ink)}
+.logo{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,var(--wx),#1fc7f4);box-shadow:0 10px 24px rgba(22,119,255,.25);display:grid;place-items:center;color:#fff;font-weight:900}
+.nav{display:flex;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px;box-shadow:0 8px 20px rgba(16,24,40,.04)}
+.nav a{font-size:13px;color:#516174;text-decoration:none;padding:8px 12px;border-radius:999px}
+.nav a:hover{background:#eef7ff;color:var(--wx)}
+.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#fff 0%,#eef7ff 100%);border:1px solid rgba(22,119,255,.14);border-radius:30px;box-shadow:var(--shadow2);padding:42px;display:grid;grid-template-columns:1.04fr .96fr;gap:34px;align-items:center}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:7px 12px;border-radius:999px;background:#eaf4ff;color:#1263d1;font-weight:900;font-size:13px;margin-bottom:16px}
+.eyebrow i{width:8px;height:8px;background:var(--wx);border-radius:50%;box-shadow:0 0 0 4px rgba(22,119,255,.12)}
+h1{margin:0;color:var(--ink);font-size:42px;line-height:1.15;letter-spacing:-1px}.hero p{font-size:17px;color:#475467;margin:18px 0 24px;max-width:620px}
+.chips{display:flex;gap:10px;flex-wrap:wrap}.chip{border:1px solid #dcecff;background:rgba(255,255,255,.75);border-radius:999px;padding:7px 11px;color:#456074;font-size:13px}
+.board{background:rgba(255,255,255,.86);border:1px solid #ddecff;border-radius:26px;box-shadow:0 26px 60px rgba(22,119,255,.14);padding:18px}
+.board-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.board-title{font-weight:900;color:#18314f}.dots{display:flex;gap:5px}.dots i{width:8px;height:8px;border-radius:50%;background:#d5e2ef}.dots i:first-child{background:#17b26a}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.kpi{background:#f6fbff;border:1px solid #e4f0ff;border-radius:16px;padding:14px}.kpi b{display:block;color:#102a43;font-size:24px}.kpi span{font-size:12px;color:var(--muted)}
+.fake-table{border:1px solid #e6edf7;border-radius:16px;overflow:hidden;background:#fff}.row{display:grid;grid-template-columns:1fr .8fr .8fr .6fr;gap:10px;padding:11px 12px;border-bottom:1px solid #edf2f7;font-size:12px;color:#52677d}.row:last-child{border-bottom:0}.row.head{background:#f1f8ff;color:#1c558f;font-weight:900}
+.tag{display:inline-flex;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900}.blue{background:#eef7ff;color:#1677ff}.green{background:#ecfdf3;color:#079455}.orange{background:#fff7ed;color:#dc6803}
+section{margin-top:38px}.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:18px}.kicker{font-size:12px;color:var(--wx);letter-spacing:.1em;font-weight:900;text-transform:uppercase}.section-title h2{margin:5px 0 0;color:var(--ink);font-size:30px;line-height:1.25}.section-desc{max-width:560px;color:var(--muted);margin:0}
+.grid{display:grid;gap:16px}.grid-3{grid-template-columns:repeat(3,1fr)}.grid-2{grid-template-columns:repeat(2,1fr)}.grid-4{grid-template-columns:repeat(4,1fr)}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:22px}.card h3{margin:0 0 8px;color:var(--ink);font-size:18px}.card p{margin:0;color:var(--muted);font-size:14px}
+.insight{display:grid;grid-template-columns:.95fr 1.05fr;gap:16px}.main-insight{background:linear-gradient(135deg,#1677ff,#24b9f2);color:#fff;border-radius:26px;padding:28px;box-shadow:0 18px 42px rgba(22,119,255,.22)}.main-insight h3{margin:0 0 10px;color:#fff;font-size:25px;line-height:1.25}.main-insight p{color:rgba(255,255,255,.88)}
+.list{display:grid;gap:12px}.item{display:grid;grid-template-columns:42px 1fr;gap:12px;padding:18px;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 8px 20px rgba(16,24,40,.04)}.num{width:42px;height:42px;border-radius:14px;background:#eef7ff;color:var(--wx);display:grid;place-items:center;font-weight:900}.item b{display:block;color:var(--ink);margin-bottom:4px}.item span{font-size:14px;color:var(--muted)}
+.arch{background:#fff;border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);padding:22px}.layer{display:grid;grid-template-columns:150px 1fr;gap:12px;margin-bottom:12px}.layer:last-child{margin-bottom:0}.label{background:linear-gradient(135deg,#1677ff,#21b8f2);color:#fff;border-radius:16px;display:grid;place-items:center;font-weight:900;text-align:center;padding:14px}.cells{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.cell{background:#f7fbff;border:1px solid #e2efff;border-radius:15px;padding:12px;text-align:center;font-weight:800;color:#264761;font-size:14px}
+.module{display:grid;grid-template-columns:180px 1fr;gap:16px;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:20px}.module-side{background:#f1f8ff;border:1px solid #deecff;border-radius:18px;padding:16px}.module-side b{display:block;color:#1677ff;font-size:28px}.module-body h3{margin:0;color:var(--ink);font-size:20px}.points{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.point{background:#f8fbff;border:1px solid #e7f1ff;border-radius:14px;padding:12px;font-size:13px}.point b{display:block;color:#203c5e}
+.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.phase{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:20px;position:relative}.phase:before{content:"";position:absolute;left:20px;top:0;width:42px;height:4px;background:linear-gradient(90deg,#1677ff,#21c8f6);border-radius:999px}.phase span{display:inline-block;background:#eef7ff;color:#1677ff;border-radius:999px;font-size:12px;font-weight:900;padding:5px 10px;margin-bottom:10px}.phase h3{margin:0 0 8px;color:var(--ink)}.phase p{font-size:14px;color:var(--muted);margin:0}
+.table{overflow:hidden;border:1px solid var(--line);border-radius:22px;background:#fff;box-shadow:var(--shadow)}table{width:100%;border-collapse:collapse}th,td{padding:13px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px}th{background:#f1f8ff;color:#1e477d;font-size:13px}tr:last-child td{border-bottom:0}
+.cta{margin-top:42px;background:linear-gradient(135deg,#1267e8,#22b8ff);border-radius:28px;padding:30px;color:#fff;display:flex;justify-content:space-between;gap:20px;align-items:center;box-shadow:0 20px 46px rgba(22,119,255,.22)}.cta h2{margin:0 0 6px;color:#fff}.cta p{margin:0;color:rgba(255,255,255,.86)}
+@media(max-width:900px){.hero,.insight,.module{grid-template-columns:1fr}.grid-4,.grid-3,.grid-2,.timeline{grid-template-columns:1fr 1fr}.cells{grid-template-columns:1fr 1fr}.nav{display:none}.section-head{display:block}.section-desc{margin-top:8px}}
+@media(max-width:620px){.page{padding:16px}.hero{padding:26px}h1{font-size:30px}.grid-4,.grid-3,.grid-2,.timeline{grid-template-columns:1fr}.kpis{grid-template-columns:1fr}.layer{grid-template-columns:1fr}.points{grid-template-columns:1fr}.row{grid-template-columns:1fr 1fr}.cta{display:block}}
+</style>
+</head>
+<body>
+<div class="page">
+<header class="topbar">
+  <div class="brand"><div class="logo">企</div><span>企业微信服务商定制开发售前方案</span></div>
+  <nav class="nav"><a href="#stage">客户判断</a><a href="#insight">需求洞察</a><a href="#scenario">场景方案</a><a href="#table">智能表格</a><a href="#roadmap">实施路径</a></nav>
+</header>
+
+<section class="hero">
+  <div>
+    <div class="eyebrow"><i></i>家装行业 · 前端数据分析 · 装修云管家同步</div>
+    <h1>贵州亿选装饰<br>前端数据分析看板方案</h1>
+    <p>围绕老板最关心的“上门量、签约情况、渠道分布、人员排行”，在不重建业务流程的前提下，将装修云管家的客户与合同数据同步到企业微信智能表格，形成管理层一站式看板。</p>
+    <div class="chips"><span class="chip">已有装修云管家</span><span class="chip">客户+合同同步</span><span class="chip">上门看板</span><span class="chip">签约看板</span><span class="chip">支持下钻定位</span></div>
+  </div>
+  <div class="board">
+    <div class="board-head"><div class="board-title">管理层经营看板</div><div class="dots"><i></i><i></i><i></i></div></div>
+    <div class="kpis"><div class="kpi"><b>128</b><span>本月上门客户</span></div><div class="kpi"><b>36</b><span>本月签约客户</span></div><div class="kpi"><b>¥86万</b><span>月度签约产值</span></div></div>
+    <div class="fake-table">
+      <div class="row head"><span>渠道</span><span>上门</span><span>签约</span><span>状态</span></div>
+      <div class="row"><span>抖音</span><span>48</span><span>13</span><span><i class="tag green">领先</i></span></div>
+      <div class="row"><span>自然进店</span><span>32</span><span>9</span><span><i class="tag blue">稳定</i></span></div>
+      <div class="row"><span>转介绍</span><span>21</span><span>8</span><span><i class="tag orange">关注</i></span></div>
+    </div>
+  </div>
+</section>
+
+<section id="stage">
+  <div class="section-head"><div class="section-title"><div class="kicker">01 / Stage</div><h2>客户阶段判断</h2></div><p class="section-desc">客户不是缺少业务录入系统，而是缺少一个给老板、店长、商务负责人随时看的经营数据层。本期应做前端分析，不做全流程系统重建。</p></div>
+  <div class="grid grid-4">
+    <div class="card"><h3>已有系统</h3><p>装修云管家作为客户与合同录入来源，继续保留原有一线录入习惯。</p></div>
+    <div class="card"><h3>核心对象</h3><p>客户表、合同表、客户跟进记录，围绕上门与签约形成分析。</p></div>
+    <div class="card"><h3>管理诉求</h3><p>老板在外也能及时看上门量、渠道分布、签约产值和人员排行。</p></div>
+    <div class="card"><h3>交付边界</h3><p>不替代装修云管家，不重建CRM，只做智能表格前端看板。</p></div>
+  </div>
+</section>
+
+<section id="insight">
+  <div class="section-head"><div class="section-title"><div class="kicker">02 / Insight</div><h2>需求洞察</h2></div><p class="section-desc">客户的真实需求不是“再做一套系统”，而是让已有系统数据变成管理层可理解、可下钻、可追踪的经营视图。</p></div>
+  <div class="insight">
+    <div class="main-insight"><h3>核心判断：先用 2 张只读底表 + 2 个核心看板，跑通管理层决策闭环。</h3><p>客户明确表示目前最主要的是上门客户和签约交定两个维度，其他指标暂不复杂扩展。因此一期应聚焦最小可行看板，保证快、准、可调整。</p></div>
+    <div class="list">
+      <div class="item"><div class="num">1</div><div><b>一线汇报慢</b><span>数据已在系统录入，但老板需要等人工汇总，时效性不足。</span></div></div>
+      <div class="item"><div class="num">2</div><div><b>渠道贡献看不清</b><span>需要知道主要进单渠道，并能按月度、年度观察变化。</span></div></div>
+      <div class="item"><div class="num">3</div><div><b>签约排行不直观</b><span>签约客户、产值、人员分布需要形成排行榜与趋势视图。</span></div></div>
+      <div class="item"><div class="num">4</div><div><b>看板需要可下钻</b><span>从汇总数字能跳回客户或合同明细，看到部门归属。</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="scenario">
+  <div class="section-head"><div class="section-title"><div class="kicker">03 / Scenarios</div><h2>核心业务场景拆解</h2></div><p class="section-desc">围绕“上门”和“签约”两个经营问题，把数据从装修云管家同步到企业微信智能表格，给不同管理角色提供不同看板。</p></div>
+  <div class="grid">
+    <div class="module"><div class="module-side"><b>01</b><span>上门分析</span></div><div class="module-body"><h3>上门客户统计看板</h3><p>按渠道、设计师/业务员、月度/年度展示上门客户数量，帮助老板判断渠道来源和人员表现。</p><div class="points"><div class="point"><b>数据源</b>禁止修改！客户</div><div class="point"><b>维度</b>渠道 / 人员 / 月度 / 年度</div><div class="point"><b>使用对象</b>老板 + 商务负责人</div></div></div></div>
+    <div class="module"><div class="module-side"><b>02</b><span>签约分析</span></div><div class="module-body"><h3>签约客户与产值看板</h3><p>按签约时间、合同金额、签约人、客户来源等维度统计月度排行、年度产值和渠道分布。</p><div class="points"><div class="point"><b>数据源</b>禁止修改！合同</div><div class="point"><b>维度</b>人员 / 渠道 / 产值类型</div><div class="point"><b>使用对象</b>老板 + 店长</div></div></div></div>
+    <div class="module"><div class="module-side"><b>03</b><span>下钻定位</span></div><div class="module-body"><h3>从汇总数字回到客户明细</h3><p>点击某渠道、某设计师或某月份的数据，定位到对应客户/合同明细行，并显示部门归属。</p><div class="points"><div class="point"><b>能力</b>汇总到明细下钻</div><div class="point"><b>价值</b>快速联动一线</div><div class="point"><b>边界</b>敏感字段按权限展示</div></div></div></div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head"><div class="section-title"><div class="kicker">04 / Architecture</div><h2>企业微信能力与定制服务架构</h2></div><p class="section-desc">采用“业务系统录入 → 智能表格同步底表 → 管理层看板 → 明细下钻”的轻量架构。</p></div>
+  <div class="arch">
+    <div class="layer"><div class="label">业务系统层</div><div class="cells"><div class="cell">装修云管家客户表</div><div class="cell">装修云管家合同表</div><div class="cell">客户来源字段</div><div class="cell">人员组织字段</div></div></div>
+    <div class="layer"><div class="label">智能表格层</div><div class="cells"><div class="cell">禁止修改！客户</div><div class="cell">禁止修改！合同</div><div class="cell">客户跟进记录</div><div class="cell">只读权限保护</div></div></div>
+    <div class="layer"><div class="label">看板分析层</div><div class="cells"><div class="cell">上门看板</div><div class="cell">签约看板</div><div class="cell">设计师×渠道</div><div class="cell">下钻定位</div></div></div>
+    <div class="layer"><div class="label">扩展能力层</div><div class="cells"><div class="cell">AI问数</div><div class="cell">自动月报</div><div class="cell">异常预警</div><div class="cell">目标达成提醒</div></div></div>
+  </div>
+</section>
+
+<section id="table">
+  <div class="section-head"><div class="section-title"><div class="kicker">05 / Tables</div><h2>建议建设模块</h2></div><p class="section-desc">本期不需要复杂拆表，核心是 2 张同步底表 + 1 张跟进辅助表 + 2 个看板。</p></div>
+  <div class="table"><table><thead><tr><th>表/看板</th><th>定位</th><th>使用对象</th><th>阶段</th></tr></thead><tbody>
+    <tr><td>禁止修改！客户</td><td>装修云管家客户表只读同步底表</td><td>系统同步写入；看板调用</td><td>一期</td></tr>
+    <tr><td>禁止修改！合同</td><td>装修云管家合同表只读同步底表</td><td>系统同步写入；看板调用</td><td>一期</td></tr>
+    <tr><td>客户跟进记录</td><td>智能表格层补充跟进记录</td><td>一线人员补录；管理层查看</td><td>一期建议</td></tr>
+    <tr><td>上门看板</td><td>月度/年度上门、渠道、人员分布</td><td>老板 + 商务负责人</td><td>一期</td></tr>
+    <tr><td>签约看板</td><td>签约排行、产值、渠道分布</td><td>老板 + 店长</td><td>一期</td></tr>
+  </tbody></table></div>
+</section>
+
+<section id="roadmap">
+  <div class="section-head"><div class="section-title"><div class="kicker">06 / Roadmap</div><h2>实施路径建议</h2></div><p class="section-desc">先确认同步字段和指标口径，再搭建底表、看板、权限与试跑。</p></div>
+  <div class="timeline">
+    <div class="phase"><span>第 1 阶段</span><h3>字段与口径确认</h3><p>确认客户表、合同表、渠道枚举、人员组织、签约金额口径。</p></div>
+    <div class="phase"><span>第 2 阶段</span><h3>同步底表搭建</h3><p>创建“禁止修改！”客户/合同表和客户跟进记录，配置只读权限。</p></div>
+    <div class="phase"><span>第 3 阶段</span><h3>看板配置</h3><p>配置上门看板、签约看板、设计师×渠道概览和下钻定位。</p></div>
+    <div class="phase"><span>第 4 阶段</span><h3>试跑与优化</h3><p>用真实数据校验统计口径、权限、展示效果，并交付操作说明。</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head"><div class="section-title"><div class="kicker">07 / Value</div><h2>方案价值</h2></div><p class="section-desc">用最小改造成本，把已有系统数据变成老板可随时查看、可下钻、可复盘的经营看板。</p></div>
+  <div class="grid grid-3">
+    <div class="card"><h3>汇总更及时</h3><p>减少日报与微信群人工汇总，管理层在企业微信内即可查看。</p></div>
+    <div class="card"><h3>渠道更清晰</h3><p>按渠道、人员、周期看上门与签约，判断获客质量和转化表现。</p></div>
+    <div class="card"><h3>下钻更直接</h3><p>从看板数字回到客户/合同明细，快速定位责任部门和一线人员。</p></div>
+    <div class="card"><h3>保护源数据</h3><p>同步底表只读，避免在智能表格侧误改造成源系统数据不一致。</p></div>
+    <div class="card"><h3>上线更轻</h3><p>不改变一线原录入流程，降低培训与落地阻力。</p></div>
+    <div class="card"><h3>后续可扩展</h3><p>可进一步加AI问数、自动月报、异常渠道预警和目标达成提醒。</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head"><div class="section-title"><div class="kicker">08 / Confirm</div><h2>待确认问题</h2></div><p class="section-desc">正式实施前，需要客户确认数据同步方式、指标口径和权限边界。</p></div>
+  <div class="table"><table><thead><tr><th>问题</th><th>为什么要确认</th><th>优先级</th></tr></thead><tbody>
+    <tr><td>装修云管家是否支持 API 同步，还是先采用导出/定时导入？</td><td>影响工期、实时性和技术复杂度</td><td>高</td></tr>
+    <tr><td>上门客户统计是否仅统计已上门，还是包含待上门/预约客户？</td><td>决定上门指标口径</td><td>高</td></tr>
+    <tr><td>签约产值用合同金额、结算金额还是收款金额？</td><td>决定签约排行和产值统计口径</td><td>高</td></tr>
+    <tr><td>点击下钻后手机号、金额等字段是否需要脱敏？</td><td>涉及管理权限和数据安全</td><td>中</td></tr>
+  </tbody></table></div>
+</section>
+
+<div class="cta"><div><h2>建议一期聚焦：同步底表 + 上门看板 + 签约看板</h2><p>先把老板最关心的数据跑通，再按真实使用情况扩展 AI 问数、自动月报和异常预警。</p></div></div>
+</div>
+</body></html>

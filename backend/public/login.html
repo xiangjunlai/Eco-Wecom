@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>服务商售前助手 - 登录</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.login-container {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    width: 420px;
+    max-width: 90vw;
+    overflow: hidden;
+}
+.login-header {
+    background: linear-gradient(135deg, #1a56db 0%, #764ba2 100%);
+    padding: 30px;
+    text-align: center;
+    color: #fff;
+}
+.login-header h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.login-header p { font-size: 13px; opacity: 0.9; }
+.login-body { padding: 30px; }
+.form-group { margin-bottom: 20px; }
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+.form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.form-group input:focus {
+    outline: none;
+    border-color: #1a56db;
+    box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
+}
+.form-group input.error { border-color: #dc2626; }
+.password-wrapper { position: relative; }
+.password-wrapper input { padding-right: 45px; }
+.toggle-password {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #999;
+    font-size: 18px;
+}
+.password-hint {
+    font-size: 11px;
+    color: #666;
+    margin-top: 6px;
+    padding: 8px 12px;
+    background: #f9fafb;
+    border-radius: 6px;
+    line-height: 1.6;
+}
+.password-hint.error { background: #fef2f2; color: #dc2626; }
+.password-hint.success { background: #ecfdf5; color: #059669; }
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #1a56db 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(26,86,219,0.3); }
+.btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.error-msg {
+    color: #dc2626;
+    font-size: 12px;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: #fef2f2;
+    border-radius: 6px;
+    display: none;
+}
+.error-msg.show { display: block; }
+.login-footer {
+    text-align: center;
+    padding: 20px 30px 30px;
+    font-size: 13px;
+    color: #666;
+}
+.login-footer a { color: #1a56db; text-decoration: none; font-weight: 600; cursor: pointer; }
+.page-register .login-header { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<!-- 登录页 -->
+<div class="login-container" id="page-login">
+    <div class="login-header">
+        <h1>服务商售前助手</h1>
+        <p>智能提问清单 · 需求结构化 · 多客户管理</p>
+    </div>
+    <div class="login-body">
+        <div id="login-error" class="error-msg"></div>
+        <div class="form-group">
+            <label>服务商名称</label>
+            <input type="text" id="login-provider" placeholder="请输入服务商名称" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label>受邀码</label>
+            <input type="text" id="login-code" placeholder="请输入受邀码" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label>真实姓名</label>
+            <input type="text" id="login-username" placeholder="请输入真实姓名" autocomplete="off"
+              onkeyup="if(event.key==='Enter'){var v=this.value.trim();if(v==='devuser'){event.preventDefault();testLogin();}else{doLogin();}}">
+        </div>
+        <div class="form-group">
+            <label>登录密码</label>
+            <div class="password-wrapper">
+                <input type="password" id="login-password" placeholder="请输入登录密码"
+                  onkeydown="if(event.key==='Enter'){doLogin();}">
+                <span class="toggle-password" onclick="togglePassword('login-password', this)">👁</span>
+            </div>
+        </div>
+        <button class="btn-login" id="btn-login" onclick="doLogin()">登录</button>
+    </div>
+    <div class="login-footer">
+        没有账号？<a onclick="showRegister()">立即注册</a>
+    </div>
+</div>
+
+<!-- 注册页 -->
+<div class="login-container page-register hidden" id="page-register">
+    <div class="login-header">
+        <h1>注册账号</h1>
+        <p>创建新账号开始使用</p>
+    </div>
+    <div class="login-body">
+        <div id="reg-error" class="error-msg"></div>
+        <div class="form-group">
+            <label>服务商名称</label>
+            <input type="text" id="reg-provider" placeholder="请输入服务商名称" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label>受邀码</label>
+            <input type="text" id="reg-code" placeholder="请输入受邀码" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label>用户名</label>
+            <input type="text" id="reg-username" placeholder="用于标识服务商内部使用人" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label>登录密码</label>
+            <div class="password-wrapper">
+                <input type="password" id="reg-password" placeholder="请设置登录密码" oninput="checkPassword(this.value)">
+                <span class="toggle-password" onclick="togglePassword('reg-password', this)">👁</span>
+            </div>
+            <div id="password-hint" class="password-hint">
+                密码规则：8-25位，至少包含2种不同字符类型（数字、大小写字母、特殊符号）
+            </div>
+        </div>
+        <div class="form-group">
+            <label>确认密码</label>
+            <div class="password-wrapper">
+                <input type="password" id="reg-password2" placeholder="请再次输入密码">
+                <span class="toggle-password" onclick="togglePassword('reg-password2', this)">👁</span>
+            </div>
+        </div>
+        <button class="btn-login" id="btn-register" onclick="doRegister()">注册</button>
+    </div>
+    <div class="login-footer">
+        已有账号？<a onclick="showLogin()">立即登录</a>
+    </div>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:8002';
+const TOKEN_KEY = 'provider-token';
+const AUTO_LOGIN_KEY = 'provider-auto-login';
+
+// 检测邀请码链接参数，有则跳转到注册页
+(function checkInviteCode() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code) {
+        window.location.href = 'register.html?code=' + encodeURIComponent(code);
+        return;
+    }
+})();
+
+// 自动登录检查
+async function checkAutoLogin() {
+    const autoLogin = localStorage.getItem(AUTO_LOGIN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (autoLogin && token) {
+        // 验证token是否有效
+        try {
+            const resp = await fetch(API_BASE + '/api/auth/auto-login', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (resp.ok) {
+                // token有效，直接跳转
+                window.location.href = 'client_list.html';
+                return;
+            }
+            // token无效，清除状态
+            localStorage.removeItem(AUTO_LOGIN_KEY);
+            localStorage.removeItem(TOKEN_KEY);
+        } catch(e) {
+            // 网络错误，清除状态
+            localStorage.removeItem(AUTO_LOGIN_KEY);
+            localStorage.removeItem(TOKEN_KEY);
+        }
+    }
+    // 显示登录页
+    document.getElementById('page-login').classList.remove('hidden');
+}
+
+function showRegister() {
+    document.getElementById('page-login').classList.add('hidden');
+    document.getElementById('page-register').classList.remove('hidden');
+    clearError('login-error');
+}
+
+function showLogin() {
+    document.getElementById('page-register').classList.add('hidden');
+    document.getElementById('page-login').classList.remove('hidden');
+    clearError('reg-error');
+}
+
+function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('show');
+}
+
+function clearError(id) {
+    const el = document.getElementById(id);
+    el.classList.remove('show');
+    el.textContent = '';
+}
+
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        btn.textContent = '👁';
+    }
+}
+
+function checkPassword(pwd) {
+    const hint = document.getElementById('password-hint');
+    if (!pwd) {
+        hint.className = 'password-hint';
+        hint.innerHTML = '密码规则：8-25位，至少包含2种不同字符类型（数字、大小写字母、特殊符号）';
+        return;
+    }
+    const len = pwd.length;
+    const types = [
+        /[0-9]/.test(pwd),
+        /[a-z]/.test(pwd),
+        /[A-Z]/.test(pwd),
+        /[!@#$%^&*()_+\-=\[\]{};:\'",.<>?/\\|`~]/.test(pwd)
+    ].filter(Boolean).length;
+
+    if (len < 8 || len > 25) {
+        hint.className = 'password-hint error';
+        hint.textContent = '✗ 密码长度必须为8-25位（当前' + len + '位）';
+    } else if (types < 2) {
+        hint.className = 'password-hint error';
+        hint.textContent = '✗ 密码必须包含至少2种不同字符类型（当前' + types + '种）';
+    } else {
+        hint.className = 'password-hint success';
+        hint.textContent = '✓ 密码格式正确';
+    }
+}
+
+async function doLogin() {
+    const provider = document.getElementById('login-provider').value.trim();
+    const code = document.getElementById('login-code').value.trim();
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    clearError('login-error');
+
+    if (!provider) { showError('login-error', '请输入服务商名称'); return; }
+    if (!code) { showError('login-error', '请输入受邀码'); return; }
+    if (!username) { showError('login-error', '请输入用户名'); return; }
+    if (!password) { showError('login-error', '请输入密码'); return; }
+
+    const btn = document.getElementById('btn-login');
+    btn.disabled = true;
+    btn.textContent = '登录中...';
+
+    try {
+        const resp = await fetch(API_BASE + '/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider_name: provider, invitation_code: code, username, password })
+        });
+        const data = await resp.json();
+
+        if (data.success && data.access_token) {
+            localStorage.setItem(TOKEN_KEY, data.access_token);
+            localStorage.setItem('provider-auto-login', 'true');
+            localStorage.setItem('provider-name', provider);
+            localStorage.setItem('provider-assist-name', provider);
+            localStorage.setItem('provider-username', username);
+            window.location.href = 'client_list.html';
+            return;
+        } else {
+            showError('login-error', data.detail || '登录失败');
+        }
+    } catch(e) {
+        showError('login-error', '网络错误，请检查后端服务是否运行');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '登录';
+    }
+}
+
+async function testLogin() {
+    try {
+        const resp = await fetch(API_BASE + '/api/test-login', { method: 'POST' });
+        const data = await resp.json();
+        if (data.success && data.access_token) {
+            localStorage.setItem(TOKEN_KEY, data.access_token);
+            localStorage.setItem('provider-auto-login', 'true');
+            localStorage.setItem('provider-name', data.user.provider_name);
+            localStorage.setItem('provider-assist-name', data.user.provider_name);
+            localStorage.setItem('provider-username', data.user.username);
+            window.location.href = 'client_list.html';
+        } else {
+            alert(data.error || '测试登录失败');
+        }
+    } catch(e) {
+        alert('网络错误，请检查后端服务是否运行');
+    }
+}
+
+async function doRegister() {
+    const provider = document.getElementById('reg-provider').value.trim();
+    const code = document.getElementById('reg-code').value.trim();
+    const username = document.getElementById('reg-username').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const password2 = document.getElementById('reg-password2').value;
+
+    clearError('reg-error');
+
+    if (!provider) { showError('reg-error', '请输入服务商名称'); return; }
+    if (!code) { showError('reg-error', '请输入受邀码'); return; }
+    if (!username) { showError('reg-error', '请输入用户名'); return; }
+    if (!password) { showError('reg-error', '请输入密码'); return; }
+
+    // 前端密码校验
+    if (password.length < 8 || password.length > 25) {
+        showError('reg-error', '密码长度必须为8-25位'); return;
+    }
+    const types = [/[0-9]/.test(password), /[a-z]/.test(password), /[A-Z]/.test(password), /[!@#$%^&*()_+\-=\[\]{};:\'",.<>?/\\|`~]/.test(password)].filter(Boolean).length;
+    if (types < 2) {
+        showError('reg-error', '密码必须包含至少2种不同字符类型'); return;
+    }
+    if (password !== password2) {
+        showError('reg-error', '两次密码输入不一致'); return;
+    }
+
+    const btn = document.getElementById('btn-register');
+    btn.disabled = true;
+    btn.textContent = '注册中...';
+
+    try {
+        const resp = await fetch(API_BASE + '/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider_name: provider, invitation_code: code, username, password })
+        });
+        const data = await resp.json();
+
+        if (data.success && data.access_token) {
+            localStorage.setItem(TOKEN_KEY, data.access_token);
+            localStorage.setItem('provider-auto-login', 'true');
+            localStorage.setItem('provider-name', provider);
+            localStorage.setItem('provider-assist-name', provider);
+            localStorage.setItem('provider-username', username);
+            window.location.href = 'client_list.html';
+        } else {
+            showError('reg-error', data.detail || '注册失败');
+        }
+    } catch(e) {
+        showError('reg-error', '网络错误，请检查后端服务是否运行');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '注册';
+    }
+}
+
+// 回车登录
+document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        const loginPage = document.getElementById('page-login');
+        if (!loginPage.classList.contains('hidden')) {
+            doLogin();
+        } else {
+            doRegister();
+        }
+    }
+});
+
+// 启动自动登录检查
+checkAutoLogin();
+</script>
+</body>
+</html>
