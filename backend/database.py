@@ -289,6 +289,63 @@ def init_db_legacy():
     except Exception:
         pass
 
+    # 访问追踪表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS visit_tracking (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            client_id INTEGER NOT NULL,
+            file_url TEXT NOT NULL,
+            visitor_id TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            device_type TEXT,
+            os_type TEXT,
+            browser_type TEXT,
+            referer TEXT,
+            country TEXT,
+            region TEXT,
+            city TEXT,
+            is_first_visit INTEGER DEFAULT 1,
+            visit_count INTEGER DEFAULT 1,
+            first_visit_at TIMESTAMP,
+            last_visit_at TIMESTAMP,
+            last_heartbeat_at TIMESTAMP,
+            stay_duration INTEGER DEFAULT 0,
+            scroll_depth INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (client_id) REFERENCES clients(id)
+        )
+    """)
+
+    # 补全 visit_tracking 表缺失的列
+    for col_def in [
+        "visitor_id TEXT",
+        "ip_address TEXT",
+        "device_type TEXT",
+        "os_type TEXT",
+        "browser_type TEXT",
+        "referer TEXT",
+        "country TEXT",
+        "region TEXT",
+        "city TEXT",
+        "is_first_visit INTEGER DEFAULT 1",
+        "visit_count INTEGER DEFAULT 1",
+        "first_visit_at TIMESTAMP",
+        "last_visit_at TIMESTAMP",
+        "last_heartbeat_at TIMESTAMP",
+        "stay_duration INTEGER DEFAULT 0",
+        "scroll_depth INTEGER DEFAULT 0",
+    ]:
+        col_name = col_def.split()[0]
+        try:
+            cursor.execute(f"ALTER TABLE visit_tracking ADD COLUMN {col_def}")
+            conn.commit()
+        except Exception:
+            pass
+
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_visits_client ON visit_tracking(client_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_visits_visitor ON visit_tracking(visitor_id)")
+
     conn.commit()
     print(f"数据库初始化完成（Legacy SQLite）")
 

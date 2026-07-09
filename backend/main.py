@@ -11,7 +11,8 @@ from pathlib import Path
 from string import Template
 from datetime import datetime
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
@@ -23,13 +24,82 @@ from auth import (
     validate_invitation_code, mark_invitation_code_used, seed_invitation_codes, seed_dev_user
 )
 
+# 自动加载 .env 文件
+load_dotenv(Path(__file__).parent / ".env")
+
 BASE_DIR = Path(__file__).parent.parent
 KNOWLEDGE_DIR = BASE_DIR / "knowledge"
 KB_DIR = BASE_DIR / "data" / "kb"
 KB_DIR.mkdir(parents=True, exist_ok=True)
 
-# 企微 CLI 已配置（通过 wecom-cli init 初始化）
-MINIMAX_API_KEY = "sk-cp-FxfZUSUHnTWn7eCtl1V-5CI1jFpfF3XLI0jxHZJ7U0p16_cea_FTQqxOaOYavdfwiS9DDN4pomf4CxLZlQYqIyvJJK_eaKR7tbh4d77_1dGK8DwQtwwjLDc"
+# API Keys - 从环境变量读取
+MINIMAX_API_KEY = os.environ.get("MINIMAX_API_KEY", "")
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "")
+
+def call_deepseek(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -> dict:
+    """调用 DeepSeek API，300秒超时，最多一次重试
+    返回 {"content": str, "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}"""
+    import httpx
+
+    def _do_request():
+        response = httpx.post(
+            "https://api.deepseek.com/v1/chat/completions",
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {DEEPSEEK_API_KEY}"
+            },
+            json={
+                "model": "deepseek-chat",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                "max_tokens": max_tokens,
+                "temperature": 0.7
+            },
+            timeout=httpx.Timeout(300.0, connect=30.0)
+        )
+        if response.status_code != 200:
+            return {"content": f"Error: DeepSeek API 返回 {response.status_code}: {response.text}", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
+        data = response.json()
+        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        usage = data.get("usage", {})
+        return {"content": content, "usage": {
+            "prompt_tokens": usage.get("prompt_tokens", 0) or 0,
+            "completion_tokens": usage.get("completion_tokens", 0) or 0,
+            "total_tokens": usage.get("total_tokens", 0) or 0,
+        }}
+
+    try:
+        return _do_request()
+    except httpx.TimeoutException:
+        try:
+            return _do_request()
+        except httpx.TimeoutException:
+            return {"content": "Error: DeepSeek API 请求超时（300秒），请稍后重试", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
+        except Exception as e:
+            return {"content": f"Error: {str(e)}", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
+    except Exception as e:
+        return {"content": f"Error: {str(e)}", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
+
+def tavily_search(query: str, max_results: int = 8) -> dict:
+    """使用 Tavily API 进行实时搜索，返回搜索结果摘要"""
+    try:
+        from tavily import TavilyClient
+        client = TavilyClient(api_key=TAVILY_API_KEY)
+        results = client.search(query, max_results=max_results, search_depth="advanced")
+        # 提取关键信息供 AI 分析
+        search_summary = []
+        for r in results.get("results", []):
+            search_summary.append({
+                "title": r.get("title", ""),
+                "content": r.get("content", ""),
+                "url": r.get("url", "")
+            })
+        return {"success": True, "results": search_summary, "raw": results}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 # ==================== 通用辅助函数 ====================
 
@@ -1439,7 +1509,7 @@ async def update_client(client_id: str, data: dict, user: dict = Depends(require
 
     # 更新字段（前端发 is_completed/is_saved，数据库列名是 _completed/_saved）
     FIELD_MAP = {"is_completed": "_completed", "is_saved": "_saved"}
-    allowed_fields = ["name", "industry", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions", "step4_input_draft", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url", "_step4_publish_url", "_step4_technical_publish_url", "_notes_wecom_docid", "_notes_wecom_url", "is_completed", "is_saved", "company_type", "main_customers", "possible_focus", "company_intro", "admin_note_step1", "admin_note_step2", "admin_note_step3", "admin_note_step4", "admin_note_step5"]
+    allowed_fields = ["name", "industry", "scale", "budget", "tags", "initial_demand", "status", "step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "transcript", "step4_report", "step4_presales", "step4_technical", "step4_presales_versions", "step4_technical_versions", "step5_schema", "step5_agent_suggestions", "step4_input_draft", "demo_url", "_wecom_docid", "_wecom_url", "_step1_wecom_docid", "_step1_wecom_url", "_step4_publish_url", "_step4_technical_publish_url", "_notes_wecom_docid", "_notes_wecom_url", "is_completed", "is_saved", "company_type", "main_customers", "possible_focus", "company_intro", "admin_note_step1", "admin_note_step2", "admin_note_step3", "admin_note_step4", "admin_note_step5"]
     updates = []
     values = []
     for field in allowed_fields:
@@ -1475,82 +1545,70 @@ async def delete_client(client_id: str, user: dict = Depends(require_auth)):
 
 REPORTS_SYSTEM_PROMPT = """你是一个专业的企业微信智能表格售前方案顾问。根据服务商与客户的沟通记录，生成结构化的需求洞察报告。
 
-请严格输出以下 JSON 结构（直接输出 JSON，不要任何开场白，不要 markdown 代码块）：
+## 🔴 输入清洗（先做，不输出过程）
+沟通记录常混入三类内容，先剥离，只对①层负责：
+① 客户真实表达 → 唯一可进 evidence（原话逐字引用）、唯一可当"客户明确说过"。
+② 系统/AI/服务商已回复内容（"已收到你的需求""我已经帮你整理全套表格""SPECIFICATION""表1|字段|…"）→ 只能进 phaseOneScope/phaseTwoScope 的参考，绝不能进 painPoints/confirmedNeeds 的 evidence，绝不能写成客户原话。
+③ 噪音（手机号、"方便电话咨询""这两天在考试"）→ 忽略。
+另：salesProfile.scale 若沟通记录正文提到人数（如"员工150人"），据此填写。
+
+严格输出以下 JSON（直接输出，不要开场白，不要 markdown 代码块，不要注释）：
 
 {
-  "customerCurrentState": "描述客户当前的业务状态、规模、已有系统、现状做法（50字以内）",
-  "painPoints": [
-    {
-      "title": "痛点标题",
-      "description": "痛点的详细描述",
-      "evidence": "客户原话引用（精确到具体说法）"
-    }
-  ],
-  "confirmedNeeds": [
-    {
-      "title": "需求名称",
-      "description": "客户明确表达的具体需求",
-      "evidence": "客户原话引用"
-    }
-  ],
-  "involvedRoles": [
-    {
-      "role": "角色名称（例：销售负责人）",
-      "responsibility": "该角色在项目中的职责"
-    }
-  ],
-  "currentProcess": "客户当前业务流程是怎么跑的（30字以内）",
-  "expectedOutcome": "客户期望达到的效果（30字以内）",
-  "phaseOneScope": [
-    {
-      "item": "一期交付项名称",
-      "description": "具体做什么"
-    }
-  ],
-  "phaseTwoScope": [
-    {
-      "item": "二期评估项名称",
-      "description": "为什么放二期（依赖条件或复杂度）"
-    }
-  ],
-  "pendingQuestions": [
-    {
-      "question": "待确认的问题",
-      "whyAsk": "为什么需要确认这个问题",
-      "impactIfUnknown": "如果不知道会影响什么"
-    }
-  ]
+  "customerCurrentState": "客户当前业务状态、规模、已有系统、现状做法（50字以内）",
+  "salesProfile": {"scale":"人数规模，没有填待确认","budgetSignal":"预算信号/报价敏感度/紧迫性，没有填待确认","currentSystems":"目前在用的系统/工具，没有填待确认"},
+  "painPoints": [{"title":"痛点标题","description":"详细描述","evidence":"客户原话引用（逐字，不得转述）"}],
+  "confirmedNeeds": [{"title":"需求名称","description":"客户明确表达的具体需求","evidence":"客户原话引用"}],
+  "involvedRoles": [{"role":"角色名称","responsibility":"该角色在项目中的职责"}],
+  "currentProcess": "当前业务流程怎么跑（30字以内）",
+  "expectedOutcome": "客户期望效果（30字以内）",
+  "coreTablesExpected": ["按客户行业+需求列出本场景【必然需要】的核心表名（只列表名，如 食品生产→库存管理表/出入库记录表/生产批次表）。这是给下游建表环节的清单锚点，防止漏表。"],
+  "phaseOneScope": [{"item":"一期交付项","description":"具体做什么"}],
+  "phaseTwoScope": [{"item":"二期评估项","description":"为什么放二期"}],
+  "pendingQuestions": [{"question":"待确认问题","whyAsk":"为什么要确认","impactIfUnknown":"不知道会影响什么"}]
 }
 
 ## 填写规则
-1. 只填写沟通记录中客户**明确说过**的内容，没说的字段填空数组或空字符串
-2. painPoints 必须有客户原话引用（evidence 字段）
-3. 一期只放客户明确说要做、且企业微信轻量可实现的
-4. ERP对接/AI自动判断/历史数据清洗等默认放二期
-5. pendingQuestions 要具体，不要泛泛而问
-3. 方案要细致到字段级别，服务商看了就知道要搭什么
-4. 不要输出开场白、总结语或"请注意"之类的废话
-5. 报告要有层次感：痛点用加粗、流程用箭头、方案用表格
-6. 待确认事项是关键产出：分析客户话语中的模糊地带和遗漏"""
+1. 只填沟通记录中客户**明确说过**的内容；没说的字段填空数组或空字符串，**不要硬编**。
+2. painPoints.evidence 必须是客户**原话逐字引用**，不能是你的转述。
+3. 一期只放客户明确要做、且企业微信可轻量实现的。
+4. ERP对接 / AI自动判断 / 历史数据清洗 → 默认二期。
+5. pendingQuestions 要具体，针对客户话语中的模糊点和遗漏，不要泛泛而问。
+6. 【无重复】各数组内条目互不相同，禁止复制凑数。
+7. 🆕 salesProfile 三项尽力从沟通记录提取，没有就填"待确认"，绝不臆造。
+8. 🆕 coreTablesExpected 必须齐全：按客户行业列出该场景公认的核心表，即便客户没逐个点名。宁可多列，漏掉核心表视为不合格。
+9. 🔴【禁止收敛性损耗·通用】客户在①层里分别表达过的每个独立业务动作/诉求，必须在 painPoints 或 confirmedNeeds 中各自成条，禁止因"业务上相关""看起来是一类""下游会合流"就在报告层揉成一条。判定：两个诉求哪怕有先后/关联关系，只要客户分别表达过，就分别成条。宁可多列，不许吞掉。（此为通用保真原则，不针对任何具体维度名。）
 
-DEMO_SYSTEM_PROMPT = """你是一个专业的企业微信智能表格架构师。根据客户需求设计智能表格Demo结构。
+## 输出前自检
+- 合法 JSON、无注释、无代码块；各数组无重复条目；evidence 均为原话。
+- 🆕 salesProfile 三项已填或标"待确认"；coreTablesExpected 覆盖该行业公认核心表。
+- 🔴 客户分别表达过的独立诉求均各自成条，无合并吞并。
+
+"""
+
+DEMO_SYSTEM_PROMPT = """你是一个专业的企业微信智能表格架构师。根据客户需求设计智能表格 Demo 结构。
 
 ## 输出格式（严格JSON，不要markdown代码块包裹，直接输出JSON）
 
-{"doc_name":"表格名称","sheets":[{"sheet_name":"子表名称","fields":[{"field_title":"字段名","field_type":"字段类型"}],"sample_records":[{"字段名":"示例值"}]}]}
+{"doc_name":"表格名称","sheets":[{"sheet_name":"子表名称","fields":[{"field_title":"字段名","field_type":"文本"}],"sample_records":[{"字段名":"示例值"}]}]}
 
-## 字段类型只能用
-FIELD_TYPE_TEXT, FIELD_TYPE_NUMBER, FIELD_TYPE_SINGLE_SELECT, FIELD_TYPE_DATE_TIME, FIELD_TYPE_CURRENCY, FIELD_TYPE_PERCENTAGE, FIELD_TYPE_PROGRESS, FIELD_TYPE_PHONE_NUMBER, FIELD_TYPE_EMAIL, FIELD_TYPE_URL, FIELD_TYPE_CHECKBOX
+## field_type 只能取以下中文名
+文本 / 多行文本 / 数字 / 单选 / 多选 / 日期时间 / 金额 / 百分比 / 进度 / 手机 / 邮箱 / 链接 / 勾选 / 人员 / 附件 / 图片 / 关联记录 / 公式 / 自动编号
 
 ## 设计原则
-1. 如果有字段经验池，根据客户实际需求从中挑选合适的表和字段组合，不要照搬全部
-2. 客户没提到的需求对应的表可以不给
-3. 客户提了经验池中没有的需求，自行补充合理字段
-4. 子表数量根据客户实际需求复杂度确定
-5. 每个子表给6-10个核心字段
-6. 每个子表给2-3条示例数据（数据要真实可信，贴合行业）
-7. 字段命名要专业、贴合行业术语
-8. 一张表聚焦一个业务对象"""
+1. 有字段经验池时，按客户实际需求挑选组合，不照搬全部。
+2. 客户没提到的需求对应的表可以不给。
+3. 客户提了经验池里没有的需求，自行补合理字段。
+4. 子表数量按客户实际复杂度定。
+5. 🆕 **字段数量贴合真实业务，不做"轻量"删减**：核心业务表至少 12-20 个字段，覆盖该业务对象的完整信息（基础信息+状态+时间+责任人+金额/数量+备注等）；核心表字段少于 10 个视为不合格。仅字典表/辅助表可少（6-10 个）。宁可字段全，不可为简洁砍字段。
+6. 🆕 **覆盖核心表清单**：需求报告 coreTablesExpected 里列出的每一张核心表都必须生成，缺表视为不合格。
+7. 每个子表 3-5 条示例数据，**每条内容不同**、真实可信、贴合行业，禁止复制同一条。
+8. 字段命名专业、贴合行业术语。
+9. 一张表聚焦一个业务对象。
+
+## 输出前自检
+- 合法 JSON、无注释；field_type 全部来自上述清单；示例数据无重复行。
+- 🆕 核心业务表字段数 ≥12；coreTablesExpected 中的表张张都在，无遗漏。"""
 
 
 @app.post("/api/reports/generate")
@@ -1624,7 +1682,7 @@ async def generate_report(body: dict, user: dict = Depends(require_auth)):
         user_prompt = f"{kb_context}## 客户沟通记录\n\n{transcript}\n\n请基于以上沟通记录，生成结构化的需求分析报告。"
         max_tokens = 4000
 
-    ai_result = call_minimax(system_prompt, user_prompt, max_tokens=max_tokens)
+    ai_result = call_deepseek(system_prompt, user_prompt, max_tokens=max_tokens)
     result = ai_result["content"]
 
     # 解析JSON（如果是schema）
@@ -1671,14 +1729,9 @@ async def generate_report(body: dict, user: dict = Depends(require_auth)):
 # Prompt 3: 需求结构化 → 生成 requirementSolutionData
 STEP4_REQUIREMENT_PROMPT = """你是「企业微信服务商需求调研助手」中的需求结构化引擎。
 
-你的任务不是直接写 Word，也不是直接写 HTML，也不是直接写智能表格搭建 Prompt。
+你的任务不是写 Word、不是写 HTML、不是写建表 Prompt。
 
-你的任务是把 Step1、Step2、Step3、用户编辑后的 Step4 输入、知识库、xlsx 交付物，统一整理成一个稳定的中间结构 requirementSolutionData。
-
-后续三个产物都必须基于这个结构生成：
-1. Step4 产物1：Word 版《需求确认 & 方案设计表》
-2. Step4 产物2：可视化方案 HTML
-3. Step5 产物3：企业微信智能表格搭建 Prompt
+你的任务是把 Step1/2/3、用户编辑后的 Step4 输入，知识库、xlsx 交付物，整理成一个稳定的中间结构 requirementSolutionData。后续 Word / HTML / 建表 三个产物都基于它生成——所以你的准确性决定后面三个产物的成败。
 
 ====================
 【输入信息】
@@ -1721,188 +1774,117 @@ Step3 AI 摘要：
 {service_provider_summary}
 
 ====================
-【材料使用优先级】
+【材料使用优先级】（高→低）
 ====================
-
-请严格按以下优先级使用材料：
-1. 用户编辑后的 step4_input_draft
-2. Step3 AI 摘要 step3_summary
-3. Step3 原始沟通记录 transcript 中客户明确表达的内容
-4. 服务商对客户需求总结 service_provider_summary
-5. xlsx sheet 名和字段摘要 xlsx_sheet_summary
-6. Step1 / Step2 背景信息
+1. step4_input_draft（用户编辑）
+2. step3_summary（Step3 AI 摘要）
+3. transcript 中客户明确表达的内容
+4. service_provider_summary
+5. xlsx_sheet_summary
+6. Step1 / Step2 背景
 7. 知识库 / 行业模板 / 历史方案
 
-注意：
-- **行业和场景（mainScenario）必须优先从 step4_input_draft 或 step3_summary 的对应字段读取，不得被 step1 industry 覆盖。**例如：客户是"设计/景观建筑-跨国多区域项目管理"，不得识别为"家居定制装修"。
-- **xlsx sheet 名和字段摘要必须完整进入 smartTableSpec.confirmedTables，不得遗漏。**
-- **如果 step3_summary 中的字段为空（如 confirmedNeeds、phaseOneScope 等），必须从 transcript 原始沟通记录中自行推理提取并填入，不得留空。**
-- 知识库只能补充，不得覆盖客户事实。
-- 客户没明确说过的内容，不得写成"客户已确认"。
-- 多轮沟通中，如果后续收敛了范围，以后续范围为准。
-- 客户只是提到 AI、ERP、系统对接、复杂财务核算、机器人自动填报时，默认写入二期评估，不得写入一期承诺，更不能写成 P0。
-- 沟通记录里出现但没有进入 xlsx 或服务商总结的扩展需求，不能默认进入一期。
-- **以下内容严禁写入一期 P0**：AI 智能填报、机器人自动写表、OA 系统 API 对接、复杂多区域独立阶段/财务追踪规则。
+硬规则：
+- mainScenario 必须优先取自 step4_input_draft 或 step3_summary，**不得被 step1 industry 覆盖**。例："设计/景观建筑-跨国多区域项目管理"不得识别成"家居定制装修"。
+- xlsx 的每个 sheet 与字段摘要必须完整进入 smartTableSpec.confirmedTables，**不得遗漏**。
+- 🆕 **字段饱满**：smartTableSpec.fieldsByTable 中，核心业务表字段数 12-20 个，覆盖该对象完整信息（基础信息+状态+时间+责任人+金额/数量+备注等）；核心表字段 <10 视为过薄，需补齐。仅字典/辅助表可少。
+- 🆕 **覆盖核心表清单**：若上游 Step3 报告有 coreTablesExpected，其列出的核心表必须张张出现在 confirmedTables 或 suggestedTables，缺表需在 warnings 说明原因。
+- step3_summary 字段为空时，从 transcript 推理提取补全（并按下方三态标注为"推断"）。
+- 知识库只能补充，不得覆盖客户事实。客户没说过的，不得写成"客户已确认"。
+- 多轮沟通后收敛了范围，以最后范围为准。
+- 客户只是"提到" AI / ERP / 系统对接 / 复杂财务核算 / 机器人自动填报 → 默认二期评估，不得写入一期，更不能标 P0。
+- 沟通记录出现、但没进 xlsx 或服务商总结的扩展需求，不默认进一期。
+- **严禁写入一期 P0**：AI 智能填报、机器人自动写表、OA/API 对接、复杂多区域独立阶段/财务追踪。
+
+====================
+【第 0 步 · 输入三层剥离】（最先做，不输出过程）
+====================
+transcript / initial_demand 常混入三类内容（实测 16.3% 混AI回复、40.2% 夹手机号），先剥离：
+① 客户真实表达 → 可进 confirmedByCustomer、requirements(confirmedStatus="客户已确认")、painPoints.evidence。
+② 系统/服务商/AI 已回复内容（"已收到你的需求""我已经帮你整理全套表格""SPECIFICATION""表1|字段|字段…"）
+   → 进 inferredByAI / suggestedTables，source 标"AI预生成待确认"；严禁标"客户已确认"，严禁进 confirmedTables。
+③ 噪音（手机号、"方便电话咨询""这两天在考试"）→ 忽略，不进业务字段。
+
+====================
+【第 0.5 步 · 数据充分性前置检查】（硬规则）
+====================
+检查以下三个核心字段能否从材料中确定：客户名称，行业，主场景（mainScenario）。
+- 若三者中任意一项在所有材料里都找不到明确依据 → 判定材料不足。
+  此时**不要瞎猜、不要硬编**，直接只输出如下 JSON 并结束：
+  {"meta":{"dataInsufficient":true},"message":"客户核心信息缺失（客户名/行业/主场景至少一项无依据），请补齐 Step3 沟通记录或 Step4 输入后重跑。缺失项：<列出具体缺哪项>"}
+- 若三者齐全 → 继续正常生成。
+
+====================
+【第 0.6 步 · 信息保真审计】🔴（决定方案完整性，最容易翻车的一步；抽象原则非样本规则）
+====================
+上游 Step1 已产出 infoUnits（信息单元清单，每条含 uid / label / kind / sourceQuote / raisedByCustomer / feasibility）。若上游未提供，你必须先从①层客户真实表达里重建一份（规则同 Step1：可独立描述即立条，禁止合并）。
+
+⚡ **先判档位**：raisedByCustomer=true 的单元数 ≤2 或走澄清模式 → 只需保证不发生 L4 来源污染，跳过下面的全量审计，直接生成即可（不啰嗦）。≥3 → 执行下面完整的 4 类损耗审计。
+
+**逐单元执行保真审计**，把每个 infoUnit 落到本 JSON 的产物字段，并防住 4 类损耗：
+- **防 L1 收敛性损耗**：客户**分别**提到的两个单元，必须各自有独立产物（requirement/painPoint/module/processNode 之一），不许因"业务相关""下游会合流"就合并成一条。
+- **防 L2 降格性损耗**：raisedByCustomer=true 的单元，priority 不得无理由降到 P2，sourceType 不得从 explicit 改写成 derived。要降必须在 note 写降级理由。
+- **防 L3 静默丢弃**：企微做不了的单元，进 scope.phaseTwo 或 scope.notRecommended（标 phase + reasonForPhase），**绝不能因为做不了就从产物里消失**。
+- **防 L4 来源污染**：AI/服务商已回复内容不得冒充客户单元进 confirmedByCustomer。
+
+**回填 fidelity（保真审计结果）**：在输出的 fidelityAudit 里，逐个 uid 记录最终命运：
+- kept（保留为独立产物，正常）；merged（被合并——需写并进了谁+理由，且仅当客户本就表述为一体时才允许）；downgraded（降级——需理由）；dropped（丢弃——**直接判不合格，回去补产物**）。
+- 任何 raisedByCustomer=true 的单元出现 dropped，或无理由的 merged/downgraded → 不许输出，回去修。
+
+====================
+【第 0.7 步 · 售前落点承接】🆕（治"场景错位：demo好看但上门要大改"）
+====================
+Step1 可能产出 onsiteChecklist（售前阶段答不准、留到签约后现场逐字段核对的执行细节）。承接规则：
+- onsiteChecklist 里的每一条，进 openQuestions，并标 stage="落地阶段确认"，priority 视情"中/低"。
+- 🔴 **绝不把这些没问准的执行细节，在方案里硬编成"客户已确认"的具体值/字段规则**。这类细节在 requirements/fieldsByTable 里若要体现，confirmedStatus 一律标 "待确认"，rule/取值标 "⚠️ 待落地确认"。
+- 原因：售前视频会议没有一线操作岗在场，字段级/流程步骤级细节此刻问不准。宁可显式留白、标清"落地阶段确认"，也不假装已确认。
+- 这与信息保真不冲突：客户**说过**的诉求（infoUnit）必须全留（保真）；客户**没说准**的执行细节留白待确认（落点）。两者都反对"AI 凭空替客户做主"。
 
 ====================
 【输出要求】
 ====================
 
-请输出严格 JSON，不要输出 Markdown，不要输出解释文字。
-
-JSON 结构如下：
+输出严格 JSON（能被 JSON.parse 解析）：无注释、无尾逗号、无 markdown 代码块、无解释文字。结构如下：
 
 {
-  "meta": {
-    "customerName": "",
-    "industry": "",
-    "companyScale": "",
-    "mainScenario": "",
-    "serviceProvider": "",
-    "outputDate": "",
-    "version": "v1"
-  },
-
-  "sourceTrace": {
-    "confirmedByCustomer": [],
-    "fromStep3Summary": [],
-    "fromUserEditedInput": [],
-    "fromServiceProviderSummary": [],
-    "fromXlsxOrDeliveryFile": [],
-    "fromKnowledgeBase": [],
-    "inferredByAI": [],
-    "pendingConfirmation": []
-  },
-
+  "meta": {"dataInsufficient": false, "customerName":"","industry":"","companyScale":"","mainScenario":"","secondaryScenarios":[],"serviceProvider":"","outputDate":"","version":"v1"},
+  "infoUnits": [{"uid":"U1","label":"（用客户自己的话，不贴标签名）","kind":"维度/痛点/明确诉求/硬约束","raisedByCustomer":true,"sourceQuote":"（①层客户原话≤30字）","status":"covered/pending/unclear/derived","priority":"高优先级(P0)/中优先级(P1)/低优先级(P2)","feasibility":"可原生实现/二期/需外部产品","note":""}],
+  "fidelityAudit": [{"uid":"U1","fidelity":"kept/merged/downgraded/dropped","landedOn":["requirements[?]","moduleRecommendation[?]"],"phase":"一期/二期评估/暂不建议","reason":"（非kept必填理由）"}],
+  "sourceTrace": {"confirmedByCustomer":[],"fromStep3Summary":[],"fromUserEditedInput":[],"fromServiceProviderSummary":[],"fromXlsxOrDeliveryFile":[],"fromKnowledgeBase":[],"inferredByAI":[],"pendingConfirmation":[]},
   "customerFacts": {
-    "customerCurrentState": "",
-    "existingTools": [],
-    "currentProcess": [
-      {
-        "stepName": "",
-        "role": "",
-        "currentMethod": "",
-        "problem": "",
-        "evidenceQuote": ""
-      }
-    ],
-    "involvedRoles": [],
-    "explicitNeeds": []
+    "customerCurrentState":"",
+    "existingTools":[],
+    "currentProcess":[{"stepName":"","role":"","currentMethod":"","problem":"","evidenceQuote":""}],
+    "involvedRoles":[],
+    "explicitNeeds":[]
   },
-
-  "painPoints": [
-    {
-      "title": "",
-      "description": "",
-      "businessImpact": "",
-      "evidence": "客户原话/Step3摘要/用户编辑输入/服务商总结/知识库推断",
-      "priority": "P0/P1/P2"
-    }
-  ],
-
-  "requirements": [
-    {
-      "requirementName": "",
-      "customerExpression": "",
-      "businessTranslation": "",
-      "priority": "P0/P1/P2",
-      "phase": "一期/二期评估/暂不建议",
-      "reasonForPhase": "",
-      "confirmedStatus": "客户已确认/用户编辑确认/AI推断/待确认"
-    }
-  ],
-
+  "painPoints": [{"title":"","description":"","businessImpact":"","evidence":"","priority":"P0/P1/P2","uid":""}],
+  "requirements": [{"requirementName":"","customerExpression":"","businessTranslation":"","priority":"P0/P1/P2","phase":"一期/二期评估/暂不建议","reasonForPhase":"","confirmedStatus":"客户已确认/用户编辑确认/AI推断/待确认","uid":""}],
   "scope": {
-    "phaseOne": [
-      {
-        "item": "",
-        "reason": "",
-        "deliveryForm": ""
-      }
-    ],
-    "phaseTwo": [
-      {
-        "item": "",
-        "reason": "",
-        "prerequisites": []
-      }
-    ],
-    "notRecommended": [
-      {
-        "item": "",
-        "reason": ""
-      }
-    ]
+    "phaseOne":[{"item":"","reason":"","deliveryForm":""}],
+    "phaseTwo":[{"item":"","reason":"","prerequisites":[]}],
+    "notRecommended":[{"item":"","reason":""}]
   },
-
   "businessProcess": {
-    "currentFlow": [],
-    "targetFlow": [],
-    "processNodes": [
-      {
-        "nodeName": "",
-        "responsibleRole": "",
-        "input": "",
-        "output": "",
-        "systemAction": "",
-        "reminderNeeded": true
-      }
-    ]
+    "currentFlow":[],
+    "targetFlow":[],
+    "processNodes":[{"nodeName":"","responsibleRole":"","input":"","output":"","systemAction":"","reminderNeeded":true}]
   },
-
-  "moduleRecommendation": [
-    {
-      "moduleName": "",
-      "moduleType": "智能表格/审批/自动化/权限/看板/机器人AI/系统对接",
-      "solvedProblem": "",
-      "phase": "一期/二期评估/暂不建议",
-      "notes": ""
-    }
-  ],
-
+  "moduleRecommendation": [{"moduleName":"","moduleType":"智能表格/审批/自动化/权限/看板/机器人AI/系统对接","solvedProblem":"","phase":"一期/二期评估/暂不建议","notes":"","uid":""}],
   "smartTableSpec": {
-    "scenarioComplexity": "简单流程型/跨部门协同型/多表主数据型/看板同步型/系统对接型",
-    "confirmedTables": [
-      {
-        "tableName": "",
-        "tablePurpose": "",
-        "source": "xlsx/客户确认/服务商总结/知识库建议",
-        "phase": "一期/二期评估",
-        "roles": []
-      }
-    ],
-    "suggestedTables": [],
-    "phaseTwoTables": [],
-    "fieldsByTable": [
-      {
-        "tableName": "",
-        "fields": [
-          {
-            "fieldName": "",
-            "fieldType": "文本/多行文本/单选/多选/数字/金额/日期/日期时间/人员/附件/图片/关联记录/公式/自动编号/进度/勾选/URL",
-            "required": true,
-            "rule": "",
-            "source": "xlsx/客户确认/知识库建议/AI推断"
-          }
-        ]
-      }
-    ],
-    "relations": [],
-    "views": [],
-    "automations": [],
-    "permissions": [],
-    "dashboards": [],
-    "warnings": []
+    "scenarioComplexity":"简单流程型/跨部门协同型/多表主数据型/看板同步型/系统对接型",
+    "confirmedTables":[{"tableName":"","tablePurpose":"","source":"xlsx/客户确认/服务商总结/知识库建议","roles":[]}],
+    "suggestedTables":[],
+    "phaseTwoTables":[],
+    "fieldsByTable":[{"tableName":"","fields":[{"fieldName":"","fieldType":"（中文名，见字段类型对照表）","required":true,"rule":"","source":"xlsx/客户确认/知识库建议/AI推断"}]}],
+    "relations":[],
+    "views":[],
+    "automations":[],
+    "permissions":[],
+    "dashboards":[],
+    "warnings":[]
   },
-
-  "openQuestions": [
-    {
-      "question": "",
-      "whyAsk": "",
-      "impactIfUnknown": "",
-      "priority": "高/中/低"
-    }
-  ]
+  "openQuestions": [{"question":"","whyAsk":"","impactIfUnknown":"","priority":"高/中/低","stage":"售前待补/落地阶段确认"}]
 }
 
 ====================
@@ -1930,33 +1912,24 @@ JSON 结构如下：
 - openQuestions 每个 item 的 question + whyAsk + impactIfUnknown 为非空字符串
 - 数组类型字段（如 painPoints、requirements）最少有 1 条（无内容填 "待补充" + 说明原因）
 
+## 输出前自检（不通过就重写，不要输出）
+1. 【合法 JSON】无注释、无尾逗号、无代码块。
+2. 【核心字段一致】customerName/industry/mainScenario 前后不矛盾；材料不足时已按第0步回退。
+3. 【无复制行】各数组元素内容互不相同。
+4. 【三态到位】缺失字段填 "⚠️ 待确认" 且已登记 openQuestions，没有硬编瞎猜。
+5. 【xlsx 全进表】xlsx 的 sheet/字段已全部进入 confirmedTables，无遗漏。
+6. 🔴【信息保真】fidelityAudit 中所有 raisedByCustomer=true 的单元 fidelity 无 dropped；merged/downgraded 均有理由；客户分别提的单元没被合并；二期/不可行单元已进 scope 而非消失。（此项在"轻档"可豁免，仅需保证 L4 不污染。）
+7. 🆕【售前落点】onsiteChecklist 的执行细节已进 openQuestions 并标 stage="落地阶段确认"，没有被硬编成"客户已确认"的字段值/规则。
+8. 🆕【字段饱满】核心业务表字段数 ≥12；coreTablesExpected 的核心表张张都在，缺表已在 warnings 说明。
+
 ====================
 【范围判断规则】
 ====================
+🔴 判定二期看【能力本身的复杂度】，不看客户把它说得多"基础"。客户说"就要个自动生成讲解视频""就要三端隔离"——只要能力本身属于 AI生成/系统集成/复杂权限，一律二期评估，不因客户口气轻松就放进一期。
 
-一期只包含：
-- 客户明确表达的核心需求
-- 当前痛点强
-- 可用企业微信入口 + 智能表格 + 审批 + 自动化 + 权限 + 看板轻量实现
-- 不依赖复杂接口
-- 不依赖复杂 AI 判断
-- 不依赖大量历史数据清洗
-
-二期评估默认包含：
-- ERP / OA / CRM / 财务系统对接
-- 数据回写
-- AI 自动判断
-- 复杂财务核算
-- 历史数据清洗
-- 多系统权限联动
-- 机器人自动填报
-- 高级经营分析
-
-暂不建议默认包含：
-- 替代完整 ERP / CRM / 财务系统
-- 客户没明确提出但模板里有的模块
-- 强监管实时决策
-- 超出企业微信智能表格轻量交付边界的复杂系统
+一期：客户明确的核心需求 + 痛点强 + 企业微信入口/智能表格/审批/自动化/权限/看板可轻量实现 + 不依赖复杂接口/复杂AI判断/大量历史数据清洗。
+二期评估：ERP/OA/CRM/财务对接、数据回写，AI自动判断，复杂财务核算，历史数据清洗，多系统权限联动，机器人自动填报，高级经营分析。
+暂不建议：替代完整 ERP/CRM/财务、客户没提但模板里有的模块，强监管实时决策，超出轻量交付边界的复杂系统。
 
 直接输出有效 JSON，不要 markdown 代码块包裹。"""
 
@@ -2402,12 +2375,15 @@ def validate_requirement_doc(word_content, requirement_data=None):
 # ==================== Step1 调研问题生成 ====================
 
 STEP1_SYSTEM_PROMPT = """你是一名资深的定制开发售前调研顾问，服务于企业微信智能表格 / 低代码定制开发场景。
-你的职责是：把客户进线时的原始表达，转化为一份"能直接带去和客户开会"的调研材料。
+你的职责：把客户进线时的原始表达，转化为一份"能直接带去和客户开会、并推动成交"的调研材料。
 
-你必须遵守三条铁律：
-1. 【忠于原文】客户明确说过的，是付费锚点，必须被识别、被保真、被优先；不得被你的主观判断降级或忽略。
-2. 【边界优先】必问问题只围绕"客户真实场景"展开，不做行业泛问题的堆砌；宁可少问，不可越界。
-3. 【诚实标注来源】每一条痛点、缺口、问题，都要标明它是"客户明确提的"还是"你推导补的"，绝不把推测伪装成客户原意。
+六条铁律：
+1.【忠于原文】客户明确说过的，是付费锚点，必须被识别、保真、优先；不得被你的主观判断降级或忽略。
+2.【边界优先】必问问题只围绕"客户真实场景"，不堆砌行业泛问题；宁可少问，不可越界。
+3.【诚实标注来源】每条痛点、缺口、问题都要标明是"客户明确提的"还是"你推导补的"，绝不把推测伪装成客户原意。
+4.【缺料不编造】客户原始表达不足以支撑标准调研时，走澄清模式，只提开放式澄清问题，绝不凭空编造需求或场景。
+5.【看人下问】售前进线阶段坐在对面的通常是老板/进线人，一线操作岗多半不在场。同一需求，问管理层和问执行层是两套问法：管理层只讲目标与痛，答不出字段细节；执行层才谈操作与数据。必须先判断本次访谈对象，再决定问题的抽象层级——绝不拿字段级、流程步骤级的细节去问管理层。
+6.【售前落点】这是"售前视频会议"，不是"签约后现场逐部门实装调研"。你出的问题必须满足两个条件才放进必问清单：①对面此刻的人（多为决策者）当场答得上；②答案能帮销售判断方向，推动成交。凡是"必须叫上一线操作岗、对着现有表格逐字段逐流程核对"才能答准的执行细节，一律不在售前阶段追问——把它标记为"落地阶段确认"，留到签约后现场再问。宁可框架清楚、细节留白，不可细节堆满、客户当场答不上还答不准。
 
 你只输出 JSON，不输出任何解释，开场白或 markdown 代码块。"""
 
@@ -2419,111 +2395,142 @@ STEP1_USER_PROMPT = Template("""## 客户基本信息
 - 原始需求：${initial_demand}
 - AI 补充简介：${company_intro}
 
-## 概念定义（生成全程严格遵守）
+## 🔴 输入清洗（最先做，不输出清洗过程）
+把【原始需求】在心里剥成三层，只对第①层负责：
+① 客户真实表达：客户自己说的诉求/现状/痛点。← 唯一可标 sourceType="explicit" 的来源。
+② 系统/服务商/AI 已回复内容：形如"已收到你的需求""我已经帮你整理""SPECIFICATION""全套可复制表格""表1|字段|字段…"等。→ 只能当参考线索，标 "derived"，严禁标 "explicit"，严禁写成"客户已确认"。
+③ 噪音：手机号（1xxxxxxxxxx）、"方便电话咨询""这两天在考试""与客户语音沟通情况"等寒暄。→ 忽略，不进任何业务字段。
+清洗后：若①层有效业务内容 < 15 字（例：只剩"方便电话咨询？"），直接判为"需求未明确"，走【分支B 澄清模式】。
 
+## 行业/规模兜底
+- 若 ${industry} 为空，从①层正文或公司名推断行业，标 sourceType=derived。
+- 若 ${scale} 为空，从①层正文提取人数（如"员工150人""项目团队100人以内"）作为规模，标 derived。
+
+## 多场景处理
+- 若需求标签/正文体现多个场景（如"项目管理,财务成本"），拆分识别；主场景取①层中着墨最多、痛点最强者，其余作为次要场景在 note 中说明。
+
+## 🆕 part0（访谈对象判定）—— 最先做，决定所有问题的抽象层级
+根据 ①层正文 / tags / decision_role 线索，判断本轮访谈最可能的对象，输出 interviewee：
+- "管理层"（老板/总经理/合伙人）：关心经营目标、效率，成本，能不能落地，答不出字段/流程步骤细节。
+- "业务执行层"（一线员工/主管）：关心具体操作、数据怎么填、流程卡在哪。
+- "职能技术层"（IT/流程负责人）：关心系统对接、权限、数据结构。
+无法判断时默认"管理层"（进线阶段多为老板拍板）。后续 must_ask / deep_dive 的问法，必须匹配 interviewee 的层级——绝不拿字段级细节问管理层。
+
+## 🆕 问题落点分层（贯穿 must_ask / deep_dive）—— 治"场景错位"
+这是"售前视频会议"阶段，不是"签约后现场逐部门实装调研"。给每条问题判一个 askStage：
+- "presale"（售前层）：对面此刻的人（多为决策者）当场答得上，且答案能帮销售判断方向，推动成交。例："这件事目前从头到尾大概怎么流转？""现在最头疼的卡点在哪？""大概涉及多少人？"
+- "onsite"（落地层）：必须叫上一线操作岗、对着现有表格/系统逐字段逐流程核对才能答准的执行细节。例："这张表具体要哪些字段、字段什么类型""每个审批节点的具体条件阈值""每个岗位每天几点录哪条数据"。
+规则：**售前问卷（must_ask / deep_dive）只放 askStage="presale" 的问题**；判为 "onsite" 的，不拿去问客户，改收进 onsiteChecklist（留到签约后现场再确认）。宁可框架清楚、细节留白，不可细节堆满、客户当场答不上还答不准。
+
+## 🔴 信息单元清单（infoUnits）—— 客户信息保真的通用载体，下游 06/08 据此审计
+目的：客户在①层里明确表达过的每一个**信息单元**，都要单独立条、带身份证，一路带到最终方案。防止它在流水线里被合并、降格或悄悄删掉。
+> 注意：保真（不丢信息）与售前落点（不越界多问）是两件事。infoUnits 记录客户"说过什么"，必须全留；askStage 决定这些信息里"哪些细节现在追问、哪些留到落地"。留到落地 ≠ 从 infoUnits 删掉。
+**什么是"信息单元"**：任何"客户说过，下游不该弄丢"的原子信息——可以是一个业务维度、一个痛点、一个明确诉求、一条硬约束。
+【kind 参考池】维度类：知识管理/任务管理/会议管理/客户沟通/话术管理/信息更新同步/数据看板/审批流程/培训考核/财务成本/项目管理/营销获客/权限安全/AI内容生成/外部系统对接；其它 kind：痛点/明确诉求/硬约束（如"必须手机端能用""数据不能上公有云"）。
+【立条规则】
+1. 逐句扫描①层，凡出现一个可独立描述的诉求/现状/约束，就立一条 infoUnit。
+2. 🔴 **禁止收敛性损耗（L1）**：客户**分别**提到的两个单元，哪怕业务上相关、有先后关系，也必须是两条，不许因"下游会合流""看起来是一类"就合并。
+3. 每条必带 `sourceQuote`（从①层摘一句最能证明它存在的客户原话，≤30字）。
+4. `raisedByCustomer`：true=①层明确说过；false=你基于场景补的（此时 status="derived"）。
+5. `status`：covered（信息已够设计）/ pending（提了但细节不足待追问）/ unclear（表述模糊）/ derived（AI补的）。
+6. 🔴 **禁止静默丢弃（L3）**：企微做不了的单元（如"1分钟生成讲解视频""三端数据隔离"）**不许删**，照样立条，feasibility 标 "二期"/"需外部产品"，理由写 note。
+⚡ **复杂度分级**：若①层信息单元 ≤ 2 条，或走澄清模式 → infoUnits 简单列出即可，不必逐条填全字段，不啰嗦。若 ≥ 3 条（尤其多维度进线）→ 逐条填全 uid/sourceQuote/status，供下游全量审计。
+
+## 概念定义（全程严格遵守）
 【sourceType 来源类型】对每条 gap / 问题判定其一：
-- "explicit"（明确提及）：能在【原始需求】原文中找到对应文字表达。
-- "implicit"（隐含暗示）：客户没直说，但可由原文上下文合理推断。
-- "derived"（推导补全）：客户完全没提，由行业 + 需求标签补出。
+- "explicit"（明确提及）：能在【原始需求】原文找到对应文字。
+- "implicit"（隐含暗示）：客户没直说，可由上下文合理推断。
+- "derived"（推导补全）：客户完全没提，由行业+标签补出。
 
-【scopeBoundary 场景边界】= 客户已明确表达的需求点，映射到该行业/场景标准能力地图后，所覆盖的范围。它是必问问题不可越过的红线。
+【scopeBoundary 场景边界】= 客户已明确表达的需求点，映射到该行业/场景标准能力地图后所覆盖的范围。它是必问问题不可越过的红线。
 
-## 前置判断（先做，决定走哪条分支）
-
-判断是否属于"需求未明确"：满足任一即是——
-- industry 为"无明确场景"或为空；
-- initial_demand 为空，或含"无文字描述 / 未清晰描述 / 客户没有描述 / 待沟通"等表述；
+## 前置判断（先做，决定分支）
+属于"需求未明确"（满足任一即是）：
+- industry 为"无明确场景"或空；
+- initial_demand 为空，或含"无文字描述/未清晰描述/客户没有描述/待沟通"等；
 - 通篇只有联系方式、无任何业务诉求。
-
-→ 若属于"需求未明确"：走【分支B：澄清模式】。
-→ 否则：走【分支A：标准模式】。
+→ 是：走【分支B 澄清模式】；否：走【分支A 标准模式】。
 
 ================== 分支A：标准模式 ==================
-
 ### part1（客户画像）
-- company_background：公司背景描述，100字以内。
-- pain_points：精确5条核心痛点，每条25字以内，每条标 sourceType。
+- company_background：≤100字。
+- pain_points：精确5条，每条≤25字，每条标 sourceType。
 - customer_type：如"xx行业中型民营企业"。
-- main_customers：该企业主要客户群体。
+- main_customers：主要客户群体。
+🆕 销售维度（有则填，无则填"待确认"，绝不臆造）：
+  - company_scale_guess：人数规模（从①层正文或公司名推断，如"约150人"）。
+  - budget_signal：预算信号（客户有无提到预算/报价敏感度/紧迫性）。
+  - current_systems：目前在用的系统/工具（钉钉/Excel/某ERP等）。
+  - decision_role：进线人角色（老板/中层/执行，呼应 interviewee）。
 
 ### part2（待确认信息清单）
-- gaps[]：5-8条关键缺口，每条 { gap, priority, whyNeed, sourceType }。
+- gaps[]：条数随复杂度浮动，每条 { gap, priority, whyNeed, sourceType, uid }。
+【优先级判定规则——强制，先判 sourceType 再定 priority】
+- priority 取值："高优先级(P0)" / "中优先级(P1)" / "低优先级(P2)"。
+- 硬规则一：sourceType="explicit" 的条目，priority 不得低于"高优先级(P0)"。仅当明显是边角诉求（如随口一提的外观偏好）方可降为"中优先级(P1)"，并在 whyNeed 末尾写"（降级原因：…）"。
+- 硬规则二：sourceType="derived" 的条目，默认"中优先级(P1)"。仅当它是场景成败关键项（缺了方案无法落地）方可升为"高优先级(P0)"。
 
-【优先级判定规则——强制，禁止用主观影响判断覆盖】
-1. 先判 sourceType，再定 priority。
-2. 硬规则一：sourceType="explicit" 的条目，priority 不得低于"高优先级"。
-   仅当它明显是边角诉求（如随口一提的外观偏好）时，方可降为"中优先级"，
-   并在 whyNeed 末尾以"（降级原因：…）"写明理由。
-3. 硬规则二：sourceType="derived" 的条目，priority 默认"中优先级"。
-   仅当它是"场景成败关键项"（缺了方案无法落地，如核心主数据、历史数据迁移）
-   时，方可升为"高优先级"。
-4. priority 取值仅限："高优先级" / "中优先级" / "低优先级"。
-
-### part3（访谈提纲）—— 必须按 A→E 顺序推导
-
+### part3（访谈提纲）—— 按 A→E 顺序推导
 A. 抽取【原始需求】中客户明确提及的需求点，记为"已知点"。
-B. 基于 industry + tags，推导该场景的标准能力地图（标准环节/数据对象/流程），
-   与"已知点"取交集，得出【场景边界】，输出到 part3.scope_boundary（一句话描述)。
-C. must_ask[]：6-10条必问问题。数量由场景边界决定，宁缺毋滥，
-   严禁为凑数生成边界外问题。每条 { question, dimension, note, needRole,
-   whyAsk, impactIfUnknown, sourceType }，且必须满足：
-   - 落在 part3.scope_boundary 之内；
-   - 是"方案设计必需、但客户尚未说清"的信息；
-   - sourceType 只能是 "explicit"（客户提及待澄清）或 "derived"（场景关键补全）；
-   - 与已知点关联度低的行业泛问题，禁止放入 must_ask，应放入 industry_experience。
-D. deep_dive[]：5-8条深挖问题，针对"已知点"的执行细节/量化/根因，须在场景边界内。
-   每条 { question, dimension, note }。
-E. industry_experience[]：2-3条行业经验问题，用于建立专业信任，
-   允许超出场景边界，但仅作行业共性探讨，不得与 must_ask 重复。
-   每条 { question, note }。
+B. 基于 industry+tags 推导该场景标准能力地图，与"已知点"取交集，得【场景边界】，写入 scope_boundary。
+🆕 C. must_ask[]：**先框架后细节 + 只放售前层**，按此规则生成——
+   【排序·强制】前 2-3 条固定为框架性问题，顺序：
+     ① 业务场景/流程类（这件事从头到尾怎么流转、涉及哪些环节和角色）——至少 2 条，永远排最前；
+     ② 现状与痛点类（现在靠什么做、最大的卡点是什么）；
+     ③ 才是执行细节类（但仅限 askStage="presale" 的，见下）。
+   【落点·强制】每条标 askStage。**must_ask 只收 askStage="presale" 的问题**；凡判为 "onsite"（要操作岗在场逐字段核对）的执行细节，不放这里，改写进 onsiteChecklist。
+   【数量·随复杂度】简单进线（原始需求≤2个诉求）给 3-5 条；复杂进线给 6-10 条。宁缺毋滥，严禁把简单需求问复杂，严禁生成边界外行业泛问题。
+   【层级·匹配对象】问法匹配 interviewee：对管理层问目标与痛，不问字段。
+   若 budget_signal / current_systems 为"待确认"，可在 must_ask 末尾各加 1 条温和探测，语气克制放最后，askStage="presale"。
+   每条 { question, dimension, note, needRole, whyAsk, impactIfUnknown, sourceType, askStage, uid }，且必须落在 scope_boundary 内。
+D. deep_dive[]：3-6条深挖问题，针对"已知点"的根因/量化，须在场景边界内，且**同样只放 askStage="presale"**。每条 { question, dimension, note, askStage, uid }。
+🆕 onsiteChecklist[]：把判为 "onsite" 的执行细节问题收在这里（留到签约后现场、操作岗在场时确认，不在本次售前问客户）。每条 { item, whyOnsite }。可为空数组。
+E. industry_experience[]：2-3条行业经验问题，建立专业信任，允许超边界但仅作行业共性探讨，不得与 must_ask 重复。每条 { question, note }。
 
 ================== 分支B：澄清模式 ==================
-（客户需求未明确时使用，目的是把模糊进线变成可澄清的开放问题，绝不凭空编造需求）
-
-### part1（客户画像）
-- company_background：仅依据已知的行业/规模做克制描述，不臆造业务细节，50字以内。
-- pain_points：最多3条，且每条 sourceType 必须为 "derived"，
-  whyNeed 注明"基于行业推测，待客户确认"。
-- customer_type / main_customers：基于行业常识保守填写。
-
-### part2（待确认信息清单）
-- gaps[]：3-5条，priority 一律标 "待澄清"，sourceType 一律 "derived"，
-  whyNeed 说明为何需要向客户澄清此项。
-
-### part3（访谈提纲）
-- scope_boundary：填 "客户需求尚未明确，本轮以澄清为主"。
-- must_ask[]：5-7条全部为开放式澄清问题，sourceType 一律 "explicit_clarify"，
-  dimension 标 "需求澄清"。示例方向（按客户行业改写，勿照抄）：
+（目的：把模糊进线变成可澄清的开放问题，绝不凭空编造需求）
+### part1
+- company_background：仅依据已知行业/规模克制描述，不臆造业务细节，≤50字。
+- pain_points：最多3条，sourceType 全 "derived"，whyNeed 注"基于行业推测，待客户确认"。
+- customer_type / main_customers：基于行业常识保守填。
+- 销售维度四项一律填"待确认"。
+### part2
+- gaps[]：3-5条，priority 一律 "待澄清(pending)"，sourceType 一律 "derived"。
+### part3
+- scope_boundary："客户需求尚未明确，本轮以澄清为主"。
+- must_ask[]：5-7条全开放式澄清问题，sourceType 一律 "explicit_clarify"，dimension 标 "需求澄清"，askStage 一律 "presale"。方向（按行业改写，勿照抄）：
     · 您目前最想优先解决的具体问题是什么？
-    · 这件事现在主要靠什么工具/由谁来完成？流程是怎样的？
-    · 理想状态下，您希望它变成什么样子？
+    · 现在主要靠什么工具/由谁完成？流程如何？
+    · 理想状态希望它变成什么样？
     · 大概涉及多少人、多少数据量？
-    · 有没有现成的表格/系统/截图可以让我们参考？
-  每条 { question, dimension, note, needRole, whyAsk, impactIfUnknown, sourceType }。
-- deep_dive[]：留空数组 []（需求未明确时不做深挖）。
-- industry_experience[]：可给1-2条行业共性问题，帮助打开话题。
+    · 有没有现成表格/系统/截图可参考？
+  每条 { question, dimension, note, needRole, whyAsk, impactIfUnknown, sourceType, askStage }。
+- deep_dive[]：[]（需求未明确不深挖）。
+- onsiteChecklist[]：[]（需求未明确，无落地细节可收）。
+- industry_experience[]：1-2条行业共性问题帮打开话题。
 
-## 输出格式（两个分支通用）
-严格输出如下 JSON，直接输出，不要 markdown 代码块，不要任何解释文字：
-
+## 输出格式（两分支通用，严格 JSON，直接输出，无 markdown 代码块，无注释，无解释）
 {
   "mode": "standard | clarify",
-  "part1": {
-    "company_background": "",
-    "pain_points": [{ "text": "", "sourceType": "" }],
-    "customer_type": "",
-    "main_customers": ""
-  },
-  "part2": {
-    "gaps": [{ "gap": "", "priority": "", "whyNeed": "", "sourceType": "" }]
-  },
-  "part3": {
-    "scope_boundary": "",
-    "must_ask": [{ "question": "", "dimension": "", "note": "", "needRole": "", "whyAsk": "", "impactIfUnknown": "", "sourceType": "" }],
-    "deep_dive": [{ "question": "", "dimension": "", "note": "" }],
-    "industry_experience": [{ "question": "", "note": "" }]
-  }
+  "interviewee": "管理层 | 业务执行层 | 职能技术层",
+  "part1": {"company_background":"","pain_points":[{"text":"","sourceType":""}],"customer_type":"","main_customers":"","company_scale_guess":"","budget_signal":"","current_systems":"","decision_role":""},
+  "infoUnits": [
+    {"uid":"U1","label":"（用客户自己的话，不贴标签名）","kind":"维度/痛点/明确诉求/硬约束","raisedByCustomer":true,"sourceQuote":"（①层客户原话≤30字）","status":"covered/pending/unclear/derived","priority":"高优先级(P0)/中优先级(P1)/低优先级(P2)","feasibility":"可原生实现/二期/需外部产品","note":""}
+  ],
+  "part2": {"gaps":[{"gap":"","priority":"","whyNeed":"","sourceType":"","uid":""}]},
+  "part3": {"scope_boundary":"","must_ask":[{"question":"","dimension":"","note":"","needRole":"","whyAsk":"","impactIfUnknown":"","sourceType":"","askStage":"presale","uid":""}],"deep_dive":[{"question":"","dimension":"","note":"","askStage":"presale","uid":""}],"onsiteChecklist":[{"item":"","whyOnsite":""}],"industry_experience":[{"question":"","note":""}]}
 }
+
+## 输出前自检
+- 合法 JSON、无注释；各数组无重复条目；priority 带 P 级标注。
+- 🆕 **售前落点**：must_ask 与 deep_dive 里没有任何 askStage="onsite" 的条目；需要操作岗在场逐字段核对的细节都进了 onsiteChecklist，没拿去问客户。
+- 🆕 **先框架后细节**：must_ask 前 2-3 条是业务流程/场景类框架问题；简单进线（≤2诉求）未被撑成 6-10 条。
+- 🆕 **看人下问**：问题层级匹配 interviewee；没有拿字段级细节去问管理层。
+- 🆕 **销售维度**：part1 四项销售字段已填或标"待确认"，无臆造。
+- 🔴 **保真-无合并**：①层客户分别提到的每个可独立单元，在 infoUnits 里都能找到独立一条，且每条有 sourceQuote 佐证；没有把两个单元揉成一条。
+- 🔴 **保真-无丢弃**：企微做不了的单元也在 infoUnits 里（标 feasibility），没被删掉；"留到落地"的细节只影响 askStage，绝不导致 infoUnits 删条。
+- 🔴 **回指**：gaps/must_ask/deep_dive 中与某单元相关的条目，uid 回指到 infoUnits（无法归属填 ""）。
+- ⚡ **分级**：若信息单元 ≤2 或澄清模式，infoUnits 可精简，不强求填满全字段。
 """)
 
 
@@ -2546,7 +2553,7 @@ async def question_list(body: dict, user: dict = Depends(require_auth)):
         company_intro=company_intro or "暂无"
     )
 
-    ai_result = call_minimax(STEP1_SYSTEM_PROMPT, user_prompt, max_tokens=6000)
+    ai_result = call_deepseek(STEP1_SYSTEM_PROMPT, user_prompt, max_tokens=6000)
     raw = ai_result["content"]
     # Note: question_list doesn't have client_id, skip token recording here
     if raw.startswith("Error:"):
@@ -3261,7 +3268,7 @@ def _build_requirement_data_from_context(ctx: dict) -> dict:
     return requirement_data
 
 
-def _build_html_prompt(template_html: str, golden_rules: str, example_html: str, ctx: dict) -> tuple:
+def _build_html_prompt(template_html: str, golden_rules: str, example_html: str, ctx: dict, feedback: str = "") -> tuple:
     """构建 HTML 生成的 prompt，返回 (system_prompt, user_prompt)"""
     system = (
         "你是企业微信定制开发服务商的方案专家。请严格使用我给的 HTML 模板骨架，"
@@ -3270,6 +3277,7 @@ def _build_html_prompt(template_html: str, golden_rules: str, example_html: str,
         "务必参考我给的范例风格（Hero 仿真看板、分层架构图、厚场景卡）。\n"
         "黄金规则：\n" + golden_rules
     )
+    feedback_block = ("\n\n【修改反馈（必须全部采纳）】\n" + feedback + "\n") if feedback else ""
     user = (
         "【模板骨架】\n" + template_html + "\n\n"
         "【客户材料正文】\n"
@@ -3292,11 +3300,13 @@ def _build_html_prompt(template_html: str, golden_rules: str, example_html: str,
         "【任务】\n"
         "请基于以上客户材料，把模板填充成完整的售前 HTML 方案。"
         "所有 {{}} 占位符必须全部替换为真实内容，禁止残留任何占位符或空壳话术。"
+        + feedback_block +
+        ("【重要】请务必按照【修改反馈】中的每一条意见进行修改后再输出。" if feedback else "")
     )
     return system, user
 
 
-def _build_word_prompt(template_docx_path: str, golden_rules: str, example_word_text: str, ctx: dict) -> tuple:
+def _build_word_prompt(template_docx_path: str, golden_rules: str, example_word_text: str, ctx: dict, feedback: str = "") -> tuple:
     """构建 Word 生成的 prompt，返回 (system_prompt, user_prompt)"""
     system = (
         "你是企业微信定制开发服务商的需求确认文档专家。请严格按 11 节结构输出内容，"
@@ -3358,6 +3368,7 @@ def _build_word_prompt(template_docx_path: str, golden_rules: str, example_word_
         "【任务】\n"
         "请基于以上客户材料，按 11 节结构输出 Word 文档内容。"
         "格式：【节标题】\\n字段名=内容，字段名与 docx 模板表头对齐。"
+        + ("\n\n【修改反馈（必须全部采纳）】\n" + feedback + "\n\n【重要】请务必按照【修改反馈】中的每一条意见进行修改后再输出。" if feedback else "")
     )
     return system, user
 
@@ -3379,6 +3390,7 @@ async def generate_step4_html(body: dict, user: dict = Depends(require_auth)):
         raise HTTPException(status_code=404, detail="客户不存在")
 
     client = dict(row)
+    feedback = body.get("feedback", "")
 
     # 读模板文件
     template_html = _read_template(TEMPLATE_BASE + "/templates/售前解决方案_HTML模板.html")
@@ -3392,7 +3404,7 @@ async def generate_step4_html(body: dict, user: dict = Depends(require_auth)):
     ctx = _load_client_context(client, user)
 
     # 构建 prompt
-    system_prompt, user_prompt = _build_html_prompt(template_html, golden_rules, example_html, ctx)
+    system_prompt, user_prompt = _build_html_prompt(template_html, golden_rules, example_html, ctx, feedback)
 
     # 调用 CodeBuddy（最多重试1次）
     html_content = None
@@ -3497,6 +3509,7 @@ async def generate_step4_word(body: dict, user: dict = Depends(require_auth)):
         raise HTTPException(status_code=404, detail="客户不存在")
 
     client = dict(row)
+    feedback = body.get("feedback", "")
 
     # 读模板文件
     golden_rules = _read_template(TEMPLATE_BASE + "/黄金规则.md")
@@ -3516,7 +3529,7 @@ async def generate_step4_word(body: dict, user: dict = Depends(require_auth)):
     ctx = _load_client_context(client, user)
 
     # 构建 prompt
-    system_prompt, user_prompt = _build_word_prompt("", golden_rules, example_word_text, ctx)
+    system_prompt, user_prompt = _build_word_prompt("", golden_rules, example_word_text, ctx, feedback)
 
     # 调用 CodeBuddy（最多重试1次）
     word_text_raw = None
@@ -4349,12 +4362,18 @@ notRecommended：{not_recommended_scope}
 }
 
 【填写规则 - 必须遵守】
-1. **只包含 phase = "一期" 的表**，不包含二期评估
-2. 每个字段的 field_type 必须从以下列表选择：**文本/多行文本/单选/多选/数字/金额/日期/日期时间/人员/手机/附件/图片/关联记录/公式/自动编号/进度/勾选/URL**
-3. 每个子表字段数量 **2-15 个**（轻量交付原则，不要超过 15 个）
-4. **sample_records 必须恰好 10 条，不足 10 条视为严重不合格，必须补齐真实业务数据**
-5. **行业贴合**：字段值要贴合 {industry} 行业的实际业务场景（如设计行业用"项目名称/设计师/客户名称/阶段"；制造行业用"批次/工序/物料"）
-6. **每条记录都要有实际业务意义**，不能是重复的占位数据（如"测试1"/"测试2"）
+1. 只包含 phase="一期" 的表，不含二期评估。
+2. field_type 只能取以下中文名之一：**文本 / 多行文本 / 数字 / 单选 / 多选 / 日期时间 / 金额 / 百分比 / 进度 / 手机 / 邮箱 / 链接 / 勾选 / 人员 / 附件 / 图片 / 关联记录 / 公式 / 自动编号**。
+3. 🆕 **字段数贴合真实业务，不做轻量删减**：核心业务表 12-20 个字段，覆盖该对象完整信息（基础信息+状态+时间+责任人+金额/数量+备注等）；核心表字段少于 10 个视为不合格。仅字典表/辅助表可少（6-10 个）。
+4. 🆕 **覆盖核心表清单**：smartTableSpec / 需求报告 coreTablesExpected 里列出的每一张核心表都必须建，缺表视为不合格。
+5. 【sample_records 恰好 10 条，且 10 条内容各不相同】——禁止把同一条复制 10 遍，禁止填虚假/无关数据。数据必须贴合本行业本客户场景，10 条应体现不同记录（不同客户/项目/日期/金额等）。
+6. 字段命名专业、贴合行业术语；一张表聚焦一个业务对象。
+
+## 输出前自检（不通过就重写）
+1. 合法 JSON：无注释、无尾逗号、无代码块。
+2. 每个子表 sample_records 正好 10 条且互不相同。
+3. field_type 全部来自上述清单。
+4. 🆕 核心业务表字段数 ≥12；coreTablesExpected 中的表张张都在，无遗漏。
 
 直接输出有效 JSON，不要 markdown 代码块包裹。"""
 
@@ -4431,25 +4450,44 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
         if isinstance(phase_one_scope, list):
             phase_one_scope = [{"item": (i.get("item") or i.get("title") or str(i)), "reason": "", "deliveryForm": "智能表格"} for i in phase_one_scope]
 
-        # 如果 phase_one_scope 仍为空，尝试从 step3_summary 的其他字段推断
+        # 如果 phase_one_scope 仍为空，从 step4_input_draft 的 confirmedNeeds 和 painPoints 推断
         if not phase_one_scope:
             industry = client.get("industry") or ""
-            summary_raw = step3_summary.get("_raw", "") if isinstance(step3_summary, dict) else str(step3_summary or "")
-            # 从 confirmedNeeds 和 painPoints 推断一期范围
-            confirmed_needs = step3_summary.get("confirmedNeeds") or step3_summary.get("confirmed_needs") or []
-            pain_points = step3_summary.get("painPoints") or step3_summary.get("pain_points") or []
-            # 通用建表需求（无任何数据时）
-            phase_one_scope = [
-                {"item": "客户信息管理表", "reason": f"基础客户信息管理", "deliveryForm": "智能表格"},
-                {"item": "跟进记录管理表", "reason": "记录销售跟进过程", "deliveryForm": "智能表格"}
-            ]
+            # 优先从 step4_input_draft 读取
+            step4_input = client.get("step4_input_draft") or {}
+            if isinstance(step4_input, str):
+                try: step4_input = json.loads(step4_input)
+                except: step4_input = {}
+            confirmed_needs = step4_input.get("confirmedNeeds") or step3_summary.get("confirmedNeeds") or step3_summary.get("confirmed_needs") or []
+            pain_points = step4_input.get("painPoints") or step3_summary.get("painPoints") or step3_summary.get("pain_points") or []
+            # 从需求构建一期表（支持字符串列表或对象列表）
+            phase_one_scope = []
             if confirmed_needs:
                 for n in (confirmed_needs if isinstance(confirmed_needs, list) else [confirmed_needs]):
-                    title = n.get("title") or n.get("name") or ""
-                    if title and len(phase_one_scope) < 5:
-                        phase_one_scope.append({"item": title, "reason": "客户确认需求", "deliveryForm": "智能表格"})
-            if industry and len(phase_one_scope) < 3:
-                phase_one_scope.append({"item": f"{industry}业务主表", "reason": f"基于行业({industry})的核心业务管理", "deliveryForm": "智能表格"})
+                    # 支持字符串格式："标题：描述" 或对象格式：{title, description}
+                    if isinstance(n, str):
+                        parts = n.split("：", 1) if "：" in n else [n, ""]
+                        title = parts[0].strip()
+                        reason = parts[1].strip() if len(parts) > 1 else "客户确认需求"
+                    else:
+                        title = n.get("title") or n.get("name") or ""
+                        reason = n.get("description") or "客户确认需求"
+                    if title and len(phase_one_scope) < 8:
+                        phase_one_scope.append({"item": title, "reason": reason, "deliveryForm": "智能表格"})
+            if pain_points and len(phase_one_scope) < 3:
+                for p in (pain_points if isinstance(pain_points, list) else [pain_points]):
+                    if isinstance(p, str):
+                        parts = p.split("：", 1) if "：" in p else [p, ""]
+                        title = parts[0].strip()
+                        reason = parts[1].strip() if len(parts) > 1 else "痛点解决"
+                    else:
+                        title = p.get("title") or ""
+                        reason = p.get("description") or "痛点解决"
+                    if title and len(phase_one_scope) < 8:
+                        phase_one_scope.append({"item": title, "reason": reason, "deliveryForm": "智能表格"})
+            # 如果仍然为空，使用 step4_input_draft 的 customerCurrentState 作为唯一表
+            if not phase_one_scope and step4_input.get("customerCurrentState"):
+                phase_one_scope = [{"item": "业务管理表", "reason": "基于客户现状描述的核心业务管理", "deliveryForm": "智能表格"}]
 
         requirement_data = {
             "smartTableSpec": {
@@ -4511,19 +4549,92 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
     if schema and schema.get("sheets"):
         import logging
         logger2 = logging.getLogger("uvicorn")
+        # 常用填充值库（用于生成更真实的补录数据）
+        _name_pool = ["张伟", "李娜", "王芳", "刘洋", "陈静", "杨勇", "赵磊", "黄丽", "周强", "吴敏"]
+        _status_pool = ["进行中", "已完成", "待处理", "已取消", "暂停中"]
+        _dept_pool = ["销售部", "市场部", "运营部", "技术部", "财务部", "行政部"]
+        _priority_pool = ["高", "中", "低"]
+        _date_pool = ["2026-07-01", "2026-07-05", "2026-07-08", "2026-07-10", "2026-07-12", "2026-07-15"]
+        _amount_pool = [3500, 8200, 15000, 28000, 45000, 63000, 98000]
+
+        def _smart_pad_record(template, idx, field_types):
+            """根据字段类型生成更真实的第 idx 条补录数据"""
+            result = {}
+            for k, v in template.items():
+                ftype = field_types.get(k, '文本')
+                if isinstance(v, str):
+                    if ftype == '单选' and v in _status_pool:
+                        result[k] = _status_pool[idx % len(_status_pool)]
+                    elif ftype == '单选' and v in _priority_pool:
+                        result[k] = _priority_pool[idx % len(_priority_pool)]
+                    elif ftype == '单选' and v in _dept_pool:
+                        result[k] = _dept_pool[idx % len(_dept_pool)]
+                    elif '名称' in k or '负责人' in k or '客户' in k:
+                        result[k] = _name_pool[idx % len(_name_pool)]
+                    elif '部门' in k or '部门' in k:
+                        result[k] = _dept_pool[idx % len(_dept_pool)]
+                    elif '状态' in k:
+                        result[k] = _status_pool[idx % len(_status_pool)]
+                    elif '日期' in k or '时间' in k:
+                        result[k] = _date_pool[idx % len(_date_pool)]
+                    elif '金额' in k or '预算' in k or '费用' in k:
+                        result[k] = _amount_pool[idx % len(_amount_pool)]
+                    elif '备注' in k or '说明' in k:
+                        result[k] = v + f"（第{idx+1}条）"
+                    else:
+                        result[k] = v + f"_{idx+1}"
+                elif isinstance(v, (int, float)):
+                    if '金额' in k or '预算' in k:
+                        result[k] = _amount_pool[idx % len(_amount_pool)]
+                    else:
+                        result[k] = v + idx
+                else:
+                    result[k] = v
+            return result
+
+        def _guess_field_type(field_title):
+            """根据字段名推测类型"""
+            t = field_title or ''
+            if any(x in t for x in ['状态', '类型', '阶段', '等级']): return '单选'
+            if any(x in t for x in ['日期', '时间']): return '日期'
+            if any(x in t for x in ['金额', '预算', '费用', '报价', '成本']): return '金额'
+            if any(x in t for x in ['名称', '客户', '负责人', '联系人', '员工']): return '文本'
+            if any(x in t for x in ['数量', '数量', '次数']): return '数字'
+            if any(x in t for x in ['备注', '说明', '描述', '内容']): return '多行文本'
+            if any(x in t for x in ['手机', '电话']): return '手机'
+            if any(x in t for x in ['邮箱']): return '邮箱'
+            if any(x in t for x in ['URL', '链接', '网址']): return '链接'
+            return '文本'
+
         for sheet in schema["sheets"]:
             records = sheet.get("sample_records") or []
-            field_names = [f.get("field_title") for f in (sheet.get("fields") or []) if f.get("field_title")]
             current = len(records)
-            if current < 10:
-                logger2.warning(f"[Step5Demo] sheet '{sheet.get('sheet_name','')}' only has {current} records, padding to 10")
-                # 用第一条记录的结构复制补齐
+            if current < 10 and current > 0:
+                logger2.warning(f"[Step5Demo] sheet '{sheet.get('sheet_name','')}' has {current} records, padding to 10 with smart variation")
                 template = records[0] if records else {}
+                # 建立字段名→类型的映射（从 fields 定义获取，否则靠猜）
+                field_type_map = {}
+                for f in (sheet.get("fields") or []):
+                    ft = f.get("field_type", "")
+                    for fn in ("field_title", "fieldName", "name"):
+                        if f.get(fn):
+                            field_type_map[f.get(fn)] = ft
+                            break
+                # 如果 fields 没有定义，从 template 的值猜测
+                for k in template.keys():
+                    if k not in field_type_map:
+                        field_type_map[k] = _guess_field_type(k)
+                idx = 0
                 while len(records) < 10:
-                    new_record = {k: (v + "_补" if isinstance(v, str) else v) for k, v in template.items()}
+                    new_record = _smart_pad_record(template, idx, field_type_map)
                     records.append(new_record)
+                    idx += 1
                 sheet["sample_records"] = records
-            logger2.info(f"[Step5Demo] sheet '{sheet.get('sheet_name','')}' final record count: {len(sheet.get('sample_records', []))}")
+                logger2.info(f"[Step5Demo] sheet '{sheet.get('sheet_name','')}' final record count: {len(records)}")
+            elif current == 0:
+                logger2.warning(f"[Step5Demo] sheet '{sheet.get('sheet_name','')}' has ZERO records, cannot pad - skipping")
+            else:
+                logger2.info(f"[Step5Demo] sheet '{sheet.get('sheet_name','')}' has {current} records (OK)")
 
     if not schema:
         return {"success": False, "error": "Step5 Schema 生成失败：" + (raw[:200] if raw else "空响应")}
@@ -4534,7 +4645,7 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
     return {"success": True, "demo": schema}
 
 
-STEP5_AGENT_PROMPT = """你是一个企业微信智能表格 AI 增强专家。基于已有的智能表格 Schema，为服务商提供进一步 AI 化的建议。
+STEP5_AGENT_PROMPT = """你是一个企业微信定制开发增项顾问。基于客户背景和已规划的智能表格方案，推荐可打包进定制开发的 AI 助手产品（企微群机器人 + 单聊机器人）。
 
 【客户背景】
 客户名称：{customer_name}
@@ -4544,12 +4655,20 @@ STEP5_AGENT_PROMPT = """你是一个企业微信智能表格 AI 增强专家。�
 【现有智能表格 Schema（已规划的一期交付内容）】
 {schema_summary}
 
-请生成 4-6 条"若要加强 AI 化，可以考虑..."的建议，每条包含：
-- title：建议标题（如"引入 AI 自动汇总"）
+请生成 4-6 条增项建议，每条对应一个可独立交付的 AI 助手功能模块，包含：
+- title：功能名称（如"智能问答机器人"）
+- type：产品类型（群机器人/单聊机器人/混合）
 - description：2-3 句话说明实现方式和价值
-- example：该建议在当前客户场景中的具体应用示例（如"在【项目状态】表中，字段值变为'待验收'时，自动推送企微消息给项目经理"）
+- example：该功能在当前客户场景中的具体对话示例（机器人收到什么消息、返回什么结果）
 - difficulty：实现难度（低/中/高）
-- phase：建议时机（一期/二期/远期）
+- phase：建议时机（一期/二期）
+
+【企微AI助手增项方向参考】
+- 智能问答：员工/客户发消息给机器人，机器人查询智能表格数据后回答（如"帮我查一下本周新增的面试候选人"）
+- 快捷指令：发送特定指令，机器人执行写表/查表/推送操作（如发送"催款"触发应收提醒流程）
+- 主动推送：当表格数据满足某条件，机器人自动发群消息或私信通知（如逾期未到账提醒项目经理）
+- 自然语言写表：发送"帮我加一条 xxx 记录"，机器人解析后写入智能表格
+- FAQ 知识库：基于行业/公司知识库，员工随时问机器人（如"合同到期前多久可以续签"）
 
 直接输出 JSON 数组，不要 markdown 代码块，不要任何前缀文字。"""
 
@@ -4571,10 +4690,192 @@ async def publish_step4_report(body: dict, user: dict = Depends(require_auth)):
     share_dir.mkdir(parents=True, exist_ok=True)
     suffix = "_technical" if doc_type == "technical" else ""
     filepath = share_dir / f"{client_id}_step4{suffix}.html"
+    # 注入访客追踪 JS
+    tracking_js = (
+        '<script>'
+        '(function(){'
+        'var vid=localStorage.getItem("pa_vid")||(localStorage.setItem("pa_vid","v"+Math.random().toString(36).substr(2,9)+Date.now()),localStorage.getItem("pa_vid"));'
+        'var fu=location.pathname;'
+        'var cid=' + str(client_id) + ';'
+        'var sd=0;'
+        'function tk(a,e){var p={visitor_id:vid,file_url:fu,client_id:cid,referer:document.referrer,scroll_depth:sd};if(e)Object.assign(p,e);fetch("/api/track/"+a,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)}).catch(function(){});}'
+        'tk("visit");'
+        'window.addEventListener("scroll",function(){var h=document.documentElement,b=document.body,pct=Math.round(100*(h.scrollTop||b.scrollTop)/(h.scrollHeight-h.clientHeight));if(pct>sd)sd=pct;},{passive:true});'
+        'setInterval(function(){tk("heartbeat");},30000);'
+        '})();'
+        '</script>'
+    )
+    if "</body>" in html_content.lower():
+        html_content = html_content.replace("</body>", tracking_js + "</body>")
+    else:
+        html_content += tracking_js
+
     filepath.write_text(html_content, encoding="utf-8")
 
     url = f"/public/s/{client_id}_step4{suffix}.html"
     return {"success": True, "url": url}
+
+
+# ==================== 访问追踪 ====================
+def _parse_ua(ua_str):
+    """从 User-Agent 解析设备/操作系统/浏览器"""
+    ua = ua_str or ""
+    device = "未知"
+    os_type = "未知"
+    browser = "未知"
+    if "Mobile" in ua or "Android" in ua and "Mobile" in ua:
+        device = "手机"
+    elif "iPad" in ua or "Tablet" in ua:
+        device = "平板"
+    elif "Windows" in ua:
+        device = "电脑"
+    elif "Macintosh" in ua or "Mac OS" in ua:
+        device = "电脑"
+    elif "Linux" in ua and "Android" not in ua:
+        device = "电脑"
+    if "Windows NT 10" in ua:
+        os_type = "Windows 10/11"
+    elif "Windows NT 6.3" in ua:
+        os_type = "Windows 8"
+    elif "Mac OS X" in ua:
+        os_type = "macOS"
+    elif "Android" in ua:
+        os_type = "Android"
+    elif "iPhone" in ua or "iOS" in ua:
+        os_type = "iOS"
+    elif "Linux" in ua:
+        os_type = "Linux"
+    if "Chrome/" in ua and "Edg/" not in ua:
+        browser = "Chrome"
+    elif "Firefox/" in ua:
+        browser = "Firefox"
+    elif "Safari/" in ua and "Chrome/" not in ua:
+        browser = "Safari"
+    elif "Edg/" in ua:
+        browser = "Edge"
+    elif "MicroMessenger/" in ua:
+        browser = "微信"
+    return device, os_type, browser
+
+
+def _get_client_ip(request):
+    """获取真实 IP（支持代理）"""
+    return request.headers.get("x-forwarded-for", "").split(",")[0].strip() or \
+           request.headers.get("x-real-ip", "") or \
+           "127.0.0.1"
+
+
+@app.post("/api/track/visit")
+async def track_visit(request: Request, body: dict):
+    """记录首次访问（访客打开分享链接时）"""
+    client_id = body.get("client_id")
+    file_url = body.get("file_url", "")
+    visitor_id = body.get("visitor_id", "")
+    referer = body.get("referer", "")
+    scroll_depth = body.get("scroll_depth", 0)
+
+    if not client_id or not file_url:
+        return {"success": False}
+
+    conn = get_db()
+    cursor = conn.cursor()
+    ip = _get_client_ip(request)
+    ua = request.headers.get("user-agent", "")
+    device, os_type, browser = _parse_ua(ua)
+
+    # 检查是否已有该 visitor_id 的记录
+    existing = None
+    if visitor_id:
+        cursor.execute(
+            "SELECT id,visit_count FROM visit_tracking WHERE visitor_id=? AND file_url=? ORDER BY id DESC LIMIT 1",
+            (visitor_id, file_url)
+        )
+        existing = cursor.fetchone()
+
+    now = datetime.now().isoformat()
+    if existing:
+        # 回访：更新 visit_count / last_visit_at / scroll_depth
+        cursor.execute("""
+            UPDATE visit_tracking
+            SET visit_count=visit_count+1, last_visit_at=?, last_heartbeat_at=?,
+                scroll_depth=?, ip_address=?
+            WHERE id=?
+        """, (now, now, scroll_depth, ip, existing[0]))
+    else:
+        # 首次访问
+        cursor.execute("""
+            INSERT INTO visit_tracking
+            (client_id,file_url,visitor_id,ip_address,user_agent,device_type,os_type,browser_type,
+             referer,is_first_visit,visit_count,first_visit_at,last_visit_at,last_heartbeat_at,stay_duration,scroll_depth)
+            VALUES (?,?,?,?,?,?,?,?,?,1,1,?,?,?,0,?)
+        """, (client_id, file_url, visitor_id, ip, ua, device, os_type, browser,
+              referer, now, now, now, scroll_depth))
+    conn.commit()
+    return {"success": True}
+
+
+@app.post("/api/track/heartbeat")
+async def track_heartbeat(request: Request, body: dict):
+    """页面心跳（每30秒发送一次，更新停留时长）"""
+    visitor_id = body.get("visitor_id", "")
+    file_url = body.get("file_url", "")
+    scroll_depth = body.get("scroll_depth", 0)
+
+    if not visitor_id or not file_url:
+        return {"success": False}
+
+    conn = get_db()
+    cursor = conn.cursor()
+    now = datetime.now().isoformat()
+    cursor.execute("""
+        UPDATE visit_tracking
+        SET last_heartbeat_at=?,
+            stay_duration=COALESCE(stay_duration,0)+30,
+            scroll_depth=MAX(COALESCE(scroll_depth,0),?)
+        WHERE visitor_id=? AND file_url=?
+        ORDER BY id DESC LIMIT 1
+    """, (now, scroll_depth, visitor_id, file_url))
+    conn.commit()
+    rows = cursor.rowcount
+    return {"success": rows > 0}
+
+
+@app.get("/api/clients/{client_id}/visits")
+async def get_client_visits(client_id: int,
+                            page: int = 1,
+                            limit: int = 20,
+                            device: str = "",
+                            date_from: str = "",
+                            date_to: str = "",
+                            user: dict = Depends(require_auth)):
+    offset = (page - 1) * limit
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # 组合筛选条件
+    sql = "SELECT * FROM visit_tracking WHERE client_id=? AND file_url LIKE '/outputs/%'"
+    params = [client_id]
+    if device:
+        sql += " AND device_type=?"
+        params.append(device)
+    if date_from:
+        sql += " AND created_at>=?"
+        params.append(date_from)
+    if date_to:
+        sql += " AND created_at<=?"
+        params.append(date_to + " 23:59:59")
+
+    # 总数
+    cursor.execute("SELECT COUNT(*) FROM visit_tracking WHERE client_id=? AND file_url LIKE '/outputs/%'", (client_id,))
+    total = cursor.fetchone()[0]
+
+    sql += " ORDER BY last_visit_at DESC LIMIT ? OFFSET ?"
+    params.extend([limit, offset])
+    cursor.execute(sql, params)
+    rows = cursor.fetchall()
+    cols = [d[0] for d in cursor.description]
+    items = [dict(zip(cols, r)) for r in rows]
+    return {"success": True, "total": total, "page": page, "limit": limit, "visits": items}
 
 
 @app.post("/api/step5/agent-suggest")
@@ -5115,7 +5416,10 @@ async def generate_profile(body: dict, user: dict = Depends(require_auth)):
 
 # ==================== 健康检查 ====================
 
-COMPANY_SEARCH_PROMPT = """你是一个企业信息分析助手。根据客户名称和行业，生成公司简介、主要客户群体、可能关注点。
+COMPANY_SEARCH_PROMPT = """你是一个企业信息分析助手。根据客户名称、行业以及搜索结果，生成公司简介、主要客户群体、可能关注点。
+
+参考搜索结果（来自互联网实时搜索）：
+${search_results}
 
 直接返回 JSON（不要 markdown 代码块），格式：
 {
@@ -5127,13 +5431,36 @@ COMPANY_SEARCH_PROMPT = """你是一个企业信息分析助手。根据客户�
 
 @app.post("/api/company_search")
 async def company_search(body: dict, user: dict = Depends(require_auth)):
-    """AI 智搜：根据客户名称和行业生成公司简介"""
+    """AI 智搜：根据客户名称和行业生成公司简介（基于真实搜索结果）"""
     company_name = body.get("company_name", "")
     industry = body.get("industry", "")
     if not company_name:
         return {"error": "缺少公司名称"}
-    user_prompt = f"客户名称：{company_name}\n行业：{industry or '未指定'}\n请分析生成 JSON。"
-    raw = call_minimax(COMPANY_SEARCH_PROMPT, user_prompt, max_tokens=800)
+
+    # 第一步：用 Tavily 搜索获取真实信息
+    # 搜索词加上"公司"和行业关键词，提高相关性
+    search_terms = [company_name, "公司"]
+    if industry and industry != "未指定":
+        search_terms.append(industry)
+    search_query = " ".join(search_terms)
+    search_result = tavily_search(search_query, max_results=8)
+
+    # 构建搜索结果摘要给 AI
+    if search_result.get("success") and search_result.get("results"):
+        results_text = "\n".join([
+            f"- {r['title']}: {r['content'][:200]}..."
+            for r in search_result["results"][:5]
+        ])
+    else:
+        results_text = "（搜索失败，使用默认分析）"
+
+    # 第二步：用 AI 分析生成 JSON
+    user_prompt = f"客户名称：{company_name}\n行业：{industry or '未指定'}"
+    raw = call_codebuddy(
+        COMPANY_SEARCH_PROMPT.replace("${search_results}", results_text),
+        user_prompt,
+        max_tokens=3000
+    )
     raw = raw["content"] if isinstance(raw, dict) else raw
     if raw.startswith("Error:"):
         return {"error": raw}

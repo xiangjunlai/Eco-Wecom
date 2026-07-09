@@ -717,30 +717,42 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
           <h3 id="gen-title">正在生成调研准备材料</h3>
           <p class="subtitle" id="gen-subtitle">AI 正在分析客户信息并生成调研问题</p>
           <div class="progress-wrap" id="gen-progress">
-            <div class="progress-step" data-step="1">
+            <!-- 5步版本（Step1→2） -->
+            <div class="progress-step" data-step="1" id="ps-step-1">
               <span class="step-check pending" id="pc1">○</span>
               <span class="step-label">客户信息分析</span>
               <span class="step-status" id="ps1">等待中</span>
             </div>
-            <div class="progress-step" data-step="2">
+            <div class="progress-step" data-step="2" id="ps-step-2">
               <span class="step-check pending" id="pc2">○</span>
               <span class="step-label">行业识别</span>
               <span class="step-status" id="ps2">等待中</span>
             </div>
-            <div class="progress-step" data-step="3">
+            <div class="progress-step" data-step="3" id="ps-step-3">
               <span class="step-check pending" id="pc3">○</span>
               <span class="step-label">客户画像生成</span>
               <span class="step-status" id="ps3">等待中</span>
             </div>
-            <div class="progress-step" data-step="4">
+            <div class="progress-step" data-step="4" id="ps-step-4">
               <span class="step-check pending" id="pc4">○</span>
               <span class="step-label">信息缺口分析</span>
               <span class="step-status" id="ps4">等待中</span>
             </div>
-            <div class="progress-step" data-step="5">
+            <div class="progress-step" data-step="5" id="ps-step-5">
               <span class="step-check pending" id="pc5">○</span>
               <span class="step-label">调研问题生成</span>
               <span class="step-status" id="ps5">等待中</span>
+            </div>
+            <!-- 2步版本（Step3→4） -->
+            <div class="progress-step" data-step="s1" id="ps-step-s1" style="display:none">
+              <span class="step-check pending" id="pcs1">○</span>
+              <span class="step-label">生成售前解决方案</span>
+              <span class="step-status" id="pss1">等待中</span>
+            </div>
+            <div class="progress-step" data-step="s2" id="ps-step-s2" style="display:none">
+              <span class="step-check pending" id="pcs2">○</span>
+              <span class="step-label">生成技术路线及报价方案</span>
+              <span class="step-status" id="pss2">等待中</span>
             </div>
           </div>
           <!-- 简化进度条（Step4/5 导航用）-->
@@ -906,18 +918,25 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
                 <option>1-50人</option><option>50-200人</option><option>200-1000人</option><option>1000人以上</option>
               </select>
             </div>
+            <div class="field">
+              <div class="label">客户预算</div>
+              <select class="select" id="s1-budget" onchange="saveStep1()">
+                <option value="">暂不明确</option>
+                <option>1千以下</option><option>1千-5千</option><option>5千-1万</option><option>1-5万</option><option>5-10万</option><option>10-20万</option><option>20-50万</option><option>50万以上</option>
+              </select>
+            </div>
           </div>
           <div class="field" style="margin-top:12px">
             <div class="label">需求标签 <span class="hint">可多选，直接输入自定义标签后回车</span></div>
             <div class="chips" id="s1-chips">
-              <span class="chip" data-tag="合规风控">合规风控</span>
-              <span class="chip" data-tag="客户运营">客户运营</span>
-              <span class="chip" data-tag="审批流程">审批流程</span>
-              <span class="chip" data-tag="销售管理">销售管理</span>
-              <span class="chip" data-tag="系统集成">系统集成</span>
-              <span class="chip" data-tag="项目交付">项目交付</span>
-              <span class="chip" data-tag="生产管理">生产管理</span>
-              <span class="chip" data-tag="人力资源">人力资源</span>
+              <span class="chip" data-tag="合规风控" onclick="this.classList.toggle('active'); saveStep1();">合规风控</span>
+              <span class="chip" data-tag="客户运营" onclick="this.classList.toggle('active'); saveStep1();">客户运营</span>
+              <span class="chip" data-tag="审批流程" onclick="this.classList.toggle('active'); saveStep1();">审批流程</span>
+              <span class="chip" data-tag="销售管理" onclick="this.classList.toggle('active'); saveStep1();">销售管理</span>
+              <span class="chip" data-tag="系统集成" onclick="this.classList.toggle('active'); saveStep1();">系统集成</span>
+              <span class="chip" data-tag="项目交付" onclick="this.classList.toggle('active'); saveStep1();">项目交付</span>
+              <span class="chip" data-tag="生产管理" onclick="this.classList.toggle('active'); saveStep1();">生产管理</span>
+              <span class="chip" data-tag="人力资源" onclick="this.classList.toggle('active'); saveStep1();">人力资源</span>
               <input class="chip-input" id="s1-custom-tag" placeholder="+ 自定义" onkeydown="handleCustomTag(event)">
             </div>
           </div>
@@ -987,6 +1006,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             <button class="tab on" data-target="must" onclick="switchTab(this)">必问问题 <span class="tab-count" id="s2-must-count">0</span></button>
             <button class="tab" data-target="deep" onclick="switchTab(this)">深挖问题 <span class="tab-count" id="s2-deep-count">0</span></button>
             <button class="tab" data-target="industry" onclick="switchTab(this)">行业经验 <span class="tab-count" id="s2-industry-count">0</span></button>
+            <button class="tab" data-target="onsite" onclick="switchTab(this)">落地清单 <span class="tab-count" id="s2-onsite-count">0</span></button>
           </div>
           <div id="s2-scope-boundary" style="display:none;background:linear-gradient(135deg,rgba(18,99,230,.08),rgba(18,99,230,.04));border:1px solid rgba(18,99,230,.2);border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#1263e6;line-height:1.6">
             <div style="font-weight:900;margin-bottom:4px">🔵 场景边界</div>
@@ -995,6 +1015,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
           <div class="q-list" id="s2-must-questions"></div>
           <div class="q-list" id="s2-deep-questions" style="display:none"></div>
           <div class="q-list" id="s2-industry-notes" style="display:none"></div>
+          <div class="q-list" id="s2-onsite-questions" style="display:none"></div>
           <button class="more" id="s2-more-btn" onclick="toggleMoreQuestions()" style="display:none">查看更多（<span id="s2-deep-total">0</span>）</button>
           <div style="margin-top:10px">
             <button class="add-q-btn" id="s2-add-btn" onclick="addQuestionByTab()" style="width:100%">+ 添加问题</button>
@@ -1161,13 +1182,48 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 			      <div>
 			        <div style="font-size:13px;color:#667085">面向客户汇报，展示方案价值、建设模块与二期预留方向</div>
 			      </div>
-			      <button class="btn primary" id="s4-presales-btn" onclick="generateHtmlPresales()" style="height:34px;font-size:13px">生成 HTML</button>
-			    </div>
-			    <div id="s4-presales-history" style="display:none">
-			      <div class="history-toggle" onclick="togglePresalesHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;margin-top:4px">
-			        版本记录 <span id="s4-presales-history-count"></span> <span id="s4-presales-history-arrow">▶</span>
+			      <div style="display:flex;gap:6px">
+			        <button class="btn secondary" id="s4-presales-preview-btn" onclick="togglePresalesPreview()" style="height:34px;font-size:12px">预览</button>
+			        <button class="btn primary" id="s4-presales-btn" onclick="generateHtmlPresales()" style="height:34px;font-size:13px">生成 HTML</button>
 			      </div>
-			      <div id="s4-presales-history-content" style="margin-top:8px"></div>
+			    </div>
+			    <!-- 访问追踪分析 -->
+			    <div id="s4-presales-tracking" style="margin-top:8px">
+			      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+			        <span style="font-size:12px;font-weight:700;color:#344054">访问分析</span>
+			        <div style="display:flex;gap:6px;align-items:center">
+			          <select id="s4-track-filter-device" onchange="loadPresalesVisits()" style="font-size:11px;color:#667085;border:1px solid #e8edf5;border-radius:6px;padding:2px 6px">
+			            <option value="">全部设备</option>
+			            <option value="电脑">电脑</option>
+			            <option value="手机">手机</option>
+			            <option value="平板">平板</option>
+			          </select>
+			          <button class="btn secondary" onclick="loadPresalesVisits()" style="height:26px;font-size:11px;padding:0 10px">刷新</button>
+			        </div>
+			      </div>
+			      <div id="s4-presales-visits-loading" style="display:none;text-align:center;padding:20px;color:#98a2b3;font-size:12px">加载中…</div>
+			      <div id="s4-presales-visits-empty" style="display:none;text-align:center;padding:16px;color:#98a2b3;font-size:12px">暂无访问记录</div>
+			      <div id="s4-presales-visits-list" style="max-height:180px;overflow-y:auto"></div>
+			    </div>
+			    <!-- 反馈对话框 -->
+			    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f0f2f5">
+			      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+			        <span style="font-size:12px;font-weight:700;color:#344054">修改反馈</span>
+			        <span style="font-size:11px;color:#98a2b3" id="s4-presales-feedback-count">0 条反馈</span>
+			      </div>
+			      <div id="s4-presales-feedback-queue" style="margin-bottom:8px;max-height:80px;overflow-y:auto;display:none"></div>
+			      <div style="display:flex;gap:6px">
+			        <textarea id="s4-presales-feedback-input" placeholder="输入对方案的修改意见…" style="flex:1;border:1px solid #e8edf5;border-radius:8px;padding:8px 10px;font-size:12px;resize:none;height:36px;line-height:1.5" rows="1"></textarea>
+			        <button class="btn secondary" onclick="addPresalesFeedback()" style="height:36px;font-size:12px;white-space:nowrap">追加</button>
+			        <button class="btn primary" id="s4-presales-regen-btn" onclick="regeneratePresalesWithFeedback()" style="height:36px;font-size:12px;white-space:nowrap">重新生成</button>
+			      </div>
+			    </div>
+			    <!-- 版本列表 -->
+			    <div style="margin-top:10px">
+			      <div onclick="togglePresalesVersionList()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;display:flex;align-items:center;gap:4px">
+			        版本列表 <span id="s4-presales-version-count"></span> <span id="s4-presales-version-arrow">▶</span>
+			      </div>
+			      <div id="s4-presales-version-list" style="margin-top:6px;display:none"></div>
 			    </div>
 			  </div>
 			</div>
@@ -1185,11 +1241,25 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 			      </div>
 			      <button class="btn primary" id="s4-technical-btn" onclick="generateWordPlan()" style="height:34px;font-size:13px">生成 Word</button>
 			    </div>
-			    <div id="s4-technical-history" style="display:none">
-			      <div class="history-toggle" onclick="toggleTechnicalHistory()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;margin-top:4px">
-			        版本记录 <span id="s4-technical-history-count"></span> <span id="s4-technical-history-arrow">▶</span>
+			    <!-- 反馈对话框 -->
+			    <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f2f5">
+			      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+			        <span style="font-size:12px;font-weight:700;color:#344054">修改反馈</span>
+			        <span style="font-size:11px;color:#98a2b3" id="s4-technical-feedback-count">0 条反馈</span>
 			      </div>
-			      <div id="s4-technical-history-content" style="margin-top:8px"></div>
+			      <div id="s4-technical-feedback-queue" style="margin-bottom:8px;max-height:80px;overflow-y:auto;display:none"></div>
+			      <div style="display:flex;gap:6px">
+			        <textarea id="s4-technical-feedback-input" placeholder="输入对方案的修改意见…" style="flex:1;border:1px solid #e8edf5;border-radius:8px;padding:8px 10px;font-size:12px;resize:none;height:36px;line-height:1.5" rows="1"></textarea>
+			        <button class="btn secondary" onclick="addTechnicalFeedback()" style="height:36px;font-size:12px;white-space:nowrap">追加</button>
+			        <button class="btn primary" id="s4-technical-regen-btn" onclick="regenerateTechnicalWithFeedback()" style="height:36px;font-size:12px;white-space:nowrap">重新生成</button>
+			      </div>
+			    </div>
+			    <!-- 版本列表 -->
+			    <div style="margin-top:10px">
+			      <div onclick="toggleTechnicalVersionList()" style="cursor:pointer;font-size:12px;color:#667085;user-select:none;display:flex;align-items:center;gap:4px">
+			        版本列表 <span id="s4-technical-version-count"></span> <span id="s4-technical-version-arrow">▶</span>
+			      </div>
+			      <div id="s4-technical-version-list" style="margin-top:6px;display:none"></div>
 			    </div>
 			  </div>
 			</div>
@@ -1281,10 +1351,10 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
         <div class="prep-card" style="margin-bottom:16px">
           <div class="card-accent accent-green"></div>
           <div class="prep-card-head" style="margin-bottom:10px">
-            <h3>💡 Agent 建议</h3>
+            <h3>💡 AI 助手增项方案</h3>
             <button class="btn secondary" id="s5-agent-btn" onclick="doGenerateAgentSuggest()" style="height:32px;font-size:13px;display:flex;align-items:center;gap:6px">
               <span id="s5-agent-spinner" style="display:none;font-size:14px;animation:spin 1s linear infinite">⟳</span>
-              <span id="s5-agent-btn-text">生成建议</span>
+              <span id="s5-agent-btn-text">生成增项方案</span>
             </button>
           </div>
           <div id="s5-agent-loading" style="display:none;text-align:center;padding:16px 0;color:#98a2b3;font-size:13px">正在生成…</div>
@@ -1440,7 +1510,7 @@ let genCurrentStep = 0;
 let genReady = false;
 let genTargetStep = 2; // which step to go to on success
 
-function showGenerateModal(titleText, subtitleText, targetStep) {
+function showGenerateModal(titleText, subtitleText, targetStep, type) {
   genReady = false;
   genTargetStep = targetStep || 2;
   const modal = document.getElementById('generate-modal');
@@ -1457,13 +1527,28 @@ function showGenerateModal(titleText, subtitleText, targetStep) {
   btn.style.display = 'none';
   error.style.display = 'none';
   progress.style.display = 'block';
-  // Reset all steps
+
+  const is2Step = type === '2step';
+
+  // 5-step version elements
   for (let i = 1; i <= 5; i++) {
+    const row = document.getElementById('ps-step-' + i);
+    if (row) row.style.display = is2Step ? 'none' : '';
     document.getElementById('pc' + i).className = 'step-check pending';
     document.getElementById('pc' + i).textContent = '○';
     document.getElementById('ps' + i).className = 'step-status';
     document.getElementById('ps' + i).textContent = '等待中';
   }
+  // 2-step version elements
+  for (let i = 1; i <= 2; i++) {
+    const row = document.getElementById('ps-step-s' + i);
+    if (row) row.style.display = is2Step ? '' : 'none';
+    document.getElementById('pcs' + i).className = 'step-check pending';
+    document.getElementById('pcs' + i).textContent = '○';
+    document.getElementById('pss' + i).className = 'step-status';
+    document.getElementById('pss' + i).textContent = '等待中';
+  }
+
   modal.classList.add('active');
 }
 
@@ -1473,25 +1558,46 @@ function hideGenerateModal() {
 }
 
 function setGenStep(step) {
-  // Mark previous steps as done
-  for (let i = 1; i < step; i++) {
-    document.getElementById('pc' + i).className = 'step-check done';
-    document.getElementById('pc' + i).textContent = '✓';
-    document.getElementById('ps' + i).className = 'step-status';
-    document.getElementById('ps' + i).textContent = '完成';
-  }
-  // Mark current step as active
+  // Determine if 2-step mode (steps 's1', 's2')
+  const is2Step = String(step).startsWith('s');
   genCurrentStep = step;
-  document.getElementById('pc' + step).className = 'step-check active';
-  document.getElementById('pc' + step).textContent = '◌';
-  document.getElementById('ps' + step).className = 'step-status active';
-  document.getElementById('ps' + step).textContent = '进行中';
-  // Mark future steps as pending
-  for (let i = step + 1; i <= 5; i++) {
-    document.getElementById('pc' + i).className = 'step-check pending';
-    document.getElementById('pc' + i).textContent = '○';
-    document.getElementById('ps' + i).className = 'step-status';
-    document.getElementById('ps' + i).textContent = '等待中';
+
+  if (is2Step) {
+    const n = parseInt(step.replace('s', ''));
+    for (let i = 1; i < n; i++) {
+      document.getElementById('pcs' + i).className = 'step-check done';
+      document.getElementById('pcs' + i).textContent = '✓';
+      document.getElementById('pss' + i).className = 'step-status';
+      document.getElementById('pss' + i).textContent = '完成';
+    }
+    document.getElementById('pcs' + n).className = 'step-check active';
+    document.getElementById('pcs' + n).textContent = '◌';
+    document.getElementById('pss' + n).className = 'step-status active';
+    document.getElementById('pss' + n).textContent = '进行中';
+    for (let i = n + 1; i <= 2; i++) {
+      document.getElementById('pcs' + i).className = 'step-check pending';
+      document.getElementById('pcs' + i).textContent = '○';
+      document.getElementById('pss' + i).className = 'step-status';
+      document.getElementById('pss' + i).textContent = '等待中';
+    }
+  } else {
+    // 5-step mode
+    for (let i = 1; i < step; i++) {
+      document.getElementById('pc' + i).className = 'step-check done';
+      document.getElementById('pc' + i).textContent = '✓';
+      document.getElementById('ps' + i).className = 'step-status';
+      document.getElementById('ps' + i).textContent = '完成';
+    }
+    document.getElementById('pc' + step).className = 'step-check active';
+    document.getElementById('pc' + step).textContent = '◌';
+    document.getElementById('ps' + step).className = 'step-status active';
+    document.getElementById('ps' + step).textContent = '进行中';
+    for (let i = step + 1; i <= 5; i++) {
+      document.getElementById('pc' + i).className = 'step-check pending';
+      document.getElementById('pc' + i).textContent = '○';
+      document.getElementById('ps' + i).className = 'step-status';
+      document.getElementById('ps' + i).textContent = '等待中';
+    }
   }
 }
 
@@ -2086,7 +2192,7 @@ function deleteClient(id) {
 }
 
 function openClient(id) {
-  location.href = 'workbench.html?v=20260626&client_id=' + encodeURIComponent(id);
+  location.href = 'workbench.html?v=20260709&client_id=' + encodeURIComponent(id);
 }
 
 function goStep1() {
@@ -2109,7 +2215,7 @@ function goStep1() {
   };
   clients.push(newClient);
   saveClients(clients);
-  location.href = 'workbench.html?v=20260626&client_id=' + encodeURIComponent(newClient.id);
+  location.href = 'workbench.html?v=20260709&client_id=' + encodeURIComponent(newClient.id);
 }
 
 function loadClientsList() {
@@ -2137,6 +2243,7 @@ function loadStep1(c) {
   document.getElementById('s1-name').value = c.name || '';
   document.getElementById('s1-industry').value = c.industry || '';
   document.getElementById('s1-scale').value = c.scale || '';
+  document.getElementById('s1-budget').value = c.budget || '';
   document.getElementById('s1-demand').value = c.initial_demand || '';
   document.querySelectorAll('#s1-chips .chip').forEach(chip => {
     const tag = chip.dataset.tag;
@@ -2260,7 +2367,7 @@ function toggleAISearch() {
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 20px">
         <div style="width:48px;height:48px;border-radius:50%;border:4px solid #e8edf5;border-top-color:#1263e6;border-right-color:#13b96f;animation:spin .8s linear infinite"></div>
         <div style="font-size:14px;font-weight:800;color:#182235">正在搜索公司信息...</div>
-        <div style="font-size:12px;color:#98a2b3">预计 3-5 秒</div>
+        <div style="font-size:12px;color:#98a2b3">预计 15-20 秒</div>
       </div>`;
     document.getElementById('s1-ai-retry').style.display = 'none';
     doAISearch();
@@ -2297,7 +2404,7 @@ async function doAISearch() {
   btn.innerHTML = '<span style="width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;animation:spin .8s linear infinite;display:inline-block"></span><span>搜索中...</span>';
   setAIIndicator('loading', 'AI 智搜中...');
   document.getElementById('s1-ai-retry').style.display = 'none';
-  body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 20px"><div style="width:48px;height:48px;border-radius:50%;border:4px solid #e8edf5;border-top-color:#1263e6;border-right-color:#13b96f;animation:spin .8s linear infinite"></div><div style="font-size:14px;font-weight:800;color:#182235">正在搜索公司信息...</div><div style="font-size:12px;color:#98a2b3">预计 3-5 秒</div></div>';
+  body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px 20px"><div style="width:48px;height:48px;border-radius:50%;border:4px solid #e8edf5;border-top-color:#1263e6;border-right-color:#13b96f;animation:spin .8s linear infinite"></div><div style="font-size:14px;font-weight:800;color:#182235">正在搜索公司信息...</div><div style="font-size:12px;color:#98a2b3">预计 15-20 秒</div></div>';
 
   updateClient(currentClientId, { name, industry });
 
@@ -2449,10 +2556,11 @@ function adoptAIResult() {
     const name = document.getElementById('s1-name').value.trim();
     const industry = document.getElementById('s1-industry').value;
     const scale = document.getElementById('s1-scale').value;
+    const budget = document.getElementById('s1-budget').value;
     const demand = document.getElementById('s1-demand').value.trim();
     const activeTags = [...document.querySelectorAll('#s1-chips .chip.active')].map(c => c.dataset.tag);
     const tags = activeTags.join(',');
-    updateClient(currentClientId, { name, industry, scale, initial_demand: demand, tags, is_saved: true });
+    updateClient(currentClientId, { name, industry, scale, budget, initial_demand: demand, tags, is_saved: true });
     updateFloatingAction(1);
     renderArtifacts();
   }
@@ -2482,12 +2590,13 @@ function saveStep1Local() {
   const name = document.getElementById('s1-name').value.trim();
   const industry = document.getElementById('s1-industry').value;
   const scale = document.getElementById('s1-scale').value;
+  const budget = document.getElementById('s1-budget').value;
   const demand = document.getElementById('s1-demand').value.trim();
   const activeTags = [...document.querySelectorAll('#s1-chips .chip.active')].map(c => c.dataset.tag);
   const tags = activeTags.join(',');
   const clients = getClients();
   const idx = clients.findIndex(c => c.id === currentClientId);
-  if (idx >= 0) Object.assign(clients[idx], { name, industry, scale, initial_demand: demand, tags, is_saved: true, updated_at: new Date().toISOString() });
+  if (idx >= 0) Object.assign(clients[idx], { name, industry, scale, budget, initial_demand: demand, tags, is_saved: true, updated_at: new Date().toISOString() });
   saveClients(clients);
 }
 
@@ -2563,7 +2672,7 @@ function doStep1Next() {
     fetch(API_BASE + '/api/question_list', {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ industry, initial_demand: demand, company_name: name, scale: document.getElementById('s1-scale')?.value || '', tags: [...document.querySelectorAll('#s1-chips .chip.active')].map(c => c.dataset.tag).join(','), company_intro: getClient(currentClientId)?.company_intro || '' })
+      body: JSON.stringify({ industry, initial_demand: demand, company_name: name, scale: document.getElementById('s1-scale')?.value || '', budget: document.getElementById('s1-budget')?.value || '', tags: [...document.querySelectorAll('#s1-chips .chip.active')].map(c => c.dataset.tag).join(','), company_intro: getClient(currentClientId)?.company_intro || '' })
     }).then(r => r.json()).then(data => {
       clearTimeout(genTimeout);
       if (genReady) return;
@@ -2598,7 +2707,7 @@ async function doRegenerateStep2() {
   setTimeout(() => { if (genReady) return; setGenStep(5); }, 8000);
   fetch(API_BASE + '/api/question_list', {
     method: 'POST', headers: getAuthHeaders(),
-    body: JSON.stringify({ industry, initial_demand: demand, company_name: name, scale: c.scale || '', tags: c.tags || '', company_intro: c.company_intro || '' })
+    body: JSON.stringify({ industry, initial_demand: demand, company_name: name, scale: c.scale || '', budget: c.budget || '', tags: c.tags || '', company_intro: c.company_intro || '' })
   }).then(r => r.json()).then(data => {
     clearTimeout(genTimeout);
     if (genReady) return;
@@ -2666,8 +2775,8 @@ async function doStep3Next() {
     showToast('请先添加沟通记录');
     return;
   }
+  // 如果还没有 step3_summary，先生成摘要
   if (!c.step3_summary) {
-    // step3_summary 不存在，先遮罩生成
     showSimpleLoadingModal('正在生成方案输入确认单……', 'AI 正在分析沟通记录', async () => {
       try {
         var resp = await fetch(API_BASE + '/api/reports/generate', {
@@ -2678,6 +2787,10 @@ async function doStep3Next() {
         var data = await resp.json();
         if (data.summary) {
           updateClient(currentClientId, { step3_summary: data.summary });
+          // 摘要生成完成后，继续进入 Step3→4 的自动生成流程
+          go(4);
+          // 在 Step4 加载后自动触发两个方案生成
+          setTimeout(function() { autoGenerateStep4OnEnter(); }, 300);
         } else {
           showToast('生成摘要失败：' + (data.error || '未知错误'));
         }
@@ -2687,7 +2800,87 @@ async function doStep3Next() {
     });
     return;
   }
+  // 有摘要：直接进 Step4，并自动生成两个方案
   go(4);
+  setTimeout(function() { autoGenerateStep4OnEnter(); }, 300);
+}
+
+// Step3→4 进入 Step4 时自动触发生成
+async function autoGenerateStep4OnEnter() {
+  const c = getClient(currentClientId);
+  if (!c) return;
+  var hasPresales = Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0;
+  var hasTechnical = Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0;
+  // 如果已经有版本，不重复生成
+  if (hasPresales && hasTechnical) return;
+
+  showGenerateModal('正在生成双方案', 'AI 正在生成售前方案和技术路线，请稍候…', 4, '2step');
+
+  var errors = [];
+  var htmlDone = false;
+  var wordDone = false;
+
+  // Step1: 生成售前HTML
+  setGenStep('s1');
+  try {
+    var resp1 = await fetch(API_BASE + '/api/step4/generate-html', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: c.id })
+    });
+    var data1 = await resp1.json();
+    if (data1.success) {
+      // 保存新版本
+      var versions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions.slice() : [];
+      versions.push({ version: versions.length + 1, content: data1, created_at: new Date().toISOString(), file_url: data1.file_url, filename: data1.filename });
+      updateClient(currentClientId, { step4_presales_versions: versions, _step4_publish_url: data1.file_url });
+      htmlDone = true;
+    } else {
+      errors.push('售前方案：' + (data1.error || '生成失败'));
+      htmlDone = true; // 即使失败也继续
+    }
+  } catch(e) {
+    errors.push('售前方案：网络错误');
+    htmlDone = true;
+  }
+
+  // Step2: 生成技术路线Word
+  setGenStep('s2');
+  try {
+    var resp2 = await fetch(API_BASE + '/api/step4/generate-word', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: c.id })
+    });
+    var data2 = await resp2.json();
+    if (data2.success) {
+      var tVersions = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions.slice() : [];
+      tVersions.push({ version: tVersions.length + 1, content: data2, created_at: new Date().toISOString(), file_url: data2.file_url, filename: data2.filename });
+      updateClient(currentClientId, { step4_technical_versions: tVersions });
+      wordDone = true;
+    } else {
+      errors.push('技术路线：' + (data2.error || '生成失败'));
+      wordDone = true;
+    }
+  } catch(e) {
+    errors.push('技术路线：网络错误');
+    wordDone = true;
+  }
+
+  // 等待两个都完成
+  var checkDone = setInterval(function() {
+    if (htmlDone && wordDone) {
+      clearInterval(checkDone);
+      if (errors.length > 0) {
+        showGenError2('部分生成失败：' + errors.join('；'), false);
+      } else {
+        showGenSuccess('方案生成完成', '<p style="margin:0;font-size:13px;color:#13b96f">售前方案和技术路线均已生成</p>');
+      }
+      // 自动进入 Step4 并刷新制品区
+      loadStep4(getClient(currentClientId));
+      renderArtifacts();
+    }
+  }, 200);
 }
 
 function doStep4Next() {
@@ -3555,25 +3748,30 @@ function renderStep4History(type, versions) {
   var histEl = document.getElementById('s4-' + type + '-history');
   var countEl = document.getElementById('s4-' + type + '-history-count');
   if (!histEl) return;
+  // presales 不再显示历史版本（已被访问分析替代）
+  if (type === 'presales') {
+    histEl.style.display = 'none';
+    return;
+  }
+  // technical：轻量化版本记录（下载链接）
   if (!versions || versions.length <= 1) {
     histEl.style.display = 'none';
     return;
   }
   histEl.style.display = '';
-  if (countEl) countEl.textContent = '(' + (versions.length) + ' 个版本)';
+  if (countEl) countEl.textContent = '(' + versions.length + ' 个版本)';
   var contentEl = document.getElementById('s4-' + type + '-history-content');
   if (!contentEl) return;
   var html = '';
-  var isHtml = (type === 'technical'); // technical = HTML, presales = Word
-  var artifactName = isHtml ? '面向客户汇报，展示方案价值、建设模块与二期预留方向' : '正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题';
   // Show all versions (newest first)
   for (var i = versions.length - 1; i >= 0; i--) {
     var v = versions[i];
     var date = new Date(v.created_at);
     var dateStr = date.toLocaleDateString('zh-CN', {year:'numeric',month:'2-digit',day:'2-digit'});
-    html += '<div style="margin-bottom:8px;padding:8px 10px;background:#f8f9fc;border-radius:8px;font-size:12px">';
-    html += '<div style="color:#667085;margin-bottom:4px">v' + v.version + ' · ' + dateStr + '</div>';
-    html += '<div style="color:#344054;font-size:12px">' + artifactName + '</div>';
+    var fileUrl = v.file_url || '';
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;background:#f8f9fc;border-radius:6px;font-size:12px">';
+    html += '<span style="color:#667085;flex-shrink:0">v' + v.version + ' · ' + dateStr + '</span>';
+    if (fileUrl) html += '<a href="' + fileUrl + '" download style="color:#1263e6;font-weight:600;margin-left:auto">下载 ↓</a>';
     html += '</div>';
   }
   contentEl.innerHTML = html;
@@ -3586,6 +3784,69 @@ function togglePresalesHistory() {
   var isHidden = contentEl.style.display === 'none';
   contentEl.style.display = isHidden ? '' : 'none';
   if (arrowEl) arrowEl.textContent = isHidden ? '▼' : '▶';
+}
+
+async function loadPresalesVisits() {
+  var c = getClient(currentClientId);
+  if (!c || !c.id) return;
+  var listEl = document.getElementById('s4-presales-visits-list');
+  var emptyEl = document.getElementById('s4-presales-visits-empty');
+  var loadingEl = document.getElementById('s4-presales-visits-loading');
+  if (!listEl) return;
+  var deviceFilter = document.getElementById('s4-track-filter-device');
+  var device = deviceFilter ? deviceFilter.value : '';
+  if (loadingEl) loadingEl.style.display = '';
+  if (emptyEl) emptyEl.style.display = 'none';
+  if (listEl) listEl.innerHTML = '';
+  try {
+    var url = API_BASE + '/api/clients/' + c.id + '/visits?limit=50' + (device ? '&device=' + encodeURIComponent(device) : '');
+    var resp = await fetch(url, { headers: getAuthHeaders() });
+    if (!resp.ok) throw new Error('加载失败');
+    var data = await resp.json();
+    var visits = data.visits || [];
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (visits.length === 0) {
+      if (emptyEl) emptyEl.style.display = '';
+      return;
+    }
+    // 渲染统计摘要行
+    var totalVisits = visits.length;
+    var uniqueVisitors = {};
+    visits.forEach(function(v) { if (v.visitor_id) uniqueVisitors[v.visitor_id] = true; });
+    var statsHtml = '<div style="display:flex;gap:16px;margin-bottom:10px;padding:8px 10px;background:#f8f9fc;border-radius:8px;font-size:11px">' +
+      '<div><span style="color:#667085">总访问</span> <span style="font-weight:700;color:#182235">'+totalVisits+'</span></div>' +
+      '<div><span style="color:#667085">独立访客</span> <span style="font-weight:700;color:#182235">'+Object.keys(uniqueVisitors).length+'</span></div>' +
+      '<div><span style="color:#667085">最高浏览</span> <span style="font-weight:700;color:#182235">'+(function(){var max=0;visits.forEach(function(v){if(v.scroll_depth>max)max=v.scroll_depth;});return max||0;})()+'%</span></div>' +
+      '</div>';
+    listEl.innerHTML = statsHtml;
+    // 渲染每条记录
+    visits.forEach(function(v) {
+      var visitTime = v.last_visit_at ? new Date(v.last_visit_at) : new Date(v.created_at);
+      var timeStr = visitTime.toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'}) + ' ' + visitTime.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+      var stayMin = v.stay_duration ? Math.round(v.stay_duration / 60) : 0;
+      var deviceIcon = {'电脑':'💻','手机':'📱','平板':'📲','未知':'❓'}[v.device_type] || '❓';
+      var firstBadge = v.is_first_visit ? '<span style="background:#e6f4ea;color:#1677ff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;margin-left:4px">首访</span>' : '<span style="background:#fff7ed;color:#d97706;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;margin-left:4px">回访</span>';
+      var row = '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5f5f5;font-size:12px">';
+      row += '<span style="font-size:14px">'+deviceIcon+'</span>';
+      row += '<div style="flex:1;min-width:0">';
+      row += '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">';
+      row += '<span style="font-weight:700;color:#182235">'+esc(v.ip_address||'未知')+'</span>';
+      row += firstBadge;
+      row += '</div>';
+      row += '<div style="color:#667085;font-size:11px;margin-top:2px">'+esc(v.os_type||'')+' / '+esc(v.browser_type||'')+' / '+esc(v.device_type||'')+'</div>';
+      row += '</div>';
+      row += '<div style="text-align:right;flex-shrink:0">';
+      row += '<div style="color:#344054;font-size:11px;font-weight:600">'+timeStr+'</div>';
+      row += '<div style="color:#667085;font-size:11px;margin-top:2px">'+esc(v.city||v.region||'')+' '+esc(v.country||'')+'</div>';
+      row += '<div style="color:#667085;font-size:11px;margin-top:2px">停留 '+stayMin+'分钟 / '+esc(String(v.scroll_depth||0))+'%</div>';
+      row += '</div>';
+      row += '</div>';
+      listEl.innerHTML += row;
+    });
+  } catch(e) {
+    if (loadingEl) loadingEl.style.display = 'none';
+    listEl.innerHTML = '<div style="color:#ef4444;font-size:12px;text-align:center;padding:12px">加载失败: '+esc(e.message)+'</div>';
+  }
 }
 
 function toggleTechnicalHistory() {
@@ -3684,16 +3945,20 @@ function renderS5Agent() {
     list.style.flexDirection = 'column';
     list.style.gap = '16px';
     list.innerHTML = suggestions.map(function(s) {
+      var typeIcon = {'群机器人':'💬','单聊机器人':'🤖','混合':'🔄'}[s.type] || '🤖';
+      var typeColor = {'群机器人':'#6366f1','单聊机器人':'#0d9488','混合':'#7c3aed'}[s.type] || '#667085';
       var diffColor = s.difficulty === '低' ? '#13b96f' : (s.difficulty === '中' ? '#ff8a00' : '#ef4444');
       var phaseColor = s.phase === '一期' ? '#13b96f' : (s.phase === '二期' ? '#1263e6' : '#98a2b3');
-      var example = s.example ? '<div style="margin-top:8px;padding:8px 10px;background:#f0f7ff;border-radius:8px;font-size:12px;color:#1263e6;line-height:1.5"><b>示例：</b>' + escHtml(s.example) + '</div>' : '';
+      var example = s.example ? '<div style="margin-top:8px;padding:10px 12px;background:#f8f9fc;border-radius:8px;font-size:12px;color:#344054;line-height:1.6;border-left:3px solid #1263e6"><b style="color:#1263e6">💬 对话示例：</b>' + escHtml(s.example) + '</div>' : '';
       return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
-        '<span style="font-size:14px;font-weight:600;color:#182235;flex:1">' + escHtml(s.title || '') + '</span>' +
-        '<span style="font-size:11px;padding:2px 8px;border-radius:6px;background:' + diffColor + '22;color:' + diffColor + '">' + (s.difficulty || '') + '</span>' +
-        '<span style="font-size:11px;padding:2px 8px;border-radius:6px;background:' + phaseColor + '22;color:' + phaseColor + '">' + (s.phase || '') + '</span>' +
+        '<span style="font-size:16px">' + typeIcon + '</span>' +
+        '<span style="font-size:14px;font-weight:700;color:#182235;flex:1">' + escHtml(s.title || '') + '</span>' +
+        '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:' + typeColor + '18;color:' + typeColor + '">' + escHtml(s.type || '') + '</span>' +
+        '<span style="font-size:11px;padding:2px 8px;border-radius:6px;background:' + diffColor + '18;color:' + diffColor + '">' + (s.difficulty || '') + '</span>' +
+        '<span style="font-size:11px;padding:2px 8px;border-radius:6px;background:' + phaseColor + '18;color:' + phaseColor + '">' + (s.phase || '') + '</span>' +
         '</div>' +
-        '<div style="font-size:13px;color:#667085;line-height:1.65">' + escHtml(s.description || '') + '</div>' +
+        '<div style="font-size:13px;color:#667085;line-height:1.65;margin-bottom:4px">' + escHtml(s.description || '') + '</div>' +
         example +
         '</div>';
     }).join('');
@@ -4305,17 +4570,21 @@ function renderQuestions(questions) {
   var must = questions.must_ask || questions.must || questions.mandatory || [];
   var deep = questions.deep_dive || questions.deep || questions.followup || [];
   var industry = questions.industry_experience || questions.industry || [];
+  var onsite = questions.onsiteChecklist || [];
   var mustEl = document.getElementById('s2-must-questions');
   var deepEl = document.getElementById('s2-deep-questions');
   var indEl = document.getElementById('s2-industry-notes');
+  var onsiteEl = document.getElementById('s2-onsite-questions');
   var mustCount = document.getElementById('s2-must-count');
   var deepCount = document.getElementById('s2-deep-count');
   var indCount = document.getElementById('s2-industry-count');
+  var onsiteCount = document.getElementById('s2-onsite-count');
   var moreBtn = document.getElementById('s2-more-btn');
   var moreTotal = document.getElementById('s2-deep-total');
   if (mustCount) mustCount.textContent = must.length;
   if (deepCount) deepCount.textContent = deep.length;
   if (indCount) indCount.textContent = industry.length;
+  if (onsiteCount) onsiteCount.textContent = onsite.length;
   if (moreTotal) moreTotal.textContent = deep.length;
   if (moreBtn) moreBtn.style.display = deep.length > 3 ? '' : 'none';
   function renderQ(qs) {
@@ -4366,17 +4635,19 @@ function renderQuestions(questions) {
     deepEl.innerHTML = renderQ(deepWithHidden);
   }
   if (indEl) indEl.innerHTML = industry.length ? industry.map(function(n){ var q = typeof n === 'string' ? n : (n.question || ''); var note = (n.note || ''); var whyAsk = n.whyAsk || ''; var impact = n.impactIfUnknown || ''; var extra = (note ? '<div style="font-size:12px;color:#667085;line-height:1.6;margin-top:6px">提示: '+note+'</div>' : '') + (whyAsk ? '<div style="font-size:11px;color:#8a9bae;line-height:1.5;margin-top:4px">问因: '+whyAsk+'</div>' : '') + (impact ? '<div style="font-size:11px;color:#8a9bae;line-height:1.5;margin-top:2px">影响: '+impact+'</div>' : ''); return '<div class="q-card"><div class="q-card-main"><div style="font-size:14px;color:#182235;line-height:1.6;font-weight:600">'+q+'</div>' + extra + '</div></div></div>'; }).join('') : '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">暂无行业经验知识库，添加更多案例可丰富此模块</div>';
+  // 落地清单：按 card 样式渲染，标注"落地阶段确认"
+  if (onsiteEl) onsiteEl.innerHTML = onsite.length ? onsite.map(function(n){ var item = n.item || ''; var why = n.whyOnsite || ''; return '<div class="q-card"><div class="q-card-main"><div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:6px"><div style="display:inline-block;background:rgba(245,158,11,.15);color:#d97706;border-radius:8px;padding:2px 10px;font-size:11px;font-weight:700">落地阶段确认</div></div><div style="font-size:14px;color:#182235;line-height:1.6;font-weight:600">'+item+'</div>' + (why ? '<div style="margin-top:8px;font-size:12px;color:#667085;line-height:1.6"><div style="color:#8a9bae;font-size:11px">原因: '+why+'</div></div>' : '') + '</div></div>'; }).join('') : '<div style="color:#98a2b3;font-size:13px;text-align:center;padding:20px">无落地细节清单</div>';
   // Update "查看更多问题" button based on current active tab
   var moreBtn = document.getElementById('s2-more-btn');
   var totalEl = document.getElementById('s2-deep-total');
   var activeTab = document.querySelector('.tabs .tab.on');
   var target = activeTab ? activeTab.dataset.target : 'must';
-  var threshold = target === 'must' ? 8 : target === 'deep' ? 5 : 3;
-  var list = target === 'must' ? must : target === 'deep' ? deep : industry;
-  var shownCount = target === 'must' ? Math.min(must.length, 8) : target === 'deep' ? Math.min(deep.length, 5) : Math.min(industry.length, 3);
+  var threshold = target === 'must' ? 8 : target === 'deep' ? 5 : target === 'onsite' ? 999 : 3;
+  var list = target === 'must' ? must : target === 'deep' ? deep : target === 'onsite' ? onsite : industry;
+  var shownCount = target === 'must' ? Math.min(must.length, 8) : target === 'deep' ? Math.min(deep.length, 5) : target === 'onsite' ? onsite.length : Math.min(industry.length, 3);
   var hiddenCount = list.length - shownCount;
   if (moreBtn) {
-    moreBtn.style.display = hiddenCount > 0 ? 'block' : 'none';
+    moreBtn.style.display = (target === 'onsite' || hiddenCount > 0) ? 'none' : 'block';
     if (totalEl) totalEl.textContent = hiddenCount;
     moreBtn.textContent = hiddenCount > 0 ? `查看更多（${hiddenCount}）` : '收起 ▲';
   }
@@ -4461,7 +4732,7 @@ function updateAddButtonText() {
   var target = activeTab ? activeTab.dataset.target : 'must';
   var btn = document.getElementById('s2-add-btn');
   if (!btn) return;
-  var labels = {must: '+ 添加问题', deep: '+ 添加问题', industry: '+ 添加问题'};
+  var labels = {must: '+ 添加问题', deep: '+ 添加问题', industry: '+ 添加问题', onsite: '+ 添加清单项'};
   btn.textContent = labels[target] || '+ 添加问题';
 }
 
@@ -4474,7 +4745,7 @@ function switchTab(btn) {
   var mustEl = container.querySelector('#s2-must-questions');
   var deepEl = container.querySelector('#s2-deep-questions');
   var indEl = container.querySelector('#s2-industry-notes');
-  var tabEls = {must: mustEl, deep: deepEl, industry: indEl};
+  var tabEls = {must: mustEl, deep: deepEl, industry: indEl, onsite: onsiteEl};
   Object.keys(tabEls).forEach(function(t) {
     var el = tabEls[t];
     if (!el) return;
@@ -4490,14 +4761,15 @@ function switchTab(btn) {
   var moreBtn = document.getElementById('s2-more-btn');
   if (moreBtn) {
     var currentEl = tabEls[target];
-    var threshold = target === 'must' ? 8 : target === 'deep' ? 5 : 3;
+    var threshold = target === 'must' ? 8 : target === 'deep' ? 5 : target === 'onsite' ? 999 : 3;
     var c = getClient(currentClientId);
     var step1 = c?.step1_result?.part3 || {};
     var must = step1.must_ask || [];
     var deep = step1.deep_dive || [];
     var industry = step1.industry_experience || [];
-    var list = target === 'must' ? must : target === 'deep' ? deep : industry;
-    var hiddenCount = Math.max(0, list.length - threshold);
+    var onsite = step1.onsiteChecklist || [];
+    var list = target === 'must' ? must : target === 'deep' ? deep : target === 'onsite' ? onsite : industry;
+    var hiddenCount = target === 'onsite' ? 0 : Math.max(0, list.length - threshold);
     var totalEl = document.getElementById('s2-deep-total');
     if (totalEl) totalEl.textContent = hiddenCount;
     var isExpanded = _qTabExpanded[target];
@@ -4505,7 +4777,7 @@ function switchTab(btn) {
     moreBtn.textContent = isExpanded ? '收起 ▲' : (hiddenCount > 0 ? '查看更多（' + hiddenCount + '）' : '收起 ▲');
   }
 }
-var _qTabExpanded = {must: false, deep: false, industry: false};
+var _qTabExpanded = {must: false, deep: false, industry: false, onsite: false};
 updateAddButtonText();
 
 function toggleMoreQuestions() {
@@ -4513,9 +4785,9 @@ function toggleMoreQuestions() {
   if (!btn) return;
   var activeTab = document.querySelector('.tabs .tab.on');
   var target = activeTab ? activeTab.dataset.target : 'must';
-  var tabMap = {must: 's2-must-questions', deep: 's2-deep-questions', industry: 's2-industry-notes'};
+  var tabMap = {must: 's2-must-questions', deep: 's2-deep-questions', industry: 's2-industry-notes', onsite: 's2-onsite-questions'};
   var activeEl = document.getElementById(tabMap[target]);
-  if (!activeEl) return;
+  if (!activeEl || target === 'onsite') return;
   var isExpanded = activeEl.classList.toggle('show-all');
   _qTabExpanded[target] = isExpanded;
   activeEl.querySelectorAll('.q-card.hidden-q').forEach(function(c){
@@ -4955,6 +5227,45 @@ function renderSummaryReadable(report) {
     });
     html += '</div></div>';
   }
+
+  // salesProfile 销售维度
+  if (report.salesProfile) {
+    var sp = report.salesProfile;
+    var spItems = [];
+    if (sp.scale) spItems.push('<span style="background:#f0fdf4;color:#15803d;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700">规模：'+sp.scale+'</span>');
+    if (sp.budgetSignal) spItems.push('<span style="background:#fff7ed;color:#c2410c;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700">预算：'+sp.budgetSignal+'</span>');
+    if (sp.currentSystems) spItems.push('<span style="background:#f0f9ff;color:#0369a1;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700">在用系统：'+sp.currentSystems+'</span>');
+    if (spItems.length > 0) {
+      html += '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:900;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">销售维度</div><div style="display:flex;flex-wrap:wrap;gap:8px">'+spItems.join('')+'</div></div>';
+    }
+  }
+  // coreTablesExpected 核心表清单
+  if (report.coreTablesExpected && report.coreTablesExpected.length > 0) {
+    html += '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:900;color:#1263e6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">核心表清单（建表时照此生成）</div><div style="display:flex;flex-wrap:wrap;gap:6px">';
+    report.coreTablesExpected.forEach(function(t) {
+      html += '<span style="background:#eff6ff;color:#1d4ed8;border-radius:8px;padding:4px 12px;font-size:12px;font-weight:700">□ '+t+'</span>';
+    });
+    html += '</div></div>';
+  }
+  // infoUnits 信息单元清单
+  if (report.infoUnits && report.infoUnits.length > 0) {
+    html += '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:900;color:#0d9488;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">信息单元清单</div>';
+    report.infoUnits.forEach(function(u) {
+      var kindColor = {'维度':'#6366f1','痛点':'#ef4444','明确诉求':'#13b96f','硬约束':'#f97316'}[u.kind] || '#667085';
+      var raisedBadge = u.raisedByCustomer ? '<span style="background:rgba(19,185,111,.12);color:#13b96f;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;margin-left:4px">客户提出</span>' : '<span style="background:rgba(100,116,139,.12);color:#64748b;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;margin-left:4px">推断</span>';
+      var feasTag = u.feasibility && u.feasibility !== '可原生实现' ? '<span style="background:rgba(245,158,11,.12);color:#d97706;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;margin-left:4px">' + u.feasibility + '</span>' : '';
+      html += '<div style="margin-bottom:8px;padding:8px 12px;background:#f0fdfb;border-radius:10px;border-left:3px solid #0d9488">';
+      html += '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px">';
+      html += '<span style="background:'+kindColor+'22;color:'+kindColor+';font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px">'+u.label+'</span>';
+      html += '<span style="font-size:10px;color:#98a2b3">['+u.uid+']</span>';
+      html += raisedBadge;
+      html += feasTag;
+      html += '</div>';
+      if (u.sourceQuote) html += '<div style="font-size:11px;color:#667085;margin-top:2px">来源：'+u.sourceQuote.substring(0,80)+(u.sourceQuote.length>80?'...':'')+'</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
   // 当前流程
   if (report.currentProcess) {
     html += '<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:900;color:#667085;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">当前流程</div><div style="font-size:13px;color:#344054;line-height:1.7">' + report.currentProcess + '</div></div>';
@@ -5040,16 +5351,213 @@ function loadStep3(c) {
 function loadStep4(c) {
   if (!c || !c.id) return;
   autoGenerateStep4Input(c);
+  renderArtifacts(); // 右侧制品区
   var presalesVersions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
   if (presalesVersions.length > 0) {
     renderStep4LatestPresales(presalesVersions[presalesVersions.length - 1], presalesVersions.length);
-    renderStep4History('presales', presalesVersions);
+    renderPresalesVersionList(presalesVersions);
   }
+  loadPresalesVisits();
   var techVersions = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
   if (techVersions.length > 0) {
     renderStep4LatestTechnical(techVersions[techVersions.length - 1]);
-    renderStep4History('technical', techVersions);
+    renderTechnicalVersionList(techVersions);
   }
+}
+
+// ==================== 反馈队列 ====================
+var _presalesFeedbackQueue = [];
+var _technicalFeedbackQueue = [];
+
+function addPresalesFeedback() {
+  var input = document.getElementById('s4-presales-feedback-input');
+  var text = input.value.trim();
+  if (!text) return;
+  _presalesFeedbackQueue.push(text);
+  input.value = '';
+  renderPresalesFeedbackQueue();
+}
+
+function addTechnicalFeedback() {
+  var input = document.getElementById('s4-technical-feedback-input');
+  var text = input.value.trim();
+  if (!text) return;
+  _technicalFeedbackQueue.push(text);
+  input.value = '';
+  renderTechnicalFeedbackQueue();
+}
+
+function renderPresalesFeedbackQueue() {
+  var queueEl = document.getElementById('s4-presales-feedback-queue');
+  var countEl = document.getElementById('s4-presales-feedback-count');
+  if (!queueEl) return;
+  countEl.textContent = _presalesFeedbackQueue.length + ' 条反馈';
+  if (_presalesFeedbackQueue.length === 0) {
+    queueEl.style.display = 'none';
+    queueEl.innerHTML = '';
+    return;
+  }
+  queueEl.style.display = '';
+  queueEl.innerHTML = _presalesFeedbackQueue.map(function(f, i) {
+    return '<div style="font-size:12px;color:#344054;padding:4px 8px;background:#f8f9fc;border-radius:6px;margin-bottom:4px;line-height:1.5">' +
+      '<span style="color:#1263e6;font-weight:700;margin-right:4px">' + (i+1) + '.</span>' + esc(f) + '</div>';
+  }).join('');
+}
+
+function renderTechnicalFeedbackQueue() {
+  var queueEl = document.getElementById('s4-technical-feedback-queue');
+  var countEl = document.getElementById('s4-technical-feedback-count');
+  if (!queueEl) return;
+  countEl.textContent = _technicalFeedbackQueue.length + ' 条反馈';
+  if (_technicalFeedbackQueue.length === 0) {
+    queueEl.style.display = 'none';
+    queueEl.innerHTML = '';
+    return;
+  }
+  queueEl.style.display = '';
+  queueEl.innerHTML = _technicalFeedbackQueue.map(function(f, i) {
+    return '<div style="font-size:12px;color:#344054;padding:4px 8px;background:#f8f9fc;border-radius:6px;margin-bottom:4px;line-height:1.5">' +
+      '<span style="color:#1263e6;font-weight:700;margin-right:4px">' + (i+1) + '.</span>' + esc(f) + '</div>';
+  }).join('');
+}
+
+async function regeneratePresalesWithFeedback() {
+  if (_presalesFeedbackQueue.length === 0) {
+    showToast('请先输入修改反馈');
+    return;
+  }
+  var c = getClient(currentClientId);
+  var feedbackText = '【修改反馈】\n' + _presalesFeedbackQueue.map(function(f, i) { return (i+1) + '. ' + f; }).join('\n');
+  var btn = document.getElementById('s4-presales-regen-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '生成中…'; }
+  try {
+    var resp = await fetch(API_BASE + '/api/step4/generate-html', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: c.id, feedback: feedbackText })
+    });
+    var data = await resp.json();
+    if (data.success) {
+      var versions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions.slice() : [];
+      versions.push({ version: versions.length + 1, content: data, created_at: new Date().toISOString(), file_url: data.file_url, filename: data.filename });
+      updateClient(currentClientId, { step4_presales_versions: versions, _step4_publish_url: data.file_url });
+      _presalesFeedbackQueue = [];
+      renderPresalesFeedbackQueue();
+      renderPresalesVersionList(versions);
+      loadPresalesVisits();
+      showToast('售前方案已重新生成');
+    } else {
+      showToast('生成失败：' + (data.error || '未知错误'));
+    }
+  } catch(e) {
+    showToast('网络错误');
+  } finally {
+    var btn2 = document.getElementById('s4-presales-regen-btn');
+    if (btn2) { btn2.disabled = false; btn2.textContent = '重新生成'; }
+  }
+}
+
+async function regenerateTechnicalWithFeedback() {
+  if (_technicalFeedbackQueue.length === 0) {
+    showToast('请先输入修改反馈');
+    return;
+  }
+  var c = getClient(currentClientId);
+  var feedbackText = '【修改反馈】\n' + _technicalFeedbackQueue.map(function(f, i) { return (i+1) + '. ' + f; }).join('\n');
+  var btn = document.getElementById('s4-technical-regen-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '生成中…'; }
+  try {
+    var resp = await fetch(API_BASE + '/api/step4/generate-word', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ client_id: c.id, feedback: feedbackText })
+    });
+    var data = await resp.json();
+    if (data.success) {
+      var versions = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions.slice() : [];
+      versions.push({ version: versions.length + 1, content: data, created_at: new Date().toISOString(), file_url: data.file_url, filename: data.filename });
+      updateClient(currentClientId, { step4_technical_versions: versions });
+      _technicalFeedbackQueue = [];
+      renderTechnicalFeedbackQueue();
+      renderTechnicalVersionList(versions);
+      showToast('技术路线已重新生成');
+    } else {
+      showToast('生成失败：' + (data.error || '未知错误'));
+    }
+  } catch(e) {
+    showToast('网络错误');
+  } finally {
+    var btn2 = document.getElementById('s4-technical-regen-btn');
+    if (btn2) { btn2.disabled = false; btn2.textContent = '重新生成'; }
+  }
+}
+
+function togglePresalesVersionList() {
+  var el = document.getElementById('s4-presales-version-list');
+  var arrow = document.getElementById('s4-presales-version-arrow');
+  if (!el) return;
+  var show = el.style.display === 'none';
+  el.style.display = show ? '' : 'none';
+  if (arrow) arrow.textContent = show ? '▼' : '▶';
+}
+
+function toggleTechnicalVersionList() {
+  var el = document.getElementById('s4-technical-version-list');
+  var arrow = document.getElementById('s4-technical-version-arrow');
+  if (!el) return;
+  var show = el.style.display === 'none';
+  el.style.display = show ? '' : 'none';
+  if (arrow) arrow.textContent = show ? '▼' : '▶';
+}
+
+function togglePresalesPreview() {
+  var c = getClient(currentClientId);
+  var versions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
+  var latest = versions[versions.length - 1];
+  if (!latest || !latest.file_url) { showToast('暂无可预览的方案'); return; }
+  window.open(latest.file_url, '_blank');
+}
+
+function renderPresalesVersionList(versions) {
+  var listEl = document.getElementById('s4-presales-version-list');
+  var countEl = document.getElementById('s4-presales-version-count');
+  if (!listEl) return;
+  if (countEl) countEl.textContent = '(' + versions.length + ' 个版本)';
+  if (versions.length === 0) {
+    listEl.innerHTML = '<div style="font-size:12px;color:#98a2b3;text-align:center;padding:8px">暂无版本</div>';
+    return;
+  }
+  listEl.innerHTML = versions.slice().reverse().map(function(v) {
+    var d = new Date(v.created_at);
+    var dateStr = d.toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'}) + ' ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+    var url = v.file_url || '';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:12px">' +
+      '<span style="color:#667085;flex-shrink:0">v' + v.version + '</span>' +
+      '<span style="color:#98a2b3;flex:1">' + dateStr + '</span>' +
+      (url ? '<a href="' + url + '" target="_blank" style="color:#1263e6;font-weight:600;flex-shrink:0">打开</a>' : '') +
+      '</div>';
+  }).join('');
+}
+
+function renderTechnicalVersionList(versions) {
+  var listEl = document.getElementById('s4-technical-version-list');
+  var countEl = document.getElementById('s4-technical-version-count');
+  if (!listEl) return;
+  if (countEl) countEl.textContent = '(' + versions.length + ' 个版本)';
+  if (versions.length === 0) {
+    listEl.innerHTML = '<div style="font-size:12px;color:#98a2b3;text-align:center;padding:8px">暂无版本</div>';
+    return;
+  }
+  listEl.innerHTML = versions.slice().reverse().map(function(v) {
+    var d = new Date(v.created_at);
+    var dateStr = d.toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'}) + ' ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+    var url = v.file_url || '';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:12px">' +
+      '<span style="color:#667085;flex-shrink:0">v' + v.version + '</span>' +
+      '<span style="color:#98a2b3;flex:1">' + dateStr + '</span>' +
+      (url ? '<a href="' + url + '" download style="color:#1263e6;font-weight:600;flex-shrink:0">下载</a>' : '') +
+      '</div>';
+  }).join('');
 }
 
 
