@@ -4716,6 +4716,81 @@ async def publish_step4_report(body: dict, user: dict = Depends(require_auth)):
     return {"success": True, "url": url}
 
 
+# ==================== Step4 AI 对话建议 ====================
+@app.post("/api/step4/chat-suggest")
+async def step4_chat_suggest(body: dict, user: dict = Depends(require_auth)):
+    """基于当前方案内容，生成 AI 修改建议"""
+    client_id = body.get("client_id")
+    doc_type = body.get("doc_type")  # 'presales' | 'technical'
+    content = body.get("content", "")[:3000]
+    user_input = body.get("user_input", "").strip()
+
+    if not client_id:
+        raise HTTPException(status_code=400, detail="client_id required")
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM clients WHERE id = ? AND user_id = ?", (client_id, user["user_id"]))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="客户不存在")
+
+    # 读取提示词模板
+    suggest_prompt = _read_template(TEMPLATE_BASE + "/09_STEP5_SCHEMA_PROMPT.md")
+    if not suggest_prompt:
+        suggest_prompt = ""
+
+    # 根据是否有用户输入，决定是生成建议还是联想
+    if user_input:
+        system_prompt = f"""你是一个方案优化顾问。用户正在修改一{doc_type == 'presales' and '售前方案HTML' or '技术路线Word'}文档。
+根据用户的修改意见和当前方案内容，给出具体的优化建议。
+
+当前方案内容摘要：
+{content[:1500]}
+
+用户说：{user_input}
+
+请生成 1-2 条具体的修改建议，每条包含：
+- title: 建议标题（10字内）
+- desc: 建议描述（15字内）
+- prompt: 建议对应的完整修改指令（30字内，用于直接提交）
+
+直接输出 JSON 数组，不要解释。"""
+    else:
+        system_prompt = f"""你是一个方案优化顾问。请分析以下{doc_type == 'presales' and '售前方案HTML' or '技术路线Word'}文档的内容，给出 3-5 条最值得改进的方向。
+
+当前方案内容摘要：
+{content[:1500]}
+
+请生成建议，每条包含：
+- title: 建议标题（10字内）
+- desc: 建议描述（15字内）
+- prompt: 建议对应的完整修改指令（30字内，用于直接提交）
+
+直接输出 JSON 数组，不要解释。"""
+
+    try:
+        result = call_minimax(system_prompt, "你是一个方案优化顾问。", max_tokens=800)
+        raw = result.get("content", "").strip()
+        # 尝试解析 JSON
+        try:
+            suggestions = json.loads(raw)
+        except:
+            # 去掉 markdown 代码块
+            import re
+            m = re.search(r'\[.*\]', raw, re.DOTALL)
+            if m:
+                suggestions = json.loads(m.group())
+            else:
+                suggestions = []
+    except Exception as e:
+        logger.warning(f"[chat-suggest] error: {e}")
+        suggestions = []
+
+    return {"success": True, "suggestions": suggestions}
+
+
 # ==================== 访问追踪 ====================
 def _parse_ua(ua_str):
     """从 User-Agent 解析设备/操作系统/浏览器"""
