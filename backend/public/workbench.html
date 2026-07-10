@@ -725,15 +725,53 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .artifact-chat-loading .dots{animation:blink 1.2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* Step4 两栏布局 */
-#page4 .page4-grid{display:grid;grid-template-columns:1fr 360px;gap:16px;height:100%;align-items:start}
-#page4 .page4-left{height:calc(100vh - 120px);display:flex;flex-direction:column}
-#page4 .page4-right{display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 120px);overflow-y:auto;padding-bottom:80px}
-#page4 .step-action-bar{position:sticky;bottom:0;background:#fff;border-top:1px solid #f0f2f5;padding:10px 0;margin-top:4px}
-#page4 .step4-workspace{height:100%;background:#f7f9fc;border-radius:20px;border:1px solid #e8edf5;overflow:hidden}
-#page4 .step4-workspace-header{background:#fff}
-#page4 .step4-input-bar{background:#fff}
-</style>
+/* Step4 三栏布局 */
+#page4{display:grid;grid-template-columns:1fr 280px;gap:16px;align-items:start;padding:0}
+#page4 .ws-block{background:#fff;border:1px solid #e8edf5;border-radius:18px;overflow:hidden;margin-bottom:14px}
+#page4 .ws-block-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#fafbfc;border-bottom:1px solid #f0f2f5}
+#page4 .ws-chat-scroll{max-height:260px;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px;min-height:120px}
+#page4 .ws-chat-scroll:empty::before{content:"暂无消息";color:#d1d5db;font-size:13px;align-self:center;margin:auto}
+#page4 .ws-input-bar{padding:10px 18px 14px;border-top:1px solid #f0f2f5;background:#fff}
+#page4 .ws-right-panel{display:flex;flex-direction:column;gap:12px;position:sticky;top:0}
+
+/* AI 诊断建议卡片 */
+.ws-suggest-cards{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
+.ws-suggest-card{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#fff;border:1px solid #dce4f8;border-radius:10px;cursor:pointer;transition:all .15s;text-align:left;width:100%;font-family:inherit}
+.ws-suggest-card:hover{border-color:#1263e6;background:#f0f6ff;transform:translateY(-1px);box-shadow:0 2px 8px rgba(18,99,230,.1)}
+.ws-suggest-icon{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#eef3ff,#f5f7ff);display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.ws-suggest-text{flex:1;min-width:0}
+.ws-suggest-text strong{display:block;font-size:12px;font-weight:700;color:#182235;margin-bottom:1px}
+.ws-suggest-text span{font-size:11px;color:#98a2b3}
+
+/* 快捷建议chips */
+.quick-suggestions{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px}
+.quick-chip{padding:3px 9px;background:#f0f4ff;color:#1263e6;border-radius:999px;font-size:11px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.quick-chip:hover{background:#1263e6;color:#fff}
+
+/* 对话消息 */
+.chat-msg{display:flex;flex-direction:column;gap:3px;animation:fadeInMsg .2s ease}
+.chat-msg.user{align-items:flex-end}
+.chat-msg.ai{align-items:flex-start}
+.chat-bubble{max-width:82%;padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.5;word-break:break-all}
+.chat-msg.user .chat-bubble{background:linear-gradient(135deg,#1263e6,#0c55cf);color:#fff;border-bottom-right-radius:3px}
+.chat-msg.ai .chat-bubble{background:#fff;border:1px solid #e0e8f0;color:#182235;border-bottom-left-radius:3px}
+.chat-meta{font-size:10px;color:#c8d0dc;padding:0 4px}
+@keyframes fadeInMsg{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* AI 追问选项卡片 */
+.ws-option-card{display:block;padding:7px 10px;background:#fff;border:1px solid #dce4f8;border-radius:8px;cursor:pointer;transition:all .15s;text-align:left;width:100%;margin-bottom:5px;font-family:inherit;font-size:12px;color:#182235}
+.ws-option-card:hover{background:#f0f6ff;border-color:#1263e6}
+.ws-option-card input{margin-right:6px}
+
+/* 确认没问题按钮 */
+.chat-confirm-btn{height:34px;padding:0 14px;border-radius:10px;background:linear-gradient(135deg,#13b96f,#10a85c);color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:700;flex-shrink:0;box-shadow:0 2px 8px rgba(19,185,111,.2);display:none;font-family:inherit}
+.chat-confirm-btn.visible{display:flex;align-items:center;gap:5px}
+.confirm-count{background:#fff;color:#13b96f;font-size:10px;padding:1px 5px;border-radius:999px;font-weight:900}
+.chat-textarea{flex:1;border:1.5px solid #e0e8f0;border-radius:10px;padding:7px 10px;font-size:13px;resize:none;outline:none;line-height:1.5;max-height:80px;transition:border-color .15s;font-family:inherit}
+.chat-textarea:focus{border-color:#1263e6}
+
+/* Step4 两栏（废弃）*/
+.page4-grid{display:none}
 </style>
 <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
@@ -1169,84 +1207,113 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
       </section>
 
       <!-- Step 4: 需求整理 -->
-	      <section class="page" id="page4">
-	        <div class="page4-grid">
-	          <!-- 左栏：对话工作台 -->
-	          <div class="step4-workspace">
-	            <div class="step4-workspace-header">
-	              <h2>💬 方案对话工作台</h2>
-	              <p id="s4-chat-target-label">选择一个制品开始对话</p>
-	            </div>
-	            <!-- 对话消息区 -->
-	            <div class="step4-chat-scroll" id="s4-chat-scroll">
-	              <div id="s4-chat-empty" style="text-align:center;padding:40px 20px;color:#d1d5db">
-	                <div style="font-size:32px;margin-bottom:10px">💡</div>
-	                <div style="font-size:13px">点击右侧制品卡片，获取 AI 改进建议</div>
-	              </div>
-	            </div>
-	            <!-- 固定底部输入区 -->
-	            <div class="step4-input-bar">
-	              <div class="quick-suggestions" id="s4-quick-suggestions"></div>
-	              <div class="input-row">
-	                <textarea class="chat-textarea" id="s4-chat-input" placeholder="输入修改意见…" rows="1" oninput="autoGrow(this);onChatInput(this)"></textarea>
-	                <button class="chat-send-btn" id="s4-chat-add-btn" onclick="s4ChatAdd()">↑</button>
-	                <button class="chat-confirm-btn" id="s4-chat-confirm-btn" onclick="s4ChatConfirm()">
-	                  <span>没问题</span>
-	                  <span class="confirm-count" id="s4-queue-count">0</span>
-	                </button>
-	              </div>
-	            </div>
-	          </div>
-	          <!-- 右栏：制品卡片 -->
-	          <div class="page4-right">
-			<!-- 卡片：产物生成·售前解决方案 -->
-			<div class="prep-card" id="presales-card" style="margin-bottom:12px">
-			  <div class="card-accent accent-green"></div>
-			  <div class="prep-card-head" style="margin-bottom:8px">
-			    <h3 style="font-size:15px">产物生成·售前解决方案</h3>
-			    <button class="btn secondary" id="s4-presales-chat-btn" onclick="openPresalesChat()" style="height:28px;font-size:11px;padding:0 10px;border-radius:8px;display:none">💬 对话</button>
-			  </div>
-			  <div style="border:1px solid #e8edf5;border-radius:12px;padding:10px 12px">
-			    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-			      <div style="font-size:11px;color:#667085">面向客户汇报，展示方案价值、建设模块与二期预留方向</div>
-			      <div style="display:flex;gap:4px">
-			        <button class="btn secondary" id="s4-presales-preview-btn" onclick="togglePresalesPreview()" style="height:28px;font-size:11px;padding:0 8px">预览</button>
-			        <button class="btn primary" id="s4-presales-btn" onclick="generateHtmlPresales()" style="height:28px;font-size:11px;padding:0 8px">生成</button>
-			      </div>
-			    </div>
-			    <div style="display:flex;gap:6px;margin-bottom:6px">
-			      <div onclick="togglePresalesVersionList()" style="flex:1;cursor:pointer;font-size:11px;color:#667085;background:#f5f7fb;border-radius:8px;padding:5px 8px;text-align:center">📄 版本 <span id="s4-presales-version-count">0</span></div>
-			      <div onclick="togglePresalesVisits()" style="flex:1;cursor:pointer;font-size:11px;color:#667085;background:#f5f7fb;border-radius:8px;padding:5px 8px;text-align:center">👁 访问 <span id="s4-presales-visit-num">0</span></div>
-			    </div>
-			    <div id="s4-presales-version-list" style="display:none;margin-top:6px"></div>
-			    <div id="s4-presales-visits-list" style="display:none;max-height:130px;overflow-y:auto;margin-top:6px"></div>
-			  </div>
-			</div>
+      <section class="page" id="page4">
+        <!-- 售前对话工作台 -->
+        <div class="ws-block" id="presales-ws">
+          <div class="ws-block-header">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:16px">📋</span>
+              <div>
+                <div style="font-weight:800;font-size:14px;color:#111827">售前解决方案对话</div>
+                <div style="font-size:11px;color:#98a2b3">AI 诊断内容完整性/案例可信度/语言风格/差异化/其他</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn secondary" onclick="togglePresalesVersionList()" style="height:28px;font-size:11px;padding:0 10px;border-radius:8px">📄 版本 <span id="s4-presales-version-count">0</span></button>
+              <button class="btn secondary" onclick="togglePresalesVisits()" style="height:28px;font-size:11px;padding:0 10px;border-radius:8px">👁 访客 <span id="s4-presales-visit-num">0</span></button>
+            </div>
+          </div>
+          <!-- 版本列表（折叠）-->
+          <div id="s4-presales-version-list" style="display:none;padding:8px 16px;background:#f8f9fc;border-bottom:1px solid #e8edf5"></div>
+          <!-- 访客明细（折叠）-->
+          <div id="s4-presales-visits-panel" style="display:none;padding:8px 16px;background:#f8f9fc;border-bottom:1px solid #e8edf5">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <span style="font-size:12px;font-weight:700;color:#182235">筛选</span>
+              <select id="s4-track-filter-device" style="font-size:11px;color:#667085;border:1px solid #e8edf5;border-radius:6px;padding:2px 6px">
+                <option value="">全部设备</option><option value="电脑">电脑</option><option value="手机">手机</option><option value="平板">平板</option>
+              </select>
+            </div>
+            <div id="s4-presales-visits-list" style="max-height:200px;overflow-y:auto"></div>
+          </div>
+          <!-- 对话消息区 -->
+          <div class="ws-chat-scroll" id="presales-chat-scroll">
+            <div id="presales-chat-empty" style="text-align:center;padding:32px 20px;color:#d1d5db">
+              <div style="font-size:28px;margin-bottom:8px">💡</div>
+              <div style="font-size:13px">AI 正在分析你的方案…</div>
+            </div>
+          </div>
+          <!-- 底部输入 -->
+          <div class="ws-input-bar">
+            <div class="quick-suggestions" id="presales-quick-suggestions"></div>
+            <div style="display:flex;gap:8px;align-items:flex-end">
+              <textarea class="chat-textarea" id="presales-chat-input" placeholder="输入你的修改意见…" rows="1" oninput="autoGrow(this);onChatInput(this,'presales')"></textarea>
+              <button class="chat-confirm-btn" id="presales-confirm-btn" onclick="s4ChatConfirm('presales')">
+                <span>没问题</span><span class="confirm-count" id="presales-queue-count">0</span>
+              </button>
+            </div>
+          </div>
+        </div>
 
-			<!-- 卡片：产物生成·技术路线及报价方案 -->
-			<div class="prep-card" id="technical-card" style="margin-bottom:12px">
-			  <div class="card-accent accent-orange"></div>
-			  <div class="prep-card-head" style="margin-bottom:8px">
-			    <h3 style="font-size:15px">产物生成·技术路线及报价方案</h3>
-			    <button class="btn secondary" id="s4-technical-chat-btn" onclick="openTechnicalChat()" style="height:28px;font-size:11px;padding:0 10px;border-radius:8px;display:none">💬 对话</button>
-			  </div>
-			  <div style="border:1px solid #e8edf5;border-radius:12px;padding:10px 12px">
-			    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-			      <div style="font-size:11px;color:#667085">正式需求确认文档，确认需求范围、一期边界、智能表格口径与待确认问题</div>
-			      <button class="btn primary" id="s4-technical-btn" onclick="generateWordPlan()" style="height:28px;font-size:11px;padding:0 8px">生成</button>
-			    </div>
-			    <div onclick="toggleTechnicalVersionList()" style="cursor:pointer;font-size:11px;color:#667085;background:#f5f7fb;border-radius:8px;padding:5px 8px;text-align:center;margin-bottom:6px">📄 版本 <span id="s4-technical-version-count">0</span></div>
-			    <div id="s4-technical-version-list" style="display:none;margin-top:6px"></div>
-			  </div>
-			</div>
+        <!-- 技术路线对话工作台 -->
+        <div class="ws-block" id="technical-ws">
+          <div class="ws-block-header">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:16px">⚙️</span>
+              <div>
+                <div style="font-weight:800;font-size:14px;color:#111827">技术路线对话</div>
+                <div style="font-size:11px;color:#98a2b3">AI 诊断内容完整度/案例可信度/差异化/其他</div>
+              </div>
+            </div>
+            <button class="btn secondary" onclick="toggleTechnicalVersionList()" style="height:28px;font-size:11px;padding:0 10px;border-radius:8px">📄 版本 <span id="s4-technical-version-count">0</span></button>
+          </div>
+          <div id="s4-technical-version-list" style="display:none;padding:8px 16px;background:#f8f9fc;border-bottom:1px solid #e8edf5"></div>
+          <div class="ws-chat-scroll" id="technical-chat-scroll">
+            <div id="technical-chat-empty" style="text-align:center;padding:32px 20px;color:#d1d5db">
+              <div style="font-size:28px;margin-bottom:8px">💡</div>
+              <div style="font-size:13px">AI 正在分析你的方案…</div>
+            </div>
+          </div>
+          <div class="ws-input-bar">
+            <div class="quick-suggestions" id="technical-quick-suggestions"></div>
+            <div style="display:flex;gap:8px;align-items:flex-end">
+              <textarea class="chat-textarea" id="technical-chat-input" placeholder="输入你的修改意见…" rows="1" oninput="autoGrow(this);onChatInput(this,'technical')"></textarea>
+              <button class="chat-confirm-btn" id="technical-confirm-btn" onclick="s4ChatConfirm('technical')">
+                <span>没问题</span><span class="confirm-count" id="technical-queue-count">0</span>
+              </button>
+            </div>
+          </div>
+        </div>
 
-			<div class="step-action-bar">
-			  <button class="btn primary" id="s4-next-btn" onclick="doStep4Next()">下一步 →</button>
-			</div>
-	        </div><!-- end page4-right -->
-	      </div><!-- end page4-grid -->
-	      </section>
-
+        <!-- 右侧制品区 -->
+        <div class="ws-right-panel">
+          <div class="prep-card" style="margin-bottom:12px">
+            <div class="card-accent accent-green"></div>
+            <div class="prep-card-head" style="margin-bottom:10px">
+              <h3 style="font-size:15px">产物生成·售前解决方案</h3>
+            </div>
+            <div style="border:1px solid #e8edf5;border-radius:12px;padding:12px 14px">
+              <div style="display:flex;gap:6px;margin-bottom:8px">
+                <button class="btn secondary" onclick="togglePresalesPreview()" style="height:30px;font-size:12px;flex:1">👁 预览</button>
+                <button class="btn secondary" onclick="copyPresalesLink()" style="height:30px;font-size:12px;flex:1">📋 复制链接</button>
+              </div>
+              <button class="btn primary" onclick="regeneratePresalesWithFeedback('')" style="height:32px;font-size:12px;width:100%">🔄 重新生成</button>
+            </div>
+          </div>
+          <div class="prep-card">
+            <div class="card-accent accent-orange"></div>
+            <div class="prep-card-head" style="margin-bottom:10px">
+              <h3 style="font-size:15px">产物生成·技术路线</h3>
+            </div>
+            <div style="border:1px solid #e8edf5;border-radius:12px;padding:12px 14px">
+              <div style="display:flex;gap:6px;margin-bottom:8px">
+                <button class="btn secondary" onclick="toggleTechnicalPreview()" style="height:30px;font-size:12px;flex:1">👁 预览</button>
+                <button class="btn secondary" onclick="copyTechnicalLink()" style="height:30px;font-size:12px;flex:1">📋 复制链接</button>
+              </div>
+              <button class="btn primary" onclick="regenerateTechnicalWithFeedback('')" style="height:32px;font-size:12px;width:100%">🔄 重新生成</button>
+            </div>
+          </div>
+        </div>
+      </section>
       <!-- Step 5: Demo设计 -->
       <section class="page" id="page5">
 
@@ -2861,317 +2928,297 @@ async function autoGenerateStep4OnEnter() {
 
 // ==================== Step4 对话工作台 ====================
 
-// 状态
-let s4ChatTarget = null; // 'presales' | 'technical'
-let s4FeedbackQueue = [];
-let s4AiSuggestions = [];
-let s4ActiveDocType = null; // 当前对话关联的制品
+// 每个工作台独立状态
+const _wsState = {
+  presales: { queue: [], chatHist: [], aiHist: [] },
+  technical: { queue: [], chatHist: [], aiHist: [] }
+};
 
-// 打开售前对话
-async function openPresalesChat() {
-  s4ChatTarget = 'presales';
-  s4ActiveDocType = 'presales';
+// 初始化 Step4 两个工作台
+async function initStep4Workspaces() {
   const c = getClient(currentClientId);
   if (!c) return;
-  // 切换对话按钮高亮
-  document.querySelectorAll('.btn[id$="-chat-btn"]').forEach(b => b.style.background = '');
-  const btn = document.getElementById('s4-presales-chat-btn');
-  if (btn) btn.style.background = '#1263e6';
-  document.getElementById('s4-chat-target-label').textContent = '💬 售前方案 · 对话';
-  document.getElementById('s4-chat-empty').style.display = 'none';
-  renderS4QuickSuggestions();
-  loadS4ChatHistory();
-  // 调用 AI 生成建议
+  // 清空 UI
+  clearWorkspace('presales');
+  clearWorkspace('technical');
+  // 更新版本数
+  var pvs = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
+  var tvs = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
+  setVersionCount('presales', pvs.length);
+  setVersionCount('technical', tvs.length);
+  // AI 自动诊断两个工作台
   fetchAiSuggestions('presales');
-}
-
-// 打开技术路线对话
-async function openTechnicalChat() {
-  s4ChatTarget = 'technical';
-  s4ActiveDocType = 'technical';
-  const c = getClient(currentClientId);
-  if (!c) return;
-  document.querySelectorAll('.btn[id$="-chat-btn"]').forEach(b => b.style.background = '');
-  const btn = document.getElementById('s4-technical-chat-btn');
-  if (btn) btn.style.background = '#1263e6';
-  document.getElementById('s4-chat-target-label').textContent = '💬 技术路线 · 对话';
-  document.getElementById('s4-chat-empty').style.display = 'none';
-  renderS4QuickSuggestions();
-  loadS4ChatHistory();
   fetchAiSuggestions('technical');
+  // 渲染快捷建议
+  renderQuickSuggestions('presales');
+  renderQuickSuggestions('technical');
 }
 
-// 加载对话历史（从 localStorage）
-function loadS4ChatHistory() {
-  const key = 's4_chat_' + currentClientId + '_' + s4ChatTarget;
-  const hist = JSON.parse(localStorage.getItem(key) || '[]');
-  const scroll = document.getElementById('s4-chat-scroll');
-  const empty = document.getElementById('s4-chat-empty');
-  scroll.innerHTML = '';
-  if (hist.length === 0) {
-    empty.style.display = '';
-    empty.innerHTML = '<div style="font-size:32px;margin-bottom:10px">💡</div><div style="font-size:13px">发送消息开始对话</div>';
-    return;
-  }
-  empty.style.display = 'none';
-  hist.forEach(msg => appendChatMsg(msg.role, msg.text, false));
-  scroll.scrollTop = scroll.scrollHeight;
-}
-
-// 保存对话历史
-function saveS4ChatHistory(role, text) {
-  const key = 's4_chat_' + currentClientId + '_' + s4ChatTarget;
-  const hist = JSON.parse(localStorage.getItem(key) || '[]');
-  hist.push({ role, text, ts: Date.now() });
-  localStorage.setItem(key, JSON.stringify(hist.slice(-50))); // 保留最近50条
+function clearWorkspace(ws) {
+  const scroll = document.getElementById(ws + '-chat-scroll');
+  const empty = document.getElementById(ws + '-chat-empty');
+  if (scroll) scroll.innerHTML = '';
+  if (empty) { empty.style.display = ''; }
+  _wsState[ws] = { queue: [], chatHist: [], aiHist: [] };
+  updateQueueCount(ws, 0);
+  updateConfirmBtn(ws, false);
 }
 
 // 追加聊天消息
-function appendChatMsg(role, text, save = true) {
-  const scroll = document.getElementById('s4-chat-scroll');
-  const empty = document.getElementById('s4-chat-empty');
-  empty.style.display = 'none';
+function appendChatMsg(ws, role, text) {
+  const scroll = document.getElementById(ws + '-chat-scroll');
+  const empty = document.getElementById(ws + '-chat-empty');
+  if (!scroll) return;
+  if (empty) empty.style.display = 'none';
   const div = document.createElement('div');
   div.className = 'chat-msg ' + role;
-  const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
   div.innerHTML = '<div class="chat-bubble">' + escHtml(text) + '</div><div class="chat-meta">' + time + '</div>';
   scroll.appendChild(div);
   scroll.scrollTop = scroll.scrollHeight;
-  if (save) saveS4ChatHistory(role, text);
-  return div;
+  _wsState[ws].chatHist.push({ role, text });
+  // 保存历史
+  const key = 's4_chat_' + ws + '_' + currentClientId;
+  localStorage.setItem(key, JSON.stringify(_wsState[ws].chatHist.slice(-50)));
 }
 
-// AI 建议卡片
-function appendAiSuggestions(suggestions) {
-  const scroll = document.getElementById('s4-chat-scroll');
-  const empty = document.getElementById('s4-chat-empty');
-  empty.style.display = 'none';
-  const div = document.createElement('div');
-  div.className = 'ai-suggest-cards';
+// AI 诊断建议卡片
+function appendAiSuggestions(ws, suggestions) {
+  const scroll = document.getElementById(ws + '-chat-scroll');
+  if (!scroll) return;
+  const empty = document.getElementById(ws + '-chat-empty');
+  if (empty) empty.style.display = 'none';
+  const container = document.createElement('div');
+  container.className = 'ws-suggest-cards';
   suggestions.forEach((s, i) => {
-    const icons = ['🔥', '⭐', '🚀', '✏️'];
+    const icons = ['💡','📊','🎯','✨','📋'];
     const icon = icons[i % icons.length];
-    const card = document.createElement('div');
-    card.className = 'suggest-card';
-    card.innerHTML = '<div class="suggest-icon ' + (i % 2 === 0 ? 'fire' : 'star') + '">' + icon + '</div><div class="suggest-text"><strong>' + escHtml(s.title) + '</strong><span>' + escHtml(s.desc) + '</span></div>';
-    card.onclick = () => {
-      const input = document.getElementById('s4-chat-input');
-      input.value = s.prompt;
-      autoGrow(input);
-      // 清空建议卡片，用户输入可以编辑
-      div.remove();
-    };
-    div.appendChild(card);
+    const card = document.createElement('button');
+    card.className = 'ws-suggest-card';
+    card.innerHTML = '<div class="ws-suggest-icon">' + icon + '</div><div class="ws-suggest-text"><strong>' + escHtml(s.title) + '</strong><span>' + escHtml(s.desc || '') + '</span></div>';
+    card.onclick = () => handleSuggestionClick(ws, s);
+    container.appendChild(card);
   });
-  scroll.appendChild(div);
+  scroll.appendChild(container);
   scroll.scrollTop = scroll.scrollHeight;
 }
 
-// 快捷建议
-function renderS4QuickSuggestions() {
-  const el = document.getElementById('s4-quick-suggestions');
-  const suggestions = [
-    { label: '语言更简洁', prompt: '语言更简洁一些，去掉冗余描述' },
-    { label: '增加案例', prompt: '增加一些同行成功案例' },
-    { label: '突出价值', prompt: '更突出方案的价值和收益' },
-    { label: '减少篇幅', prompt: '减少篇幅，重点更突出' },
+// AI 追问卡片（选项列表）
+function appendAiOptions(ws, options) {
+  const scroll = document.getElementById(ws + '-chat-scroll');
+  if (!scroll) return;
+  const container = document.createElement('div');
+  container.className = 'ws-suggest-cards';
+  options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'ws-option-card';
+    btn.textContent = (i+1) + '. ' + opt;
+    btn.onclick = () => {
+      appendChatMsg(ws, 'user', opt);
+      appendChatMsg(ws, 'ai', '好的，继续...');
+      // 继续对话，把用户选择加入 AI history
+      _wsState[ws].aiHist.push({ role: 'user', content: opt });
+      fetchAiSuggestions(ws, '');
+    };
+    container.appendChild(btn);
+  });
+  scroll.appendChild(container);
+  scroll.scrollTop = scroll.scrollHeight;
+}
+
+// 处理建议点击
+function handleSuggestionClick(ws, s) {
+  if (s.type === 'option') {
+    // 追问选项
+    appendChatMsg(ws, 'user', s.selected || s.title);
+    appendChatMsg(ws, 'ai', s.reply || '好的，请稍等...');
+    _wsState[ws].aiHist.push({ role: 'user', content: s.selected || s.title });
+    _wsState[ws].aiHist.push({ role: 'assistant', content: s.reply });
+    fetchAiSuggestions(ws, '');
+  } else {
+    // 直接填充到输入框
+    const input = document.getElementById(ws + '-chat-input');
+    if (input) { input.value = s.prompt || s.title; autoGrow(input); }
+    // 把这条建议加入队列
+    s4ChatAdd(ws);
+  }
+}
+
+// 渲染快捷建议
+function renderQuickSuggestions(ws) {
+  const el = document.getElementById(ws + '-quick-suggestions');
+  if (!el) return;
+  const suggs = [
+    { label: '语言更简洁', prompt: '语言更简洁，去掉冗余描述' },
+    { label: '增加案例', prompt: '增加2-3个同行成功案例' },
+    { label: '突出价值', prompt: '更突出方案价值和收益' },
     { label: '更正式', prompt: '语气更正式专业' },
-    { label: '更活泼', prompt: '语气更活泼亲切' }
+    { label: '更活泼', prompt: '语气更亲切活泼' }
   ];
-  el.innerHTML = suggestions.map(s =>
-    '<button class="quick-chip" onclick="fillQuickSuggest(\'' + escAttr(s.prompt) + '\')">' + escHtml(s.label) + '</button>'
+  el.innerHTML = suggs.map(s =>
+    '<button class="quick-chip" onclick="fillQuickSuggest(\'' + ws + '\',\'' + s.prompt.replace(/'/g, '\\' + '\'') + '\')">' + s.label + '</button>'
   ).join('');
 }
 
-function fillQuickSuggest(prompt) {
-  const input = document.getElementById('s4-chat-input');
-  input.value = prompt;
-  autoGrow(input);
+function fillQuickSuggest(ws, prompt) {
+  const input = document.getElementById(ws + '-chat-input');
+  if (input) { input.value = prompt; autoGrow(input); }
 }
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function escAttr(s) {
-  return String(s).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
-}
-
-// 自动高度
+// 自动增高
 function autoGrow(el) {
   el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 96) + 'px';
+  el.style.height = Math.min(el.scrollHeight, 80) + 'px';
 }
 
-// 输入时：AI 实时联想
-async function onChatInput(el) {
+// 更新队列计数
+function updateQueueCount(ws, count) {
+  const el = document.getElementById(ws + '-queue-count');
+  if (el) el.textContent = count;
+}
+
+// 更新确认按钮
+function updateConfirmBtn(ws, show) {
+  const btn = document.getElementById(ws + '-confirm-btn');
+  if (!btn) return;
+  if (show) btn.classList.add('visible'); else btn.classList.remove('visible');
+}
+
+// 追加到队列
+function s4ChatAdd(ws) {
+  const input = document.getElementById(ws + '-chat-input');
+  const text = input ? input.value.trim() : '';
+  if (!text) return;
+  appendChatMsg(ws, 'user', text);
+  _wsState[ws].queue.push(text);
+  input.value = '';
+  autoGrow(input);
+  updateQueueCount(ws, _wsState[ws].queue.length);
+  updateConfirmBtn(ws, true);
+  // 加载对话历史（用户输入后触发 AI 联想）
+  _wsState[ws].aiHist.push({ role: 'user', content: text });
+}
+
+// 确认没问题 → 重新生成
+async function s4ChatConfirm(ws) {
+  if (_wsState[ws].queue.length === 0) { showToast('请先追加反馈意见'); return; }
+  const feedback = _wsState[ws].queue.join('；');
+  appendChatMsg(ws, 'ai', '好的，正在根据你的意见重新生成…');
+  // 清空队列
+  _wsState[ws].queue = [];
+  updateQueueCount(ws, 0);
+  updateConfirmBtn(ws, false);
+  try {
+    if (ws === 'presales') {
+      await regeneratePresalesWithFeedback(feedback);
+    } else {
+      await regenerateTechnicalWithFeedback(feedback);
+    }
+    appendChatMsg(ws, 'ai', '✅ 新版本已生成！可以在顶部版本列表查看。');
+  } catch(e) {
+    appendChatMsg(ws, 'ai', '❌ 生成失败：' + (e.message || '未知错误'));
+  }
+}
+
+// 输入时 AI 联想（防抖）
+async function onChatInput(el, ws) {
   autoGrow(el);
   const text = el.value.trim();
   if (text.length < 5) return;
-  // 防抖：300ms 后请求 AI 联想
   clearTimeout(el._debounce);
-  el._debounce = setTimeout(() => fetchAiSuggestions(s4ChatTarget, text), 300);
+  el._debounce = setTimeout(() => {
+    _wsState[ws].aiHist.push({ role: 'user', content: text });
+    fetchAiSuggestions(ws, text);
+  }, 400);
 }
 
-// AI 建议（打开时 + 输入联想）
-async function fetchAiSuggestions(type, userInput = '') {
+// 获取内容摘要
+function getContentSummary(ws) {
+  const c = getClient(currentClientId);
+  if (!c) return '';
+  if (ws === 'presales') {
+    const vs = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
+    if (vs.length === 0) return '';
+    const latest = vs[vs.length - 1];
+    return latest.content?.htmlContent || '';
+  } else {
+    const vs = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
+    if (vs.length === 0) return '';
+    const latest = vs[vs.length - 1];
+    return latest.content?.wordText || '';
+  }
+}
+
+// AI 诊断建议（多轮对话）
+async function fetchAiSuggestions(ws, userInput) {
+  const content = getContentSummary(ws);
+  if (!content && !userInput) return;
   const c = getClient(currentClientId);
   if (!c) return;
-  // 获取当前版本内容
-  let content = '';
-  const versions = type === 'presales'
-    ? (c.step4_presales_versions || [])
-    : (c.step4_technical_versions || []);
-  if (versions.length > 0) {
-    const latest = versions[versions.length - 1];
-    content = latest.content?.htmlContent || latest.content?.wordText || '';
-  }
-  if (!content && !userInput) {
-    // 没有版本时显示默认建议
-    appendAiSuggestions([
-      { title: '生成售前方案', desc: '还没有生成方案，请先生成', prompt: '请帮我生成售前方案' }
-    ]);
-    return;
-  }
+  // 构建消息历史
+  const messages = _wsState[ws].aiHist.slice(-10);
   try {
     const resp = await fetch(API_BASE + '/api/step4/chat-suggest', {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({
         client_id: c.id,
-        doc_type: type,
+        doc_type: ws,
         content: content.substring(0, 3000),
-        user_input: userInput
+        user_input: userInput || '',
+        history: messages
       })
     });
     const data = await resp.json();
-    if (data.suggestions && data.suggestions.length > 0) {
-      appendAiSuggestions(data.suggestions);
+    if (data.type === 'options' && data.options) {
+      appendAiOptions(ws, data.options);
+      _wsState[ws].aiHist.push({ role: 'assistant', content: data.options.join('; ') });
+    } else if (data.suggestions && data.suggestions.length > 0) {
+      appendAiSuggestions(ws, data.suggestions);
+      _wsState[ws].aiHist.push({ role: 'assistant', content: JSON.stringify(data.suggestions) });
     }
   } catch(e) {
     console.error('fetchAiSuggestions error', e);
   }
 }
 
-// 追加到反馈队列
-function s4ChatAdd() {
-  const input = document.getElementById('s4-chat-input');
-  const text = input.value.trim();
-  if (!text) return;
-  appendChatMsg('user', text);
-  s4FeedbackQueue.push(text);
-  input.value = '';
-  autoGrow(input);
-  // 更新确认按钮
-  const btn = document.getElementById('s4-chat-confirm-btn');
-  const count = document.getElementById('s4-queue-count');
-  if (btn) btn.classList.add('visible');
-  if (count) count.textContent = s4FeedbackQueue.length;
-  // 显示队列面板
-  renderFeedbackQueue();
-  // AI 回应（追加）
-  setTimeout(() => {
-    appendChatMsg('ai', '已追加你的意见。积累多条后，点击「没问题」一起生成新版本。');
-  }, 400);
-}
-
-// 渲染队列
-function renderFeedbackQueue() {
-  let panel = document.getElementById('s4-feedback-queue-panel');
-  if (!panel) {
-    const scroll = document.getElementById('s4-chat-scroll');
-    panel = document.createElement('div');
-    panel.id = 's4-feedback-queue-panel';
-    panel.className = 'feedback-queue-panel';
-    panel.innerHTML = '<div class="feedback-queue-label">📋 反馈队列</div><div class="queue-items" id="s4-queue-items"></div>';
-    scroll.appendChild(panel);
-  }
-  const items = document.getElementById('s4-queue-items');
-  items.innerHTML = s4FeedbackQueue.map((q, i) =>
-    '<div class="queue-item"><span class="queue-item-num">' + (i+1) + '</span><span class="queue-item-text">' + escHtml(q) + '</span><span class="queue-item-remove" onclick="s4RemoveFromQueue(' + i + ')">✕</span></div>'
-  ).join('');
-}
-
-// 从队列移除
-function s4RemoveFromQueue(idx) {
-  s4FeedbackQueue.splice(idx, 1);
-  const count = document.getElementById('s4-queue-count');
-  if (count) count.textContent = s4FeedbackQueue.length;
-  renderFeedbackQueue();
-  if (s4FeedbackQueue.length === 0) {
-    const panel = document.getElementById('s4-feedback-queue-panel');
-    if (panel) panel.remove();
-    const btn = document.getElementById('s4-chat-confirm-btn');
-    if (btn) btn.classList.remove('visible');
+// 快捷生成（用于版本卡片里的"重新生成"）
+async function quickRegenerate(ws) {
+  if (ws === 'presales') {
+    await regeneratePresalesWithFeedback('');
+  } else {
+    await regenerateTechnicalWithFeedback('');
   }
 }
 
-// 确认没问题，提交生成
-async function s4ChatConfirm() {
-  if (s4FeedbackQueue.length === 0) {
-    showToast('请先追加反馈意见');
-    return;
-  }
-  if (!s4ChatTarget) {
-    showToast('请先选择一个制品卡片打开对话');
-    return;
-  }
-  const feedback = s4FeedbackQueue.join('；');
-  appendChatMsg('ai', '好的，正在根据你的意见重新生成…');
-  // 清空队列
-  s4FeedbackQueue = [];
-  const panel = document.getElementById('s4-feedback-queue-panel');
-  if (panel) panel.remove();
-  const btn = document.getElementById('s4-chat-confirm-btn');
-  if (btn) btn.classList.remove('visible');
-  document.getElementById('s4-queue-count').textContent = '0';
-  try {
-    if (s4ChatTarget === 'presales') {
-      await regeneratePresalesWithFeedback(feedback);
-    } else {
-      await regenerateTechnicalWithFeedback(feedback);
-    }
-    appendChatMsg('ai', '✅ 新版本已生成！可以在右侧版本列表查看。');
-  } catch(e) {
-    appendChatMsg('ai', '❌ 生成失败：' + (e.message || '未知错误'));
-  }
+// 辅助
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function setVersionCount(ws, n) {
+  const el = document.getElementById('s4-' + ws + '-version-count');
+  if (el) el.textContent = n || 0;
 }
 
-function doStep4Next() {
-  const c = getClient(currentClientId);
-  saveStep4Input();
-  var hasPresales = Array.isArray(c.step4_presales_versions) && c.step4_presales_versions.length > 0;
-  var hasTechnical = Array.isArray(c.step4_technical_versions) && c.step4_technical_versions.length > 0;
-  if (!hasPresales && !hasTechnical) {
-    showToast('请先生成售前方案或技术方案');
-    return;
-  }
-  go(5);
-}
-
-// ==================== STEP 4 HANDLERS ====================
-let _s4EditingInput = false;
-
-function toggleStep4InputEdit() {
-  _s4EditingInput = !_s4EditingInput;
-  const boxes = document.querySelectorAll('#s4-input-grid [contenteditable]');
-  boxes.forEach(b => b.contentEditable = _s4EditingInput);
-  const btn = document.getElementById('s4-input-edit-btn');
-  if (btn) btn.textContent = _s4EditingInput ? '完成编辑' : '编辑';
-  if (!_s4EditingInput) saveStep4Input();
-}
-
-function saveStep4Input() {
-  const c = getClient(currentClientId);
-  if (!c) return;
-  const report = c.step4_report || {};
-  report.inputSummary = {
-    current: document.getElementById('s4-current').textContent.trim() || '-',
-    pain: document.getElementById('s4-pain').textContent.trim() || '-',
-    roles: document.getElementById('s4-roles').textContent.trim() || '-',
-    goals: document.getElementById('s4-goals').textContent.trim() || '-'
-  };
-  updateClient(currentClientId, { step4_report: report });
-  showToast('摘要已保存');
+// 加载历史对话
+function loadChatHistory(ws) {
+  const key = 's4_chat_' + ws + '_' + currentClientId;
+  const hist = JSON.parse(localStorage.getItem(key) || '[]');
+  const scroll = document.getElementById(ws + '-chat-scroll');
+  if (!scroll) return;
+  scroll.innerHTML = '';
+  if (hist.length === 0) return;
+  const empty = document.getElementById(ws + '-chat-empty');
+  if (empty) empty.style.display = 'none';
+  hist.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + m.role;
+    const time = m.ts ? new Date(m.ts).toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'}) : '';
+    div.innerHTML = '<div class="chat-bubble">' + escHtml(m.text) + '</div><div class="chat-meta">' + time + '</div>';
+    scroll.appendChild(div);
+  });
+  _wsState[ws].chatHist = hist;
+  scroll.scrollTop = scroll.scrollHeight;
 }
 
 // ==================== Step4 方案输入确认 ====================
@@ -5592,22 +5639,19 @@ function loadStep3(c) {
 }
 function loadStep4(c) {
   if (!c || !c.id) return;
-  // 右侧制品区
   var presalesVersions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
   var techVersions = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
-  // 显示对话按钮（当有版本时）
-  var presalesBtn = document.getElementById('s4-presales-chat-btn');
-  var technicalBtn = document.getElementById('s4-technical-chat-btn');
-  if (presalesBtn) presalesBtn.style.display = presalesVersions.length > 0 ? '' : 'none';
-  if (technicalBtn) technicalBtn.style.display = techVersions.length > 0 ? '' : 'none';
-  // 更新版本数
-  var pvc = document.getElementById('s4-presales-version-count');
-  if (pvc) pvc.textContent = presalesVersions.length || 0;
-  var tvc = document.getElementById('s4-technical-version-count');
-  if (tvc) tvc.textContent = techVersions.length || 0;
+  // 更新版本数（顶部工作台内）
+  setVersionCount('presales', presalesVersions.length);
+  setVersionCount('technical', techVersions.length);
   if (presalesVersions.length > 0) renderPresalesVersionList(presalesVersions);
   if (techVersions.length > 0) renderTechnicalVersionList(techVersions);
   loadPresalesVisits();
+  // 加载对话历史
+  loadChatHistory('presales');
+  loadChatHistory('technical');
+  // AI 自动诊断
+  initStep4Workspaces();
 }
 
 // ==================== 反馈队列 ====================
@@ -5769,6 +5813,32 @@ function togglePresalesPreview() {
   var latest = versions[versions.length - 1];
   if (!latest || !latest.file_url) { showToast('暂无可预览的方案'); return; }
   window.open(latest.file_url, '_blank');
+}
+
+function copyPresalesLink() {
+  var c = getClient(currentClientId);
+  var versions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
+  var latest = versions[versions.length - 1];
+  if (!latest || !latest.file_url) { showToast('暂无可复制链接'); return; }
+  var fullUrl = window.location.origin + latest.file_url;
+  navigator.clipboard.writeText(fullUrl).then(() => showToast('链接已复制'));
+}
+
+function toggleTechnicalPreview() {
+  var c = getClient(currentClientId);
+  var versions = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
+  var latest = versions[versions.length - 1];
+  if (!latest || !latest.file_url) { showToast('暂无可预览的方案'); return; }
+  window.open(latest.file_url, '_blank');
+}
+
+function copyTechnicalLink() {
+  var c = getClient(currentClientId);
+  var versions = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
+  var latest = versions[versions.length - 1];
+  if (!latest || !latest.file_url) { showToast('暂无可复制链接'); return; }
+  var fullUrl = window.location.origin + latest.file_url;
+  navigator.clipboard.writeText(fullUrl).then(() => showToast('链接已复制'));
 }
 
 function renderPresalesVersionList(versions) {

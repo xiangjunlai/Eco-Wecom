@@ -4719,76 +4719,94 @@ async def publish_step4_report(body: dict, user: dict = Depends(require_auth)):
 # ==================== Step4 AI 对话建议 ====================
 @app.post("/api/step4/chat-suggest")
 async def step4_chat_suggest(body: dict, user: dict = Depends(require_auth)):
-    """基于当前方案内容，生成 AI 修改建议"""
+    """多轮对话：AI 诊断5维度 + 追问机制"""
     client_id = body.get("client_id")
     doc_type = body.get("doc_type")  # 'presales' | 'technical'
     content = body.get("content", "")[:3000]
     user_input = body.get("user_input", "").strip()
+    history = body.get("history", [])  # [{role:'user'|'assistant', content:'...'}]
 
     if not client_id:
         raise HTTPException(status_code=400, detail="client_id required")
 
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM clients WHERE id = ? AND user_id = ?", (client_id, user["user_id"]))
-    row = cursor.fetchone()
-    conn.close()
-    if not row:
-        raise HTTPException(status_code=404, detail="客户不存在")
+    # 判断是售前(5维度)还是技术路线(4维度)
+    is_presales = doc_type == 'presales'
+    dimensions = "A内容完整度、B案例可信度、C语言风格、D差异化、E其他" if is_presales else "A内容完整度、B案例可信度、D差异化、E其他"
 
-    # 读取提示词模板
-    suggest_prompt = _read_template(TEMPLATE_BASE + "/09_STEP5_SCHEMA_PROMPT.md")
-    if not suggest_prompt:
-        suggest_prompt = ""
+    # 如果没有内容，返回诊断引导
+    if not content:
+        return {
+            "success": True,
+            "type": "suggestions",
+            "suggestions": [
+                {"title": "暂无方案内容", "desc": "请先生成售前方案", "prompt": "请先生成售前方案"}
+            ]
+        }
 
-    # 根据是否有用户输入，决定是生成建议还是联想
-    if user_input:
-        system_prompt = f"""你是一个方案优化顾问。用户正在修改一{doc_type == 'presales' and '售前方案HTML' or '技术路线Word'}文档。
-根据用户的修改意见和当前方案内容，给出具体的优化建议。
+    # 构建多轮对话 prompt
+    system_prompt = f"""你是一个专业的售前方案优化顾问。
 
-当前方案内容摘要：
-{content[:1500]}
+## 你的任务
+分析以下{doc_type == 'presales' and '售前方案HTML' or '技术路线Word'}文档，从 {dimensions} 五个维度进行诊断，给出具体可操作的改进建议。
 
-用户说：{user_input}
+## 五个诊断维度说明
+- A 内容完整度：是否有封面/客户画像/痛点/方案模块/价值阐述/实施路线图/报价？（技术路线：11节结构完整性）
+- B 案例可信度：有没有真实同行案例、数据支撑？（技术路线：技术选型有无说服力）
+- C 语言风格（仅售前）：太正式/太泛/不够亲切？语气是否符合目标受众？
+- D 差异化：有没有突出相比竞争对手的独特优势？
+- E 其他：逻辑清晰度、篇幅是否合理、重点是否突出？
 
-请生成 1-2 条具体的修改建议，每条包含：
-- title: 建议标题（10字内）
-- desc: 建议描述（15字内）
-- prompt: 建议对应的完整修改指令（30字内，用于直接提交）
+## 当前方案内容
+{content[:2500]}
 
-直接输出 JSON 数组，不要解释。"""
-    else:
-        system_prompt = f"""你是一个方案优化顾问。请分析以下{doc_type == 'presales' and '售前方案HTML' or '技术路线Word'}文档的内容，给出 3-5 条最值得改进的方向。
+## 诊断要求
+1. 每次诊断给出 2-4 条具体建议，每条格式：
+   - title: 问题描述（10字内，如"缺少同行案例"）
+   - desc: 具体修改方向（15字内，如"建议增加2个制造业案例"）
+   - prompt: 对应的完整修改指令（30字内，如"增加制造业案例：公牛集团、欧普照明"）
 
-当前方案内容摘要：
-{content[:1500]}
+2. 如果用户反馈模糊（如"减少篇幅"/"不够好"/"改一下"），必须先追问具体需求：
+   - 返回 type: "options"
+   - options: 列出 2-4 个具体选项让用户选择
+   - 例如用户说"减少篇幅"，追问：
+     ["A. 缩短每个模块的描述文字（保留全部内容）", "B. 删除部分子模块（请说明删哪些）", "C. 合并相似章节"]
 
-请生成建议，每条包含：
-- title: 建议标题（10字内）
-- desc: 建议描述（15字内）
-- prompt: 建议对应的完整修改指令（30字内，用于直接提交）
+3. 如果用户反馈已足够具体，直接生成建议。
 
-直接输出 JSON 数组，不要解释。"""
+## 输出格式
+如果给出建议：{{"type":"suggestions","suggestions":[...]}}
+如果需要追问：{{"type":"options","options":["选项A","选项B",...]}}
+直接输出 JSON，不要任何解释文字。"""
+
+    # 构建对话上下文（最近6轮）
+    recent = history[-6:] if history else []
+    user_msgs = "\n".join([f"用户：{m['content']}" for m in recent if m.get("role") == "user"])
+    ai_msgs = "\n".join([f"顾问：{m['content']}" for m in recent if m.get("role") == "assistant"])
+
+    user_prompt = f"""## 对话历史
+{ai_msgs}
+{user_msgs}
+用户：{user_input if user_input else '（首次诊断，请分析方案并给出改进建议）'}"""
 
     try:
-        result = call_minimax(system_prompt, "你是一个方案优化顾问。", max_tokens=800)
+        result = call_minimax(system_prompt, user_prompt, max_tokens=1200)
         raw = result.get("content", "").strip()
-        # 尝试解析 JSON
+        logger.warning(f"[chat-suggest] raw response: {raw[:200]}")
+        # 解析 JSON
         try:
-            suggestions = json.loads(raw)
+            data = json.loads(raw)
         except:
-            # 去掉 markdown 代码块
             import re
-            m = re.search(r'\[.*\]', raw, re.DOTALL)
+            m = re.search(r'\{.*\}', raw, re.DOTALL)
             if m:
-                suggestions = json.loads(m.group())
+                data = json.loads(m.group())
             else:
-                suggestions = []
+                data = {"type": "suggestions", "suggestions": []}
     except Exception as e:
         logger.warning(f"[chat-suggest] error: {e}")
-        suggestions = []
+        data = {"type": "suggestions", "suggestions": []}
 
-    return {"success": True, "suggestions": suggestions}
+    return {"success": True, **data}
 
 
 # ==================== 访问追踪 ====================
