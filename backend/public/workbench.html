@@ -770,19 +770,13 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .chat-textarea{flex:1;border:1.5px solid #e0e8f0;border-radius:10px;padding:7px 10px;font-size:13px;resize:none;outline:none;line-height:1.5;max-height:80px;transition:border-color .15s;font-family:inherit}
 .chat-textarea:focus{border-color:#1263e6}
 
-/* Step4 两栏（废弃）*/
-.page4-grid{display:none}
-
 /* Step4 新布局 */
-#page4{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
-#page4 .step4-edit-area{flex:1}
-#page4 .step4-right-panel{display:flex;flex-direction:column;gap:12px;position:sticky;top:0}
 #page4 .s4-artifact-tabs{display:flex;gap:2px;padding:8px 0;border-bottom:1px solid #f0f2f5}
 #page4 .s4-artifact-tab{padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;color:#667085;background:#f5f7fb;border:none;cursor:pointer;transition:all .15s}
 #page4 .s4-artifact-tab.active{background:#1263e6;color:#fff}
 #page4 .s4-artifact-panel{display:none;padding:0}
 #page4 .s4-artifact-panel.active{display:block}
-#page4 .s4-chat-scroll{max-height:240px;overflow-y:auto;padding:12px 4px;display:flex;flex-direction:column;gap:8px;min-height:100px}
+#page4 .s4-chat-scroll{max-height:220px;overflow-y:auto;padding:12px 4px;display:flex;flex-direction:column;gap:8px;min-height:100px}
 #page4 .s4-chat-scroll:empty::before{content:"暂无消息";color:#d1d5db;font-size:13px;align-self:center;margin:auto}
 #page4 .s4-chat-input-row{padding:8px 4px 4px}
 #page4 .s4-chat-textarea{width:100%;border:1.5px solid #e0e8f0;border-radius:10px;padding:7px 10px;font-size:13px;resize:none;outline:none;line-height:1.5;max-height:72px;transition:border-color .15s;font-family:inherit;box-sizing:border-box}
@@ -790,7 +784,6 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 #page4 .s4-confirm-btn{height:32px;padding:0 12px;border-radius:10px;background:linear-gradient(135deg,#13b96f,#10a85c);color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:700;flex-shrink:0;box-shadow:0 2px 8px rgba(19,185,111,.2);display:none;font-family:inherit}
 #page4 .s4-confirm-btn.visible{display:flex;align-items:center;gap:4px}
 #page4 .s4-chat-empty{text-align:center;padding:20px;color:#d1d5db}
-#page4 .s4-chat-empty.hidden{display:none}
 </style>
 <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
@@ -1227,124 +1220,91 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 
       <!-- Step 4: 需求整理 -->
       <section class="page" id="page4">
-        <!-- 中间：简化编辑区 -->
-        <div class="step4-edit-area">
-          <!-- 需求参考（只读摘要）-->
-          <div class="prep-card" style="margin-bottom:14px">
-            <div class="card-accent accent-blue"></div>
-            <div class="prep-card-head" style="margin-bottom:10px">
-              <h3>需求参考</h3>
-              <span style="font-size:11px;color:#98a2b3">来自 Step3 的沟通摘要</span>
+        <!-- 制品1：售前解决方案 -->
+        <div class="prep-card" style="margin-bottom:14px">
+          <div class="card-accent accent-green"></div>
+          <div class="prep-card-head" style="margin-bottom:0">
+            <h3>产物生成·售前解决方案</h3>
+          </div>
+          <div class="s4-artifact-tabs" id="presales-artifact-tabs">
+            <button class="s4-artifact-tab active" data-tab="chat" onclick="switchArtifactTab('presales','chat')">💬 对话</button>
+            <button class="s4-artifact-tab" data-tab="versions" onclick="switchArtifactTab('presales','versions')">📄 版本 <span id="presales-v-count" style="font-size:10px">0</span></button>
+            <button class="s4-artifact-tab" data-tab="visits" onclick="switchArtifactTab('presales','visits')">👁 访客 <span id="presales-visit-count" style="font-size:10px">0</span></button>
+          </div>
+          <div class="s4-artifact-panel active" id="presales-panel-chat">
+            <div class="s4-chat-scroll" id="presales-chat-scroll">
+              <div class="s4-chat-empty" id="presales-chat-empty">
+                <div style="font-size:28px;margin-bottom:8px">💡</div>
+                <div style="font-size:13px;color:#98a2b3">AI 正在分析你的方案…</div>
+              </div>
             </div>
-            <div id="s4-summary-view" style="font-size:13px;color:#344054;line-height:1.7;padding:0 4px">
-              <span id="s4-summary-text" style="color:#98a2b3">暂无需求摘要</span>
+            <div class="s4-chat-input-row">
+              <div class="quick-suggestions" id="presales-quick-suggestions"></div>
+              <div style="display:flex;gap:6px;align-items:flex-end">
+                <textarea class="s4-chat-textarea" id="presales-chat-input" placeholder="输入你的修改意见…" rows="1" oninput="autoGrow(this);onChatInput(this,'presales')"></textarea>
+                <button class="s4-confirm-btn" id="presales-confirm-btn" onclick="s4ChatConfirm('presales')">
+                  <span>没问题</span><span class="confirm-count" id="presales-queue-count">0</span>
+                </button>
+              </div>
             </div>
           </div>
-          <!-- 制品1：售前解决方案 -->
-          <div class="prep-card" style="margin-bottom:14px">
-            <div class="card-accent accent-green"></div>
-            <div class="prep-card-head" style="margin-bottom:0">
-              <h3>产物生成·售前解决方案</h3>
-            </div>
-            <!-- 标签切换 -->
-            <div class="s4-artifact-tabs" id="presales-artifact-tabs">
-              <button class="s4-artifact-tab active" data-tab="chat" onclick="switchArtifactTab('presales','chat')">💬 对话</button>
-              <button class="s4-artifact-tab" data-tab="versions" onclick="switchArtifactTab('presales','versions')">📄 版本 <span id="presales-v-count" style="font-size:10px">0</span></button>
-              <button class="s4-artifact-tab" data-tab="visits" onclick="switchArtifactTab('presales','visits')">👁 访客 <span id="presales-visit-count" style="font-size:10px">0</span></button>
-            </div>
-            <!-- 对话面板 -->
-            <div class="s4-artifact-panel active" id="presales-panel-chat">
-              <div class="s4-chat-scroll" id="presales-chat-scroll">
-                <div class="s4-chat-empty" id="presales-chat-empty">
-                  <div style="font-size:28px;margin-bottom:8px">💡</div>
-                  <div style="font-size:13px;color:#98a2b3">AI 正在分析你的方案…</div>
-                </div>
+          <div class="s4-artifact-panel" id="presales-panel-versions">
+            <div id="presales-version-list" style="padding:10px 4px"></div>
+          </div>
+          <div class="s4-artifact-panel" id="presales-panel-visits">
+            <div style="padding:8px 4px">
+              <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+                <select id="s4-track-filter-device" style="font-size:11px;color:#667085;border:1px solid #e8edf5;border-radius:6px;padding:2px 6px">
+                  <option value="">全部设备</option><option value="电脑">电脑</option><option value="手机">手机</option><option value="平板">平板</option>
+                </select>
               </div>
-              <div class="s4-chat-input-row">
-                <div class="quick-suggestions" id="presales-quick-suggestions"></div>
-                <div style="display:flex;gap:6px;align-items:flex-end">
-                  <textarea class="s4-chat-textarea" id="presales-chat-input" placeholder="输入你的修改意见…" rows="1" oninput="autoGrow(this);onChatInput(this,'presales')"></textarea>
-                  <button class="s4-confirm-btn" id="presales-confirm-btn" onclick="s4ChatConfirm('presales')">
-                    <span>没问题</span><span class="confirm-count" id="presales-queue-count">0</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <!-- 版本列表 -->
-            <div class="s4-artifact-panel" id="presales-panel-versions">
-              <div id="presales-version-list" style="padding:10px 4px"></div>
-            </div>
-            <!-- 访客明细 -->
-            <div class="s4-artifact-panel" id="presales-panel-visits">
-              <div style="padding:8px 4px">
-                <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
-                  <select id="s4-track-filter-device" style="font-size:11px;color:#667085;border:1px solid #e8edf5;border-radius:6px;padding:2px 6px">
-                    <option value="">全部设备</option><option value="电脑">电脑</option><option value="手机">手机</option><option value="平板">平板</option>
-                  </select>
-                </div>
-                <div id="presales-visits-list" style="max-height:220px;overflow-y:auto"></div>
-              </div>
-            </div>
-            <!-- 底部操作按钮 -->
-            <div style="padding:10px 4px 4px;border-top:1px solid #f0f2f5;display:flex;gap:6px">
-              <button class="btn secondary" onclick="togglePresalesPreview()" style="height:30px;font-size:12px;flex:1">👁 预览</button>
-              <button class="btn secondary" onclick="copyPresalesLink()" style="height:30px;font-size:12px;flex:1">📋 复制链接</button>
-              <button class="btn primary" onclick="regeneratePresalesWithFeedback('')" style="height:30px;font-size:12px;flex:1">🔄 重新生成</button>
+              <div id="presales-visits-list" style="max-height:220px;overflow-y:auto"></div>
             </div>
           </div>
-          <!-- 制品2：技术路线 -->
-          <div class="prep-card" style="margin-bottom:14px">
-            <div class="card-accent accent-orange"></div>
-            <div class="prep-card-head" style="margin-bottom:0">
-              <h3>产物生成·技术路线及报价方案</h3>
-            </div>
-            <div class="s4-artifact-tabs" id="technical-artifact-tabs">
-              <button class="s4-artifact-tab active" data-tab="chat" onclick="switchArtifactTab('technical','chat')">💬 对话</button>
-              <button class="s4-artifact-tab" data-tab="versions" onclick="switchArtifactTab('technical','versions')">📄 版本 <span id="technical-v-count" style="font-size:10px">0</span></button>
-            </div>
-            <div class="s4-artifact-panel active" id="technical-panel-chat">
-              <div class="s4-chat-scroll" id="technical-chat-scroll">
-                <div class="s4-chat-empty" id="technical-chat-empty">
-                  <div style="font-size:28px;margin-bottom:8px">💡</div>
-                  <div style="font-size:13px;color:#98a2b3">AI 正在分析你的方案…</div>
-                </div>
-              </div>
-              <div class="s4-chat-input-row">
-                <div class="quick-suggestions" id="technical-quick-suggestions"></div>
-                <div style="display:flex;gap:6px;align-items:flex-end">
-                  <textarea class="s4-chat-textarea" id="technical-chat-input" placeholder="输入你的修改意见…" rows="1" oninput="autoGrow(this);onChatInput(this,'technical')"></textarea>
-                  <button class="s4-confirm-btn" id="technical-confirm-btn" onclick="s4ChatConfirm('technical')">
-                    <span>没问题</span><span class="confirm-count" id="technical-queue-count">0</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div class="s4-artifact-panel" id="technical-panel-versions">
-              <div id="technical-version-list" style="padding:10px 4px"></div>
-            </div>
-            <div style="padding:10px 4px 4px;border-top:1px solid #f0f2f5;display:flex;gap:6px">
-              <button class="btn secondary" onclick="toggleTechnicalPreview()" style="height:30px;font-size:12px;flex:1">👁 预览</button>
-              <button class="btn secondary" onclick="copyTechnicalLink()" style="height:30px;font-size:12px;flex:1">📋 复制链接</button>
-              <button class="btn primary" onclick="regenerateTechnicalWithFeedback('')" style="height:30px;font-size:12px;flex:1">🔄 重新生成</button>
-            </div>
+          <div style="padding:10px 4px 4px;border-top:1px solid #f0f2f5;display:flex;gap:6px">
+            <button class="btn secondary" onclick="togglePresalesPreview()" style="height:30px;font-size:12px;flex:1">👁 预览</button>
+            <button class="btn secondary" onclick="copyPresalesLink()" style="height:30px;font-size:12px;flex:1">📋 复制链接</button>
+            <button class="btn primary" onclick="regeneratePresalesWithFeedback('')" style="height:30px;font-size:12px;flex:1">🔄 重新生成</button>
           </div>
         </div>
-
-        <!-- 右侧：客户进度 & 下一步 -->
-        <div class="step4-right-panel">
-          <div class="prep-card">
-            <div class="card-accent accent-blue"></div>
-            <div class="prep-card-head" style="margin-bottom:10px">
-              <h3>当前进度</h3>
+        <!-- 制品2：技术路线 -->
+        <div class="prep-card" style="margin-bottom:14px">
+          <div class="card-accent accent-orange"></div>
+          <div class="prep-card-head" style="margin-bottom:0">
+            <h3>产物生成·技术路线及报价方案</h3>
+          </div>
+          <div class="s4-artifact-tabs" id="technical-artifact-tabs">
+            <button class="s4-artifact-tab active" data-tab="chat" onclick="switchArtifactTab('technical','chat')">💬 对话</button>
+            <button class="s4-artifact-tab" data-tab="versions" onclick="switchArtifactTab('technical','versions')">📄 版本 <span id="technical-v-count" style="font-size:10px">0</span></button>
+          </div>
+          <div class="s4-artifact-panel active" id="technical-panel-chat">
+            <div class="s4-chat-scroll" id="technical-chat-scroll">
+              <div class="s4-chat-empty" id="technical-chat-empty">
+                <div style="font-size:28px;margin-bottom:8px">💡</div>
+                <div style="font-size:13px;color:#98a2b3">AI 正在分析你的方案…</div>
+              </div>
             </div>
-            <div id="s4-progress-info" style="font-size:13px;color:#344054;line-height:1.8">
-              <div>📋 售前方案：<span id="s4-presales-status" style="color:#98a2b3">未生成</span></div>
-              <div>⚙️ 技术路线：<span id="s4-technical-status" style="color:#98a2b3">未生成</span></div>
+            <div class="s4-chat-input-row">
+              <div class="quick-suggestions" id="technical-quick-suggestions"></div>
+              <div style="display:flex;gap:6px;align-items:flex-end">
+                <textarea class="s4-chat-textarea" id="technical-chat-input" placeholder="输入你的修改意见…" rows="1" oninput="autoGrow(this);onChatInput(this,'technical')"></textarea>
+                <button class="s4-confirm-btn" id="technical-confirm-btn" onclick="s4ChatConfirm('technical')">
+                  <span>没问题</span><span class="confirm-count" id="technical-queue-count">0</span>
+                </button>
+              </div>
             </div>
           </div>
-          <div class="step-action-bar">
-            <button class="btn primary" id="s4-next-btn" onclick="doStep4Next()">下一步 →</button>
+          <div class="s4-artifact-panel" id="technical-panel-versions">
+            <div id="technical-version-list" style="padding:10px 4px"></div>
           </div>
+          <div style="padding:10px 4px 4px;border-top:1px solid #f0f2f5;display:flex;gap:6px">
+            <button class="btn secondary" onclick="toggleTechnicalPreview()" style="height:30px;font-size:12px;flex:1">👁 预览</button>
+            <button class="btn secondary" onclick="copyTechnicalLink()" style="height:30px;font-size:12px;flex:1">📋 复制链接</button>
+            <button class="btn primary" onclick="regenerateTechnicalWithFeedback('')" style="height:30px;font-size:12px;flex:1">🔄 重新生成</button>
+          </div>
+        </div>
+        <div class="step-action-bar">
+          <button class="btn primary" id="s4-next-btn" onclick="doStep4Next()">下一步 →</button>
         </div>
       </section>
       <!-- Step 5: Demo设计 -->
@@ -5727,11 +5687,6 @@ function loadStep4(c) {
   if (!c || !c.id) return;
   var presalesVersions = Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [];
   var techVersions = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
-  // 更新右侧进度面板
-  var psStatus = document.getElementById('s4-presales-status');
-  if (psStatus) psStatus.textContent = presalesVersions.length > 0 ? 'v' + presalesVersions.length : '未生成';
-  var tcStatus = document.getElementById('s4-technical-status');
-  if (tcStatus) tcStatus.textContent = techVersions.length > 0 ? 'v' + techVersions.length : '未生成';
   // 更新版本标签计数
   var pvCount = document.getElementById('presales-v-count');
   if (pvCount) pvCount.textContent = presalesVersions.length || 0;
@@ -5743,18 +5698,6 @@ function loadStep4(c) {
   loadChatHistory('presales');
   loadChatHistory('technical');
   initStep4Workspaces();
-  // 需求摘要
-  var summaryText = document.getElementById('s4-summary-text');
-  if (summaryText) {
-    var summary = c.step3_summary || '';
-    if (summary && typeof summary === 'object') {
-      summaryText.textContent = summary.summary || '暂无需求摘要';
-    } else if (typeof summary === 'string' && summary.length > 0) {
-      summaryText.textContent = summary.substring(0, 200);
-    } else {
-      summaryText.textContent = '暂无需求摘要';
-    }
-  }
 }
 
 // ==================== 反馈队列 ====================
