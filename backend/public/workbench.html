@@ -3125,7 +3125,7 @@ async function fetchAiSuggestions(ws, userInput) {
       renderProbingOptions(ws, data.confirm, data.options || []);
       return null;
     } else if (data.type === 'directive') {
-      // 直接指令：渲染为可执行的建议卡片
+      // 直接指令：渲染为可执行的建议卡片，不进聊天历史
       renderDirective(ws, data.directive);
       return null;
     } else {
@@ -3138,9 +3138,8 @@ async function fetchAiSuggestions(ws, userInput) {
   }
 }
 
-// 渲染追问/确认选项chips
+// 渲染追问/确认选项（只在诊断卡片区，不动chips）
 function renderProbingOptions(ws, question, options) {
-  // 诊断卡片区：显示问题 + 选项
   const container = document.getElementById('s4-' + ws + '-suggest-cards');
   if (container) {
     container.innerHTML = '<div style="font-size:12px;color:#667085;margin-bottom:8px;padding:0 4px">' + esc(question) + '</div>' +
@@ -3148,41 +3147,43 @@ function renderProbingOptions(ws, question, options) {
         '<button class="ws-option-card" data-ws="' + ws + '" data-opt="' + escAttr(opt) + '" onclick="handleOptionSelect(this)">' + (i+1) + '. ' + esc(opt) + '</button>'
       ).join(''));
   }
-  // chips区：也显示选项
-  const chipEl = document.getElementById(ws + '-quick-suggestions');
-  if (chipEl) {
-    chipEl.innerHTML = options.map((opt, i) =>
-      '<button class="quick-chip" data-ws="' + ws + '" data-opt="' + escAttr(opt) + '" onclick="handleOptionSelect(this)">' + esc(opt) + '</button>'
-    ).join('');
+  // chips区保持不变（只有指令才会清空chips）
+}
+
+// 确认指令后重新生成
+async function doConfirmRegenerate(ws, directive) {
+  appendChatMsg(ws, 'ai', '好的，正在根据你的意见重新生成方案…');
+  try {
+    if (ws === 'presales') {
+      await regeneratePresalesWithFeedback(directive);
+    } else {
+      await regenerateTechnicalWithFeedback(directive);
+    }
+    appendChatMsg(ws, 'ai', '✅ 新版本已生成！可以在顶部版本列表查看。');
+    // 清空诊断卡片
+    const container = document.getElementById('s4-' + ws + '-suggest-cards');
+    if (container) container.innerHTML = '';
+  } catch(e) {
+    appendChatMsg(ws, 'ai', '❌ 生成失败：' + (e.message || '未知错误'));
   }
 }
 
-// 渲染直接指令为建议卡片
+// 渲染直接指令为建议卡片 + 确认重新生成按钮
 function renderDirective(ws, directive) {
   const container = document.getElementById('s4-' + ws + '-suggest-cards');
   if (container) {
-    container.innerHTML = '<button class="ws-suggest-card" data-ws="' + ws + '" data-prompt="' + escAttr(directive) + '" onclick="handleDirectiveClick(this)" style="width:100%;text-align:left">' +
-      '<div class="ws-suggest-icon">🎯</div>' +
-      '<div class="ws-suggest-text"><strong>修改指令</strong><span>' + esc(directive) + '</span></div>' +
-    '</button>';
+    container.innerHTML =
+      '<button class="ws-suggest-card" style="width:100%;text-align:left;margin-bottom:8px;cursor:default">' +
+        '<div class="ws-suggest-icon">🎯</div>' +
+        '<div class="ws-suggest-text"><strong>修改指令</strong><span>' + esc(directive) + '</span></div>' +
+      '</button>' +
+      '<button class="ws-regen-btn" onclick="doConfirmRegenerate(\'' + ws + '\',\'' + escAttr(directive) + '\')" style="width:100%;height:36px;border-radius:10px;background:linear-gradient(135deg,#13b96f,#10a85c);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700">✅ 确认，重新生成</button>';
   }
   const chipEl = document.getElementById(ws + '-quick-suggestions');
-  if (chipEl) {
-    chipEl.innerHTML = '<button class="quick-chip" data-ws="' + ws + '" data-prompt="' + escAttr(directive) + '" onclick="handleDirectiveClick(this)">🎯 ' + esc(directive) + '</button>';
-  }
+  if (chipEl) chipEl.innerHTML = '';
 }
 
 // 处理指令点击 → 填入输入框待发送
-function handleDirectiveClick(btn) {
-  const ws = btn.dataset.ws;
-  const prompt = btn.dataset.prompt;
-  const input = document.getElementById(ws + '-chat-input');
-  if (input && prompt) {
-    input.value = prompt;
-    autoGrow(input);
-    input.focus();
-  }
-}
 
 // HTML属性转义（用于data-*属性）
 function escAttr(s) {
@@ -3201,16 +3202,18 @@ function handleSuggestionClick(btn) {
   }
 }
 
-// 处理选项选择 → 填入输入框，等用户发送
+// 处理选项选择 → 直接进聊天历史 + AI 自动回复
 function handleOptionSelect(btn) {
   const ws = btn.dataset.ws;
   const opt = btn.dataset.opt;
-  const input = document.getElementById(ws + '-chat-input');
-  if (input) {
-    input.value = opt;
-    autoGrow(input);
-    input.focus();
-  }
+  appendChatMsg(ws, 'user', opt);
+  _wsState[ws].aiHist.push({ role: 'user', content: opt });
+  appendThinkingMsg(ws);
+  const thinkingDiv = document.getElementById(ws + '-thinking');
+  fetchAiSuggestions(ws, opt).then(reply => {
+    if (thinkingDiv) thinkingDiv.remove();
+    if (reply) appendChatMsg(ws, 'ai', reply);
+  });
 }
 
 // 快捷生成（用于版本卡片里的"重新生成"）
