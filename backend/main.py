@@ -4973,6 +4973,70 @@ async def get_client_visits(client_id: int,
     return {"success": True, "total": total, "page": page, "limit": limit, "visits": items}
 
 
+@app.get("/api/clients/{client_id}/visits/by-user")
+async def get_visits_by_user(client_id: int,
+                             user: dict = Depends(require_auth)):
+    """按访客聚合的访问统计"""
+    conn = get_db()
+    cursor = conn.cursor()
+    # 按 visitor_id 聚合
+    cursor.execute("""
+        SELECT
+            visitor_id,
+            COUNT(*) as visit_count,
+            SUM(visit_count) as total_visits,
+            SUM(stay_duration) as total_duration,
+            MAX(last_visit_at) as last_visit_at,
+            MIN(first_visit_at) as first_visit_at,
+            MAX(scroll_depth) as max_scroll_depth,
+            device_type,
+            os_type,
+            browser_type,
+            country,
+            region,
+            city,
+            referer
+        FROM visit_tracking
+        WHERE client_id=? AND file_url LIKE '/public/s/%'
+        GROUP BY visitor_id
+        ORDER BY total_visits DESC
+        LIMIT 50
+    """, (client_id,))
+    rows = cursor.fetchall()
+    cols = [d[0] for d in cursor.description]
+    users = [dict(zip(cols, r)) for r in rows]
+    # 同时返回各页面的访问统计
+    cursor.execute("""
+        SELECT file_url, COUNT(*) as visit_count, SUM(stay_duration) as total_duration
+        FROM visit_tracking
+        WHERE client_id=? AND file_url LIKE '/public/s/%'
+        GROUP BY file_url
+        ORDER BY visit_count DESC
+    """, (client_id,))
+    page_rows = cursor.fetchall()
+    page_cols = [d[0] for d in cursor.description]
+    pages = [dict(zip(page_cols, r)) for r in page_rows]
+    return {"success": True, "visitors": users, "pages": pages}
+
+
+@app.get("/api/clients/{client_id}/visits/{visitor_id}/timeline")
+async def get_visitor_timeline(client_id: int, visitor_id: str,
+                               user: dict = Depends(require_auth)):
+    """某个访客的访问时间线"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT * FROM visit_tracking
+        WHERE client_id=? AND visitor_id=?
+        ORDER BY last_visit_at DESC
+        LIMIT 20
+    """, (client_id, visitor_id))
+    rows = cursor.fetchall()
+    cols = [d[0] for d in cursor.description]
+    items = [dict(zip(cols, r)) for r in rows]
+    return {"success": True, "visits": items}
+
+
 @app.post("/api/step5/agent-suggest")
 async def step5_agent_suggest(body: dict, user: dict = Depends(require_auth)):
     """生成 Step5 AI 增强建议"""

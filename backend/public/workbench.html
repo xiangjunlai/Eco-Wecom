@@ -4127,60 +4127,118 @@ async function loadPresalesVisits() {
   if (!listEl) return;
   listEl.innerHTML = '<div style="text-align:center;padding:16px;color:#98a2b3;font-size:12px">加载中…</div>';
   try {
-    var url = API_BASE + '/api/clients/' + c.id + '/visits?limit=50';
-    var resp = await fetch(url, { headers: getAuthHeaders() });
+    var resp = await fetch(API_BASE + '/api/clients/' + c.id + '/visits/by-user', { headers: getAuthHeaders() });
     if (!resp.ok) throw new Error('加载失败');
     var data = await resp.json();
-    var visits = data.visits || [];
-    // 更新访问数字
+    var visitors = data.visitors || [];
+    var pages = data.pages || [];
+
+    // 更新Tab计数
     var numEl = document.getElementById('s4-presales-visit-num');
-    if (numEl) numEl.textContent = visits.length;
-    if (visits.length === 0) {
+    if (numEl) numEl.textContent = visitors.length;
+
+    if (visitors.length === 0) {
       listEl.innerHTML = '<div style="text-align:center;padding:16px;color:#98a2b3;font-size:12px">暂无访问记录</div>';
       return;
     }
-    var totalVisits = visits.length;
-    var uniqueVisitors = {};
-    visits.forEach(function(v) { if (v.visitor_id) uniqueVisitors[v.visitor_id] = true; });
-    // 地区统计
-    var geo = {};
-    visits.forEach(function(v) {
-      var loc = [v.country, v.region, v.city].filter(Boolean).join('·');
-      if (loc) geo[loc] = true;
-    });
-    var statsHtml =
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;padding:10px 12px;background:#f8f9fc;border-radius:10px;font-size:11px">' +
-        '<div><div style="color:#667085;margin-bottom:2px">总访问</div><div style="font-weight:700;color:#182235;font-size:14px">'+totalVisits+'</div></div>' +
-        '<div><div style="color:#667085;margin-bottom:2px">独立访客</div><div style="font-weight:700;color:#182235;font-size:14px">'+Object.keys(uniqueVisitors).length+'</div></div>' +
-        '<div><div style="color:#667085;margin-bottom:2px">来源地区</div><div style="font-weight:700;color:#182235;font-size:14px">'+Object.keys(geo).length+'</div></div>' +
+
+    // 总览统计
+    var totalVisits = visitors.reduce(function(s, v) { return s + (v.total_visits || 0); }, 0);
+    var totalDuration = visitors.reduce(function(s, v) { return s + (v.total_duration || 0); }, 0);
+    var durationStr = totalDuration > 0 ? Math.round(totalDuration / 60) + '分钟' : '-';
+    var html =
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;padding:10px 12px;background:#f8f9fc;border-radius:10px;font-size:11px">' +
+        '<div><div style="color:#667085">独立访客</div><div style="font-weight:700;color:#182235;font-size:15px">'+visitors.length+'</div></div>' +
+        '<div><div style="color:#667085">总访问</div><div style="font-weight:700;color:#182235;font-size:15px">'+totalVisits+'</div></div>' +
+        '<div><div style="color:#667085">总时长</div><div style="font-weight:700;color:#182235;font-size:15px">'+durationStr+'</div></div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">' +
+        pages.slice(0,4).map(function(p) {
+          var name = p.file_url.split('/').pop();
+          return '<div style="padding:8px 10px;background:#f8f9fc;border-radius:8px;font-size:11px">' +
+            '<div style="color:#667085">'+esc(name)+'</div>' +
+            '<div style="font-weight:700;color:#182235">'+p.visit_count+'次访问</div></div>';
+        }).join('') +
       '</div>';
-    listEl.innerHTML = statsHtml;
-    visits.slice(0,10).forEach(function(v) {
+
+    // 用户列表
+    html += '<div style="font-size:11px;font-weight:700;color:#667085;padding:4px 0;margin-bottom:4px">访客明细</div>';
+    visitors.forEach(function(v) {
+      var deviceIcon = {'电脑':'💻','手机':'📱','平板':'📲'}[v.device_type] || '🌐';
+      var lastTime = v.last_visit_at ? new Date(v.last_visit_at) : new Date();
+      var timeStr = lastTime.toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'}) + ' ' + lastTime.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+      var loc = [v.country, v.region, v.city].filter(Boolean).join('·') || '未知';
+      var dur = v.total_duration > 0 ? Math.round(v.total_duration / 60) + '分钟' : '-';
+      var vid = escAttr(v.visitor_id || '');
+      html +=
+        '<div style="padding:10px 0;border-bottom:1px solid #f5f5f5;cursor:pointer" onclick="loadVisitorTimeline(\'' + vid + '\',\'' + escAttr(v.device_type||'') + '\')" class="visitor-row">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+              deviceIcon +
+              '<span style="font-weight:700;color:#182235;font-size:12px">'+esc(loc)+'</span>' +
+              '<span style="color:#667085;font-size:10px">'+esc(v.os_type||'')+'</span>' +
+            '</div>' +
+            '<span style="color:#98a2b3;font-size:10px">'+timeStr+'</span>' +
+          '</div>' +
+          '<div style="display:flex;gap:12px;font-size:11px;color:#667085">' +
+            '<span>访问 <strong style="color:#182235">'+v.total_visits+'</strong> 次</span>' +
+            '<span>时长 <strong style="color:#182235">'+dur+'</strong></span>' +
+            '<span>最高阅读 <strong style="color:#182235">'+(v.max_scroll_depth||0)+'%</strong></span>' +
+            '<span style="color:#1263e6;margin-left:auto">查看详情 →</span>' +
+          '</div>' +
+        '</div>';
+    });
+    listEl.innerHTML = html;
+  } catch(e) {
+    listEl.innerHTML = '<div style="color:#ef4444;font-size:12px;text-align:center;padding:12px">加载失败: '+esc(e.message)+'</div>';
+  }
+}
+
+// 加载某个访客的时间线详情
+async function loadVisitorTimeline(visitorId, deviceType) {
+  var c = getClient(currentClientId);
+  if (!c || !c.id) return;
+  var listEl = document.getElementById('s4-presales-visits-list');
+  if (!listEl) return;
+
+  // 显示加载状态
+  var deviceLabel = deviceType || '访客';
+  listEl.innerHTML = '<div style="text-align:center;padding:16px;color:#98a2b3;font-size:12px">加载 '+esc(deviceLabel)+' 的访问明细…</div>';
+
+  try {
+    var resp = await fetch(API_BASE + '/api/clients/' + c.id + '/visits/' + encodeURIComponent(visitorId) + '/timeline', { headers: getAuthHeaders() });
+    if (!resp.ok) throw new Error('加载失败');
+    var data = await resp.json();
+    var visits = data.visits || [];
+
+    var html = '<div style="margin-bottom:12px"><button onclick="loadPresalesVisits()" style="font-size:11px;color:#1263e6;background:none;border:none;cursor:pointer;padding:0">← 返回访客列表</button></div>';
+    html += '<div style="font-size:12px;font-weight:700;color:#182235;margin-bottom:10px">访问明细（'+visits.length+' 条记录）</div>';
+
+    visits.forEach(function(v) {
       var visitTime = v.last_visit_at ? new Date(v.last_visit_at) : new Date(v.created_at);
       var timeStr = visitTime.toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'}) + ' ' + visitTime.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
-      var deviceIcon = {'电脑':'💻','手机':'📱','平板':'📲','未知':'❓'}[v.device_type] || '❓';
-      var visitCountBadge = v.visit_count > 1 ? '<span style="background:#fff7ed;color:#d97706;font-size:10px;font-weight:700;padding:1px 4px;border-radius:3px">回访'+v.visit_count+'次</span>' : '';
-      var firstBadge = v.is_first_visit ? '<span style="background:#e6f4ea;color:#1677ff;font-size:10px;font-weight:700;padding:1px 4px;border-radius:3px">首访</span>' : visitCountBadge;
-      var loc = [v.country, v.region, v.city].filter(Boolean).join('·') || '未知';
-      var osBrowser = (v.os_type||'') + ' / ' + (v.browser_type||'');
-      var referer = v.referer ? '<div style="font-size:10px;color:#98a2b3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px" title="'+esc(v.referer)+'">来源: '+esc(v.referer)+'</div>' : '';
-      listEl.innerHTML +=
-        '<div style="padding:10px 0;border-bottom:1px solid #f5f5f5;font-size:11px">' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">' +
+      var deviceIcon = {'电脑':'💻','手机':'📱','平板':'📲'}[v.device_type] || '🌐';
+      var pageName = v.file_url ? v.file_url.split('/').pop() : '-';
+      var referer = v.referer ? '<div style="font-size:10px;color:#98a2b3;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(v.referer||'')+'">来源: '+esc(v.referer)+'</div>' : '';
+      var dur = v.stay_duration > 0 ? Math.round(v.stay_duration / 60) + '分钟' : '-';
+      html +=
+        '<div style="padding:10px 0;border-bottom:1px solid #f0f2f5">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">' +
             deviceIcon +
-            '<span style="font-weight:700;color:#182235">'+esc(loc)+'</span>' +
-            '<span style="color:#667085;font-size:10px">'+esc(osBrowser)+'</span>' +
-            firstBadge +
+            '<span style="font-size:11px;color:#182235;font-weight:600;flex:1;margin-left:6px">'+esc(pageName)+'</span>' +
+            '<span style="font-size:10px;color:#98a2b3">'+timeStr+'</span>' +
           '</div>' +
-          '<div style="display:flex;align-items:center;justify-content:space-between">' +
-            '<div style="color:#98a2b3;font-size:10px">'+timeStr+'</div>' +
-            (v.scroll_depth ? '<div style="color:#667085;font-size:10px">阅读'+Math.round(v.scroll_depth)+'%</div>' : '') +
+          '<div style="display:flex;gap:10px;font-size:10px;color:#667085;margin-bottom:2px">' +
+            '<span>阅读 '+Math.round(v.scroll_depth||0)+'%</span>' +
+            '<span>时长 '+dur+'</span>' +
+            '<span>访问 '+v.visit_count+' 次</span>' +
           '</div>' +
           referer +
         '</div>';
     });
+    listEl.innerHTML = html;
   } catch(e) {
-    listEl.innerHTML = '<div style="color:#ef4444;font-size:12px;text-align:center;padding:12px">加载失败</div>';
+    listEl.innerHTML = '<div style="color:#ef4444;font-size:12px;text-align:center;padding:12px">加载失败 <button onclick="loadPresalesVisits()" style="color:#1263e6;background:none;border:none;cursor:pointer">返回</button></div>';
   }
 }
 
