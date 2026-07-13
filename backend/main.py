@@ -1945,7 +1945,7 @@ STEP4_WORD_PROMPT = """你是一个企业微信智能表格售前方案顾问。
   "docTitle": "需求确认 & 方案设计表",
   "subtitle": "企业微信定制开发",
   "version": "v1.0",
-  "introNotice": "本文件用于服务商与客户共同确认需求范围、一期边界、智能表格搭建口径、权限与待确认问题。客户未确认内容不得写入一期交付承诺。",
+  "introNotice": "本文件用于服务商与客户共同确认需求范围、一期边界、智能表格搭建口径、权限与待确认问题。客户未确认内容不得写入一期交付承诺。字段与公式为参考设计，最终以落地阶段与客户核对为准。",
 
   "customerInfoTable": [
     { "field": "客户名称", "value": "" },
@@ -1956,104 +1956,71 @@ STEP4_WORD_PROMPT = """你是一个企业微信智能表格售前方案顾问。
     { "field": "方案口径", "value": "" }
   ],
 
+  "needsOverviewTable": {"moduleCount":0,"featureCount":0,"summary":"如 5大模块 × 23项功能"},
+  "companyProfileTable": [{"field":"注册资本/成立年份/统一社会信用代码/团队规模","value":"有据才填，无工商数据则本表整体省略，不编造"}],
   "currentPainTable": [
-    { "businessArea": "", "currentStateOrPain": "" }
+    {"businessArea":"","currentStateOrPain":""}
   ],
-
+  "capabilityMappingTable": [
+    {"need":"","implementWay":"","verdict":"原生可实现/降级可实现/无法实现","alternative":"无法实现时填替代方案，否则留空"}
+  ],
+  "feasibilityDistributionTable": {"native":"X项(X%)","degraded":"X项(X%)","cannot":"X项(X%)","coverageNote":"覆盖约X%"},
   "scenarioBoundary": {
-    "scenarioJudgement": "",
-    "phaseOne": [""],
-    "phaseTwo": [""],
-    "notRecommended": [""]
+    "scenarioJudgement":"",
+    "phaseOne":[""],
+    "phaseTwo":[""],
+    "notRecommended":[""]
   },
-
   "requirementPriorityTable": [
-    {
-      "requirement": "",
-      "priority": "P0/P1/P2",
-      "phase": "一期/二期评估/暂不建议",
-      "implementationApproach": ""
-    }
+    {"requirement":"","priority":"P0/P1/P2","phase":"一期/二期评估/暂不建议","implementationApproach":""}
   ],
-
+  "moduleDetailTable": [
+    {"moduleName":"","subFeature":"","capabilities":"该子功能3条能力点，用、分隔","phase":"一期/二期评估/暂不建议"}
+  ],
   "processDesignTable": [
-    {
-      "item": "",
-      "description": ""
-    }
+    {"item":"","description":""}
   ],
-
   "wecomArchitectureTable": [
-    {
-      "layer": "企业微信入口层/智能表格数据层/自动化与提醒层/权限与看板层",
-      "designDescription": ""
-    }
+    {"layer":"企业微信入口层/智能表格数据层/自动化与提醒层/权限与看板层","designDescription":""}
   ],
-
   "smartTableDeliveryTable": [
-    {
-      "tableName": "",
-      "type": "主表/业务表/辅助表",
-      "purpose": "",
-      "roles": "",
-      "phaseOne": "是/否"
-    }
+    {"tableName":"","type":"主表/业务表/辅助表","purpose":"","roles":"","phaseOne":"是/否"}
   ],
-
-  "keyFieldsByTable": [
-    {
-      "tableName": "",
-      "fields": [""]
-    }
+  "dataBlueprintTable": [
+    {"tableName":"","purpose":"这张表管什么(一句话)","forRole":"主要使用角色"}
   ],
-
+  "dataBlueprintNote": "本表为数据蓝图，说明将搭建哪几张表；具体字段、类型、公式将在方案确认后的智能表格搭建环节(Step5)展开，并与贵司操作团队共创定准。",
+  "dataFlowNote": "一句话说清数据从录入表→汇总表→看板的闭环流向",
   "automationTable": [
-    {
-      "ruleName": "",
-      "trigger": "",
-      "action": "",
-      "priority": "P0/P1/P2"
-    }
+    {"ruleName":"","trigger":"","action":"","priority":"P0/P1/P2"}
   ],
-
   "permissionTable": [
-    {
-      "role": "",
-      "viewScope": "",
-      "operation": "",
-      "sensitiveFields": ""
-    }
+    {"role":"","viewScope":"","operation":"","sensitiveFields":""}
   ],
-
   "dashboardTable": [
-    {
-      "dashboard": "",
-      "users": "",
-      "metrics": "",
-      "filters": ""
-    }
+    {"dashboard":"","users":"","metrics":"","filters":""}
   ],
-
+  "valueTable": [
+    {"metric":"如 会议决策落地率提升约80%","label":"衡量什么","basis":"有据填出处/无据填预估"}
+  ],
+  "efficiencyComparisonTable": [
+    {"dimension":"如 逾期发现","before":"实施前现状","after":"实施后(无据标预估)"}
+  ],
+  "landingCollaborationNote": "售前先讲清业务价值与蓝图，字段权限落地共创定准。基于同类项目经验，落地阶段30-50%现场调整正常且负责任——这正是方案能真正跑起来、而非demo好看上线难用的关键。共创步骤：需求共创→字段定准→原型试跑→定稿上线。",
   "dataBoundaryTable": [
-    {
-      "dataObject": "",
-      "phaseOneMethod": "",
-      "phaseTwoEvaluation": "",
-      "boundaryNote": ""
-    }
+    {"dataObject":"","phaseOneMethod":"","phaseTwoEvaluation":"","boundaryNote":""}
   ],
-
   "implementationPlanTable": [
-    {
-      "phase": "",
-      "workContent": "",
-      "customerCooperation": "",
-      "output": ""
-    }
+    {"phase":"","workContent":"","customerCooperation":"","output":""}
   ],
-
+  "optionalModules": {
+    "_note":"以下四块默认省略，仅当 Step4 用户追加要求时才输出对应块",
+    "competitorComparison": [{"dimension":"","wecom":"","competitor":"竞品侧标参考/估算，不硬编竞品精确价"}],
+    "firstCoopGuarantee": [{"guarantee":"","desc":""}],
+    "quotationSummary": {"oneTime":"参考区间","annual":"参考区间","paymentPlan":[{"milestone":"","ratio":""}],"disclaimer":"参考区间，以正式报价为准"},
+    "wecomCapabilityList": [{"capability":"","note":""}]
+  },
   "pendingQuestions": [""],
-
   "confirmationItems": [
     "一期范围是否按本文件定义执行 □ 确认 □ 调整",
     "字段与权限是否允许按试运行反馈微调 □ 确认 □ 调整",
@@ -2062,24 +2029,34 @@ STEP4_WORD_PROMPT = """你是一个企业微信智能表格售前方案顾问。
   ]
 }
 
-## 填写规则
-1. customerInfoTable：value 全部从 requirementSolutionData.meta 和 customerFacts 读取，不得留空字符串（用"待确认"填充）
-2. currentPainTable：businessArea 为业务面（如"项目立项"/"开票回款"），currentStateOrPain 描述现状或痛点；最少 1 条，无内容填"【待补充】暂无明确痛点记录"
-3. scenarioBoundary.scenarioJudgement：必填，写明场景判断（如"设计/景观建筑-跨国多区域项目管理"）
-4. scenarioBoundary.phaseOne/phaseTwo/notRecommended：每个最少 1 条，无内容填"暂无"（不能为空数组）
-5. requirementPriorityTable：**严禁**将 AI 能力、机器人自动写表、OA 对接写成 P0；requirements 为空时本章填写"[{"requirement": "【待补充】需求列表为空，请返回 Step3 补充沟通记录", "priority": "P0", "phase": "待确认", "implementationApproach": ""}]"
-6. smartTableDeliveryTable：phaseOne="是"的表必须全部来自 smartTableSpec.confirmedTables，且 phase="一期"；每条必须有 tableName + type + purpose + roles（非空）
-7. keyFieldsByTable：每张表的字段列表，字段数量 5-15 个；每条字段 fieldName 不能为空
-8. automationTable：每条 ruleName + trigger + action 不能为空；如无自动化填"暂无"
-9. permissionTable：每条 role + viewScope + operation 不能为空；如无特殊权限填"待确认"
-10. dashboardTable：每条 dashboard + users + metrics 不能为空；如无看板填"暂无"
-11. dataBoundaryTable：每条 dataObject + phaseOneMethod 不能为空
-12. implementationPlanTable：最少 2 条（一期 + 二期各 1 条），每条字段完整
-13. pendingQuestions：每个问题必须是字符串，如无填"暂无待确认问题"
-14. **所有表格的每个单元格都必须是字符串，不得留空字符串（用"待确认"填充），不得出现 [object Object]**
-15. 输出前自检：遍历所有数组字段，空数组用至少 1 条占位内容替代；所有对象的所有键值对检查是否为字符串
+## 填写规则（v11 · 内容饱满度硬指引）
+1. customerInfoTable：value 全部从 requirementSolutionData.meta 与 customerFacts 读取；不得自行发明客户名/行业/场景，材料没有的填 "⚠️ 待确认"。
+2. currentPainTable：≥4 行（覆盖客户提到的各业务面），每条痛点描述 ≥20 字，讲清"现状怎么做+卡在哪+什么后果"。
+3. capabilityMappingTable：承接 requirementSolutionData，逐项需求判 verdict；"无法实现"必须填 alternative 替代方案，绝不把做不到的写成可实现。
+4. scenarioBoundary.scenarioJudgement：必填，写明场景判断。
+5. requirementPriorityTable：**严禁**将 AI 能力、机器人自动写表、OA 对接写成 P0；为空时填"[{"requirement": "【待补充】需求列表为空，请返回 Step3 补充沟通记录", "priority": "P0", "phase": "待确认", "implementationApproach": ""}]"
+6. moduleDetailTable（做厚的核心，不能为空）：每个一期模块 2-4 个子功能行，capabilities 每格 3 条具体能力点（"员工能做什么+系统会做什么"），不写空话。
+7. smartTableDeliveryTable：phaseOne="是"的表必须全部来自 smartTableSpec.confirmedTables 且 phase="一期"；每条必须有 tableName + type + purpose + roles（非空）。
+8. dataBlueprintTable（替代原字段表）：只列"要建哪几张表 + 一句话用途 + 主要使用角色"，**禁止列字段名、字段类型、公式**。字段设计属于 Step5 建表环节，售前 Word 不出现。dataBlueprintNote 固定说明字段在 Step5 展开。
+9. valueTable：3-5 条量化价值，无客户材料佐证的数字 basis 一律填"预估"，绝不硬编精确承诺值。
+10. landingCollaborationNote：固定写清"字段权限在搭建环节共创、30-50% 调整正常且负责任，共创四步"，作为信任状。
+11. needsOverviewTable：统计 requirements/modules，给"X大模块×Y项功能"。
+12. companyProfileTable：**仅当材料有工商/公司信息时填**；无据则整表省略，绝不编造。
+13. feasibilityDistributionTable：把 capabilityMappingTable 汇总成 原生/降级/不可 三档占比 + 覆盖率。
+14. efficiencyComparisonTable：3-5 行"实施前 vs 实施后"，实施后无据数字标"预估"。
+15. optionalModules：四块默认全部省略；**仅当 requirementSolutionData.optionalModules.enabled 列出时才填**。竞品价格/费用一律标"参考/估算，以正式报价为准"，不硬编。
+16. pendingQuestions：≥4 条，每项讲清"问什么+为什么影响交付"。
+17. **所有单元格都必须是字符串**，确实无值填 "⚠️ 待确认"，不得出现 [object Object]。
+
+## 三条铁律
+A.【每行必须不同】任何一张表里，**不允许出现两行内容完全相同**。
+B.【待确认不铺满】"⚠️ 待确认"只能用于**个别真正缺数据的格子**。如果整张表大面积待确认，说明上游数据不足——该表只输出一行"【数据不足】该模块缺少客户材料支撑，请补充后重生成"。
+C.【不许自相矛盾】客户名，行业、主场景在全文必须一致。
 
 直接输出有效 JSON，不要 markdown 代码块包裹。"""
+
+
+
 
 # Prompt 5: 可视化 HTML 内容生成
 STEP4_HTML_PROMPT = """你是一个企业微信智能表格可视化方案顾问。请基于结构化需求数据，生成客户友好的可视化方案 HTML 内容。

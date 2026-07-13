@@ -1,21 +1,21 @@
 <!doctype html>
 <!--
 ========================================================================
-  企业微信定制开发 · 售前解决方案 HTML 模板（锁死骨架版）
+  企业微信定制开发 · 售前解决方案 HTML 模板（v11 · 13节完整版）
   对应工作台按钮：【售前解决方案】（生成 HTML）
 ========================================================================
-  使用说明（给 agent / minimax）：
+  使用说明（给 agent / CodeBuddy）：
   1. 本文件的 <style> 整段是「视觉基因」，已锁死，禁止改动任何颜色/圆角/阴影/渐变/布局。
   2. 你的任务 = 只替换 {{双花括号}} 里的业务文字，结构标签一律保留。
-  3. 章节顺序固定为 8 节（01~08），不得删节、不得改 kicker 的英文编号。
+  3. 章节顺序固定为 13 节（01~13），不得删节、不得改 kicker 的英文编号。
   4. 列表/卡片/表格行数可按真实信息「增减」，但每个区块至少保留模板给的条数，
      宁可多写真实内容，也禁止留下 {{变量}} 或「待补充/待识别/暂无」这类空壳话术。
   5. 凡是客户已有系统的源数据底表，沿用标杆写法「禁止修改！xxx」命名。
-  ⛔ 绝对不能改的 5 个视觉基因（详见 黄金规则.md）：
+  ⛔ 绝对不能改的 5 个视觉基因：
      ① 主色 #1677ff 企业微信蓝 + 光晕 radial-gradient 背景
      ② Hero 右侧「仿真经营看板」(KPI 三连卡 + 迷你数据表 + 彩色 tag)
      ③ 04 章「分层架构图」(4 个横向 layer，左标签右 cells)
-     ④ 场景用「厚 module 卡」(左侧大序号 + 右侧三点钉 points)
+     ④ 03 章「厚 module 卡」(左侧大序号 + 右侧三点钉 points)
      ⑤ 章节标题用「英文 kicker (01 / Stage)」+ 中文大标题
 ========================================================================
 -->
@@ -36,7 +36,7 @@ background:radial-gradient(circle at 10% -10%,rgba(22,119,255,.14),transparent 3
 .page{max-width:1180px;margin:0 auto;padding:24px 24px 72px}
 .topbar{height:58px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
 .brand{display:flex;gap:12px;align-items:center;font-weight:900;color:var(--ink)}
-.logo{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,var(--wx),#1fc7f4);box-shadow:0 10px 24px rgba(22,119,255,.25);display:grid;place-items:center;color:#fff;font-weight:900}
+.logo{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,var(--wx),#1fc8f4);box-shadow:0 10px 24px rgba(22,119,255,.25);display:grid;place-items:center;color:#fff;font-weight:900}
 .nav{display:flex;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px;box-shadow:0 8px 20px rgba(16,24,40,.04)}
 .nav a{font-size:13px;color:#516174;text-decoration:none;padding:8px 12px;border-radius:999px}
 .nav a:hover{background:#eef7ff;color:var(--wx)}
@@ -63,6 +63,30 @@ section{margin-top:38px}.section-head{display:flex;justify-content:space-between
 @media(max-width:900px){.hero,.insight,.module{grid-template-columns:1fr}.grid-4,.grid-3,.grid-2,.timeline{grid-template-columns:1fr 1fr}.cells{grid-template-columns:1fr 1fr}.nav{display:none}.section-head{display:block}.section-desc{margin-top:8px}}
 @media(max-width:620px){.page{padding:16px}.hero{padding:26px}h1{font-size:30px}.grid-4,.grid-3,.grid-2,.timeline{grid-template-columns:1fr}.kpis{grid-template-columns:1fr}.layer{grid-template-columns:1fr}.points{grid-template-columns:1fr}.row{grid-template-columns:1fr 1fr}.cta{display:block}}
 /* ===== 视觉基因结束 ===== */
+/* v9.2/v11 补充（沿用视觉基因变量） */
+.subtag{display:inline-block;font-size:11px;font-weight:900;padding:2px 9px;border-radius:999px;margin-left:6px}
+.subtag.g{background:#ecfdf3;color:#079455}.subtag.y{background:#fff7ed;color:#dc6803}.subtag.r{background:#fef3f2;color:#d92d20}
+.caps-inline{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.caps-inline span{background:#f4f9ff;border:1px solid #e4f0ff;color:#345d86;border-radius:999px;padding:4px 11px;font-size:12px}
+.dist{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.dist .d{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:20px;text-align:center}.dist .d b{font-size:32px;display:block}.dist .d.g b{color:#17b26a}.dist .d.y b{color:#f79009}.dist .d.r b{color:#f04438}.dist .d span{font-size:13px;color:var(--muted)}
+.bar{height:14px;border-radius:999px;overflow:hidden;display:flex;margin-top:14px;border:1px solid var(--line)}.bar i{display:block;height:100%}.bar .bg{background:#17b26a}.bar .by{background:#f79009}.bar .br{background:#f04438}
+.trust{background:linear-gradient(135deg,#1677ff,#24b9f2);color:#fff;border-radius:26px;padding:28px;box-shadow:0 18px 42px rgba(22,119,255,.22)}.trust h3{margin:0 0 10px;color:#fff;font-size:23px}.trust p{color:rgba(255,255,255,.9);margin:0 0 16px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stp{background:rgba(255,255,255,.14);border-radius:16px;padding:14px}.stp b{display:block;font-size:14px;margin-bottom:4px}.stp span{font-size:12px;color:rgba(255,255,255,.82)}
+.blueprint-note{margin-top:16px;padding:16px 20px;background:#f6fbff;border:1px solid #e4f0ff;border-radius:16px;color:#1c558f;font-size:14px}
+/* v11 效果图（纯CSS/SVG手绘） */
+.viz-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.viz{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:22px}
+.viz h4{margin:0 0 14px;color:var(--ink);font-size:16px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+.hbars{display:grid;gap:12px;margin-top:6px}
+.hbar-row{display:grid;grid-template-columns:96px 1fr 48px;align-items:center;gap:10px;font-size:13px}
+.hbar-track{height:20px;background:#eef3fa;border-radius:999px;overflow:hidden}
+.hbar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#1677ff,#21c8f6)}
+.cmp{display:grid;gap:12px;margin-top:6px}
+.cmp-row{display:grid;grid-template-columns:120px 1fr 1fr;align-items:center;gap:10px;font-size:13px}
+.cmp .before{background:#fff2f0;border:1px solid #ffd6cf;color:#c0392b;border-radius:10px;padding:8px 12px}
+.cmp .after{background:#ecfdf3;border:1px solid #b7ebce;color:#0a7a44;border-radius:10px;padding:8px 12px;font-weight:700}
+@media(max-width:900px){.steps,.dist,.viz-grid{grid-template-columns:1fr}.cmp-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -71,7 +95,7 @@ section{margin-top:38px}.section-head{display:flex;justify-content:space-between
 <!-- ███ 顶栏（锁死品牌区，nav 文字可对应章节微调）███ -->
 <header class="topbar">
   <div class="brand"><div class="logo">企</div><span>企业微信服务商定制开发售前方案</span></div>
-  <nav class="nav"><a href="#stage">客户判断</a><a href="#insight">需求洞察</a><a href="#scenario">场景方案</a><a href="#table">智能表格</a><a href="#roadmap">实施路径</a></nav>
+  <nav class="nav"><a href="#stage">客户判断</a><a href="#insight">需求洞察</a><a href="#scenario">场景方案</a><a href="#cap">能力评估</a><a href="#blueprint">数据蓝图</a><a href="#roadmap">实施路径</a></nav>
 </header>
 
 <!-- ███ Hero（锁死结构：左文案 + 右仿真看板。看板里的 KPI/数据行用真实业务数估算填充）███ -->
@@ -81,7 +105,7 @@ section{margin-top:38px}.section-head{display:flex;justify-content:space-between
     <h1>{{客户名}}<br>{{方案一句话标题}}</h1>
     <p>{{方案概述：围绕客户最关心的经营问题，说明在不重建原有业务流程的前提下，用企业微信智能表格能拿到什么结果。60~120字}}</p>
     <div class="chips">
-      <span class="chip">{{标签1：客户已有系统}}</span>
+      <span class="chip">{{标签1}}</span>
       <span class="chip">{{标签2}}</span>
       <span class="chip">{{标签3}}</span>
       <span class="chip">{{标签4}}</span>
@@ -89,7 +113,7 @@ section{margin-top:38px}.section-head{display:flex;justify-content:space-between
     </div>
   </div>
   <div class="board">
-    <div class="board-head"><div class="board-title">{{看板名称，如：管理层经营看板}}</div><div class="dots"><i></i><i></i><i></i></div></div>
+    <div class="board-head"><div class="board-title">{{看板名称，如：管理层经营日报看板}}</div><div class="dots"><i></i><i></i><i></i></div></div>
     <div class="kpis">
       <div class="kpi"><b>{{KPI1数值}}</b><span>{{KPI1名称}}</span></div>
       <div class="kpi"><b>{{KPI2数值}}</b><span>{{KPI2名称}}</span></div>
@@ -97,10 +121,21 @@ section{margin-top:38px}.section-head{display:flex;justify-content:space-between
     </div>
     <div class="fake-table">
       <div class="row head"><span>{{列1}}</span><span>{{列2}}</span><span>{{列3}}</span><span>状态</span></div>
-      <div class="row"><span>{{行1列1}}</span><span>{{行1列2}}</span><span>{{行1列3}}</span><span><i class="tag green">{{状态}}</i></span></div>
-      <div class="row"><span>{{行2列1}}</span><span>{{行2列2}}</span><span>{{行2列3}}</span><span><i class="tag blue">{{状态}}</i></span></div>
-      <div class="row"><span>{{行3列1}}</span><span>{{行3列2}}</span><span>{{行3列3}}</span><span><i class="tag orange">{{状态}}</i></span></div>
+      <div class="row"><span>{{行1列1}}</span><span>{{行1列2}}</span><span>{{行1列3}}</span><span><i class="tag green">{{状态1}}</i></span></div>
+      <div class="row"><span>{{行2列1}}</span><span>{{行2列2}}</span><span>{{行2列3}}</span><span><i class="tag blue">{{状态2}}</i></span></div>
+      <div class="row"><span>{{行3列1}}</span><span>{{行3列2}}</span><span>{{行3列3}}</span><span><i class="tag orange">{{状态3}}</i></span></div>
     </div>
+  </div>
+</section>
+
+<!-- ███ 00 需求总览量化 G（锁死：4指标卡）███ -->
+<section>
+  <div class="section-head"><div class="section-title"><div class="kicker">00 / Overview</div><h2>需求总览</h2></div><p class="section-desc">{{需求总览导语：基于客户提出的需求，梳理本方案的建设范围}}</p></div>
+  <div class="grid grid-4">
+    <div class="card" style="text-align:center"><h3 style="font-size:34px;color:#1677ff">{{X}}</h3><p>核心业务场景</p></div>
+    <div class="card" style="text-align:center"><h3 style="font-size:34px;color:#1677ff">{{X}}</h3><p>核心智能表</p></div>
+    <div class="card" style="text-align:center"><h3 style="font-size:34px;color:#1677ff">{{X}}</h3><p>项功能点</p></div>
+    <div class="card" style="text-align:center"><h3 style="font-size:34px;color:#1677ff">{{X}}</h3><p>经营看板</p></div>
   </div>
 </section>
 
@@ -115,11 +150,11 @@ section{margin-top:38px}.section-head{display:flex;justify-content:space-between
   </div>
 </section>
 
-<!-- ███ 02 需求洞察（锁死：左蓝色主判断卡 + 右编号列表）列表条数可 3~5 条 ███ -->
+<!-- ███ 02 需求洞察（锁死：左蓝色主判断卡 + 右编号痛点列表）███ -->
 <section id="insight">
-  <div class="section-head"><div class="section-title"><div class="kicker">02 / Insight</div><h2>需求洞察</h2></div><p class="section-desc">{{需求洞察导语：客户真实需求不是再做一套系统，而是……}}</p></div>
+  <div class="section-head"><div class="section-title"><div class="kicker">02 / Insight</div><h2>需求洞察</h2></div><p class="section-desc">{{需求洞察导语}}</p></div>
   <div class="insight">
-    <div class="main-insight"><h3>核心判断：{{一句最关键的方案判断}}</h3><p>{{展开说明，为什么这样判断，对应客户哪句原话}}</p></div>
+    <div class="main-insight"><h3>{{核心判断：一句最关键的方案判断}}</h3><p>{{展开说明，为什么这样判断，对应客户哪句原话}}</p></div>
     <div class="list">
       <div class="item"><div class="num">1</div><div><b>{{痛点1标题}}</b><span>{{痛点1说明}}</span></div></div>
       <div class="item"><div class="num">2</div><div><b>{{痛点2标题}}</b><span>{{痛点2说明}}</span></div></div>
@@ -129,42 +164,136 @@ section{margin-top:38px}.section-head{display:flex;justify-content:space-between
   </div>
 </section>
 
-<!-- ███ 03 核心业务场景拆解（锁死：厚 module 卡，每卡左侧大序号 + 右侧三点钉）卡片数 2~4 个 ███ -->
+<!-- ███ 03 核心业务场景拆解（锁死：厚 module 卡，每卡左侧大序号 + 右侧三点钉）███ -->
 <section id="scenario">
-  <div class="section-head"><div class="section-title"><div class="kicker">03 / Scenarios</div><h2>核心业务场景拆解</h2></div><p class="section-desc">{{场景导语：围绕哪几个经营问题展开}}</p></div>
+  <div class="section-head"><div class="section-title"><div class="kicker">03 / Scenarios</div><h2>核心业务场景拆解</h2></div><p class="section-desc">{{场景导语：围绕哪几条主线展开}}</p></div>
   <div class="grid">
-    <div class="module"><div class="module-side"><b>01</b><span>{{场景1简称}}</span></div><div class="module-body"><h3>{{场景1标题}}</h3><p>{{场景1说明}}</p><div class="points"><div class="point"><b>数据源</b>{{对象}}</div><div class="point"><b>维度</b>{{维度}}</div><div class="point"><b>使用对象</b>{{角色}}</div></div></div></div>
-    <div class="module"><div class="module-side"><b>02</b><span>{{场景2简称}}</span></div><div class="module-body"><h3>{{场景2标题}}</h3><p>{{场景2说明}}</p><div class="points"><div class="point"><b>数据源</b>{{对象}}</div><div class="point"><b>维度</b>{{维度}}</div><div class="point"><b>使用对象</b>{{角色}}</div></div></div></div>
-    <div class="module"><div class="module-side"><b>03</b><span>{{场景3简称}}</span></div><div class="module-body"><h3>{{场景3标题}}</h3><p>{{场景3说明}}</p><div class="points"><div class="point"><b>能力</b>{{能力}}</div><div class="point"><b>价值</b>{{价值}}</div><div class="point"><b>边界</b>{{边界}}</div></div></div></div>
+    <div class="module"><div class="module-side"><b>01</b><span>{{场景1简称}}</span></div><div class="module-body"><h3>{{场景1标题}}</h3><p>{{场景1说明}}</p>
+      <div class="caps-inline"><span>{{能力点1}}</span><span>{{能力点2}}</span><span>{{能力点3}}</span></div>
+      <div class="points"><div class="point"><b>数据源</b>{{对象}}</div><div class="point"><b>维度</b>{{维度}}</div><div class="point"><b>使用对象</b>{{角色}}</div></div>
+      <div class="caps-inline"><span style="background:#ecfdf3;border-color:#b7ebce;color:#0a7a44"><b>价值：</b>{{价值}}</span></div></div></div>
+    <div class="module"><div class="module-side"><b>02</b><span>{{场景2简称}}</span></div><div class="module-body"><h3>{{场景2标题}}</h3><p>{{场景2说明}}</p>
+      <div class="caps-inline"><span>{{能力点1}}</span><span>{{能力点2}}</span><span>{{能力点3}}</span></div>
+      <div class="points"><div class="point"><b>数据源</b>{{对象}}</div><div class="point"><b>维度</b>{{维度}}</div><div class="point"><b>使用对象</b>{{角色}}</div></div>
+      <div class="caps-inline"><span style="background:#ecfdf3;border-color:#b7ebce;color:#0a7a44"><b>价值：</b>{{价值}}</span></div></div></div>
+    <div class="module"><div class="module-side"><b>03</b><span>{{场景3简称}}</span></div><div class="module-body"><h3>{{场景3标题}}</h3><p>{{场景3说明}}</p>
+      <div class="caps-inline"><span>{{能力点1}}</span><span>{{能力点2}}</span><span>{{能力点3}}</span></div>
+      <div class="points"><div class="point"><b>数据源</b>{{对象}}</div><div class="point"><b>维度</b>{{维度}}</div><div class="point"><b>使用对象</b>{{角色}}</div></div>
+      <div class="caps-inline"><span style="background:#ecfdf3;border-color:#b7ebce;color:#0a7a44"><b>价值：</b>{{价值}}</span></div></div></div>
   </div>
 </section>
 
-<!-- ███ 04 企业微信能力与定制服务架构（锁死：4 层分层架构图）层数固定 4 层，每层 4 cell ███ -->
+<!-- ███ 04 需求能力映射（锁死：可实现度分布条 + 逐项判定表）███ -->
+<section id="cap">
+  <div class="section-head"><div class="section-title"><div class="kicker">04 / Capability</div><h2>需求能力映射（诚实评估）</h2></div><p class="section-desc">逐项判定智能表格能不能做、怎么做，做不到的给替代方案。</p></div>
+  <div class="dist" style="margin-bottom:18px">
+    <div class="d g"><b>{{原生数量}}</b><span>原生可实现</span></div>
+    <div class="d y"><b>{{降级数量}}</b><span>降级可实现</span></div>
+    <div class="d r"><b>{{二期数量}}</b><span>需外部/二期</span></div>
+  </div>
+  <div class="bar"><i class="bg" style="width:{{原生占比}}%"></i><i class="by" style="width:{{降级占比}}%"></i><i class="br" style="width:{{二期占比}}%"></i></div>
+  <div class="table" style="margin-top:18px"><table><thead><tr><th>需求功能</th><th>实现方式</th><th>判定</th><th>替代/说明</th></tr></thead><tbody>
+    <tr><td>{{需求1}}</td><td>{{实现方式1}}</td><td><span class="subtag g">原生</span></td><td>—</td></tr>
+    <tr><td>{{需求2}}</td><td>{{实现方式2}}</td><td><span class="subtag y">降级</span></td><td>{{替代方案2}}</td></tr>
+    <tr><td>{{需求3}}</td><td>{{实现方式3}}</td><td><span class="subtag r">二期</span></td><td>{{替代方案3}}</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- ███ 05 架构（锁死：4层架构图）███ -->
 <section>
-  <div class="section-head"><div class="section-title"><div class="kicker">04 / Architecture</div><h2>企业微信能力与定制服务架构</h2></div><p class="section-desc">{{架构导语：采用什么样的轻量架构链路}}</p></div>
+  <div class="section-head"><div class="section-title"><div class="kicker">05 / Architecture</div><h2>企业微信能力与定制服务架构</h2></div><p class="section-desc">{{架构导语}}</p></div>
   <div class="arch">
-    <div class="layer"><div class="label">业务系统层</div><div class="cells"><div class="cell">{{源对象1}}</div><div class="cell">{{源对象2}}</div><div class="cell">{{源对象3}}</div><div class="cell">{{源对象4}}</div></div></div>
+    <div class="layer"><div class="label">业务录入层</div><div class="cells"><div class="cell">{{录入1}}</div><div class="cell">{{录入2}}</div><div class="cell">{{录入3}}</div><div class="cell">{{录入4}}</div></div></div>
     <div class="layer"><div class="label">智能表格层</div><div class="cells"><div class="cell">{{底表1}}</div><div class="cell">{{底表2}}</div><div class="cell">{{底表3}}</div><div class="cell">{{权限保护}}</div></div></div>
     <div class="layer"><div class="label">看板分析层</div><div class="cells"><div class="cell">{{看板1}}</div><div class="cell">{{看板2}}</div><div class="cell">{{看板3}}</div><div class="cell">{{下钻能力}}</div></div></div>
     <div class="layer"><div class="label">扩展能力层</div><div class="cells"><div class="cell">{{扩展1}}</div><div class="cell">{{扩展2}}</div><div class="cell">{{扩展3}}</div><div class="cell">{{扩展4}}</div></div></div>
   </div>
 </section>
 
-<!-- ███ 05 建议建设模块（锁死：表格）行数按真实表/看板数量增减 ███ -->
-<section id="table">
-  <div class="section-head"><div class="section-title"><div class="kicker">05 / Modules</div><h2>建议建设模块</h2></div><p class="section-desc">{{模块导语：本期核心建几张表 + 几个看板}}</p></div>
-  <div class="table"><table><thead><tr><th>表/看板</th><th>定位</th><th>使用对象</th><th>阶段</th></tr></thead><tbody>
-    <tr><td>{{表1}}</td><td>{{定位}}</td><td>{{对象}}</td><td>{{一期/二期}}</td></tr>
-    <tr><td>{{表2}}</td><td>{{定位}}</td><td>{{对象}}</td><td>{{一期/二期}}</td></tr>
-    <tr><td>{{表3}}</td><td>{{定位}}</td><td>{{对象}}</td><td>{{一期/二期}}</td></tr>
-    <tr><td>{{看板1}}</td><td>{{定位}}</td><td>{{对象}}</td><td>{{一期/二期}}</td></tr>
-    <tr><td>{{看板2}}</td><td>{{定位}}</td><td>{{对象}}</td><td>{{一期/二期}}</td></tr>
+<!-- ███ 06 建议建设模块（锁死：表格）███ -->
+<section>
+  <div class="section-head"><div class="section-title"><div class="kicker">06 / Modules</div><h2>建议建设模块</h2></div><p class="section-desc">{{模块导语}}</p></div>
+  <div class="table"><table><thead><tr><th>模块</th><th>子功能与能力点</th><th>使用对象</th><th>阶段</th></tr></thead><tbody>
+    <tr><td>{{表1}}</td><td>{{能力点}}</td><td>{{对象}}</td><td><span class="subtag g">一期</span></td></tr>
+    <tr><td>{{表2}}</td><td>{{能力点}}</td><td>{{对象}}</td><td><span class="subtag g">一期</span></td></tr>
+    <tr><td>{{表3}}</td><td>{{能力点}}</td><td>{{对象}}</td><td><span class="subtag y">二期评估</span></td></tr>
   </tbody></table></div>
 </section>
 
-<!-- ███ 06 实施路径建议（锁死：4 个 phase 时间线）阶段数固定 4 ███ -->
+<!-- ███ 07 数据蓝图（锁死：字段归Step5，只留表名+用途+角色）███ -->
+<section id="blueprint">
+  <div class="section-head"><div class="section-title"><div class="kicker">07 / Blueprint</div><h2>数据蓝图预告</h2></div><p class="section-desc">本方案将搭建以下核心表。具体字段、类型、公式与示例数据，将在方案确认后的智能表格搭建环节展开，并与贵司团队共创定准。</p></div>
+  <div class="grid grid-3">
+    <div class="card"><h3>{{表1名}}</h3><p>{{表1用途}}<br><span style="color:#1677ff;font-weight:700">使用角色：</span>{{角色1}}</p></div>
+    <div class="card"><h3>{{表2名}}</h3><p>{{表2用途}}<br><span style="color:#1677ff;font-weight:700">使用角色：</span>{{角色2}}</p></div>
+    <div class="card"><h3>{{表3名}}</h3><p>{{表3用途}}<br><span style="color:#1677ff;font-weight:700">使用角色：</span>{{角色3}}</p></div>
+  </div>
+  <div class="blueprint-note">💡 <b>关于字段：</b>{{字段说明：具体字段将在方案确认后的智能表格搭建环节（Step5）展开，与贵司操作团队共创定准，确保表结构真正贴合业务，而非"demo好看上线难用"。}}</div>
+</section>
+
+<!-- ███ 08 经营看板效果预览（v11新增：纯CSS/SVG手绘图表）███ -->
+<section id="viz">
+  <div class="section-head"><div class="section-title"><div class="kicker">08 / Dashboard</div><h2>经营看板效果预览</h2></div><p class="section-desc">上线后老板在企业微信里看到的多店经营日报大致长这样（示意数据）。</p></div>
+  <div class="viz-grid">
+    <div class="viz">
+      <h4>{{图表1名称，如：今日营收项目占比}}</h4>
+      <svg viewBox="0 0 240 200" width="100%" height="200">
+        <circle cx="110" cy="100" r="76" fill="#eef3fa"/>
+        <path d="M110,100 L110,24 A76,76 0 0,1 182,124 Z" fill="#1677ff"/>
+        <path d="M110,100 L182,124 A76,76 0 0,1 96,174 Z" fill="#21c8f6"/>
+        <path d="M110,100 L96,174 A76,76 0 0,1 40,90 Z" fill="#17b26a"/>
+        <circle cx="110" cy="100" r="42" fill="#fff"/>
+        <text x="110" y="96" text-anchor="middle" font-size="13" fill="#667085">{{图表1中心标签}}</text>
+        <text x="110" y="116" text-anchor="middle" font-size="18" font-weight="700" fill="#101828">{{图表1中心数值}}</text>
+      </svg>
+      <div class="legend"><span><i style="background:#1677ff"></i>{{图例1}}</span><span><i style="background:#21c8f6"></i>{{图例2}}</span><span><i style="background:#17b26a"></i>{{图例3}}</span></div>
+    </div>
+    <div class="viz">
+      <h4>{{图表2名称，如：近7日客流}}</h4>
+      <svg viewBox="0 0 300 200" width="100%" height="200">
+        <line x1="30" y1="170" x2="290" y2="170" stroke="#d0d7de"/>
+        <line x1="30" y1="20" x2="30" y2="170" stroke="#d0d7de"/>
+        <g>
+          <rect x="40" y="70" width="8" height="100" fill="#1677ff"/><rect x="49" y="96" width="8" height="74" fill="#21c8f6"/><rect x="58" y="120" width="8" height="50" fill="#17b26a"/>
+          <rect x="78" y="60" width="8" height="110" fill="#1677ff"/><rect x="87" y="90" width="8" height="80" fill="#21c8f6"/><rect x="96" y="116" width="8" height="54" fill="#17b26a"/>
+          <rect x="116" y="88" width="8" height="82" fill="#1677ff"/><rect x="125" y="110" width="8" height="60" fill="#21c8f6"/><rect x="134" y="130" width="8" height="40" fill="#17b26a"/>
+        </g>
+        <text x="30" y="14" font-size="11" fill="#888">{{图表2单位}}</text>
+      </svg>
+      <div class="legend"><span><i style="background:#1677ff"></i>{{系列1}}</span><span><i style="background:#21c8f6"></i>{{系列2}}</span><span><i style="background:#17b26a"></i>{{系列3}}</span></div>
+    </div>
+  </div>
+  <div class="viz" style="margin-top:16px">
+    <h4>{{图表3名称，如：近30天热门服务项目 TOP6}}</h4>
+    <div class="hbars">
+      <div class="hbar-row"><span>{{项目1}}</span><div class="hbar-track"><div class="hbar-fill" style="width:{{占比1}}%"></div></div><span>{{数值1}}</span></div>
+      <div class="hbar-row"><span>{{项目2}}</span><div class="hbar-track"><div class="hbar-fill" style="width:{{占比2}}%"></div></div><span>{{数值2}}</span></div>
+      <div class="hbar-row"><span>{{项目3}}</span><div class="hbar-track"><div class="hbar-fill" style="width:{{占比3}}%"></div></div><span>{{数值3}}</span></div>
+    </div>
+  </div>
+  <div class="viz" style="margin-top:16px">
+    <h4>数字化前后经营效率对比（示意）</h4>
+    <div class="cmp">
+      <div class="cmp-row"><span>{{维度1}}</span><div class="before">{{实施前}}</div><div class="after">{{实施后}}</div></div>
+      <div class="cmp-row"><span>{{维度2}}</span><div class="before">{{实施前}}</div><div class="after">{{实施后}}</div></div>
+      <div class="cmp-row"><span>{{维度3}}</span><div class="before">{{实施前}}</div><div class="after">{{实施后}}</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ███ 09 效率前后对比（锁死：表格）███ -->
+<section>
+  <div class="section-head"><div class="section-title"><div class="kicker">09 / Impact</div><h2>数字化前后效率对比</h2></div><p class="section-desc">以下为基于同类项目经验的参考预估，实际以试运行数据为准。</p></div>
+  <div class="table"><table><thead><tr><th>维度</th><th>实施前</th><th>实施后</th></tr></thead><tbody>
+    <tr><td>{{维度1}}</td><td>{{实施前1}}</td><td>{{实施后1}}(预估)</td></tr>
+    <tr><td>{{维度2}}</td><td>{{实施前2}}</td><td>{{实施后2}}(预估)</td></tr>
+    <tr><td>{{维度3}}</td><td>{{实施前3}}</td><td>{{实施后3}}(预估)</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- ███ 10 实施路径（锁死：4阶段时间线）███ -->
 <section id="roadmap">
-  <div class="section-head"><div class="section-title"><div class="kicker">06 / Roadmap</div><h2>实施路径建议</h2></div><p class="section-desc">{{实施路径导语}}</p></div>
+  <div class="section-head"><div class="section-title"><div class="kicker">10 / Roadmap</div><h2>实施路径建议</h2></div><p class="section-desc">{{实施路径导语}}</p></div>
   <div class="timeline">
     <div class="phase"><span>第 1 阶段</span><h3>{{阶段1标题}}</h3><p>{{阶段1内容}}</p></div>
     <div class="phase"><span>第 2 阶段</span><h3>{{阶段2标题}}</h3><p>{{阶段2内容}}</p></div>
@@ -173,9 +302,9 @@ section{margin-top:38px}.section-head{display:flex;justify-content:space-between
   </div>
 </section>
 
-<!-- ███ 07 方案价值（锁死：6 张 card）███ -->
+<!-- ███ 11 方案价值（锁死：6张card）███ -->
 <section>
-  <div class="section-head"><div class="section-title"><div class="kicker">07 / Value</div><h2>方案价值</h2></div><p class="section-desc">{{价值导语}}</p></div>
+  <div class="section-head"><div class="section-title"><div class="kicker">11 / Value</div><h2>方案价值</h2></div><p class="section-desc">{{价值导语}}</p></div>
   <div class="grid grid-3">
     <div class="card"><h3>{{价值1标题}}</h3><p>{{价值1说明}}</p></div>
     <div class="card"><h3>{{价值2标题}}</h3><p>{{价值2说明}}</p></div>
@@ -186,14 +315,28 @@ section{margin-top:38px}.section-head{display:flex;justify-content:space-between
   </div>
 </section>
 
-<!-- ███ 08 待确认问题（锁死：表格）行数按真实问题增减；此处可保留「⚠️ 待确认」语义但内容必须是真实问题 ███ -->
+<!-- ███ 12 落地共创信任状（v11新增：蓝色渐变信任状）███ -->
 <section>
-  <div class="section-head"><div class="section-title"><div class="kicker">08 / Confirm</div><h2>待确认问题</h2></div><p class="section-desc">{{待确认导语}}</p></div>
+  <div class="section-head"><div class="section-title"><div class="kicker">12 / Collaboration</div><h2>落地共创说明</h2></div><p class="section-desc">为什么我们不在售前给一份"看着完整"的字段表——因为字段权限得和您的团队一起定。</p></div>
+  <div class="trust">
+    <h3>{{信任状标题}}</h3>
+    <p>{{信任状正文：讲清"30-50%现场调整正常且负责任"，字段在搭建环节共创}}</p>
+    <div class="steps">
+      <div class="stp"><b>① 需求共创</b><span>{{步骤1说明}}</span></div>
+      <div class="stp"><b>② 字段定准</b><span>{{步骤2说明}}</span></div>
+      <div class="stp"><b>③ 原型试跑</b><span>{{步骤3说明}}</span></div>
+      <div class="stp"><b>④ 定稿上线</b><span>{{步骤4说明}}</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ███ 13 待确认问题（锁死：表格）███ -->
+<section>
+  <div class="section-head"><div class="section-title"><div class="kicker">13 / Confirm</div><h2>待确认问题</h2></div><p class="section-desc">{{待确认导语}}</p></div>
   <div class="table"><table><thead><tr><th>问题</th><th>为什么要确认</th><th>优先级</th></tr></thead><tbody>
-    <tr><td>{{问题1}}</td><td>{{原因1}}</td><td>{{高/中/低}}</td></tr>
-    <tr><td>{{问题2}}</td><td>{{原因2}}</td><td>{{高/中/低}}</td></tr>
-    <tr><td>{{问题3}}</td><td>{{原因3}}</td><td>{{高/中/低}}</td></tr>
-    <tr><td>{{问题4}}</td><td>{{原因4}}</td><td>{{高/中/低}}</td></tr>
+    <tr><td>{{问题1}}</td><td>{{原因1}}</td><td><span class="subtag r">高</span></td></tr>
+    <tr><td>{{问题2}}</td><td>{{原因2}}</td><td><span class="subtag y">中</span></td></tr>
+    <tr><td>{{问题3}}</td><td>{{原因3}}</td><td><span class="subtag g">低</span></td></tr>
   </tbody></table></div>
 </section>
 
