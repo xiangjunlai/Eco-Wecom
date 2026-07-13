@@ -1228,8 +1228,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
           </div>
           <div class="s4-artifact-tabs" id="presales-artifact-tabs">
             <button class="s4-artifact-tab active" data-tab="chat" onclick="switchArtifactTab('presales','chat')">💬 对话</button>
-            <button class="s4-artifact-tab" data-tab="versions" onclick="switchArtifactTab('presales','versions')">📄 版本 <span id="presales-v-count" style="font-size:10px">0</span></button>
-            <button class="s4-artifact-tab" data-tab="visits" onclick="switchArtifactTab('presales','visits')">👁 访客 <span id="presales-visit-count" style="font-size:10px">0</span></button>
+            <button class="s4-artifact-tab" data-tab="versions" onclick="switchArtifactTab('presales','versions')">📄 版本 <span id="s4-presales-version-count" style="font-size:10px">0</span></button>
+            <button class="s4-artifact-tab" data-tab="visits" onclick="switchArtifactTab('presales','visits')">👁 访客 <span id="s4-presales-visit-num" style="font-size:10px">0</span></button>
           </div>
           <div class="s4-artifact-panel active" id="presales-panel-chat">
             <div class="s4-chat-scroll" id="presales-chat-scroll">
@@ -1249,7 +1249,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             </div>
           </div>
           <div class="s4-artifact-panel" id="presales-panel-versions">
-            <div id="presales-version-list" style="padding:10px 4px"></div>
+            <div id="s4-presales-version-list" style="padding:10px 4px"></div>
           </div>
           <div class="s4-artifact-panel" id="presales-panel-visits">
             <div style="padding:8px 4px">
@@ -1258,7 +1258,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
                   <option value="">全部设备</option><option value="电脑">电脑</option><option value="手机">手机</option><option value="平板">平板</option>
                 </select>
               </div>
-              <div id="presales-visits-list" style="max-height:220px;overflow-y:auto"></div>
+              <div id="s4-presales-visits-list" style="max-height:220px;overflow-y:auto"></div>
             </div>
           </div>
           <div style="padding:10px 4px 4px;border-top:1px solid #f0f2f5;display:flex;gap:6px">
@@ -1275,7 +1275,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
           </div>
           <div class="s4-artifact-tabs" id="technical-artifact-tabs">
             <button class="s4-artifact-tab active" data-tab="chat" onclick="switchArtifactTab('technical','chat')">💬 对话</button>
-            <button class="s4-artifact-tab" data-tab="versions" onclick="switchArtifactTab('technical','versions')">📄 版本 <span id="technical-v-count" style="font-size:10px">0</span></button>
+            <button class="s4-artifact-tab" data-tab="versions" onclick="switchArtifactTab('technical','versions')">📄 版本 <span id="s4-technical-version-count" style="font-size:10px">0</span></button>
           </div>
           <div class="s4-artifact-panel active" id="technical-panel-chat">
             <div class="s4-chat-scroll" id="technical-chat-scroll">
@@ -1295,7 +1295,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
             </div>
           </div>
           <div class="s4-artifact-panel" id="technical-panel-versions">
-            <div id="technical-version-list" style="padding:10px 4px"></div>
+            <div id="s4-technical-version-list" style="padding:10px 4px"></div>
           </div>
           <div style="padding:10px 4px 4px;border-top:1px solid #f0f2f5;display:flex;gap:6px">
             <button class="btn secondary" onclick="toggleTechnicalPreview()" style="height:30px;font-size:12px;flex:1">👁 预览</button>
