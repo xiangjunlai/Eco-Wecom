@@ -4946,7 +4946,7 @@ async def get_client_visits(client_id: int,
     cursor = conn.cursor()
 
     # 组合筛选条件
-    sql = "SELECT * FROM visit_tracking WHERE client_id=? AND file_url LIKE '/outputs/%'"
+    sql = "SELECT * FROM visit_tracking WHERE client_id=? AND file_url LIKE '/public/s/%'"
     params = [client_id]
     if device:
         sql += " AND device_type=?"
@@ -4959,7 +4959,7 @@ async def get_client_visits(client_id: int,
         params.append(date_to + " 23:59:59")
 
     # 总数
-    cursor.execute("SELECT COUNT(*) FROM visit_tracking WHERE client_id=? AND file_url LIKE '/outputs/%'", (client_id,))
+    cursor.execute("SELECT COUNT(*) FROM visit_tracking WHERE client_id=? AND file_url LIKE '/public/s/%'", (client_id,))
     total = cursor.fetchone()[0]
 
     sql += " ORDER BY last_visit_at DESC LIMIT ? OFFSET ?"
