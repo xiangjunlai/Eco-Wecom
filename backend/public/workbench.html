@@ -3205,6 +3205,7 @@ function handleSuggestionClick(btn) {
 function handleOptionSelect(btn) {
   const ws = btn.dataset.ws;
   const opt = btn.dataset.opt;
+  alert('选中了: ' + opt); // DEBUG
   _wsState[ws].aiHist.push({ role: 'user', content: opt });
   s4ChatSend(ws);
 }
