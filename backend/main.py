@@ -4720,6 +4720,8 @@ async def publish_step4_report(body: dict, user: dict = Depends(require_auth)):
 @app.post("/api/step4/chat-suggest")
 async def step4_chat_suggest(body: dict, user: dict = Depends(require_auth)):
     """多轮对话：AI 诊断5维度 + 追问机制"""
+    import logging
+    logger = logging.getLogger("uvicorn")
     client_id = body.get("client_id")
     doc_type = body.get("doc_type")  # 'presales' | 'technical'
     content = body.get("content", "")[:3000]
