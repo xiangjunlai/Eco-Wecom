@@ -3132,22 +3132,20 @@ async function fetchAiSuggestions(ws, userInput) {
 
 // 渲染诊断建议到固定区域（诊断卡片）+ chips
 function renderAiSuggestions(ws, suggestions) {
-  // 诊断卡片（固定区）
   const container = document.getElementById('s4-' + ws + '-suggest-cards');
+  const icons = ['💡','📊','🎯','✨','📋'];
   if (container) {
-    const icons = ['💡','📊','🎯','✨','📋'];
     container.innerHTML = suggestions.map((s, i) =>
-      '<button class="ws-suggest-card" onclick="handleSuggestionClick(\'' + ws + '\',' + i + ',\'' + (s.prompt||'').replace(/'/g,'\\'') + '\')">' +
+      '<button class="ws-suggest-card" data-prompt="' + escAttr(s.prompt||'') + '" data-ws="' + ws + '" data-idx="' + i + '" onclick="handleSuggestionClick(this)">' +
         '<div class="ws-suggest-icon">' + icons[i % icons.length] + '</div>' +
         '<div class="ws-suggest-text"><strong>' + esc(s.title||'') + '</strong><span>' + esc(s.desc||'') + '</span></div>' +
       '</button>'
     ).join('');
   }
-  // chips（快捷建议，点击填入输入框）
   const chipEl = document.getElementById(ws + '-quick-suggestions');
   if (chipEl) {
     chipEl.innerHTML = suggestions.slice(0, 5).map((s, i) =>
-      '<button class="quick-chip" onclick="handleSuggestionClick(\'' + ws + '\',' + i + ',\'' + (s.prompt||'').replace(/'/g,'\\'') + '\')">' + esc(s.title||'') + '</button>'
+      '<button class="quick-chip" data-prompt="' + escAttr(s.prompt||'') + '" data-ws="' + ws + '" data-idx="' + i + '" onclick="handleSuggestionClick(this)">' + esc(s.title||'') + '</button>'
     ).join('');
   }
 }
@@ -3157,16 +3155,22 @@ function renderAiOptions(ws, options) {
   const container = document.getElementById('s4-' + ws + '-suggest-cards');
   if (container) {
     container.innerHTML = options.map((opt, i) =>
-      '<button class="ws-option-card" onclick="handleOptionSelect(\'' + ws + '\',\'' + opt.replace(/'/g,'\\'') + '\')">' + (i+1) + '. ' + esc(opt) + '</button>'
+      '<button class="ws-option-card" data-ws="' + ws + '" data-opt="' + escAttr(opt) + '" onclick="handleOptionSelect(this)">' + (i+1) + '. ' + esc(opt) + '</button>'
     ).join('');
   }
-  // 清空 chips（追问时不展示）
   const chipEl = document.getElementById(ws + '-quick-suggestions');
   if (chipEl) chipEl.innerHTML = '';
 }
 
+// HTML属性转义（用于data-*属性）
+function escAttr(s) {
+  return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // 处理诊断建议点击 → 填充到输入框
-function handleSuggestionClick(ws, idx, prompt) {
+function handleSuggestionClick(btn) {
+  const ws = btn.dataset.ws;
+  const prompt = btn.dataset.prompt;
   const input = document.getElementById(ws + '-chat-input');
   if (input && prompt) {
     input.value = prompt;
@@ -3176,7 +3180,9 @@ function handleSuggestionClick(ws, idx, prompt) {
 }
 
 // 处理选项选择
-function handleOptionSelect(ws, opt) {
+function handleOptionSelect(btn) {
+  const ws = btn.dataset.ws;
+  const opt = btn.dataset.opt;
   _wsState[ws].aiHist.push({ role: 'user', content: opt });
   s4ChatSend(ws);
 }
