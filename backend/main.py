@@ -4746,49 +4746,38 @@ async def step4_chat_suggest(body: dict, user: dict = Depends(require_auth)):
         }
 
     # 构建多轮对话 prompt
-    system_prompt = f"""你是一个专业的售前方案优化顾问。
+    system_prompt = f"""你是一个经验丰富的售前方案优化顾问，用苏格拉底式追问法帮助客户明确修改方向。
 
-## 你的任务
-分析以下{doc_type == 'presales' and '售前方案HTML' or '技术路线Word'}文档，从 {dimensions} 五个维度进行诊断，给出具体可操作的改进建议。
+## 你的工作方式（严格遵守）
+用户给出修改意见后，你**绝对不要**直接输出建议卡片。你必须：
+1. 先复述你的理解："您是说[你的理解]，对吗？"
+2. 问一个**具体的**追问："您希望怎么改？"（给出2-4个具体选项）
+3. 等用户回复后，再给出确认的修改指令
 
-## 五个诊断维度说明
-- A 内容完整度：是否有封面/客户画像/痛点/方案模块/价值阐述/实施路线图/报价？（技术路线：11节结构完整性）
-- B 案例可信度：有没有真实同行案例、数据支撑？（技术路线：技术选型有无说服力）
-- C 语言风格（仅售前）：太正式/太泛/不够亲切？语气是否符合目标受众？
-- D 差异化：有没有突出相比竞争对手的独特优势？
-- E 其他：逻辑清晰度、篇幅是否合理、重点是否突出？
+**重要规则：**
+- 每轮只问**一个问题**，不要一次问多个
+- 追问选项要具体，不能泛泛而谈
+- 如果用户反馈非常具体（如"案例里加3个同行案例"），直接给出修改指令，不需要追问
+- 技术路线文档（technical）无需C维度（语言风格）
 
-## 当前方案内容
-{content[:2500]}
+## 输出格式（严格JSON，不能有任何其他文字）
+追问时：{{"type":"probing","probing":"追问内容（20字内，一句话）","options":["选项A","选项B","选项C"]}}
+直接指令时：{{"type":"directive","directive":"具体的修改指令（30字内，直接可执行）"}}
+确认理解时：{{"type":"confirm","confirm":"复述用户意图+确认（20字内）","options":["A. 是的", "B. 不对，我意思是..."]}}
+直接输出JSON，不要任何解释前缀。"""
 
-## 诊断要求
-1. 每次诊断给出 2-4 条具体建议，每条格式：
-   - title: 问题描述（10字内，如"缺少同行案例"）
-   - desc: 具体修改方向（15字内，如"建议增加2个制造业案例"）
-   - prompt: 对应的完整修改指令（30字内，如"增加制造业案例：公牛集团、欧普照明"）
-
-2. 如果用户反馈模糊（如"减少篇幅"/"不够好"/"改一下"），必须先追问具体需求：
-   - 返回 type: "options"
-   - options: 列出 2-4 个具体选项让用户选择
-   - 例如用户说"减少篇幅"，追问：
-     ["A. 缩短每个模块的描述文字（保留全部内容）", "B. 删除部分子模块（请说明删哪些）", "C. 合并相似章节"]
-
-3. 如果用户反馈已足够具体，直接生成建议。
-
-## 输出格式
-如果给出建议：{{"type":"suggestions","suggestions":[...]}}
-如果需要追问：{{"type":"options","options":["选项A","选项B",...]}}
-直接输出 JSON，不要任何解释文字。"""
-
-    # 构建对话上下文（最近6轮）
-    recent = history[-6:] if history else []
-    user_msgs = "\n".join([f"用户：{m['content']}" for m in recent if m.get("role") == "user"])
-    ai_msgs = "\n".join([f"顾问：{m['content']}" for m in recent if m.get("role") == "assistant"])
+    # 构建对话上下文（最近4轮）
+    recent = history[-4:] if history else []
+    ctx = "\n".join([f"{'顾问' if m.get('role')=='assistant' else '用户'}：{m.get('content','')}" for m in recent])
 
     user_prompt = f"""## 对话历史
-{ai_msgs}
-{user_msgs}
-用户：{user_input if user_input else '（首次诊断，请分析方案并给出改进建议）'}"""
+{ctx}
+
+## 当前方案内容摘要
+{content[:2000] if content else '（暂无方案内容）'}
+
+## 用户最新反馈
+{user_input if user_input else '（请分析当前方案，给出优化建议，但不直接输出建议卡片，先问一个追问）'}"""
 
     try:
         result = call_minimax(system_prompt, user_prompt, max_tokens=1200)
@@ -4803,10 +4792,10 @@ async def step4_chat_suggest(body: dict, user: dict = Depends(require_auth)):
             if m:
                 data = json.loads(m.group())
             else:
-                data = {"type": "suggestions", "suggestions": []}
+                data = {"type": "raw", "content": raw[:200]}
     except Exception as e:
         logger.warning(f"[chat-suggest] error: {e}")
-        data = {"type": "suggestions", "suggestions": []}
+        data = {"type": "raw", "content": str(e)}
 
     return {"success": True, **data}
 

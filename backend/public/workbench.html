@@ -3112,51 +3112,76 @@ async function fetchAiSuggestions(ws, userInput) {
       })
     });
     const data = await resp.json();
-    _wsState[ws].aiHist.push({ role: 'assistant', content: data.raw || JSON.stringify(data) });
-    if (data.type === 'options' && data.options) {
-      renderAiOptions(ws, data.options);
+    _wsState[ws].aiHist.push({ role: 'assistant', content: JSON.stringify(data) });
+
+    if (data.type === 'probing') {
+      // 追问：在聊天区显示问题 + 渲染选项chips
+      appendChatMsg(ws, 'ai', '🤔 ' + data.probing);
+      renderProbingOptions(ws, data.probing, data.options || []);
       return null;
-    } else if (data.suggestions && data.suggestions.length > 0) {
-      renderAiSuggestions(ws, data.suggestions);
+    } else if (data.type === 'confirm') {
+      // 确认理解：在聊天区显示 + 渲染确认选项
+      appendChatMsg(ws, 'ai', '✅ ' + data.confirm);
+      renderProbingOptions(ws, data.confirm, data.options || []);
       return null;
+    } else if (data.type === 'directive') {
+      // 直接指令：渲染为可执行的建议卡片
+      renderDirective(ws, data.directive);
+      return null;
+    } else {
+      // 兜底：显示原始回复
+      return data.content || '好的，已记录';
     }
-    return data.reply || '好的，已记录你的意见。';
   } catch(e) {
     console.error('fetchAiSuggestions error', e);
     return '⚠️ 网络异常，请重试';
   }
 }
 
-// 渲染诊断建议到固定区域（诊断卡片）+ chips
-function renderAiSuggestions(ws, suggestions) {
+// 渲染追问/确认选项chips
+function renderProbingOptions(ws, question, options) {
+  // 诊断卡片区：显示问题 + 选项
   const container = document.getElementById('s4-' + ws + '-suggest-cards');
-  const icons = ['💡','📊','🎯','✨','📋'];
   if (container) {
-    container.innerHTML = suggestions.map((s, i) =>
-      '<button class="ws-suggest-card" data-prompt="' + escAttr(s.prompt||'') + '" data-ws="' + ws + '" data-idx="' + i + '" onclick="handleSuggestionClick(this)">' +
-        '<div class="ws-suggest-icon">' + icons[i % icons.length] + '</div>' +
-        '<div class="ws-suggest-text"><strong>' + esc(s.title||'') + '</strong><span>' + esc(s.desc||'') + '</span></div>' +
-      '</button>'
-    ).join('');
+    container.innerHTML = '<div style="font-size:12px;color:#667085;margin-bottom:8px;padding:0 4px">' + esc(question) + '</div>' +
+      (options.map((opt, i) =>
+        '<button class="ws-option-card" data-ws="' + ws + '" data-opt="' + escAttr(opt) + '" onclick="handleOptionSelect(this)">' + (i+1) + '. ' + esc(opt) + '</button>'
+      ).join(''));
   }
+  // chips区：也显示选项
   const chipEl = document.getElementById(ws + '-quick-suggestions');
   if (chipEl) {
-    chipEl.innerHTML = suggestions.slice(0, 5).map((s, i) =>
-      '<button class="quick-chip" data-prompt="' + escAttr(s.prompt||'') + '" data-ws="' + ws + '" data-idx="' + i + '" onclick="handleSuggestionClick(this)">' + esc(s.title||'') + '</button>'
+    chipEl.innerHTML = options.map((opt, i) =>
+      '<button class="quick-chip" data-ws="' + ws + '" data-opt="' + escAttr(opt) + '" onclick="handleOptionSelect(this)">' + esc(opt) + '</button>'
     ).join('');
   }
 }
 
-// 渲染 AI 追问选项到固定区域
-function renderAiOptions(ws, options) {
+// 渲染直接指令为建议卡片
+function renderDirective(ws, directive) {
   const container = document.getElementById('s4-' + ws + '-suggest-cards');
   if (container) {
-    container.innerHTML = options.map((opt, i) =>
-      '<button class="ws-option-card" data-ws="' + ws + '" data-opt="' + escAttr(opt) + '" onclick="handleOptionSelect(this)">' + (i+1) + '. ' + esc(opt) + '</button>'
-    ).join('');
+    container.innerHTML = '<button class="ws-suggest-card" data-ws="' + ws + '" data-prompt="' + escAttr(directive) + '" onclick="handleDirectiveClick(this)" style="width:100%;text-align:left">' +
+      '<div class="ws-suggest-icon">🎯</div>' +
+      '<div class="ws-suggest-text"><strong>修改指令</strong><span>' + esc(directive) + '</span></div>' +
+    '</button>';
   }
   const chipEl = document.getElementById(ws + '-quick-suggestions');
-  if (chipEl) chipEl.innerHTML = '';
+  if (chipEl) {
+    chipEl.innerHTML = '<button class="quick-chip" data-ws="' + ws + '" data-prompt="' + escAttr(directive) + '" onclick="handleDirectiveClick(this)">🎯 ' + esc(directive) + '</button>';
+  }
+}
+
+// 处理指令点击 → 填入输入框待发送
+function handleDirectiveClick(btn) {
+  const ws = btn.dataset.ws;
+  const prompt = btn.dataset.prompt;
+  const input = document.getElementById(ws + '-chat-input');
+  if (input && prompt) {
+    input.value = prompt;
+    autoGrow(input);
+    input.focus();
+  }
 }
 
 // HTML属性转义（用于data-*属性）
