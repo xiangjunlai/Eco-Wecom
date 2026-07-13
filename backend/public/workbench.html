@@ -3201,12 +3201,16 @@ function handleSuggestionClick(btn) {
   }
 }
 
-// 处理选项选择
+// 处理选项选择 → 填入输入框，等用户发送
 function handleOptionSelect(btn) {
   const ws = btn.dataset.ws;
   const opt = btn.dataset.opt;
-  _wsState[ws].aiHist.push({ role: 'user', content: opt });
-  s4ChatSend(ws);
+  const input = document.getElementById(ws + '-chat-input');
+  if (input) {
+    input.value = opt;
+    autoGrow(input);
+    input.focus();
+  }
 }
 
 // 快捷生成（用于版本卡片里的"重新生成"）
