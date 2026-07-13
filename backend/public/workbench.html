@@ -2960,8 +2960,8 @@ function loadArtifactVersions(ws) {
   var versions = ws === 'presales'
     ? (Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [])
     : (Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : []);
-  var listEl = document.getElementById(ws + '-version-list');
-  var countEl = document.getElementById(ws + '-v-count');
+  var listEl = document.getElementById('s4-' + ws + '-version-list');
+  var countEl = document.getElementById('s4-' + ws + '-version-count');
   if (countEl) countEl.textContent = versions.length || 0;
   if (!listEl) return;
   if (versions.length === 0) {
