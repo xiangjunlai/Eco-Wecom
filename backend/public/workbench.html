@@ -734,9 +734,9 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 #page4 .ws-input-bar{padding:10px 18px 14px;border-top:1px solid #f0f2f5;background:#fff}
 #page4 .ws-right-panel{display:flex;flex-direction:column;gap:12px;position:sticky;top:0}
 
-/* AI 诊断建议卡片 */
-.ws-suggest-cards{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
-.ws-suggest-card{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#fff;border:1px solid #dce4f8;border-radius:10px;cursor:pointer;transition:all .15s;text-align:left;width:100%;font-family:inherit}
+/* AI 诊断建议卡片（固定在对话区顶部，不撑大页面） */
+.ws-suggest-cards{display:flex;flex-direction:column;gap:6px;margin-bottom:4px;max-height:140px;overflow-y:auto;flex-shrink:0}
+.ws-suggest-card{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#fff;border:1px solid #dce4f8;border-radius:10px;cursor:pointer;transition:all .15s;text-align:left;width:100%;font-family:inherit;flex-shrink:0}
 .ws-suggest-card:hover{border-color:#1263e6;background:#f0f6ff;transform:translateY(-1px);box-shadow:0 2px 8px rgba(18,99,230,.1)}
 .ws-suggest-icon{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#eef3ff,#f5f7ff);display:grid;place-items:center;font-size:13px;flex-shrink:0}
 .ws-suggest-text{flex:1;min-width:0}
@@ -744,7 +744,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .ws-suggest-text span{font-size:11px;color:#98a2b3}
 
 /* 快捷建议chips */
-.quick-suggestions{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px}
+.quick-suggestions{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px;max-height:80px;overflow-y:auto}
 .quick-chip{padding:3px 9px;background:#f0f4ff;color:#1263e6;border-radius:999px;font-size:11px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
 .quick-chip:hover{background:#1263e6;color:#fff}
 
@@ -3205,7 +3205,6 @@ function handleSuggestionClick(btn) {
 function handleOptionSelect(btn) {
   const ws = btn.dataset.ws;
   const opt = btn.dataset.opt;
-  alert('选中了: ' + opt); // DEBUG
   _wsState[ws].aiHist.push({ role: 'user', content: opt });
   s4ChatSend(ws);
 }
