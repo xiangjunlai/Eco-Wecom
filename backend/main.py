@@ -107,9 +107,15 @@ def call_mcp(tool_name: str, arguments: dict) -> dict:
     """调用企微 API（通过本地认证的 wecom-cli）"""
     import subprocess, json as jsonmod
 
+    # 使用新机器人凭证（解决旧机器人创建的文档无权限访问问题）
+    env = {
+        "WECOM_BOT_ID": "aibmNuLSHYId2jvHy68XtU6HWhwCHZnvkpD",
+        "WECOM_BOT_SECRET": "qE6ePDNGRv8PZZft7a1aqaQpNHQLtw8lIcjfJmwc55A",
+    }
+
     cmd = ["wecom-cli", "doc", tool_name, "--json", jsonmod.dumps(arguments, ensure_ascii=False)]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, env={**__import__("os").environ, **env})
         output = result.stdout
         if result.returncode != 0 and result.stderr:
             if "authorization expired" in result.stderr.lower():
@@ -195,31 +201,33 @@ def call_minimax(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -
         return {"content": f"Error: {str(e)}", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
 
 
-def call_codebuddy(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -> dict:
-    """调用 CodeBuddy CLI（单行模式），300秒超时，最多一次重试
+def call_codebuddy(system_prompt: str, user_prompt: str, max_tokens: int = 4000, timeout: int = 600) -> dict:
+    """调用 CodeBuddy CLI（单行模式），默认600秒超时，最多一次重试
+    如果第一次输出不是 HTML（不以 < 开头），自动重试并强制要求只输出 HTML
     返回 {"content": str, "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}"""
     import subprocess
 
     full_prompt = f"{system_prompt}\n\n---\n\n{user_prompt}"
 
-    def _do_request():
+    def _do_request(extra_directive=""):
+        prompt_to_send = full_prompt + ("\n\n" + extra_directive if extra_directive else "")
         result = subprocess.run(
-            ["codebuddy", full_prompt, "-p", "--output-format", "text"],
-            capture_output=True, text=True, timeout=300
+            ["codebuddy", prompt_to_send, "-p", "-y", "--output-format", "text"],
+            capture_output=True, text=True, timeout=timeout
         )
-        # 如果 stdout 为空，尝试 stderr（有些版本错误输出在 stderr）
         content = result.stdout.strip() if result.stdout.strip() else result.stderr.strip()
-        return {"content": content, "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
+        return content
 
     try:
-        return _do_request()
+        content = _do_request()
+        # 如果输出不是 HTML（不以 < 开头），重试并强制要求只输出 HTML
+        if not content.startswith("<"):
+            content = _do_request(
+                "【重要】上一次输出不是 HTML。请直接在消息中输出完整的 HTML 代码（以 <html 开头），不要输出任何解释文字、分析说明或 markdown 代码块包裹。只需 HTML 代码本身。"
+            )
+        return {"content": content, "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
     except subprocess.TimeoutExpired:
-        try:
-            return _do_request()
-        except subprocess.TimeoutExpired:
-            return {"content": "Error: CodeBuddy CLI 执行超时（300秒），请稍后重试", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
-        except Exception as e:
-            return {"content": f"Error: {str(e)}", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
+        return {"content": f"Error: CodeBuddy CLI 执行超时（{timeout}秒），请稍后重试", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
     except Exception as e:
         return {"content": f"Error: {str(e)}", "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}
 
@@ -2059,6 +2067,86 @@ C.【不许自相矛盾】客户名，行业、主场景在全文必须一致。
 
 
 # Prompt 5: 可视化 HTML 内容生成
+# Prompt 6: 技术路线及报价方案（文档风·11章26表·可下载Word）— V11
+STEP4_TECHDOC_PROMPT = """你是一个企业微信定制开发技术方案顾问。请基于结构化需求数据，生成《技术路线及报价方案》完整 HTML 文档（文档风，可下载 Word）。
+
+【requirementSolutionData】
+{requirement_data}
+
+请直接输出完整 HTML 文档（不要 JSON，不要 markdown 代码块包裹）。
+
+## 文档视觉基因（锁死，禁止修改）
+- 正文字体：font-family:"STKaiti","华文楷体","KaiTi","楷体",serif（正文华文楷体）
+- 背景：白色 #ffffff
+- 排版：白底、A4 文档感、双线封面、编号章节（一、二…十一）、小节（1.1/1.2）、密集表格（表头深蓝底白字 #1f4e79）
+- 封面：双线边框，深蓝顶标 #1f4e79
+- 章节标题：左 left-border 5px solid #1f4e79 + 浅蓝背景 #f2f5f9
+- 表头：#1f4e79 底 + 白字加粗，偶数行：#f7f9fb
+- 右下角固定「⬇ 下载 Word 版」按钮（Blob msword 导出，Word 样式里字体同样设为华文楷体）
+- 无营销渐变卡片、无 KPI 大数字、无效果图——这是严肃的技术确认文档
+
+## 文档骨架（11 章 26 表，锁死结构，照此生成）
+封面：企业微信定制开发 / 技术路线及报价方案 / 需求确认&方案设计表 / "请勿将未确认需求写入一期交付承诺"
+元信息表×2：客户名称|所属行业|服务商|项目场景；方案版本|输出日期|沟通阶段|客户联系人
+
+一、客户基础信息与当前现状
+  1.1 客户基础信息确认表（项目|填写内容|备注来源，8行）
+  1.2 当前业务运转方式（环节|当前做法|主要问题|会议依据客户原话，≥4行）
+  1.3 核心痛点与优先级（痛点编号|描述|业务影响|优先级|对应企微方案，≥4行）
+二、场景类型判断与方案边界
+  2.1 场景类型判断（判断项|填写内容：场景大类/是否已有源系统/本期定位|交付边界，4行）
+  2.2 一期/二期/不建议范围（类型|范围说明|原因，3行）
+三、需求理解与优先级确认
+  3.1 需求清单（需求项|客户描述|业务影响|优先级|一期二期|企微实现方式，≥5行）
+  3.2 客户原话与业务翻译（客户原话|业务翻译|是否已确认，≥4行）
+四、业务流程设计
+  4.1 当前流程与目标流程（阶段|当前流程|优化后流程|企微动作，≥4行）
+  4.2 流程节点确认表（节点序号|名称|操作角色|输入|输出|是否提醒，≥5行）
+五、企业微信方案总览
+  5.1 能力架构（层级|能力|本项目使用方式，4行）
+六、智能表格交付设计【技术核心，字段在此展开】
+  6.1 智能表格总览（表名|类型|用途|使用对象|一期必做，≥5行）
+  6.2 核心字段设计表（所属表|字段分组|字段名|类型|必填|填写角色|规则说明，逐字段展开，用rowspan按表分组，≥16行）
+  6.3 表间关联关系（主表|关联表|关联字段|自动带出汇总|注意事项，≥3行）
+七、审批与自动化设计
+  7.1 自动化规则表（规则名|触发条件|执行动作|通知对象|优先级，≥4行）
+  7.2 审批流程设计（审批名|发起角色|审批人|通过后动作|同步表格，≥3行）
+八、权限与数据看板设计
+  8.1 权限矩阵（角色|新增|查看范围|可编辑字段|看板权限|敏感字段，覆盖全部角色）
+  8.2 数据看板设计（看板名|使用对象|核心指标|筛选维度|是否下钻，≥3行）
+九、数据来源、系统对接与交付边界
+  9.1 数据来源与接入方式（数据对象|来源方式|一期接入|二期评估，≥3行）
+  9.2 交付清单（类别|交付内容|是否包含|备注，≥6行）
+十、实施计划、报价口径与变更机制
+  10.1 实施计划（阶段|工作内容|客户配合|输出物，≥4行）
+  10.2 报价口径建议（费用模块|范围说明|是否本次包含|备注参考区间，≥6行；价格一律标"参考区间，以正式报价为准"）
+  10.3 范围变更机制（事项|是否范围内|处理方式，3行）
+十一、待客户确认问题与签署
+  11.1 待确认问题清单（问题编号|待确认问题|负责人|截止时间|确认结果，≥5行）
+  11.2 客户确认（确认事项|确认说明，含盖章签字栏）
+
+## 填写规则（治"内容不对、满屏待确认、残留占位符"）
+1. 内容来自 requirementSolutionData（06 产出），客户名/行业/痛点/需求/场景/字段全部取真实数据，不残留 `{{来源}}`/`{{}}` 占位符。
+2. ⚠️待确认只用于真缺失（只有客户确实没定的才标）；能从 Step1/Step3 推出的一律填实，禁止满屏待确认。
+3. 字段设计要厚：6.2 逐字段展开，核心表 8-13 字段/表，用 rowspan 按表分组，带类型/必填/角色/规则/公式。这是技术方案的价值所在。
+4. 报价只给参考区间：10.2 每项标"参考 X-Y 元"，统一注"参考区间，以正式报价为准"，不硬编精确价。
+5. 一期/二期边界沿用 06 的 confidence 与 scope，ERP对接等一律二期，不写进一期承诺。
+6. 内容饱满度：每个表按行数下限填满，每格写实不空泛。
+
+## 输出前自检（不通过就重写）
+1. 合法完整 HTML，华文楷体，含下载 Word 按钮。
+2. 11 章 26 表齐全，字段设计（6.2）逐字段展开 ≥16 行。
+3. 无 `{{}}` 占位符残留；⚠️待确认只在真缺失处。
+4. 报价均为参考区间且带 disclaimer。
+5. 视觉为文档风（白底/编号章节/密集表），无营销渐变卡片。
+
+直接输出完整 HTML，不要任何前缀说明。"""
+
+
+
+
+
+
 STEP4_HTML_PROMPT = """你是一个企业微信智能表格可视化方案顾问。请基于结构化需求数据，生成客户友好的可视化方案 HTML 内容。
 
 【requirementSolutionData】
@@ -2829,6 +2917,15 @@ async def generate_step4_artifacts(body: dict, user: dict = Depends(require_auth
         html_content = parse_json_response(html_raw)
         if html_content:
             result["htmlContent"] = html_content
+
+    # ====== Step 4: Prompt 6 → 技术文档 HTML（文档风，11章26表） ======
+    if artifact_type in ("both", "technical"):
+        techdoc_prompt = STEP4_TECHDOC_PROMPT.replace("{requirement_data}", req_json_str)
+        techdoc_ai = call_codebuddy(STEP4_TECHDOC_PROMPT, techdoc_prompt, max_tokens=12000)
+        techdoc_raw = techdoc_ai["content"]
+        record_ai_tokens(client_id, techdoc_ai["usage"]["total_tokens"])
+        if techdoc_raw and not techdoc_raw.startswith("Error:"):
+            result["technicalContent"] = techdoc_raw
 
     # ====== 推断补全（对 requirementData 空白字段做 fallback ======
     rd = result.get("requirementData") or {}
@@ -3709,6 +3806,115 @@ async def generate_step4_word(body: dict, user: dict = Depends(require_auth)):
     }
 
 
+# ==================== Step4 技术文档 HTML 生成（文档风，11章26表）====================
+@app.post("/api/step4/generate-technical")
+async def generate_step4_technical(body: dict, user: dict = Depends(require_auth)):
+    """按钮②（技术文档模式）：生成技术路线及报价方案 HTML（文档风，可下载 Word）"""
+    client_id = body.get("client_id")
+    if not client_id:
+        raise HTTPException(status_code=400, detail="client_id is required")
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM clients WHERE id = ? AND user_id = ?", (client_id, user["user_id"]))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="客户不存在")
+
+    client = dict(row)
+
+    # 加载上下文
+    ctx = _load_client_context(client, user)
+
+    # 构建 requirementData 供 prompt 使用
+    requirement_data = _build_requirement_data_from_context(ctx)
+    req_json_str = json.dumps(requirement_data, ensure_ascii=False)
+
+    # 调用 CodeBuddy 生成技术文档 HTML
+    techdoc_prompt = STEP4_TECHDOC_PROMPT.replace("{requirement_data}", req_json_str)
+    html_content = None
+    for attempt in range(2):
+        ai_result = call_codebuddy(STEP4_TECHDOC_PROMPT, techdoc_prompt, max_tokens=12000)
+        raw = ai_result["content"]
+        record_ai_tokens(client_id, ai_result["usage"]["total_tokens"])
+        if raw.startswith("Error:"):
+            if attempt == 0:
+                continue
+            return {"success": False, "error": raw}
+        html_content = raw
+        break
+
+    if not html_content:
+        return {"success": False, "error": "技术文档生成失败，请稍后重试"}
+
+    # 保存文件
+    client_id_str = str(client_id)
+    output_dir = OUTPUTS_BASE + "/" + client_id_str
+    os.makedirs(output_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"技术路线及报价方案_{ctx['customer_name']}_{timestamp}.html"
+    filepath = os.path.join(output_dir, filename)
+
+    # 注入访客跟踪脚本（与 presales HTML 保持一致）
+    tracking_js = (
+        '<script>'
+        '(function(){'
+        'var vid=localStorage.getItem("pa_vid")||(localStorage.setItem("pa_vid","v"+Math.random().toString(36).substr(2,9)+Date.now()),localStorage.getItem("pa_vid"));'
+        'var fu=location.pathname;'
+        'var cid=' + str(client_id) + ';'
+        'var sd=0;'
+        'function tk(a,e){var p={visitor_id:vid,file_url:fu,client_id:cid,referer:document.referrer,scroll_depth:sd};if(e)Object.assign(p,e);fetch("/api/track/"+a,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)}).catch(function(){});}'
+        'tk("visit");'
+        'window.addEventListener("scroll",function(){var h=document.documentElement,b=document.body,pct=Math.round(100*(h.scrollTop||b.scrollTop)/(h.scrollHeight-h.clientHeight));if(pct>sd)sd=pct;},{passive:true});'
+        'setInterval(function(){tk("heartbeat");},30000);'
+        '})();'
+        '</script>'
+    )
+    if "</body>" in html_content.lower():
+        html_content = html_content.replace("</body>", tracking_js + "</body>")
+    else:
+        html_content += tracking_js
+
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+    file_url = "/outputs/" + client_id_str + "/" + filename
+
+    # 更新版本数组
+    now = datetime.now().isoformat()
+    versions = client.get("step4_technical_versions") or []
+    if isinstance(versions, str):
+        try:
+            versions = json.loads(versions)
+        except:
+            versions = []
+    next_ver = len(versions) + 1
+    versions.append({
+        "version": next_ver,
+        "content": {"htmlContent": html_content, "requirementData": requirement_data},
+        "created_at": now,
+        "file_url": file_url,
+        "filename": filename,
+    })
+    conn2 = get_db()
+    cursor2 = conn2.cursor()
+    cursor2.execute(
+        "UPDATE clients SET step4_technical_versions = ? WHERE id = ?",
+        (json.dumps(versions, ensure_ascii=False), client_id)
+    )
+    conn2.commit()
+    conn2.close()
+
+    return {
+        "success": True,
+        "file_url": file_url,
+        "filename": filename,
+        "version": next_ver,
+        "html_content": html_content,
+    }
+
+
 # ==================== Step4 Word .docx 生成 ====================
 @app.post("/api/step4/generate-docx")
 async def generate_step4_docx(body: dict, user: dict = Depends(require_auth)):
@@ -4396,8 +4602,6 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
     if not requirement_data:
         step2_schema = client.get("step2_schema") or {}
         step3_summary = client.get("step3_summary") or {}
-        logger.warning(f"[Step5Demo] fallback step2_schema keys={list(step2_schema.keys()) if isinstance(step2_schema, dict) else 'not_dict'}")
-        logger.warning(f"[Step5Demo] fallback step3_summary keys={list(step3_summary.keys()) if isinstance(step3_summary, dict) else 'not_dict'}")
         if isinstance(step2_schema, str):
             try: step2_schema = json.loads(step2_schema)
             except: step2_schema = {}
@@ -4423,48 +4627,33 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
             if fields:
                 fields_by_table.append({"tableName": name, "fields": fields})
 
-        phase_one_scope = step3_summary.get("phaseOneScope") or step3_summary.get("phase_one_scope") or []
-        if isinstance(phase_one_scope, list):
-            phase_one_scope = [{"item": (i.get("item") or i.get("title") or str(i)), "reason": "", "deliveryForm": "智能表格"} for i in phase_one_scope]
-
-        # 如果 phase_one_scope 仍为空，从 step4_input_draft 的 confirmedNeeds 和 painPoints 推断
-        if not phase_one_scope:
-            industry = client.get("industry") or ""
-            # 优先从 step4_input_draft 读取
-            step4_input = client.get("step4_input_draft") or {}
-            if isinstance(step4_input, str):
-                try: step4_input = json.loads(step4_input)
-                except: step4_input = {}
-            confirmed_needs = step4_input.get("confirmedNeeds") or step3_summary.get("confirmedNeeds") or step3_summary.get("confirmed_needs") or []
-            pain_points = step4_input.get("painPoints") or step3_summary.get("painPoints") or step3_summary.get("pain_points") or []
-            # 从需求构建一期表（支持字符串列表或对象列表）
-            phase_one_scope = []
-            if confirmed_needs:
-                for n in (confirmed_needs if isinstance(confirmed_needs, list) else [confirmed_needs]):
-                    # 支持字符串格式："标题：描述" 或对象格式：{title, description}
-                    if isinstance(n, str):
-                        parts = n.split("：", 1) if "：" in n else [n, ""]
-                        title = parts[0].strip()
-                        reason = parts[1].strip() if len(parts) > 1 else "客户确认需求"
-                    else:
-                        title = n.get("title") or n.get("name") or ""
-                        reason = n.get("description") or "客户确认需求"
-                    if title and len(phase_one_scope) < 8:
-                        phase_one_scope.append({"item": title, "reason": reason, "deliveryForm": "智能表格"})
-            if pain_points and len(phase_one_scope) < 3:
-                for p in (pain_points if isinstance(pain_points, list) else [pain_points]):
-                    if isinstance(p, str):
-                        parts = p.split("：", 1) if "：" in p else [p, ""]
-                        title = parts[0].strip()
-                        reason = parts[1].strip() if len(parts) > 1 else "痛点解决"
-                    else:
-                        title = p.get("title") or ""
-                        reason = p.get("description") or "痛点解决"
-                    if title and len(phase_one_scope) < 8:
-                        phase_one_scope.append({"item": title, "reason": reason, "deliveryForm": "智能表格"})
-            # 如果仍然为空，使用 step4_input_draft 的 customerCurrentState 作为唯一表
-            if not phase_one_scope and step4_input.get("customerCurrentState"):
-                phase_one_scope = [{"item": "业务管理表", "reason": "基于客户现状描述的核心业务管理", "deliveryForm": "智能表格"}]
+        # 构建 phase_one_scope
+        _raw_s3 = step3_summary.get("_raw") or {}
+        _cn = step3_summary.get("confirmedNeeds") or []
+        _pp = step3_summary.get("painPoints") or []
+        _s4i = {}
+        step4_input = client.get("step4_input_draft") or {}
+        if isinstance(step4_input, str):
+            try: _s4i = json.loads(step4_input)
+            except: _s4i = {}
+        else: _s4i = step4_input or {}
+        _cn = _cn or _s4i.get("confirmedNeeds") or []
+        _pp = _pp or _s4i.get("painPoints") or []
+        phase_one_scope = []
+        for n in (_cn if isinstance(_cn, list) else [_cn]):
+            title = n.get("title") or n.get("name") or "" if isinstance(n, dict) else ""
+            reason = n.get("description") or "客户确认需求" if isinstance(n, dict) else ""
+            if isinstance(n, str): title, reason = n, "客户确认需求"
+            if title and len(phase_one_scope) < 8: phase_one_scope.append({"item": title, "reason": reason, "deliveryForm": "智能表格"})
+        for p in (_pp if isinstance(_pp, list) else [_pp]):
+            title = p.get("title") or "" if isinstance(p, dict) else ""
+            reason = p.get("description") or "痛点解决" if isinstance(p, dict) else ""
+            if isinstance(p, str): title, reason = p, "痛点解决"
+            if title and len(phase_one_scope) < 8: phase_one_scope.append({"item": title, "reason": reason, "deliveryForm": "智能表格"})
+        if not phase_one_scope and _s4i.get("customerCurrentState"):
+            phase_one_scope = [{"item": "核心业务管理", "reason": _s4i["customerCurrentState"][:80], "deliveryForm": "智能表格"}]
+        elif not phase_one_scope and _raw_s3.get("customerCurrentState"):
+            phase_one_scope = [{"item": "核心业务管理", "reason": _raw_s3["customerCurrentState"][:80], "deliveryForm": "智能表格"}]
 
         requirement_data = {
             "smartTableSpec": {
@@ -4480,21 +4669,61 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
                 "notRecommended": []
             }
         }
-        logger.warning(f"[Step5Demo] fallback built requirement_data confirmedTables={len(confirmed_tables)} fieldsByTable={len(fields_by_table)}")
+        logger.warning(f"[Step5Demo] fallback built requirement_data confirmedTables={len(confirmed_tables)}")
+
+    # ===== 兼容 _raw 嵌套格式：无论 requirement_data 从哪来，都尝试从 _raw 补全 scope =====
+    # _raw 可能是 dict，也可能是 JSON 字符串，需要统一解析
+    _raw = requirement_data.get("_raw") or {}
+    if not _raw:
+        s3 = client.get("step3_summary") or {}
+        if isinstance(s3, str):
+            try: s3 = json.loads(s3)
+            except: s3 = {}
+        _raw = s3.get("_raw") or {}
+    if isinstance(_raw, str):
+        try: _raw = json.loads(_raw)
+        except: _raw = {}
+    scope = requirement_data.get("scope") or {}
+    if not scope.get("phaseOne") and _raw:
+        # 从 _raw.painPoints 提取 phase_one_scope
+        pts = _raw.get("painPoints") or []
+        phase_one = []
+        for p in (pts if isinstance(pts, list) else [pts]):
+            title = (p.get("title") or p.get("name") or "") if isinstance(p, dict) else ""
+            desc = (p.get("description") or "") if isinstance(p, dict) else ""
+            if title:
+                phase_one.append({"item": title, "reason": desc[:60] if desc else "客户痛点", "deliveryForm": "智能表格"})
+        if phase_one:
+            scope["phaseOne"] = phase_one
+            logger.warning(f"[Step5Demo] _raw 补全 phaseOne: {len(phase_one)} 项")
+        # 如果仍空，用 customerCurrentState 作为兜底
+        if not scope.get("phaseOne") and _raw.get("customerCurrentState"):
+            scope["phaseOne"] = [{"item": "核心业务管理", "reason": _raw["customerCurrentState"][:80], "deliveryForm": "智能表格"}]
+    requirement_data["scope"] = scope
 
     smart_table_spec = requirement_data.get("smartTableSpec") or {}
-    scope = requirement_data.get("scope") or {}
     confirmed_tables = smart_table_spec.get("confirmedTables") or []
     logger.warning(f"[Step5Demo] smart_table_spec confirmedTables={len(confirmed_tables)}, scope phaseOne={len(scope.get('phaseOne', []))}")
 
-    # confirmedTables 为空时（未上传XLSX），改为让AI根据scope和requirements自行推断表结构
+    # confirmedTables 为空时：让 AI 根据 scope 和客户描述自行推断表结构
     if not confirmed_tables:
-        logger.warning("[Step5Demo] confirmedTables为空，改用scope推断模式")
+        raw_ctx = ""
+        if _raw.get("customerCurrentState"):
+            raw_ctx += f"\n客户现状：{_raw['customerCurrentState']}"
+        pts = _raw.get("painPoints") or []
+        if pts:
+            raw_ctx += "\n痛点：" + "；".join([
+                (p.get("title","") + "：" + p.get("description","")[:30]) if isinstance(p, dict) else str(p)
+                for p in pts[:5]
+            ])
+        if not scope.get("phaseOne"):
+            logger.warning("[Step5Demo] confirmedTables 和 phaseOne 均为空，无法推断")
+            return {"success": False, "error": "无法生成：缺少需求数据。请到 Step3 填写「确认需求」和「一期范围」，再重试。"}
         user_prompt = STEP5_SCHEMA_USER_PROMPT.replace(
             "{smart_table_spec}",
             json.dumps({
                 "scenarioComplexity": smart_table_spec.get("scenarioComplexity", "简单流程型"),
-                "confirmedTables": [],  # AI根据scope自行推断
+                "confirmedTables": [],
                 "scope": scope
             }, ensure_ascii=False, indent=2)
         ).replace(
@@ -4504,8 +4733,7 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
         ).replace(
             "{not_recommended_scope}", json.dumps(scope.get("notRecommended") or [], ensure_ascii=False, indent=2)
         )
-        # 追加推断指令
-        user_prompt += "\n\n【重要】confirmedTables为空，请根据phaseOne scope中的交付项和行业场景，自行推断需要创建哪些智能表格（建议2-4张），并生成对应的JSON Schema。"
+        user_prompt += f"\n\n【客户业务描述（请据此推断表结构）】{raw_ctx}\n\n【重要】confirmedTables 为空，请根据上方客户业务描述，自行推断需要创建哪些智能表格（建议2-4张，覆盖核心业务流程），每个表必须有实际字段名称，禁止返回空表或占位表。"
     else:
         user_prompt = STEP5_SCHEMA_USER_PROMPT.replace(
             "{smart_table_spec}", json.dumps(smart_table_spec, ensure_ascii=False, indent=2)
@@ -4517,7 +4745,7 @@ async def generate_step5_demo(body: dict, user: dict = Depends(require_auth)):
             "{not_recommended_scope}", json.dumps(scope.get("notRecommended") or [], ensure_ascii=False, indent=2)
         )
 
-    ai_result = call_codebuddy(STEP5_SCHEMA_SYSTEM_PROMPT, user_prompt, max_tokens=25000)
+    ai_result = call_codebuddy(STEP5_SCHEMA_SYSTEM_PROMPT, user_prompt, max_tokens=25000, timeout=600)
     raw = ai_result["content"]
     record_ai_tokens(client_id, ai_result["usage"]["total_tokens"])
     schema = parse_json_response(raw)
@@ -4786,6 +5014,463 @@ async def step4_chat_suggest(body: dict, user: dict = Depends(require_auth)):
         data = {"type": "raw", "content": str(e)}
 
     return {"success": True, **data}
+
+
+# ==================== Step4 售前对话 · 文字聊天 ====================
+@app.post("/api/step4/chat")
+async def step4_chat(body: dict, user: dict = Depends(require_auth)):
+    """对话式修订：AI 根据用户反馈给出具体修改建议（含内容+位置）"""
+    import logging
+    logger = logging.getLogger("uvicorn")
+    client_id = body.get("client_id")
+    doc_type = body.get("doc_type", "presales")
+    html_content = body.get("html_content")   # JSON 对象或 HTML 字符串
+    requirement_data = body.get("requirement_data", {})  # 原始结构化需求
+    user_input = body.get("user_input", "").strip()
+    history = body.get("history", [])  # [{role:'user'|'assistant', content:'...'}]
+
+    if not client_id:
+        raise HTTPException(status_code=400, detail="client_id required")
+    if not user_input:
+        raise HTTPException(status_code=400, detail="user_input required")
+
+    # 构建对话上下文（最近6轮）
+    recent = history[-6:] if history else []
+    ctx = "\n".join([f"{'顾问' if m.get('role')=='assistant' else '用户'}：{m.get('content','')}" for m in recent])
+
+    # 序列化 html_content
+    if isinstance(html_content, dict):
+        html_str = json.dumps(html_content, ensure_ascii=False)
+    else:
+        html_str = str(html_content) if html_content else ""
+
+    req_str = json.dumps(requirement_data, ensure_ascii=False) if requirement_data else "暂无结构化需求数据"
+
+    # 根据 doc_type 切换角色
+    if doc_type == "technical":
+        system_prompt = """你是一个企业微信技术文档优化顾问。
+
+## 你的职责
+用户对已生成的技术路线及报价方案提出修改意见，你给出**具体的修改建议**（修改内容 + 放置位置）。
+
+## 绝对禁止
+- 不要说"内容不够完整/不具体"这种泛泛的话
+- 不要说"是否/是不是/要不要"这类 yes/no 问题
+- 不要只给方向性建议，必须给出**具体可执行的内容文本**
+- 禁止输出任何解释、说明、注释
+
+## 技术文档结构参考（11章26表）
+一、客户基础信息与当前现状 / 二、场景类型判断与方案边界 / 三、需求理解与优先级确认 / 四、业务流程设计 / 五、企业微信方案总览 / 六、智能表格交付设计（字段展开） / 七、审批与自动化设计 / 八、权限与数据看板设计 / 九、数据来源与系统对接 / 十、实施计划、报价口径与变更机制 / 十一、待客户确认问题与签署
+
+## 输出格式（严格 JSON，不要前缀，不要 markdown 包裹）
+当你认为用户意见可行时：
+{"agreed": true, "suggestion": "具体的修改建议文本（含要加入的内容和位置）", "location": "建议放置的具体位置描述"}
+
+当你认为用户意见不明确、需要澄清时：
+{"agreed": false, "probing": "追问具体是哪个方面需要调整（20字内）", "options": ["A. 措辞措辞", "B. 表格内容", "C. 报价口径", "D. 结构重组"]}
+
+直接输出 JSON，不要有任何其他文字。"""
+    else:
+        system_prompt = """你是一个企业微信智能表格售前方案优化顾问。
+
+## 你的职责
+用户对已生成的售前方案提出修改意见，你给出**具体的修改建议**（修改内容 + 放置位置）。
+
+## 绝对禁止
+- 不要说"内容不够完整/不具体"这种泛泛的话
+- 不要说"是否/是不是/要不要"这类 yes/no 问题
+- 不要只给方向性建议，必须给出**具体可执行的内容文本**
+- 禁止输出任何解释、说明、注释
+
+## 输出格式（严格 JSON，不要前缀，不要 markdown 包裹）
+当你认为用户意见可行时：
+{"agreed": true, "suggestion": "具体的修改建议文本（含要加入的内容和位置）", "location": "建议放置的具体位置描述"}
+
+当你认为用户意见不明确、需要澄清时：
+{"agreed": false, "probing": "追问具体是哪个方面需要调整（20字内）", "options": ["A. 措辞风格", "B. 案例内容", "C. 价值量化", "D. 结构框架"]}
+
+直接输出 JSON，不要有任何其他文字。"""
+
+    # 技术文档是完整 HTML 字符串（截取前 4000 字符）；售前是 JSON 对象
+    if doc_type == "technical":
+        doc_summary = html_str[:4000] if html_str else "（暂无技术文档内容）"
+    else:
+        doc_summary = html_str[:3000]
+
+    user_prompt = f"""## 当前方案摘要
+{doc_summary}
+
+## 原始需求数据
+{req_str[:2000]}
+
+## 对话历史
+{ctx}
+
+## 用户最新反馈
+{user_input}
+
+请根据用户反馈，给出具体修改建议或追问。不要输出任何解释文字，只输出 JSON。"""
+
+    try:
+        result = call_minimax(system_prompt, user_prompt, max_tokens=1500)
+        raw = result.get("content", "").strip()
+        logger.warning(f"[step4-chat] raw: {raw[:300]}")
+        # 解析 JSON
+        try:
+            data = json.loads(raw)
+        except:
+            import re
+            m = re.search(r'\{.*\}', raw, re.DOTALL)
+            if m:
+                data = json.loads(m.group())
+            else:
+                data = {"agreed": False, "probing": "请更具体描述您的修改需求", "options": ["措辞调整", "补充内容", "删除内容", "结构重组"]}
+    except Exception as e:
+        logger.warning(f"[step4-chat] error: {e}")
+        data = {"agreed": False, "probing": "抱歉，对话处理出现异常，请稍后重试", "options": ["措辞调整", "补充内容", "删除内容", "结构重组"]}
+
+    return {"success": True, **data}
+
+
+# ==================== Step4 售前对话 · 重新生成 ====================
+@app.post("/api/step4/regenerate")
+async def step4_regenerate(body: dict, user: dict = Depends(require_auth)):
+    """对话确认后，根据改动清单重新生成售前方案 HTML（新版本追加到列表）"""
+    import logging
+    logger = logging.getLogger("uvicorn")
+    client_id = body.get("client_id")
+    doc_type = body.get("doc_type", "presales")
+    html_content = body.get("html_content")   # 当前版本的 JSON 对象
+    requirement_data = body.get("requirement_data", {})
+    confirmed_changes = body.get("confirmed_changes", [])  # [{action, location, content}]
+    chat_history = body.get("chat_history", [])  # 完整对话历史
+
+    if not client_id:
+        raise HTTPException(status_code=400, detail="client_id required")
+    if not html_content:
+        raise HTTPException(status_code=400, detail="html_content required")
+
+    # 获取客户数据（用于 ctx 构建）
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM clients WHERE id = ? AND user_id = ?", (client_id, user["user_id"]))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="客户不存在")
+
+    client = dict(row)
+    for field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "step4_input_draft"):
+        if client.get(field) and isinstance(client[field], str):
+            try:
+                client[field] = json.loads(client[field])
+            except:
+                pass
+
+    # 构建完整需求数据（同 generate_step4_artifacts）
+    step1 = client.get("step1_result", {}) or {}
+    step3 = client.get("step3_summary", {}) or {}
+    step4_input = client.get("step4_input_draft", {}) or {}
+    uploaded_files = client.get("uploaded_files") or []
+
+    def _build_req_data():
+        # 复用 generate_step4_artifacts 中构建 requirement_data 的逻辑片段
+        rd = {
+            "meta": {
+                "company_name": client.get("name", ""),
+                "industry": client.get("industry", ""),
+                "scale": client.get("scale", ""),
+                "initial_demand": client.get("initial_demand", "")
+            },
+            "step1": step1,
+            "step3": step3,
+            "step4_input": step4_input,
+            "uploaded_files_text": "\n\n".join([
+                f"【{f.get('name','记录')}】{f.get('content','') or f.get('text','')}"
+                for f in uploaded_files if f.get('content') or f.get('text')
+            ])
+        }
+        return rd
+
+    req_data = _build_req_data()
+    req_json_str = json.dumps(req_data, ensure_ascii=False)
+
+    # 对话摘要（用于注入到 prompt）
+    changes_text = "\n".join([
+        f"- [{c.get('action','')}] 在「{c.get('location','')}」：{c.get('content','')}"
+        for c in confirmed_changes
+    ]) if confirmed_changes else "（用户无额外修改要求）"
+
+    chat_summary = ""
+    if chat_history:
+        for msg in chat_history:
+            role = "用户" if msg.get("role") == "user" else "AI"
+            chat_summary += f"{role}：{msg.get('content','')}\n"
+
+    # 构建专用 regenerate prompt
+    REGENERATE_PROMPT = f"""你是一个企业微信智能表格可视化方案顾问。请基于原始需求 + 用户对话确认的修改意见，重新生成售前方案 HTML 内容。
+
+【原始需求数据】
+{req_json_str}
+
+【用户确认的修改意见】
+{changes_text}
+
+【对话历史摘要】
+{chat_summary}
+
+请重新生成完整的方案 JSON，直接输出 JSON，不要任何前缀、说明、markdown 包裹。
+
+输出格式同 STEP4_HTML_PROMPT：
+{{
+  "pageTitle": "",
+  "hero": {{...}},
+  "customerStageJudgement": {{...}},
+  "insightSection": {{...}},
+  "scenarioBreakdown": [...],
+  "architecture": {{...}},
+  "recommendedModules": [...],
+  "roadmap": [...],
+  "valuePoints": [...],
+  "pendingQuestions": []
+}}
+
+**强制要求**：
+- 将用户确认的修改意见**全部融入**新版本中
+- 保持 JSON 结构完整，所有字段不得为 null 或空数组
+- 以 `{{` 开头，以 `}}` 结尾，不输出任何其他文字"""
+
+    html_prompt = REGENERATE_PROMPT  # 数据已通过 f-string 注入
+    REGEN_SYSTEM = "你是一个企业微信智能表格可视化方案顾问。请严格根据用户提供的需求数据生成方案，直接输出 JSON，不要任何前缀解释。"
+    ai_result = call_codebuddy(REGEN_SYSTEM, html_prompt, max_tokens=10000)
+    raw = ai_result.get("content", "").strip()
+
+    if raw.startswith("Error:") or not raw:
+        return {"success": False, "error": raw or "生成失败"}
+
+    new_html_content = parse_json_response(raw)
+    if not new_html_content:
+        return {"success": False, "error": "生成内容解析失败，请重试"}
+
+    # 保存新版本到数据库
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT step4_presales_versions FROM clients WHERE id = ?", (client_id,))
+    row = cursor.fetchone()
+    existing_versions = []
+    if row and row[0]:
+        try:
+            existing_versions = json.loads(row[0])
+        except:
+            existing_versions = []
+    conn.close()
+
+    new_version = {
+        "version": len(existing_versions) + 1,
+        "content": {"htmlContent": new_html_content},
+        "created_at": datetime.now().isoformat(),
+        "chat_history": chat_history,
+        "confirmed_changes": confirmed_changes,
+        "source": "chat_regenerate"
+    }
+    existing_versions.append(new_version)
+
+    db_update_client(client_id, {"step4_presales_versions": existing_versions})
+
+    # 发布新版本 HTML
+    html_text = json.dumps(new_html_content, ensure_ascii=False)
+    publish_result = {"success": False}
+    try:
+        from pathlib import Path
+        out_dir = Path("/Users/laixiangjun/Eco-Wecom/outputs") / str(client_id)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filepath = out_dir / f"售前解决方案_{client.get('name','客户')}_{ts}_V{len(existing_versions)}.html"
+        # 注入访客追踪
+        tracking_js = ""
+        full_html = f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>{new_html_content.get("pageTitle","售前方案")}</title></head><body>{html_text}{tracking_js}</body></html>'
+        filepath.write_text(full_html, encoding="utf-8")
+        pub_url = f"/public/s/{client_id}_step4_presales_v{len(existing_versions)}.html"
+        publish_result = {"success": True, "url": pub_url}
+    except Exception as e:
+        logger.warning(f"[regenerate] publish error: {e}")
+
+    return {
+        "success": True,
+        "version": len(existing_versions),
+        "html_content": new_html_content,
+        "publish_url": publish_result.get("url", ""),
+        "message": f"新版本 V{len(existing_versions)} 已生成并追加到版本列表"
+    }
+
+
+# ==================== Step4 技术文档对话 · 重新生成 ====================
+@app.post("/api/step4/regenerate-technical")
+async def step4_regenerate_technical(body: dict, user: dict = Depends(require_auth)):
+    """对话确认后，根据改动清单重新生成技术路线及报价方案 HTML（新版本追加到列表）"""
+    import logging
+    logger = logging.getLogger("uvicorn")
+    client_id = body.get("client_id")
+    html_content = body.get("html_content")   # 当前版本的技术文档 HTML 字符串
+    confirmed_changes = body.get("confirmed_changes", [])  # [{action, location, content}]
+    chat_history = body.get("chat_history", [])  # 完整对话历史
+
+    if not client_id:
+        raise HTTPException(status_code=400, detail="client_id required")
+    if not html_content:
+        raise HTTPException(status_code=400, detail="html_content required")
+
+    # 获取客户数据
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM clients WHERE id = ? AND user_id = ?", (client_id, user["user_id"]))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="客户不存在")
+
+    client = dict(row)
+    for field in ("step1_result", "step2_report", "step2_todo", "step2_schema", "step3_summary", "uploaded_files", "step4_input_draft"):
+        if client.get(field) and isinstance(client[field], str):
+            try:
+                client[field] = json.loads(client[field])
+            except:
+                pass
+
+    # 构建完整需求数据
+    step1 = client.get("step1_result", {}) or {}
+    step3 = client.get("step3_summary", {}) or {}
+    step4_input = client.get("step4_input_draft", {}) or {}
+    uploaded_files = client.get("uploaded_files") or []
+
+    rd = {
+        "meta": {
+            "company_name": client.get("name", ""),
+            "industry": client.get("industry", ""),
+            "scale": client.get("scale", ""),
+            "initial_demand": client.get("initial_demand", "")
+        },
+        "step1": step1,
+        "step3": step3,
+        "step4_input": step4_input,
+        "uploaded_files_text": "\n\n".join([
+            f"【{f.get('name','记录')}】{f.get('content','') or f.get('text','')}"
+            for f in uploaded_files if f.get('content') or f.get('text')
+        ])
+    }
+    req_json_str = json.dumps(rd, ensure_ascii=False)
+
+    # 对话摘要
+    changes_text = "\n".join([
+        f"- [{c.get('action','')}] 在「{c.get('location','')}」：{c.get('content','')}"
+        for c in confirmed_changes
+    ]) if confirmed_changes else "（用户无额外修改要求）"
+
+    chat_summary = ""
+    if chat_history:
+        for msg in chat_history:
+            role = "用户" if msg.get("role") == "user" else "AI"
+            chat_summary += f"{role}：{msg.get('content','')}\n"
+
+    # 技术文档专用 regenerate prompt（完整 HTML，不是 JSON）
+    REGEN_TECH_PROMPT = f"""你是一个企业微信定制开发技术方案顾问。请基于原始需求 + 用户对话确认的修改意见，重新生成《技术路线及报价方案》完整 HTML 文档。
+
+【原始需求数据】
+{req_json_str}
+
+【用户确认的修改意见】
+{changes_text}
+
+【对话历史摘要】
+{chat_summary}
+
+请重新生成完整 HTML 文档（文档风，华文楷体，可下载 Word），直接输出 HTML，不要任何前缀、说明、markdown 包裹。
+
+## 文档骨架（11 章 26 表，锁死顺序）
+封面 / 元信息表×2 / 一、客户基础信息与当前现状 / 二、场景类型判断与方案边界 / 三、需求理解与优先级确认 / 四、业务流程设计 / 五、企业微信方案总览 / 六、智能表格交付设计（字段逐字段展开） / 七、审批与自动化设计 / 八、权限与数据看板设计 / 九、数据来源、系统对接与交付边界 / 十、实施计划、报价口径与变更机制 / 十一、待客户确认问题与签署
+
+**强制要求**：
+- 将用户确认的修改意见**全部融入**新版本中
+- 保持完整 HTML 结构，华文楷体，右下角有下载 Word 按钮
+- 以 `<!DOCTYPE` 或 `<html` 开头，不要有任何其他文字"""
+
+    REGEN_TECH_SYSTEM = "你是一个企业微信定制开发技术方案顾问。请严格根据用户提供的需求数据生成技术文档，直接输出完整 HTML，不要任何前缀解释。"
+
+    ai_result = call_codebuddy(REGEN_TECH_SYSTEM, REGEN_TECH_PROMPT, max_tokens=12000)
+    raw = ai_result.get("content", "").strip()
+
+    if raw.startswith("Error:") or not raw:
+        return {"success": False, "error": raw or "生成失败"}
+
+    # raw 是完整 HTML，不需要 parse_json_response
+    new_html_content = raw
+
+    # 保存文件
+    from pathlib import Path
+    out_dir = Path("/Users/laixiangjun/Eco-Wecom/outputs") / str(client_id)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"技术路线及报价方案_{client.get('name','客户')}_{ts}_V{len(json.loads(client.get('step4_technical_versions') or '[]')) + 1}.html"
+    filepath = out_dir / filename
+
+    # 注入访客追踪
+    tracking_js = (
+        '<script>'
+        '(function(){'
+        'var vid=localStorage.getItem("pa_vid")||(localStorage.setItem("pa_vid","v"+Math.random().toString(36).substr(2,9)+Date.now()),localStorage.getItem("pa_vid"));'
+        'var fu=location.pathname;'
+        'var cid=' + str(client_id) + ';'
+        'var sd=0;'
+        'function tk(a,e){var p={visitor_id:vid,file_url:fu,client_id:cid,referer:document.referrer,scroll_depth:sd};if(e)Object.assign(p,e);fetch("/api/track/"+a,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)}).catch(function(){});}'
+        'tk("visit");'
+        'window.addEventListener("scroll",function(){var h=document.documentElement,b=document.body,pct=Math.round(100*(h.scrollTop||b.scrollTop)/(h.scrollHeight-h.clientHeight));if(pct>sd)sd=pct;},{passive:true});'
+        'setInterval(function(){tk("heartbeat");},30000);'
+        '})();'
+        '</script>'
+    )
+    if "</body>" in new_html_content.lower():
+        new_html_content = new_html_content.replace("</body>", tracking_js + "</body>")
+    else:
+        new_html_content += tracking_js
+
+    filepath.write_text(new_html_content, encoding="utf-8")
+    file_url = f"/outputs/{client_id}/{filename}"
+
+    # 保存新版本到数据库
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT step4_technical_versions FROM clients WHERE id = ?", (client_id,))
+    row = cursor.fetchone()
+    existing_versions = []
+    if row and row[0]:
+        try:
+            existing_versions = json.loads(row[0])
+        except:
+            existing_versions = []
+    conn.close()
+
+    new_version = {
+        "version": len(existing_versions) + 1,
+        "content": {"htmlContent": new_html_content},
+        "created_at": datetime.now().isoformat(),
+        "file_url": file_url,
+        "filename": filename,
+        "chat_history": chat_history,
+        "confirmed_changes": confirmed_changes,
+        "source": "chat_regenerate"
+    }
+    existing_versions.append(new_version)
+
+    db_update_client(client_id, {"step4_technical_versions": existing_versions})
+
+    return {
+        "success": True,
+        "version": len(existing_versions),
+        "html_content": new_html_content,
+        "file_url": file_url,
+        "filename": filename,
+        "message": f"新版本 V{len(existing_versions)} 已生成并追加到版本列表"
+    }
 
 
 # ==================== 访问追踪 ====================
