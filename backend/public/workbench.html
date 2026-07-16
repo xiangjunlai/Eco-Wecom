@@ -784,6 +784,22 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 #page4 .s4-send-btn{height:32px;padding:0 14px;border-radius:10px;background:linear-gradient(135deg,#13b96f,#10a85c);color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:700;flex-shrink:0;box-shadow:0 2px 8px rgba(19,185,111,.2);font-family:inherit}
 #page4 .s4-confirm-btn.visible{display:flex;align-items:center;gap:4px}
 #page4 .s4-chat-empty{text-align:center;padding:20px;color:#d1d5db}
+#page4 .ws-confirm-card{display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:#f0f6ff;border:1.5px solid #1263e6;border-radius:12px;margin:4px 0}
+#page4 .ws-confirm-location{font-size:11px;color:#1263e6;font-weight:600;margin-bottom:2px}
+#page4 .ws-confirm-suggestion{font-size:13px;color:#182235;line-height:1.6}
+#page4 .ws-confirm-actions{display:flex;gap:6px;margin-top:4px}
+#page4 .ws-confirm-accept{height:30px;padding:0 14px;border-radius:8px;background:linear-gradient(135deg,#13b96f,#10a85c);color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit}
+#page4 .ws-confirm-accept:hover{opacity:.9}
+#page4 .ws-confirm-cancel{height:30px;padding:0 14px;border-radius:8px;background:#f5f7fb;color:#667085;border:1px solid #e0e8f0;cursor:pointer;font-size:12px;font-family:inherit}
+#page4 .ws-confirm-cancel:hover{background:#e8edf5}
+#page4 .ws-confirmed-list{display:flex;flex-direction:column;gap:4px;margin:6px 0}
+#page4 .ws-confirmed-item{display:flex;align-items:flex-start;gap:6px;padding:6px 10px;background:#e6f4ea;border-radius:8px;font-size:12px}
+#page4 .ws-confirmed-item .ws-check{color:#13b96f;font-size:13px;flex-shrink:0;margin-top:1px}
+#page4 .ws-confirmed-item .ws-confirmed-text{color:#182235;line-height:1.5}
+#page4 .ws-confirmed-item .ws-confirmed-loc{font-size:11px;color:#667085;margin-top:2px}
+#page4 .ws-generate-btn{height:36px;padding:0 18px;border-radius:10px;background:linear-gradient(135deg,#1263e6,#0d47a1);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;width:100%;margin-top:8px;box-shadow:0 2px 8px rgba(18,99,230,.25)}
+#page4 .ws-generate-btn:hover{opacity:.92}
+#page4 .ws-generate-btn:disabled{opacity:.5;cursor:not-allowed}
 
 /* ===== 售前对话 Chat Modal ===== */
 #chat-modal{display:none;position:fixed;inset:0;z-index:9998;align-items:center;justify-content:center}
@@ -1307,6 +1323,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
           </div>
           <div class="s4-artifact-panel" id="presales-panel-chat">
             <div class="s4-chat-scroll" id="presales-chat-scroll"></div>
+            <div id="s4-presales-confirmed-list" style="padding:0 4px"></div>
             <!-- 输入区 -->
             <div class="s4-chat-input-row">
               <div class="quick-suggestions" id="presales-quick-suggestions"></div>
@@ -1342,6 +1359,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
           </div>
           <div class="s4-artifact-panel" id="technical-panel-chat">
             <div class="s4-chat-scroll" id="technical-chat-scroll"></div>
+            <div id="s4-technical-confirmed-list" style="padding:0 4px"></div>
             <!-- 输入区 -->
             <div class="s4-chat-input-row">
               <div class="quick-suggestions" id="technical-quick-suggestions"></div>
@@ -2975,8 +2993,8 @@ async function autoGenerateStep4OnEnter() {
 
 // 每个工作台独立状态
 const _wsState = {
-  presales: { chatHist: [], aiHist: [] },
-  technical: { chatHist: [], aiHist: [] }
+  presales: { chatHist: [], aiHist: [], confirmedChanges: [], pendingSuggestion: null },
+  technical: { chatHist: [], aiHist: [], confirmedChanges: [], pendingSuggestion: null }
 };
 
 // 制品卡片 Tab 切换
@@ -2999,23 +3017,13 @@ function switchArtifactTab(ws, tab) {
   } else if (tab === 'visits' && ws === 'presales') {
     loadPresalesVisits();
   } else if (tab === 'chat') {
-    // 技术文档有版本 → 打开 modal 对话；售前保持旧逻辑
-    if (ws === 'technical') {
-      var c = getClient(currentClientId);
-      var tvs = Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : [];
-      if (tvs.length > 0) {
-        var latest = tvs[tvs.length - 1];
-        var reqData = {};
-        if (c.step1_result) reqData.step1 = c.step1_result;
-        if (c.step3_summary) reqData.step3 = c.step3_summary;
-        if (c.step4_input_draft) reqData.step4_input = c.step4_input_draft;
-        openChatModal(latest.content?.htmlContent || '', reqData, latest.version, 'technical');
-        return;
-      }
-    } else {
-      if (_wsState[ws].chatHist.length === 0) {
-        fetchAiSuggestions(ws, '');
-      }
+    // 切换到对话 tab：有版本则显示 AI intro，无版本则空着
+    var c2 = getClient(currentClientId);
+    var hasVersion = (ws === 'presales'
+      ? (Array.isArray(c2.step4_presales_versions) ? c2.step4_presales_versions : []).length > 0
+      : (Array.isArray(c2.step4_technical_versions) ? c2.step4_technical_versions : []).length > 0);
+    if (hasVersion && _wsState[ws].chatHist.length === 0) {
+      showAiIntro(ws);
     }
   }
 }
@@ -3074,6 +3082,148 @@ function clearWorkspace(ws) {
   if (suggContainer) suggContainer.innerHTML = '';
 }
 
+// 追加聊天消息（含确认按钮）—— agreed 建议专用
+function appendChatMsgWithConfirm(ws, suggestion, location) {
+  const scroll = document.getElementById(ws + '-chat-scroll');
+  const empty = document.getElementById(ws + '-chat-empty');
+  if (!scroll) return;
+  if (empty) empty.style.display = 'none';
+  const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
+  const locHtml = location ? '<div class="ws-confirm-location">📍 ' + escHtml(location) + '</div>' : '';
+  const div = document.createElement('div');
+  div.className = 'chat-msg ai';
+  div.innerHTML =
+    '<div class="chat-bubble">' +
+      locHtml +
+      '<div class="ws-confirm-suggestion">' + escHtml(suggestion) + '</div>' +
+      '<div class="ws-confirm-actions">' +
+        '<button class="ws-confirm-accept" onclick="acceptSuggestion(\'' + ws + '\')">✅ 确认此条</button>' +
+        '<button class="ws-confirm-cancel" onclick="cancelSuggestion(\'' + ws + '\')">✕ 取消</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="chat-meta">' + time + '</div>';
+  scroll.appendChild(div);
+  scroll.scrollTop = scroll.scrollHeight;
+  // 追加到 chatHist（显示用）
+  _wsState[ws].chatHist.push({ role: 'ai', text: '【修改建议】' + suggestion + (location ? '\n位置：' + location : '') });
+}
+
+// 接受当前建议 → 加入 confirmedChanges，继续对话
+function acceptSuggestion(ws) {
+  var pending = _wsState[ws].pendingSuggestion;
+  if (!pending) return;
+  _wsState[ws].confirmedChanges.push({
+    action: '修改',
+    location: pending.location || '',
+    content: pending.suggestion
+  });
+  _wsState[ws].pendingSuggestion = null;
+  // 更新已确认列表显示
+  renderConfirmedChanges(ws);
+  // 清空当前输入框，AI 继续对话
+  appendChatMsg(ws, 'ai', '✅ 已确认此条修改。你还有别的修改意见吗？');
+}
+
+// 取消当前建议
+function cancelSuggestion(ws) {
+  _wsState[ws].pendingSuggestion = null;
+  // 移除最后一条 AI 消息（带确认按钮的那条）
+  var scroll = document.getElementById(ws + '-chat-scroll');
+  if (scroll && scroll.lastElementChild) {
+    scroll.lastElementChild.remove();
+  }
+}
+
+// 渲染已确认的修改列表 + 生成按钮
+function renderConfirmedChanges(ws) {
+  var changes = _wsState[ws].confirmedChanges;
+  var listEl = document.getElementById('s4-' + ws + '-confirmed-list');
+  if (!listEl) return;
+  if (changes.length === 0) {
+    listEl.innerHTML = '';
+    return;
+  }
+  var html = '<div style="font-size:11px;color:#667085;margin-bottom:6px">已确认 ' + changes.length + ' 条修改：</div>';
+  html += '<div class="ws-confirmed-list">';
+  for (var i = 0; i < changes.length; i++) {
+    var c = changes[i];
+    html += '<div class="ws-confirmed-item">' +
+      '<span class="ws-check">✅</span>' +
+      '<div>' +
+        '<div class="ws-confirmed-text">' + escHtml(c.content) + '</div>' +
+        (c.location ? '<div class="ws-confirmed-loc">📍 ' + escHtml(c.location) + '</div>' : '') +
+      '</div>' +
+    '</div>';
+  }
+  html += '</div>';
+  html += '<button class="ws-generate-btn" id="s4-' + ws + '-generate-btn" onclick="doGenerateNewVersion(\'' + ws + '\')">✅ 确认全部修改，生成 V' + (changes.length + 1) + '</button>';
+  listEl.innerHTML = html;
+}
+
+// 生成新版本（从 confirmedChanges 列表）
+async function doGenerateNewVersion(ws) {
+  var btn = document.getElementById('s4-' + ws + '-generate-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '生成中…'; }
+  try {
+    var c = getClient(currentClientId);
+    var vs = ws === 'presales'
+      ? (Array.isArray(c.step4_presales_versions) ? c.step4_presales_versions : [])
+      : (Array.isArray(c.step4_technical_versions) ? c.step4_technical_versions : []);
+    var latest = vs[vs.length - 1];
+    var isTechnical = ws === 'technical';
+    // 取最新版本的 HTML 内容
+    var latestHtml = latest ? (latest.content?.htmlContent || '') : '';
+    var endpoint = isTechnical ? '/api/step4/regenerate-technical' : '/api/step4/regenerate';
+    var versionsKey = isTechnical ? 'step4_technical_versions' : 'step4_presales_versions';
+    var reqData = {};
+    if (c.step1_result) reqData.step1 = c.step1_result;
+    if (c.step3_summary) reqData.step3 = c.step3_summary;
+    if (c.step4_input_draft) reqData.step4_input = c.step4_input_draft;
+    var resp = await fetch(API_BASE + endpoint, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        client_id: c.id,
+        doc_type: ws,
+        html_content: latestHtml,
+        requirement_data: reqData,
+        confirmed_changes: _wsState[ws].confirmedChanges,
+        chat_history: _wsState[ws].chatHist.slice(-20)
+      })
+    });
+    var data = await resp.json();
+    if (data.success) {
+      // 清空确认列表
+      _wsState[ws].confirmedChanges = [];
+      _wsState[ws].pendingSuggestion = null;
+      renderConfirmedChanges(ws);
+      // 追加新版本
+      var newVersion = {
+        version: data.version,
+        content: { htmlContent: data.html_content || latestHtml },
+        created_at: new Date().toISOString(),
+        file_url: isTechnical ? data.file_url : undefined,
+        filename: isTechnical ? data.filename : undefined,
+        source: 'chat_regenerate'
+      };
+      var allVersions = (Array.isArray(c[versionsKey]) ? c[versionsKey] : []).slice();
+      allVersions.push(newVersion);
+      var upd = {}; upd[versionsKey] = allVersions;
+      updateClient(currentClientId, upd);
+      _wsState[ws].currentHtmlContent = data.html_content || latestHtml;
+      appendChatMsg(ws, 'ai', '✅ V' + data.version + ' 已生成！版本列表已更新。');
+      setVersionCount(ws, allVersions.length);
+      renderStep4History(ws, allVersions);
+    } else {
+      appendChatMsg(ws, 'ai', '⚠️ 生成失败：' + (data.error || '请重试'));
+    }
+  } catch(e) {
+    appendChatMsg(ws, 'ai', '⚠️ 网络异常：' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✅ 确认全部修改，生成 V' + (_wsState[ws].confirmedChanges.length + 1); }
+  }
+}
+
 // 追加聊天消息
 function appendChatMsg(ws, role, text) {
   const scroll = document.getElementById(ws + '-chat-scroll');
@@ -3094,6 +3244,50 @@ function appendChatMsg(ws, role, text) {
 
 // 诊断建议卡片渲染（见上方 renderAiSuggestions）
 // 追问选项渲染（见上方 renderAiOptions）
+
+// 显示 AI intro（仅首次）
+function showAiIntro(ws) {
+  var isTechnical = ws === 'technical';
+  var introText;
+  if (isTechnical) {
+    introText = '您好！我已完成了技术路线及报价方案 V1 的生成。作为技术方案顾问，主动审阅后发现：整体结构完整，11 章 26 表骨架齐全，字段设计已逐一张开。建议重点关注：① 字段类型与必填规则是否贴合业务？② 报价参考区间是否需要调整？③ 一期/二期交付边界是否清晰？';
+  } else {
+    introText = '您好！我已完成了售前解决方案 V1 的生成。作为售前顾问，主动审阅后发现：整体结构完整，核心痛点方向把握准确。建议重点关注：① 贵司行业案例是否充足？② 价值量化是否有数据支撑？③ 一期/二期边界是否清晰？';
+  }
+  appendChatMsg(ws, 'ai', introText);
+  // 快捷按钮放 quick-suggestions 区
+  var chipEl = document.getElementById(ws + '-quick-suggestions');
+  if (chipEl) {
+    var btns = isTechnical
+      ? [
+          { label: '✅ 方向 OK', text: '方向没问题，继续完善细节' },
+          { label: '🗣 措辞调整', text: '措辞要更专业严谨' },
+          { label: '📇 字段展开', text: '字段设计不够详细' },
+          { label: '💰 报价口径', text: '报价口径要更清晰' },
+          { label: '📋 边界明确', text: '一期二期边界要更清晰' }
+        ]
+      : [
+          { label: '✅ 方向 OK', text: '方案方向没问题，继续' },
+          { label: '🗣 措辞调整', text: '措辞太正式，希望更口语化' },
+          { label: '📇 补充案例', text: '缺行业案例佐证' },
+          { label: '📊 数据量化', text: '价值描述不够量化' },
+          { label: '📋 边界明确', text: '一期二期边界要更清晰' }
+        ];
+    var html = '';
+    for (var i = 0; i < btns.length; i++) {
+      html += '<button class="ws-suggest-card" style="cursor:pointer" data-ws="' + ws + '" data-text="' + escAttr(btns[i].text) + '">' + btns[i].label + '</button>';
+    }
+    chipEl.innerHTML = html;
+    chipEl.onclick = function(e) {
+      var btn = e.target.closest('.ws-suggest-card');
+      if (!btn) return;
+      var w = btn.dataset.ws;
+      var t = btn.dataset.text;
+      var input = document.getElementById(w + '-chat-input');
+      if (input) { input.value = t; autoGrow(input); input.focus(); }
+    };
+  }
+}
 
 // 自动增高
 function autoGrow(el) {
@@ -3197,8 +3391,17 @@ async function fetchAiSuggestions(ws, userInput) {
     _wsState[ws].aiHist.push({ role: 'assistant', content: JSON.stringify(data) });
 
     if (data.agreed) {
-      // AI 认为可行，给出具体修改建议
-      return data.suggestion || '好的，已记录你的修改意见。';
+      // AI 认为可行，给出具体修改建议（含内容+位置）
+      var suggestionText = data.suggestion || '好的，已记录你的修改意见。';
+      var locationText = data.location || '';
+      // 存储到 _confirmedChanges 待确认
+      _wsState[ws].pendingSuggestion = {
+        suggestion: suggestionText,
+        location: locationText
+      };
+      // 在 chat scroll 里显示带确认按钮的 AI 建议
+      appendChatMsgWithConfirm(ws, suggestionText, locationText);
+      return null;
     } else if (data.probing) {
       // 需要追问，显示选项
       appendChatMsg(ws, 'ai', data.probing);
@@ -5859,10 +6062,9 @@ function loadStep4(c) {
   if (tvCount) tvCount.textContent = techVersions.length || 0;
   // 更新访客计数
   loadPresalesVisits();
-  // 加载对话历史 + AI 诊断
-  loadChatHistory('presales');
-  loadChatHistory('technical');
-  initStep4Workspaces();
+  // 切换到对话 tab，显示 AI intro（仅首次）
+  switchArtifactTab('presales', 'chat');
+  switchArtifactTab('technical', 'chat');
 }
 
 // ==================== 反馈队列 ====================
