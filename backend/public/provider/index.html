@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>服务商工作台 - Provider Assist</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#162033;--sub:#667085;--muted:#98a2b3;--line:#e6ebf2;--blue:#1263e6;--green:#13b96f;--orange:#ff8a00}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg);min-height:100vh}
+/* Top bar */
+.topbar{background:var(--card);border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.brand{font-weight:900;font-size:16px;color:var(--text);display:flex;align-items:center;gap:8px}
+.brand-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#1263e6,#19c58a);display:grid;place-items:center;color:#fff;font-weight:900;font-size:14px}
+.user-info{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--sub)}
+.logout-btn{border:1px solid #d9e0ea;background:#fff;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer}
+.logout-btn:hover{background:#f5f7fb}
+/* Tabs */
+.tabs{display:flex;gap:4px;padding:16px 28px 0;background:var(--card);border-bottom:1px solid var(--line)}
+.tab{padding:10px 18px;border-radius:10px 10px 0 0;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer;border:none;background:transparent;transition:.15s}
+.tab:hover{color:var(--blue);background:#f0f6ff}
+.tab.active{color:var(--blue);background:#eef6ff;border-bottom:2px solid var(--blue);margin-bottom:-1px}
+/* Content */
+.content{padding:24px 28px}
+.page{display:none}
+.page.active{display:block}
+/* Cards */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card);border-radius:18px;padding:20px;box-shadow:0 2px 8px rgba(20,34,64,.05)}
+.stat-card .num{font-size:28px;font-weight:900;color:var(--blue);margin-bottom:4px}
+.stat-card .label{font-size:12px;color:var(--sub)}
+/* Client list */
+.client-card{background:var(--card);border-radius:16px;padding:16px 18px;margin-bottom:12px;box-shadow:0 2px 8px rgba(20,34,64,.05);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.client-card:hover{box-shadow:0 4px 16px rgba(18,99,230,.12)}
+.client-name{font-weight:700;font-size:15px}
+.client-meta{font-size:12px;color:var(--sub);margin-top:3px}
+.reports{display:flex;gap:8px;flex-wrap:wrap}
+.report-link{display:inline-flex;align-items:center;padding:4px 10px;background:#eef6ff;color:var(--blue);border-radius:8px;font-size:11px;font-weight:600;text-decoration:none}
+.report-link:hover{background:#1263e6;color:#fff}
+/* Visit list */
+.visit-card{background:var(--card);border-radius:16px;padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.visit-client{font-weight:600;font-size:14px}
+.visit-meta{font-size:12px;color:var(--sub);margin-top:2px}
+.visit-time{font-size:11px;color:var(--muted)}
+/* Knowledge list */
+.kb-card{background:var(--card);border-radius:16px;padding:16px 18px;margin-bottom:12px}
+.kb-title{font-weight:700;font-size:14px;margin-bottom:6px}
+.kb-meta{display:flex;gap:8px;flex-wrap:wrap}
+.kb-tag{background:#f0f4ff;color:var(--blue);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600}
+.kb-content{font-size:13px;color:var(--sub);margin-top:8px;line-height:1.6}
+.kb-actions{display:flex;gap:8px;margin-top:10px}
+.btn-sm{border:1px solid #d9e0ea;background:#fff;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer}
+.btn-sm:hover{background:#f5f7fb}
+.btn-sm.danger{color:#dc2626;border-color:#fca5a5}
+.btn-sm.danger:hover{background:#fef2f2}
+/* Empty state */
+.empty{text-align:center;padding:48px;color:var(--muted);font-size:14px}
+.empty b{display:block;font-size:15px;color:var(--text);margin-bottom:6px}
+/* Loading */
+.loading{text-align:center;padding:40px;color:var(--muted)}
+.spinner{width:28px;height:28px;border-radius:50%;border:3px solid #e8edf5;border-top-color:var(--blue);animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Knowledge upload */
+.upload-zone{border:2px dashed #b9d8ff;background:#eef6ff;border-radius:16px;padding:24px;text-align:center;color:var(--blue);cursor:pointer;margin-bottom:16px;font-size:13px}
+.upload-zone:hover{background:#dceeff}
+.upload-zone input{display:none}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-logo">PA</div>
+    Provider Assist
+  </div>
+  <div class="user-info">
+    <span id="user-name">-</span>
+    <span id="provider-name" style="color:var(--blue)">-</span>
+    <button class="logout-btn" onclick="logout()">退出</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="clients" onclick="switchTab('clients')">我的客户</button>
+  <button class="tab" data-tab="visits" onclick="switchTab('visits')">我的访问</button>
+  <button class="tab" data-tab="kb" onclick="switchTab('kb')">我的知识库</button>
+</div>
+
+<div class="content">
+  <!-- 我的客户 -->
+  <div class="page active" id="page-clients">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="num" id="stat-clients">0</div>
+        <div class="label">客户总数</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-reports">0</div>
+        <div class="label">生成报告</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-kb">0</div>
+        <div class="label">知识库条目</div>
+      </div>
+    </div>
+    <div id="client-list">
+      <div class="loading"><div class="spinner"></div>加载中...</div>
+    </div>
+  </div>
+
+  <!-- 我的访问 -->
+  <div class="page" id="page-visits">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="num" id="stat-visits">0</div>
+        <div class="label">访问总次数</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-visit-clients">0</div>
+        <div class="label">被访问客户</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-latest">-</div>
+        <div class="label">最近访问</div>
+      </div>
+    </div>
+    <div id="visit-list">
+      <div class="loading"><div class="spinner"></div>加载中...</div>
+    </div>
+  </div>
+
+  <!-- 我的知识库 -->
+  <div class="page" id="page-kb">
+    <div class="upload-zone" onclick="document.getElementById('kb-upload').click()">
+      <input type="file" id="kb-upload" accept=".txt,.docx,.pdf" multiple onchange="handleKbUpload(this.files)">
+      📎 点击上传知识库文件（支持 .txt/.docx/.pdf）
+    </div>
+    <div id="kb-list">
+      <div class="loading"><div class="spinner"></div>加载中...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8002';
+
+function getToken() { return localStorage.getItem('provider_token') || ''; }
+function getUser() { try { return JSON.parse(localStorage.getItem('provider_user') || '{}'); } catch { return {}; } }
+
+function authHeaders() {
+  const t = getToken();
+  return t ? {'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json'} : {'Content-Type': 'application/json'};
+}
+
+function checkAuth() {
+  if (!getToken()) location.href = 'login.html';
+}
+checkAuth();
+
+const user = getUser();
+document.getElementById('user-name').textContent = user.username || '-';
+document.getElementById('provider-name').textContent = user.provider_name || '-';
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+  document.getElementById(`page-${tab}`).classList.add('active');
+  if (tab === 'clients') loadClients();
+  else if (tab === 'visits') loadVisits();
+  else if (tab === 'kb') loadKB();
+}
+
+function logout() {
+  localStorage.removeItem('provider_token');
+  localStorage.removeItem('provider_user');
+  location.href = 'login.html';
+}
+
+// ===== 客户列表 =====
+async function loadClients() {
+  const list = document.getElementById('client-list');
+  try {
+    const resp = await fetch(`${API}/api/clients`, { headers: authHeaders() });
+    const clients = await resp.json();
+
+    document.getElementById('stat-clients').textContent = clients.length;
+
+    if (!clients.length) {
+      list.innerHTML = '<div class="empty"><b>暂无客户</b>通过 Work Buddy 生成报告后，客户将显示在这里</div>';
+      return;
+    }
+
+    document.getElementById('stat-reports').textContent =
+      clients.filter(c => c.step4_presales_versions).length;
+
+    list.innerHTML = clients.map(c => {
+      const reports = c.step4_presales_versions || [];
+      const reportsHtml = Array.isArray(reports)
+        ? reports.map(r => `<a class="report-link" href="${r.url || '#'}" target="_blank">${r.type === 'sales' ? '📄 售前' : r.type === 'tech' ? '🔧 技术' : '💰 报价'}</a>`).join('')
+        : '';
+      return `
+        <div class="client-card">
+          <div>
+            <div class="client-name">${esc(c.name || '未命名')}</div>
+            <div class="client-meta">${esc(c.industry || '未定义行业')} · ${esc(c.scale || '')} · ${new Date(c.updated_at || c.created_at).toLocaleDateString()}</div>
+          </div>
+          <div class="reports">${reportsHtml || '<span style="color:var(--muted);font-size:12px">暂无报告</span>'}</div>
+        </div>
+      `;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty">加载失败，请刷新重试</div>';
+  }
+}
+
+// ===== 访问记录 =====
+async function loadVisits() {
+  const list = document.getElementById('visit-list');
+  try {
+    const resp = await fetch(`${API}/api/visits`, { headers: authHeaders() });
+    const data = await resp.json();
+    const visits = data.visits || [];
+
+    document.getElementById('stat-visits').textContent = visits.length;
+    document.getElementById('stat-visit-clients').textContent = new Set(visits.map(v => v.client_id)).size;
+
+    if (!visits.length) {
+      list.innerHTML = '<div class="empty"><b>暂无访问记录</b>报告被访问时将显示在这里</div>';
+      return;
+    }
+
+    list.innerHTML = visits.map(v => `
+      <div class="visit-card">
+        <div>
+          <div class="visit-client">${esc(v.client_name || '客户 #' + v.client_id)}</div>
+          <div class="visit-meta">${esc(v.report_type || '报告访问')} · ${esc(v.ip_address || '-')}</div>
+        </div>
+        <div class="visit-time">${new Date(v.visited_at || v.last_visit_at).toLocaleString()}</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty">加载失败，请刷新重试</div>';
+  }
+}
+
+// ===== 知识库 =====
+async function loadKB() {
+  const list = document.getElementById('kb-list');
+  try {
+    const resp = await fetch(`${API}/api/provider-knowledge`, { headers: authHeaders() });
+    const items = await resp.json();
+
+    document.getElementById('stat-kb').textContent = items.length;
+
+    if (!items.length) {
+      list.innerHTML = '<div class="empty"><b>暂无知识库内容</b>点击上方按钮上传文件</div>';
+      return;
+    }
+
+    list.innerHTML = items.map(item => `
+      <div class="kb-card">
+        <div class="kb-title">${esc(item.title || '未命名')}</div>
+        <div class="kb-meta">
+          <span class="kb-tag">${esc(item.category || '通用')}</span>
+          <span class="kb-tag">${esc(item.industry || '未分类')}</span>
+        </div>
+        <div class="kb-content">${esc(item.content || '').substring(0, 120)}...</div>
+        <div class="kb-actions">
+          <button class="btn-sm" onclick="viewKB(${item.id})">查看</button>
+          <button class="btn-sm danger" onclick="deleteKB(${item.id})">删除</button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty">加载失败，请刷新重试</div>';
+  }
+}
+
+async function handleKbUpload(files) {
+  if (!files.length) return;
+  const formData = new FormData();
+  for (const f of files) formData.append('files', f);
+  // 简化：直接提示用后台上传
+  alert('请联系平台管理员上传知识库文件');
+}
+
+async function viewKB(id) {
+  const resp = await fetch(`${API}/api/provider-knowledge/${id}`, { headers: authHeaders() });
+  const item = await resp.json();
+  alert(item.content || '无内容');
+}
+
+async function deleteKB(id) {
+  if (!confirm('确认删除？')) return;
+  await fetch(`${API}/api/provider-knowledge/${id}`, { method: 'DELETE', headers: authHeaders() });
+  loadKB();
+}
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// 初始化
+loadClients();
+</script>
+</body>
+</html>

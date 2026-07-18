@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>服务商登录 - Provider Assist</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#162033;--sub:#667085;--blue:#1263e6;--blue2:#eaf3ff;--green:#13b96f}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg);min-height:100vh;display:flex;align-items:center;justify-content:center}
+.wrap{width:420px;max-width:92vw}
+.logo{width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#1263e6,#19c58a);display:grid;place-items:center;color:#fff;font-weight:900;font-size:22px;margin:0 auto 20px;box-shadow:0 12px 28px rgba(18,99,230,.25)}
+h1{text-align:center;font-size:22px;margin:0 0 6px}
+.sub{text-align:center;color:var(--sub);font-size:13px;margin:0 0 28px}
+.card{background:var(--card);border-radius:22px;padding:32px 28px;box-shadow:0 8px 32px rgba(20,34,64,.08)}
+.field{margin-bottom:18px}
+.label{font-size:13px;font-weight:700;margin-bottom:7px;display:block}
+.input{width:100%;border:1.5px solid #d9e0ea;border-radius:13px;padding:12px 14px;font-size:14px;outline:none;transition:.15s}
+.input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(18,99,230,.08)}
+.btn{width:100%;padding:14px;border-radius:13px;border:none;background:linear-gradient(135deg,#1263e6,#0c55cf);color:#fff;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(18,99,230,.3);transition:.15s;margin-top:6px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(18,99,230,.35)}
+.btn:active{transform:none}
+.error{background:#fef2f2;color:#dc2626;border-radius:10px;padding:11px 14px;font-size:13px;margin-bottom:14px;display:none}
+.hint{text-align:center;font-size:12px;color:var(--sub);margin-top:18px}
+.hint a{color:var(--blue);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">PA</div>
+  <h1>服务商登录</h1>
+  <p class="sub">Provider Assist 售前助手</p>
+  <div class="card">
+    <div class="error" id="error-msg"></div>
+    <div class="field">
+      <label class="label">用户名</label>
+      <input class="input" id="username" placeholder="输入用户名" autocomplete="username">
+    </div>
+    <div class="field">
+      <label class="label">密码</label>
+      <input class="input" id="password" type="password" placeholder="输入密码" autocomplete="current-password">
+    </div>
+    <div class="field">
+      <label class="label">API Key（受邀码）</label>
+      <input class="input" id="api_key" placeholder="输入 API Key（可选）">
+    </div>
+    <button class="btn" id="login-btn" onclick="doLogin()">登录</button>
+  </div>
+  <p class="hint">没有账号？联系平台管理员获取受邀码</p>
+</div>
+<script>
+const API = 'http://localhost:8002';
+
+async function doLogin() {
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('error-msg');
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const apiKey = document.getElementById('api_key').value.trim();
+
+  if (!username || !password) {
+    err.textContent = '请输入用户名和密码';
+    err.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '登录中...';
+  err.style.display = 'none';
+
+  try {
+    const resp = await fetch(`${API}/api/auth/login`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        username, password,
+        provider_name: '',  // 可留空
+        invitation_code: apiKey || 'PROV2026001'  // 默认测试码
+      })
+    });
+    const data = await resp.json();
+
+    if (data.access_token) {
+      localStorage.setItem('provider_token', data.access_token);
+      localStorage.setItem('provider_user', JSON.stringify(data.user));
+      location.href = 'index.html';
+    } else {
+      err.textContent = data.detail || '登录失败';
+      err.style.display = 'block';
+    }
+  } catch(e) {
+    err.textContent = '网络错误，请稍后重试';
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '登录';
+  }
+}
+
+document.getElementById('password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>
