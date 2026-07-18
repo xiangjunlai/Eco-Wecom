@@ -6639,6 +6639,40 @@ async def log_visit(request: Request, data: dict):
     return {"success": True}
 
 
+@app.get("/api/visits")
+async def list_visits(request: Request, user: dict = Depends(require_auth)):
+    """获取当前服务商的访问记录"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT vt.*, c.name as client_name
+        FROM visit_tracking vt
+        LEFT JOIN clients c ON vt.client_id = c.id
+        WHERE c.user_id = ?
+        ORDER BY vt.last_visit_at DESC
+        LIMIT 200
+    """, (user["user_id"],))
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return {"visits": rows}
+
+
+@app.get("/api/provider-knowledge/{kb_id}")
+async def get_knowledge_item(kb_id: int, user: dict = Depends(require_auth)):
+    """获取知识库单条内容"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM provider_knowledge WHERE id = ? AND user_id = ?",
+        (kb_id, user["user_id"])
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="不存在")
+    return dict(row)
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
