@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>平台管理后台 - Provider Assist</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#162033;--sub:#667085;--muted:#98a2b3;--line:#e6ebf2;--blue:#1263e6;--green:#13b96f;--orange:#ff8a00;--red:#ef4444}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg);min-height:100vh}
+/* Top bar */
+.topbar{background:var(--card);border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.brand{font-weight:900;font-size:16px;color:var(--text);display:flex;align-items:center;gap:8px}
+.brand-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ff8a00,#ff6b00);display:grid;place-items:center;color:#fff;font-weight:900;font-size:14px}
+.user-info{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--sub)}
+.logout-btn{border:1px solid #d9e0ea;background:#fff;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer}
+.logout-btn:hover{background:#f5f7fb}
+/* Tabs */
+.tabs{display:flex;gap:4px;padding:16px 28px 0;background:var(--card);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{padding:10px 18px;border-radius:10px 10px 0 0;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer;border:none;background:transparent;transition:.15s}
+.tab:hover{color:var(--blue);background:#f0f6ff}
+.tab.active{color:#fff;background:var(--blue);margin-bottom:-1px}
+/* Content */
+.content{padding:24px 28px}
+.page{display:none}
+.page.active{display:block}
+/* Stats */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card);border-radius:18px;padding:18px 20px;box-shadow:0 2px 8px rgba(20,34,64,.05)}
+.stat-card .num{font-size:26px;font-weight:900;color:var(--blue);margin-bottom:3px}
+.stat-card .num.orange{color:var(--orange)}
+.stat-card .num.green{color:var(--green)}
+.stat-card .label{font-size:12px;color:var(--sub)}
+/* Tables */
+.table-wrap{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(20,34,64,.05)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f8fbff;color:var(--sub);font-weight:600;padding:12px 14px;text-align:left;font-size:12px;white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid #f3f4f6;color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbff}
+.badge{display:inline-flex;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.badge.active{background:#ecfdf3;color:#047857}
+.badge.inactive{background:#f3f4f6;color:#667085}
+.badge.danger{background:#fef2f2;color:#dc2626}
+.actions{display:flex;gap:6px}
+.btn-xs{border:1px solid #d9e0ea;background:#fff;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer}
+.btn-xs:hover{background:#f5f7fb}
+.btn-xs.danger{color:#dc2626;border-color:#fca5a5}
+.btn-xs.danger:hover{background:#fef2f2}
+.btn-xs.primary{color:var(--blue);border-color:#b9d8ff;background:#eef6ff}
+.btn-xs.primary:hover{background:#dceeff}
+/* Search bar */
+.search-row{display:flex;gap:10px;margin-bottom:16px;align-items:center}
+.search-input{flex:1;border:1.5px solid #d9e0ea;border-radius:10px;padding:9px 14px;font-size:13px;outline:none;max-width:300px}
+.search-input:focus{border-color:var(--blue)}
+/* Modal */
+.modal{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.4);align-items:center;justify-content:center}
+.modal.active{display:flex}
+.modal-box{background:#fff;border-radius:20px;padding:28px;width:500px;max-width:92vw;max-height:80vh;overflow:auto}
+.modal-box h3{margin:0 0 16px;font-size:16px}
+.modal-field{margin-bottom:14px}
+.modal-label{font-size:12px;font-weight:700;margin-bottom:6px;display:block}
+.modal-input{width:100%;border:1.5px solid #d9e0ea;border-radius:10px;padding:10px 12px;font-size:13px;outline:none}
+.modal-input:focus{border-color:var(--blue)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.btn-cancel{border:1px solid #d9e0ea;background:#fff;border-radius:10px;padding:9px 18px;font-size:13px;cursor:pointer}
+.btn-confirm{border:none;background:var(--blue);color:#fff;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-confirm.orange{background:var(--orange)}
+/* Code list */
+.code-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid #f3f4f6}
+.code-item:last-child{border-bottom:none}
+.code-value{font-weight:700;font-size:14px;color:var(--blue)}
+.code-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.code-actions{display:flex;gap:6px}
+/* Empty */
+.empty{text-align:center;padding:48px;color:var(--muted);font-size:14px}
+.empty b{display:block;font-size:15px;color:var(--text);margin-bottom:6px}
+/* Loading */
+.loading{text-align:center;padding:40px;color:var(--muted)}
+.spinner{width:28px;height:28px;border-radius:50%;border:3px solid #e8edf5;border-top-color:var(--blue);animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-logo">PA</div>
+    平台管理后台
+  </div>
+  <div class="user-info">
+    <span id="user-name">-</span>
+    <button class="logout-btn" onclick="logout()">退出</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="stats" onclick="switchTab('stats')">数据概览</button>
+  <button class="tab" data-tab="providers" onclick="switchTab('providers')">服务商管理</button>
+  <button class="tab" data-tab="clients" onclick="switchTab('clients')">客户管理</button>
+  <button class="tab" data-tab="kb" onclick="switchTab('kb')">知识库管理</button>
+  <button class="tab" data-tab="quota" onclick="switchTab('quota')">AI配额</button>
+  <button class="tab" data-tab="codes" onclick="switchTab('codes')">受邀码管理</button>
+</div>
+
+<div class="content">
+  <!-- 数据概览 -->
+  <div class="page active" id="page-stats">
+    <div class="stat-grid" id="stats-grid">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- 服务商管理 -->
+  <div class="page" id="page-providers">
+    <div class="search-row">
+      <input class="search-input" id="provider-search" placeholder="搜索服务商名称" oninput="filterProviders()">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>服务商</th><th>用户数</th><th>客户数</th><th>Token消耗</th><th>注册时间</th><th>操作</th></tr></thead>
+        <tbody id="providers-tbody"><tr><td colspan=6><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 客户管理 -->
+  <div class="page" id="page-clients">
+    <div class="search-row">
+      <input class="search-input" id="client-search" placeholder="搜索客户名称" oninput="filterClients()">
+      <select class="search-input" id="client-provider-filter" style="max-width:180px" onchange="filterClients()">
+        <option value="">全部服务商</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>客户名称</th><th>服务商</th><th>行业</th><th>阶段</th><th>报告</th><th>Token消耗</th><th>更新时间</th></tr></thead>
+        <tbody id="clients-tbody"><tr><td colspan=7><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 知识库管理 -->
+  <div class="page" id="page-kb">
+    <div class="search-row">
+      <input class="search-input" id="kb-search" placeholder="搜索知识库标题" oninput="filterKB()">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>标题</th><th>服务商</th><th>类型</th><th>行业</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody id="kb-tbody"><tr><td colspan=6><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- AI配额 -->
+  <div class="page" id="page-quota">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="num orange" id="quota-total">-</div>
+        <div class="label">总 Token 消耗</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="quota-providers">-</div>
+        <div class="label">使用配额的服务商</div>
+      </div>
+      <div class="stat-card">
+        <div class="num green" id="quota-calls">-</div>
+        <div class="label">AI 调用次数</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>服务商</th><th>用户名</th><th>Token消耗</th><th>调用次数</th><th>配额设置</th><th>操作</th></tr></thead>
+        <tbody id="quota-tbody"><tr><td colspan=6><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 受邀码管理 -->
+  <div class="page" id="page-codes">
+    <div class="search-row">
+      <button class="btn-xs primary" onclick="showCreateCodeModal()">+ 新建受邀码</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>受邀码</th><th>服务商</th><th>状态</th><th>已注册/上限</th><th>注册用户</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody id="codes-tbody"><tr><td colspan=7><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 创建受邀码弹窗 -->
+<div class="modal" id="create-code-modal">
+  <div class="modal-box">
+    <h3>新建受邀码</h3>
+    <div class="modal-field">
+      <label class="modal-label">服务商名称</label>
+      <input class="modal-input" id="code-provider" placeholder="输入服务商名称">
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">最大用户数</label>
+      <input class="modal-input" id="code-max-users" type="number" value="1" min="1">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeCreateCodeModal()">取消</button>
+      <button class="btn-confirm orange" onclick="createCode()">创建</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8002';
+
+function getToken() { return localStorage.getItem('admin_token') || ''; }
+function authHeaders() {
+  const t = getToken();
+  return t ? {'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json'} : {'Content-Type': 'application/json'};
+}
+
+function checkAuth() {
+  if (!getToken()) location.href = 'login.html';
+}
+checkAuth();
+
+document.getElementById('user-name').textContent = localStorage.getItem('admin_user') ? JSON.parse(localStorage.getItem('admin_user')).username : '-';
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+  document.getElementById(`page-${tab}`).classList.add('active');
+
+  if (tab === 'stats') loadStats();
+  else if (tab === 'providers') loadProviders();
+  else if (tab === 'clients') { loadClients(); loadProviderOptions(); }
+  else if (tab === 'kb') loadKB();
+  else if (tab === 'quota') loadQuota();
+  else if (tab === 'codes') loadCodes();
+}
+
+function logout() {
+  localStorage.removeItem('admin_token');
+  localStorage.removeItem('admin_user');
+  location.href = 'login.html';
+}
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===== 数据概览 =====
+async function loadStats() {
+  const grid = document.getElementById('stats-grid');
+  try {
+    const resp = await fetch(`${API}/api/admin/stats`, { headers: authHeaders() });
+    const data = await resp.json();
+    grid.innerHTML = `
+      <div class="stat-card"><div class="num">${data.total_users || 0}</div><div class="label">服务商用户</div></div>
+      <div class="stat-card"><div class="num orange">${data.total_clients || 0}</div><div class="label">客户总数</div></div>
+      <div class="stat-card"><div class="num green">${data.total_tokens || 0}</div><div class="label">Token 消耗</div></div>
+      <div class="stat-card"><div class="num">${data.funnel?.s1 || 0}</div><div class="label">Step1 完成</div></div>
+      <div class="stat-card"><div class="num">${data.funnel?.s2 || 0}</div><div class="label">Step2 完成</div></div>
+      <div class="stat-card"><div class="num">${data.funnel?.s3 || 0}</div><div class="label">Step3 完成</div></div>
+      <div class="stat-card"><div class="num">${data.funnel?.s4 || 0}</div><div class="label">Step4 完成</div></div>
+      <div class="stat-card"><div class="num">${data.funnel?.s5 || 0}</div><div class="label">Step5 完成</div></div>
+    `;
+  } catch(e) {
+    grid.innerHTML = '<div class="empty">加载失败</div>';
+  }
+}
+
+// ===== 服务商管理 =====
+let allProviders = [];
+
+async function loadProviders() {
+  const tbody = document.getElementById('providers-tbody');
+  try {
+    const resp = await fetch(`${API}/api/admin/users`, { headers: authHeaders() });
+    allProviders = await resp.json();
+    renderProviders(allProviders);
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan=6 class="empty">加载失败</td></tr>';
+  }
+}
+
+function renderProviders(providers) {
+  const tbody = document.getElementById('providers-tbody');
+  if (!providers.length) {
+    tbody.innerHTML = '<tr><td colspan=6 class="empty"><b>暂无服务商</b></td></tr>';
+    return;
+  }
+  tbody.innerHTML = providers.map(p => `
+    <tr>
+      <td><b>${esc(p.provider_name || '-')}</b><br><span style="font-size:11px;color:var(--muted)">${esc(p.username)}</span></td>
+      <td>${p.client_count || 0}</td>
+      <td>-</td>
+      <td>-</td>
+      <td>${new Date(p.created_at).toLocaleDateString()}</td>
+      <td><button class="btn-xs danger" onclick="deleteProvider(${p.id})">删除</button></td>
+    </tr>
+  `).join('');
+}
+
+function filterProviders() {
+  const q = document.getElementById('provider-search').value.toLowerCase();
+  const filtered = allProviders.filter(p => (p.provider_name || '').toLowerCase().includes(q));
+  renderProviders(filtered);
+}
+
+async function deleteProvider(id) {
+  if (!confirm('确认删除该服务商？')) return;
+  await fetch(`${API}/api/admin/users/${id}`, { method: 'DELETE', headers: authHeaders() });
+  loadProviders();
+}
+
+// ===== 客户管理 =====
+let allClients = [];
+
+async function loadClients() {
+  const tbody = document.getElementById('clients-tbody');
+  try {
+    const resp = await fetch(`${API}/api/admin/clients`, { headers: authHeaders() });
+    allClients = await resp.json();
+    renderClients(allClients);
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan=7 class="empty">加载失败</td></tr>';
+  }
+}
+
+async function loadProviderOptions() {
+  const sel = document.getElementById('client-provider-filter');
+  try {
+    const resp = await fetch(`${API}/api/admin/users`, { headers: authHeaders() });
+    const providers = await resp.json();
+    sel.innerHTML = '<option value="">全部服务商</option>' +
+      providers.map(p => `<option value="${esc(p.provider_name)}">${esc(p.provider_name)}</option>`).join('');
+  } catch(e) {}
+}
+
+function renderClients(clients) {
+  const tbody = document.getElementById('clients-tbody');
+  if (!clients.length) {
+    tbody.innerHTML = '<tr><td colspan=7 class="empty"><b>暂无客户</b></td></tr>';
+    return;
+  }
+  tbody.innerHTML = clients.map(c => {
+    const hasReports = (c.step4_presales_versions || c.step4_presales) ? '✓' : '-';
+    const step = c.is_completed ? '已完成' : c.hasStep4 ? 'Step4' : c.hasStep3 ? 'Step3' : c.hasStep2 ? 'Step2' : c.hasStep1 ? 'Step1' : '新建';
+    return `<tr>
+      <td><b>${esc(c.name || '未命名')}</b></td>
+      <td>${esc(c.provider_name || '-')}</td>
+      <td>${esc(c.industry || '-')}</td>
+      <td><span class="badge active">${step}</span></td>
+      <td>${hasReports}</td>
+      <td>${c.token_count || 0}</td>
+      <td>${new Date(c.updated_at).toLocaleDateString()}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterClients() {
+  const q = document.getElementById('client-search').value.toLowerCase();
+  const prov = document.getElementById('client-provider-filter').value;
+  const filtered = allClients.filter(c => {
+    const matchQ = !q || (c.name || '').toLowerCase().includes(q);
+    const matchP = !prov || c.provider_name === prov;
+    return matchQ && matchP;
+  });
+  renderClients(filtered);
+}
+
+// ===== 知识库管理 =====
+let allKB = [];
+
+async function loadKB() {
+  const tbody = document.getElementById('kb-tbody');
+  try {
+    const resp = await fetch(`${API}/api/admin/knowledge`, { headers: authHeaders() });
+    const data = await resp.json();
+    // data 是按 provider_name 分组的
+    allKB = data;
+    renderKB(data);
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan=6 class="empty">加载失败</td></tr>';
+  }
+}
+
+function renderKB(data) {
+  const tbody = document.getElementById('kb-tbody');
+  const rows = data.flatMap(g => (g.files || []).map(f => ({...f, provider: g.provider_name})));
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan=6 class="empty"><b>暂无知识库</b></td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(f => `
+    <tr>
+      <td><b>${esc(f.display_name || f.original_filename || '-')}</b></td>
+      <td>${esc(f.provider)}</td>
+      <td>${esc(f.category)}</td>
+      <td>${esc(f.industry || '-')}</td>
+      <td>${new Date(f.created_at).toLocaleDateString()}</td>
+      <td><button class="btn-xs danger" onclick="deleteKB('${f.id}')">删除</button></td>
+    </tr>
+  `).join('');
+}
+
+function filterKB() {
+  const q = document.getElementById('kb-search').value.toLowerCase();
+  const rows = allKB.flatMap(g => (g.files || []).map(f => ({...f, provider: g.provider_name}))).filter(f => (f.display_name || '').toLowerCase().includes(q));
+  renderKB(rows);
+}
+
+async function deleteKB(fileId) {
+  if (!confirm('确认删除？')) return;
+  await fetch(`${API}/api/admin/kb/files/${fileId}`, { method: 'DELETE', headers: authHeaders() });
+  loadKB();
+}
+
+// ===== AI配额 =====
+async function loadQuota() {
+  const tbody = document.getElementById('quota-tbody');
+  try {
+    const resp = await fetch(`${API}/api/admin/stats`, { headers: authHeaders() });
+    const data = await resp.json();
+    document.getElementById('quota-total').textContent = data.total_tokens || 0;
+    document.getElementById('quota-providers').textContent = data.provider_ai_rank?.length || 0;
+    document.getElementById('quota-calls').textContent = data.total_ai_calls || 0;
+
+    const rank = data.provider_ai_rank || [];
+    if (!rank.length) {
+      tbody.innerHTML = '<tr><td colspan=6 class="empty"><b>暂无数据</b></td></tr>';
+      return;
+    }
+    tbody.innerHTML = rank.map(r => `
+      <tr>
+        <td><b>${esc(r.provider_name)}</b></td>
+        <td>-</td>
+        <td>${r.tokens || 0}</td>
+        <td>-</td>
+        <td>-</td>
+        <td><button class="btn-xs">设置配额</button></td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan=6 class="empty">加载失败</td></tr>';
+  }
+}
+
+// ===== 受邀码管理 =====
+let allCodes = [];
+
+async function loadCodes() {
+  const tbody = document.getElementById('codes-tbody');
+  try {
+    const resp = await fetch(`${API}/api/admin/invitation-codes`, { headers: authHeaders() });
+    allCodes = await resp.json();
+    renderCodes(allCodes);
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan=7 class="empty">加载失败</td></tr>';
+  }
+}
+
+function renderCodes(codes) {
+  const tbody = document.getElementById('codes-tbody');
+  if (!codes.length) {
+    tbody.innerHTML = '<tr><td colspan=7 class="empty"><b>暂无受邀码</b></td></tr>';
+    return;
+  }
+  tbody.innerHTML = codes.map(c => `
+    <tr>
+      <td><span class="code-value">${esc(c.code)}</span></td>
+      <td>${esc(c.provider_name)}</td>
+      <td><span class="badge ${c.used >= c.max_users ? 'inactive' : 'active'}">${c.used >= c.max_users ? '已用完' : '可用'}</span></td>
+      <td>${c.used}/${c.max_users}</td>
+      <td>${esc(c.registered_users || '-')}</td>
+      <td>${new Date(c.created_at).toLocaleDateString()}</td>
+      <td class="code-actions">
+        <button class="btn-xs primary" onclick="resetCode(${c.id})">重置</button>
+        <button class="btn-xs danger" onclick="deleteCode(${c.id})">删除</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function showCreateCodeModal() {
+  document.getElementById('create-code-modal').classList.add('active');
+}
+
+function closeCreateCodeModal() {
+  document.getElementById('create-code-modal').classList.remove('active');
+}
+
+async function createCode() {
+  const provider = document.getElementById('code-provider').value.trim();
+  const maxUsers = parseInt(document.getElementById('code-max-users').value) || 1;
+  if (!provider) { alert('请输入服务商名称'); return; }
+  await fetch(`${API}/api/admin/invitation-codes`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ provider_name: provider, max_users: maxUsers })
+  });
+  closeCreateCodeModal();
+  loadCodes();
+}
+
+async function resetCode(id) {
+  await fetch(`${API}/api/admin/invitation-codes/${id}/reset`, { method: 'POST', headers: authHeaders() });
+  loadCodes();
+}
+
+async function deleteCode(id) {
+  if (!confirm('确认删除？')) return;
+  await fetch(`${API}/api/admin/invitation-codes/${id}`, { method: 'DELETE', headers: authHeaders() });
+  loadCodes();
+}
+
+// Init
+loadStats();
+</script>
+</body>
+</html>
