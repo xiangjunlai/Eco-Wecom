@@ -6,6 +6,9 @@ venv/
 .venv/
 *.db
 
+# Env
+backend/.env
+
 # Node
 node_modules/
 package-lock.json
@@ -28,3 +31,16 @@ test-results/
 *.tmp
 *.bak
 test_ai_comparison/
+
+# Outputs (generated reports)
+outputs/
+
+# Generated step HTML files
+backend/public/s/
+
+# Generated HTML files in backend
+backend/*.html
+backend/public/*.html
+!backend/public/login.html
+!backend/public/workbench.html
+!backend/public/client_list.html
