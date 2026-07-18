@@ -35,6 +35,9 @@ test_ai_comparison/
 # Outputs (generated reports)
 outputs/
 
+# Skill generated reports (HTML)
+data/reports/
+
 # Generated step HTML files
 backend/public/s/
 

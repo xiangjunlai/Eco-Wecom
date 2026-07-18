@@ -288,6 +288,11 @@ outputs_dir = Path(__file__).parent.parent / "outputs"
 outputs_dir.mkdir(exist_ok=True)
 app.mount("/outputs", StaticFiles(directory=str(outputs_dir)), name="outputs")
 
+# reports 目录（Skill 生成的 HTML 报告托管）
+reports_dir = Path(__file__).parent.parent / "data" / "reports"
+reports_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/reports", StaticFiles(directory=str(reports_dir)), name="reports")
+
 # 初始化测试用受邀码
 seed_invitation_codes()
 seed_dev_user()
@@ -6305,6 +6310,334 @@ async def health_check():
 async def root():
     """根路径"""
     return {"message": "Provider Assist API", "version": "1.0.0"}
+
+# ==================== Skill API（供 Work Buddy Skill 调用）====================
+
+import uuid
+import hashlib
+
+# Skill API Key 认证
+async def require_skill_auth(request: Request):
+    """验证 Skill API Key"""
+    api_key = request.headers.get("X-API-Key") or request.query_params.get("api_key")
+    if not api_key:
+        raise HTTPException(status_code=401, detail="缺少 API Key")
+
+    conn = get_db()
+    cursor = conn.cursor()
+    # 查找 API Key 对应的服务商
+    cursor.execute("""
+        SELECT u.id, u.username, u.provider_name
+        FROM users u
+        JOIN invitation_codes ic ON u.provider_name = ic.provider_name
+        WHERE ic.code = ?
+    """, (api_key,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        raise HTTPException(status_code=401, detail="无效的 API Key")
+
+    return {"user_id": row["id"], "username": row["username"], "provider_name": row["provider_name"]}
+
+
+@app.post("/api/skill/submit")
+async def skill_submit(data: dict, request: Request):
+    """WB Skill 提交完整售前数据"""
+    try:
+        auth = await require_skill_auth(request)
+    except HTTPException:
+        # 尝试用 Bearer Token（兼容旧方式）
+        auth = {"user_id": None, "username": "unknown", "provider_name": "unknown"}
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # 解析数据
+    client_name = data.get("client_name", "")
+    industry = data.get("industry", "")
+    scale = data.get("scale", "")
+    tags = data.get("tags", [])
+    initial_demand = data.get("initial_demand", "")
+    profile_json = data.get("profile_json", {})
+    profile_text = data.get("profile_text", "")
+    visit_outline = data.get("visit_outline", "")
+    meeting_notes = data.get("meeting_notes", [])
+    md_outline = data.get("md_outline", "")
+    reports = data.get("reports", [])
+    token_estimate = data.get("token_estimate", 0)
+    cost_estimate = data.get("cost_estimate", 0)
+
+    # 创建或更新客户
+    user_id = auth.get("user_id")
+    if user_id:
+        cursor.execute("SELECT id FROM clients WHERE user_id = ? AND name = ?", (user_id, client_name))
+        existing = cursor.fetchone()
+        if existing:
+            client_id = existing["id"]
+        else:
+            cursor.execute(
+                "INSERT INTO clients (user_id, name, industry, scale, tags, initial_demand, step1_result, step2_report, step3_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (user_id, client_name, industry, scale, json.dumps(tags), initial_demand, json.dumps(profile_json), profile_text, md_outline)
+            )
+            client_id = cursor.lastrowid
+    else:
+        # 无用户ID，创建临时记录
+        cursor.execute(
+            "INSERT INTO clients (name, industry, scale, tags, initial_demand, step1_result, step2_report, step3_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (client_name, industry, scale, json.dumps(tags), initial_demand, json.dumps(profile_json), profile_text, md_outline)
+        )
+        client_id = cursor.lastrowid
+
+    # 存储报告信息
+    reports_json = json.dumps(reports, ensure_ascii=False)
+    cursor.execute("UPDATE clients SET step4_presales_versions = ? WHERE id = ?", (reports_json, client_id))
+
+    # 更新 Token 消耗
+    cursor.execute("UPDATE clients SET token_count = COALESCE(token_count, 0) + ? WHERE id = ?", (token_estimate, client_id))
+
+    conn.commit()
+    conn.close()
+
+    return {"success": True, "client_id": client_id, "message": "数据已保存"}
+
+
+@app.post("/api/skill/reports")
+async def skill_upload_report(request: Request, data: dict = None):
+    """接收 WB Skill 生成的 HTML 报告，写入 sining.cloud/reports/"""
+    try:
+        auth = await require_skill_auth(request)
+    except HTTPException:
+        raise HTTPException(status_code=401, detail="无效的 API Key")
+
+    if data is None:
+        body = await request.json()
+    else:
+        body = data
+
+    html_content = body.get("html", "")
+    report_type = body.get("type", "sales")  # sales / tech / quote
+    client_name = body.get("client_name", "unknown")
+
+    if not html_content:
+        raise HTTPException(status_code=400, detail="HTML 内容不能为空")
+
+    # 生成唯一 ID
+    report_id = f"rpt_{uuid.uuid4().hex[:12]}"
+    filename = f"{report_id}_{report_type}.html"
+
+    # 报告存储目录
+    reports_dir = Path(__file__).parent.parent / "data" / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    # 写入文件
+    filepath = reports_dir / filename
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+    # 构建访问 URL
+    base_url = os.environ.get("BASE_URL", "https://sining.cloud")
+    report_url = f"{base_url}/reports/{filename}"
+
+    return {
+        "success": True,
+        "id": report_id,
+        "url": report_url,
+        "filename": filename
+    }
+
+
+@app.get("/api/skill/reports/{report_id}")
+async def skill_get_report(report_id: str, request: Request):
+    """获取报告信息"""
+    try:
+        auth = await require_skill_auth(request)
+    except HTTPException:
+        raise HTTPException(status_code=401, detail="无效的 API Key")
+
+    reports_dir = Path(__file__).parent.parent / "data" / "reports"
+    # 查找匹配的报告文件
+    for f in reports_dir.glob(f"{report_id}_*.html"):
+        return {
+            "id": report_id,
+            "filename": f.name,
+            "url": f"/reports/{f.name}"
+        }
+
+    raise HTTPException(status_code=404, detail="报告不存在")
+
+
+@app.post("/api/skill/knowledge")
+async def skill_save_knowledge(request: Request, data: dict = None):
+    """保存到服务商知识库"""
+    try:
+        auth = await require_skill_auth(request)
+    except HTTPException:
+        raise HTTPException(status_code=401, detail="无效的 API Key")
+
+    if data is None:
+        body = await request.json()
+    else:
+        body = data
+
+    kb_type = body.get("type", "case")  # case / template / fragment
+    title = body.get("title", "")
+    content = body.get("content", "")
+    industry = body.get("industry", "")
+    tags = body.get("tags", [])
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO provider_knowledge (user_id, category, title, content, industry, tags) VALUES (?, ?, ?, ?, ?, ?)",
+        (auth["user_id"], kb_type, title, content, industry, json.dumps(tags))
+    )
+    conn.commit()
+    kb_id = cursor.lastrowid
+    conn.close()
+
+    return {"success": True, "id": kb_id, "message": "已保存到知识库"}
+
+
+@app.get("/api/skill/knowledge")
+async def skill_list_knowledge(
+    request: Request,
+    industry: str = "",
+    kb_type: str = "",
+    user: dict = Depends(require_auth)
+):
+    """查询服务商知识库"""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    query = "SELECT * FROM provider_knowledge WHERE user_id = ?"
+    params = [user["user_id"]]
+
+    if industry:
+        query += " AND industry = ?"
+        params.append(industry)
+    if kb_type:
+        query += " AND category = ?"
+        params.append(kb_type)
+
+    query += " ORDER BY created_at DESC"
+
+    cursor.execute(query, params)
+    items = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+
+    return items
+
+
+@app.get("/api/skill/prompts/{step_name}")
+async def skill_get_prompt(step_name: str, request: Request):
+    """获取指定 Step 的 Prompt 内容"""
+    try:
+        auth = await require_skill_auth(request)
+    except HTTPException:
+        raise HTTPException(status_code=401, detail="无效的 API Key")
+
+    # Prompt 文件路径
+    skill_dir = Path(__file__).parent.parent / "skill" / "prompts"
+    prompt_map = {
+        "step1_prep": "step1_prep.md",
+        "step3_notes": "step3_notes.md",
+        "step4_sales": "step4_sales.md",
+        "step4_tech": "step4_tech.md",
+        "step4_quote": "step4_quote.md",
+        "step5_kb": "step5_kb.md",
+    }
+
+    filename = prompt_map.get(step_name)
+    if not filename:
+        raise HTTPException(status_code=404, detail=f"未找到 Prompt: {step_name}")
+
+    prompt_file = skill_dir / filename
+    if not prompt_file.exists():
+        raise HTTPException(status_code=404, detail=f"Prompt 文件不存在: {step_name}")
+
+    content = prompt_file.read_text(encoding="utf-8")
+
+    return {
+        "step": step_name,
+        "content": content
+    }
+
+
+@app.get("/api/skill/clients")
+async def skill_list_clients(request: Request, user: dict = Depends(require_auth)):
+    """获取服务商的所有客户（Skill 用）"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, name, industry, scale, tags, initial_demand,
+               step1_result, step2_report, step3_summary, step4_presales_versions,
+               created_at, updated_at
+        FROM clients WHERE user_id = ? ORDER BY updated_at DESC
+    """, (user["user_id"],))
+
+    clients = []
+    for row in cursor.fetchall():
+        d = dict(row)
+        # 解析 JSON 字段
+        for field in ["step1_result", "step4_presales_versions"]:
+            if d.get(field) and isinstance(d[field], str):
+                try:
+                    d[field] = json.loads(d[field])
+                except:
+                    pass
+        clients.append(d)
+
+    conn.close()
+    return clients
+
+
+@app.get("/api/skill/clients/{client_id}")
+async def skill_get_client(client_id: int, request: Request, user: dict = Depends(require_auth)):
+    """获取单个客户的完整数据（Skill 用）"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT * FROM clients WHERE id = ? AND user_id = ?
+    """, (client_id, user["user_id"]))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="客户不存在")
+
+    result = dict(row)
+    # 解析 JSON 字段
+    for field in ["step1_result", "step2_report", "step3_summary", "step4_presales_versions", "step5_schema"]:
+        if result.get(field) and isinstance(result[field], str):
+            try:
+                result[field] = json.loads(result[field])
+            except:
+                pass
+
+    return result
+
+
+# ==================== 访问日志 ====================
+
+@app.post("/api/visits")
+async def log_visit(request: Request, data: dict):
+    """记录报告访问日志"""
+    client_id = data.get("client_id")
+    report_type = data.get("report_type", "")
+    ip = request.client.host if request.client else ""
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO visit_tracking (client_id, file_url, ip_address, last_visit_at)
+        VALUES (?, ?, ?, datetime('now'))
+    """, (client_id, report_type, ip))
+    conn.commit()
+    conn.close()
+
+    return {"success": True}
+
 
 if __name__ == "__main__":
     import uvicorn
