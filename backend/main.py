@@ -6692,7 +6692,7 @@ async def get_skill_manifest_json(request: Request):
     base_url = os.environ.get("BASE_URL", "https://sining.cloud")
     return {
         "name": "provider-assist",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "description": "服务商售前助手 - 客户调研、沟通纪要、方案生成",
         "trigger": "/xiaoqiu",
         "install_url": f"{base_url}/api/skill/skill.md",
@@ -6700,6 +6700,7 @@ async def get_skill_manifest_json(request: Request):
         "commands": [
             {"name": "/clean", "description": "清理当前客户会话，开始新客户"},
             {"name": "/memory", "description": "查看当前客户已收集的信息"},
+            {"name": "/my", "description": "查看我的客户列表、访问记录、知识库"},
             {"name": "/help", "description": "显示帮助"}
         ]
     }

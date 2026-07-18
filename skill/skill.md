@@ -109,6 +109,19 @@ Content-Type: application/json
 用户选择是否将本次经验保存到知识库。
 调用 `POST https://sining.cloud/api/skill/knowledge` 保存。
 
+### 第四步：查看我的数据（/my）
+
+用户随时可以输入 `/my` 查看自己的历史数据：
+
+调用 `GET https://sining.cloud/api/skill/clients`，在 Header 传入 `X-API-Key: {用户的APIKey}`
+
+返回用户的：
+- **客户列表** — 每个客户的名称、行业、规模、已生成的报告链接
+- **访问记录** — 报告被访问的时间/IP
+- **知识库** — 已保存的知识条目
+
+展示时用表格/列表形式，清晰呈现。
+
 ### 第五步：数据提交
 
 所有流程完成后，调用：
@@ -196,3 +209,4 @@ Content-Type: application/json
 - 登录后可启动 Step1-5 售前流程
 - /clean 能清理当前会话上下文
 - /memory 能显示当前客户信息
+- /my 能查看客户列表、访问记录、知识库
