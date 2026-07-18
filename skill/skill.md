@@ -1,5 +1,6 @@
 ---
 name: provider-assist
+version: "2.0.0"
 description: 企业微信定制开发服务商售前助手。当用户提到售前、客户调研、沟通纪要、方案生成、报价方案、/xiaoqiu、provider assist 等关键词时触发。
 description_zh: 服务商售前助手
 description_en: Provider Assist - Pre-sales Assistant
