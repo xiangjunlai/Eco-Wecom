@@ -6673,6 +6673,38 @@ async def get_knowledge_item(kb_id: int, user: dict = Depends(require_auth)):
     return dict(row)
 
 
+# ==================== Skill 安装接口 ====================
+
+@app.get("/api/skill/skill.md")
+async def get_skill_manifest(request: Request):
+    """返回 Work Buddy 可安装的 skill.md manifest"""
+    skill_md = Path(__file__).parent.parent / "skill" / "skill.md"
+    if not skill_md.exists():
+        raise HTTPException(status_code=404, detail="Skill not found")
+    content = skill_md.read_text(encoding="utf-8")
+    from starlette.responses import Response
+    return Response(content=content, media_type="text/markdown; charset=utf-8")
+
+
+@app.get("/api/skill/manifest")
+async def get_skill_manifest_json(request: Request):
+    """返回 Skill 元信息"""
+    base_url = os.environ.get("BASE_URL", "https://sining.cloud")
+    return {
+        "name": "provider-assist",
+        "version": "1.0.0",
+        "description": "服务商售前助手 - 客户调研、沟通纪要、方案生成",
+        "trigger": "/xiaoqiu",
+        "install_url": f"{base_url}/api/skill/skill.md",
+        "author": "Provider Assist Team",
+        "commands": [
+            {"name": "/clean", "description": "清理当前客户会话，开始新客户"},
+            {"name": "/memory", "description": "查看当前客户已收集的信息"},
+            {"name": "/help", "description": "显示帮助"}
+        ]
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
