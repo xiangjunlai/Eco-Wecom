@@ -6409,12 +6409,15 @@ async def skill_login(data: dict):
     if not password:
         raise HTTPException(status_code=400, detail="密码不能为空")
 
-    # 解析 API Key：{受邀码}:{用户名}:{user_id}
+    # 解析 API Key：{受邀码}:{用户名}:{user_id} 或 {用户名}:{user_id}（测试用户）
     parts = api_key.split(":")
-    if len(parts) != 3:
+    invitation_code = ""
+    if len(parts) == 3:
+        invitation_code, username, user_id = parts
+    elif len(parts) == 2:
+        username, user_id = parts
+    else:
         raise HTTPException(status_code=400, detail="API Key 格式错误")
-
-    invitation_code, username, user_id = parts
 
     # 验证用户ID和用户名匹配
     try:
