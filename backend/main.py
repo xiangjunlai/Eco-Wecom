@@ -37,6 +37,35 @@ MINIMAX_API_KEY = os.environ.get("MINIMAX_API_KEY", "")
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "")
 
+
+def estimate_tokens(text: str) -> int:
+    """
+    使用 tiktoken 估算文本的 token 数量（兼容 GPT-4/Claude 等）
+    """
+    try:
+        import tiktoken
+        # 使用 cl100k_base 编码器（GPT-4/Claude/大多数模型通用）
+        enc = tiktoken.get_encoding("cl100k_base")
+        return len(enc.encode(text))
+    except Exception:
+        # fallback：粗略估算（中文字符约 2 token，英文约 0.25 token）
+        chinese_chars = sum(1 for c in text if '一' <= c <= '鿿')
+        other_chars = len(text) - chinese_chars
+        return int(chinese_chars * 2 + other_chars * 0.25)
+
+
+def estimate_cost(tokens: int, model: str = "deepseek-chat") -> float:
+    """
+    估算 API 调用费用（单位：元）
+    model: deepseek-chat / gpt-4 / claude-3-sonnet
+    """
+    # DeepSeek 价格：输入 ¥1/百万token，输出 ¥2/百万token（估算）
+    if "deepseek" in model.lower():
+        return tokens / 1_000_000 * 1.5  # 平均约 ¥1.5/百万
+    # 其他模型价格可扩展
+    return tokens / 1_000_000 * 10  # 默认估算
+
+
 def call_deepseek(system_prompt: str, user_prompt: str, max_tokens: int = 4000) -> dict:
     """调用 DeepSeek API，300秒超时，最多一次重试
     返回 {"content": str, "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}}"""
@@ -6339,6 +6368,106 @@ async def require_skill_auth(request: Request):
         raise HTTPException(status_code=401, detail="无效的 API Key")
 
     return {"user_id": row["id"], "username": row["username"], "provider_name": row["provider_name"]}
+
+
+@app.post("/api/skill/login")
+async def skill_login(data: dict):
+    """
+    Skill 登录接口
+    API Key 格式：{受邀码}:{用户名}:{user_id}
+    返回：access_token（与 /api/auth/login 一致）
+    """
+    api_key = data.get("api_key", "")
+    password = data.get("password", "")
+
+    if not api_key:
+        raise HTTPException(status_code=400, detail="API Key 不能为空")
+    if not password:
+        raise HTTPException(status_code=400, detail="密码不能为空")
+
+    # 解析 API Key：{受邀码}:{用户名}:{user_id}
+    parts = api_key.split(":")
+    if len(parts) != 3:
+        raise HTTPException(status_code=400, detail="API Key 格式错误")
+
+    invitation_code, username, user_id = parts
+
+    # 验证用户ID和用户名匹配
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="API Key 格式错误")
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # 验证用户存在且属于该受邀码
+    cursor.execute("""
+        SELECT u.id, u.username, u.password_hash, u.provider_name
+        FROM users u
+        JOIN invitation_codes ic ON u.provider_name = ic.provider_name
+        WHERE u.id = ? AND u.username = ? AND ic.code = ?
+    """, (user_id, username, invitation_code))
+    row = cursor.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=401, detail="API Key 无效")
+
+    # 验证密码
+    if not verify_password(password, row["password_hash"]):
+        raise HTTPException(status_code=401, detail="密码错误")
+
+    # 生成 access_token
+    token = create_access_token({"sub": row["username"], "user_id": row["id"]})
+
+    return {
+        "success": True,
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": row["id"],
+            "username": row["username"],
+            "provider_name": row["provider_name"] or ""
+        }
+    }
+
+
+@app.post("/api/skill/render")
+async def skill_render_report(data: dict, request: Request):
+    """
+    Skill 报告渲染接口
+    AI 生成 JSON 数据 → 后端用模板渲染 HTML
+    """
+    try:
+        auth = await require_skill_auth(request)
+    except HTTPException:
+        raise HTTPException(status_code=401, detail="无效的 API Key")
+
+    report_type = data.get("type", "sales")  # sales / tech / quote
+    report_data = data.get("data", {})
+
+    # 加载模板
+    from jinja2 import Environment, FileSystemLoader
+    templates_dir = Path(__file__).parent / "templates" / "reports"
+    env = Environment(loader=FileSystemLoader(str(templates_dir)))
+    template_file = f"{report_type}.html"
+
+    try:
+        template = env.get_template(template_file)
+    except Exception:
+        raise HTTPException(status_code=400, detail=f"不支持的报告类型: {report_type}")
+
+    # 渲染
+    from datetime import datetime
+    report_data["generate_date"] = datetime.now().strftime("%Y-%m-%d")
+
+    html_content = template.render(**report_data)
+
+    return {
+        "success": True,
+        "html": html_content,
+        "type": report_type
+    }
 
 
 @app.post("/api/skill/submit")

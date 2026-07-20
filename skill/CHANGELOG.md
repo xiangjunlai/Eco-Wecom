@@ -2,6 +2,22 @@
 
 所有版本采用 **语义化版本**：`主版本.次版本.修订号`
 
+## [2.1.0] 2026-07-20
+
+### 新增
+- **`/api/skill/login` 接口**：解析 API Key（格式 `{受邀码}:{用户名}:{user_id}`）+ 密码验证
+- **`/api/skill/render` 接口**：AI 生成 JSON → 后端 Jinja2 模板渲染 HTML
+- **`estimate_tokens()` 函数**：使用 tiktoken 准确估算 Token 数量
+- **`estimate_cost()` 函数**：估算 API 调用费用
+
+### 改动
+- **API Key 格式更新**：从纯受邀码改为 `{受邀码}:{用户名}:{user_id}`，支持用户级识别
+- **注册接口**：改用 `/api/auth/register`（复用现有系统）
+- **登录接口**：Skill 端改用 `/api/skill/login`（新增接口）
+- **报告生成流程**：AI 输出 JSON → `/api/skill/render` 渲染 HTML → `/api/skill/reports` 上传
+
+---
+
 ## [2.0.0] 2026-07-18
 
 ### 新增

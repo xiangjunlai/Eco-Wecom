@@ -1,6 +1,6 @@
 ---
 name: provider-assist
-version: "2.0.0"
+version: "2.1.0"
 description: 企业微信定制开发服务商售前助手。当用户提到售前、客户调研、沟通纪要、方案生成、报价方案、/xiaoqiu、provider assist 等关键词时触发。
 description_zh: 服务商售前助手
 description_en: Provider Assist - Pre-sales Assistant
@@ -35,43 +35,49 @@ agent_created: true
 
 - 受邀码（必填，格式如 `PROV2026001`）
 - 公司名称（必填）
-- 你的真实姓名（必填）
-- 设置登录密码（必填，6位以上）
+- 用户名（必填，用于登录）
+- 登录密码（必填，8位以上，需包含大小写字母和数字）
 
 收集完毕后，调用注册接口：
 
 ```
-POST https://sining.cloud/api/skill/register
+POST https://sining.cloud/api/auth/register
 Content-Type: application/json
 
 {
+  "provider_name": "公司名称",
   "invitation_code": "受邀码",
-  "company_name": "公司名称",
-  "real_name": "真实姓名",
+  "username": "用户名",
   "password": "密码"
 }
 ```
 
-注册成功后，保存 API Key（受邀码）到本地，并说：
+注册成功后，系统返回 `access_token` 和用户信息。
+
+**生成 API Key** = `{受邀码}:{用户名}:{user_id}`，保存到本地。
+
+然后说：
 
 > 🎉 注册成功！我是小秋，你的售前助手。
+> 你的 API Key 已生成并保存。
 > 现在可以开始服务客户了，说"开始新客户"吧！
 
 ### 第三步：老用户登陆
 
-如果是有 API Key 的老用户，询问 API Key 并验证：
+如果是有 API Key 的老用户，询问密码并验证：
 
 ```
 POST https://sining.cloud/api/skill/login
 Content-Type: application/json
 
 {
-  "api_key": "用户的APIKey"
+  "api_key": "受邀码:用户名:user_id",
+  "password": "登录密码"
 }
 ```
 
-验证失败时说："API Key 无效，请检查后重新输入。"
-验证成功时说：
+验证失败时说："密码错误，请重新输入。"
+验证成功时返回 access_token，并说：
 
 > 👋 欢迎回来！我是小秋，继续上次的客户流程吗？说"查看进度"或"开始新客户"。
 > 输入 /memory 查看当前客户信息。
@@ -122,7 +128,36 @@ Content-Type: application/json
 
 展示时用表格/列表形式，清晰呈现。
 
-### 第五步：数据提交
+### 第五步：报告生成（售前/技术/报价）
+
+生成报告时，分两步：
+
+**第一步**：让 AI 生成 **JSON 数据**（不是 HTML）
+
+```
+POST https://sining.cloud/api/skill/render
+X-API-Key: {用户的APIKey}
+Content-Type: application/json
+
+{
+  "type": "sales",
+  "data": {
+    "client_name": "客户名称",
+    "industry": "行业",
+    "scale": "规模",
+    "tags": ["标签1"],
+    "profile_json": { ... },
+    "solutions": [...],
+    "implementation_plan": [...]
+  }
+}
+```
+
+API 返回渲染后的 HTML。
+
+**第二步**：调用 `/api/skill/reports` 上传 HTML 获取访问链接。
+
+### 第六步：数据提交
 
 所有流程完成后，调用：
 
@@ -168,20 +203,22 @@ Content-Type: application/json
 用户：PROV2026001
 小秋：收到！请提供公司名称：
 用户：某某科技有限公司
-小秋：请提供你的真实姓名：
-用户：张三
-小秋：请设置一个登录密码（6位以上）：
-用户：123456
+小秋：请设置用户名（用于登录）：
+用户：zhangsan
+小秋：请设置登录密码（8位以上，需包含大小写字母和数字）：
+用户：MyPass123
 小秋：🎉 注册成功！我是小秋，你的售前助手。
-      API Key：PROV2026001 已保存。
+      你的 API Key：PROV2026001:zhangsan:1 已生成并保存。
       现在可以开始服务客户了！第一个客户叫什么名字？
 ```
 
 ### 老用户登陆
 ```
 小秋：你好！我是小秋，Provider Assist 售前助手 👋
-      请输入你的 API Key（受邀码）：
-用户：PROV2026001
+      请输入你的 API Key：
+用户：PROV2026001:zhangsan:1
+小秋：请输入登录密码：
+用户：MyPass123
 小秋：✅ 验证成功！欢迎回来！
       继续上次的客户流程吗？说"查看进度"或"开始新客户"。
       输入 /memory 可查看当前客户信息。
@@ -193,7 +230,7 @@ Content-Type: application/json
 - 生成报告前必须先估算 Token 并告知用户，确认后再生成
 - 沟通记录可多次上传，用户说"ok"才算确认
 - 数据存储在 sining.cloud，注意客户数据的隐私合规
-- API Key 即受邀码，保存后每次调用在 Header 传入 `X-API-Key`
+- API Key 格式：{受邀码}:{用户名}:{user_id}，保存后每次调用在 Header 传入 `X-API-Key`
 
 ## 错误处理
 

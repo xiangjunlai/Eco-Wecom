@@ -17,13 +17,11 @@
 
 ## Token 预估
 
-在生成前，计算预估 Token 和费用：
+在生成前，调用 `estimate_tokens()` 函数计算预估 Token 和费用：
 
 ```
-输入长度 = 客户档案字数 + 沟通记录字数 + MD题纲字数
-Prompt Token ≈ {prompt_length}（固定）
-预估 Token = (输入长度 + Prompt Token) × 1.2（考虑 JSON 输出）
-预估费用 = 预估 Token ÷ 1000 × 0.001（元）
+预估 Token = estimate_tokens(客户档案JSON + 沟通纪要 + 沟通记录)
+预估费用 = estimate_cost(预估 Token)
 ```
 
 如果预估 Token > 3000，先展示预警：
@@ -51,26 +49,45 @@ Prompt Token ≈ {prompt_length}（固定）
 沟通记录：{meeting_notes}
 ```
 
-### 2. 生成 HTML
+### 2. 估算 Token 和费用
+
+使用 `estimate_tokens()` 函数计算：
+
+```
+预估 Token = estimate_tokens(客户档案JSON + 沟通纪要 + 沟通记录)
+预估费用 = estimate_cost(预估 Token)
+```
+
+如果预估 Token > 3000，先展示预警：
+
+```
+⚠️ 生成售前报告预估消耗：
+- Token 预估：{n}
+- 费用预估：¥{x}
+
+确认生成吗？回复"确认"继续。
+```
+
+### 3. 生成 JSON 数据
 
 **System Prompt:**
 
 ```
-你是一个企业微信定制开发售前方案顾问。请基于以下需求数据，生成一份客户友好的售前解决方案 HTML 页面。
+你是一个企业微信定制开发售前方案顾问。请基于以下需求数据，生成一份结构化的售前解决方案 JSON 数据。
 
 要求：
-1. 输出完整的、可直接在浏览器打开的 HTML（包含 <html><head><body>）
-2. 风格专业、现代，使用内联 CSS（不要外部依赖）
-3. 内容结构：
-   - 封面（客户名称、方案标题、日期）
-   - 客户画像与痛点
-   - 需求理解与优先级
-   - 解决方案模块推荐
-   - 实施计划与价值
-   - 待确认问题
+1. 只输出 JSON，不输出任何解释或 markdown 代码块
+2. JSON 结构必须包含：
+   - client_name: 客户名称
+   - industry: 行业
+   - scale: 规模
+   - tags: 标签数组
+   - profile_json: 客户档案（直接透传）
+   - solutions: 解决方案数组，每个包含 title/description/modules
+   - implementation_plan: 实施计划数组，每个包含 name/description/timeline
+   - gaps: 待确认问题数组（从 profile_json.part2.gaps 提取）
 
-4. 不要生成 JSON，直接输出 HTML 内容。
-5. HTML 存放在 sining.cloud/reports/ 目录下。
+3. solutions 至少 3 个模块，implementation_plan 至少 2 个阶段
 ```
 
 **User Prompt:**
@@ -89,15 +106,42 @@ Prompt Token ≈ {prompt_length}（固定）
 沟通记录：
 {meeting_notes}
 
-请生成售前解决方案 HTML 页面。
+请生成售前解决方案 JSON 数据。
 ```
 
-### 3. 部署
+### 4. 渲染 HTML
 
-生成 HTML 后，通过 API 部署：
+将 AI 返回的 JSON 数据发送到后端渲染：
+
+```
+POST https://sining.cloud/api/skill/render
+X-API-Key: {用户的APIKey}
+Content-Type: application/json
+
+{
+  "type": "sales",
+  "data": { AI 返回的 JSON 数据 }
+}
+```
+
+API 返回：
+```json
+{
+  "success": true,
+  "html": "<html>...</html>",
+  "type": "sales"
+}
+```
+
+### 5. 部署
+
+将返回的 HTML 上传到报告服务：
 
 ```
 POST https://sining.cloud/api/skill/reports
+X-API-Key: {用户的APIKey}
+Content-Type: application/json
+
 {
   "type": "sales",
   "client_name": "{client_name}",
@@ -113,7 +157,7 @@ API 返回：
 }
 ```
 
-### 4. 展示结果
+### 6. 展示结果
 
 展示给用户：
 

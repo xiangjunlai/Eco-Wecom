@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ client_name }} - 售前解决方案</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: #162033;
+      background: #f5f7fb;
+      line-height: 1.6;
+    }
+    .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .cover {
+      text-align: center;
+      padding: 40px 24px;
+      background: linear-gradient(135deg, #1263e6 0%, #1a7af8 100%);
+      color: #fff;
+      border-radius: 16px;
+      margin-bottom: 20px;
+    }
+    .cover h1 { font-size: 28px; margin-bottom: 12px; }
+    .cover .subtitle { font-size: 16px; opacity: 0.9; }
+    .cover .date { font-size: 14px; opacity: 0.7; margin-top: 16px; }
+    h2 {
+      color: #182235;
+      font-size: 18px;
+      border-bottom: 2px solid #1263e6;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+    h3 { color: #1263e6; font-size: 16px; margin-bottom: 8px; }
+    .tag {
+      display: inline-block;
+      background: #eef6ff;
+      color: #1263e6;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-right: 8px;
+      margin-bottom: 4px;
+    }
+    .pain-item, .module {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .pain-item { border-left: 3px solid #1263e6; }
+    .module { border: 1px solid #e8edf5; }
+    .module h3 { margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th {
+      background: #f1f8ff;
+      color: #1e477d;
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eef2f7;
+      font-size: 13px;
+    }
+    tr:last-child td { border-bottom: none; }
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: #888;
+      font-size: 12px;
+    }
+    .priority-high { color: #e53e3e; }
+    .priority-mid { color: #dd6b20; }
+    .priority-low { color: #38a169; }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 封面 -->
+    <div class="cover card">
+      <h1>{{ client_name }}</h1>
+      <p class="subtitle">企业微信定制开发 - 售前解决方案</p>
+      <p class="date">生成日期：{{ generate_date }}</p>
+    </div>
+
+    <!-- 客户画像 -->
+    <div class="card">
+      <h2>客户画像与痛点</h2>
+      <div style="margin-bottom: 16px;">
+        {% if industry %}<span class="tag">{{ industry }}</span>{% endif %}
+        {% if scale %}<span class="tag">{{ scale }}</span>{% endif %}
+        {% if tags %}
+          {% for tag in tags %}<span class="tag">{{ tag }}</span>{% endfor %}
+        {% endif %}
+      </div>
+
+      {% if profile_json %}
+        {% if profile_json.part1 %}
+          <h3>公司背景</h3>
+          <p style="color: #555; margin-bottom: 16px;">{{ profile_json.part1.company_background or '待确认' }}</p>
+        {% endif %}
+
+        {% if profile_json.part1.pain_points %}
+          <h3>核心痛点</h3>
+          {% for pain in profile_json.part1.pain_points %}
+            <div class="pain-item">
+              <span class="tag" style="background: {% if pain.sourceType == 'explicit' %}#fef2f2{% elif pain.sourceType == 'implicit' %}#fffbeb{% else %}#f0fdf4{% endif %};">
+                {% if pain.sourceType == 'explicit' %}明确提出{% elif pain.sourceType == 'implicit' %}隐含需求{% else %}推导{% endif %}
+              </span>
+              {{ pain.text }}
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        {% if profile_json.part1.current_systems %}
+          <h3 style="margin-top: 16px;">现有系统</h3>
+          <p>{{ profile_json.part1.current_systems }}</p>
+        {% endif %}
+
+        {% if profile_json.part1.budget_signal %}
+          <h3 style="margin-top: 16px;">预算信号</h3>
+          <p>{{ profile_json.part1.budget_signal }}</p>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    <!-- 需求理解 -->
+    <div class="card">
+      <h2>需求理解与优先级</h2>
+      {% if profile_json.infoUnits %}
+        <table>
+          <tr>
+            <th>需求项</th>
+            <th>优先级</th>
+            <th>可行性</th>
+          </tr>
+          {% for unit in profile_json.infoUnits %}
+          <tr>
+            <td>{{ unit.label }}</td>
+            <td class="priority-{{ 'high' if 'P0' in unit.priority or '高优' in unit.priority else 'mid' if 'P1' in unit.priority or '中优' in unit.priority else 'low' }}">
+              {{ unit.priority }}
+            </td>
+            <td>{{ unit.feasibility or '待评估' }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      {% else %}
+        <p style="color: #888;">暂无数据</p>
+      {% endif %}
+    </div>
+
+    <!-- 解决方案 -->
+    <div class="card">
+      <h2>解决方案模块推荐</h2>
+      {% if solutions %}
+        {% for sol in solutions %}
+        <div class="module">
+          <h3>{{ sol.title }}</h3>
+          <p style="color: #555; font-size: 14px;">{{ sol.description }}</p>
+          {% if sol.modules %}
+          <ul style="margin-top: 8px;">
+            {% for m in sol.modules %}<li>{{ m }}</li>{% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="module">
+          <h3>待规划</h3>
+          <p style="color: #888;">根据需求调研后确定具体模块</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- 实施计划 -->
+    <div class="card">
+      <h2>实施计划与价值</h2>
+      {% if implementation_plan %}
+        {% for phase in implementation_plan %}
+        <div class="module">
+          <h3>{{ phase.name }}</h3>
+          <p style="color: #555; font-size: 14px;">{{ phase.description }}</p>
+          {% if phase.timeline %}<p style="font-size: 12px; color: #888;">预计周期：{{ phase.timeline }}</p>{% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <p style="color: #888;">实施计划待定</p>
+      {% endif %}
+    </div>
+
+    <!-- 待确认 -->
+    <div class="card">
+      <h2>待确认问题</h2>
+      {% if profile_json.part2 and profile_json.part2.gaps %}
+        <ul>
+          {% for gap in profile_json.part2.gaps %}
+          <li>
+            <strong>{{ gap.gap }}</strong>
+            {% if gap.priority %}<span class="priority-{{ 'high' if 'P0' in gap.priority else 'mid' if 'P1' in gap.priority else 'low' }}"> [{{ gap.priority }}]</span>{% endif %}
+            {% if gap.whyNeed %}<br><span style="color: #666; font-size: 13px;">{{ gap.whyNeed }}</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p style="color: #888;">暂无待确认问题</p>
+      {% endif %}
+    </div>
+
+    <div class="footer">
+      <p>本方案由 Provider Assist 生成 | 仅供参考</p>
+    </div>
+  </div>
+</body>
+</html>
