@@ -6354,14 +6354,38 @@ async def require_skill_auth(request: Request):
 
     conn = get_db()
     cursor = conn.cursor()
-    # 查找 API Key 对应的服务商
-    cursor.execute("""
-        SELECT u.id, u.username, u.provider_name
-        FROM users u
-        JOIN invitation_codes ic ON u.provider_name = ic.provider_name
-        WHERE ic.code = ?
-    """, (api_key,))
-    row = cursor.fetchone()
+
+    # 解析 API Key：{受邀码}:{用户名}:{user_id}
+    parts = api_key.split(":")
+    if len(parts) == 3:
+        invitation_code, username, user_id = parts
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            raise HTTPException(status_code=401, detail="无效的 API Key")
+
+        # 先尝试有受邀码的方式
+        cursor.execute("""
+            SELECT u.id, u.username, u.provider_name
+            FROM users u
+            JOIN invitation_codes ic ON u.provider_name = ic.provider_name
+            WHERE u.id = ? AND u.username = ? AND ic.code = ?
+        """, (user_id, username, invitation_code))
+        row = cursor.fetchone()
+
+        if not row:
+            # 尝试没有受邀码的方式（测试用户）
+            cursor.execute("""
+                SELECT u.id, u.username, u.provider_name
+                FROM users u
+                WHERE u.id = ? AND u.username = ?
+            """, (user_id, username))
+            row = cursor.fetchone()
+    else:
+        # 旧格式或无效格式，只用 api_key 当用户名查
+        cursor.execute("SELECT id, username, provider_name FROM users WHERE username = ?", (api_key,))
+        row = cursor.fetchone()
+
     conn.close()
 
     if not row:
@@ -6401,17 +6425,26 @@ async def skill_login(data: dict):
     conn = get_db()
     cursor = conn.cursor()
 
-    # 验证用户存在且属于该受邀码
+    # 验证用户存在（先不用受邀码验证，支持没有受邀码的测试用户）
     cursor.execute("""
         SELECT u.id, u.username, u.password_hash, u.provider_name
         FROM users u
-        JOIN invitation_codes ic ON u.provider_name = ic.provider_name
-        WHERE u.id = ? AND u.username = ? AND ic.code = ?
-    """, (user_id, username, invitation_code))
+        WHERE u.id = ? AND u.username = ?
+    """, (user_id, username))
     row = cursor.fetchone()
 
     if not row:
         raise HTTPException(status_code=401, detail="API Key 无效")
+
+    # 如果 API Key 里有受邀码，额外验证受邀码匹配（兼容有受邀码的用户）
+    if invitation_code:
+        cursor.execute("""
+            SELECT 1 FROM users u
+            JOIN invitation_codes ic ON u.provider_name = ic.provider_name
+            WHERE u.id = ? AND ic.code = ?
+        """, (user_id, invitation_code))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=401, detail="API Key 无效")
 
     # 验证密码
     if not verify_password(password, row["password_hash"]):
