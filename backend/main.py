@@ -6334,54 +6334,34 @@ async def company_search(body: dict, user: dict = Depends(require_auth)):
 async def skill_company_search(data: dict, request: Request):
     """
     Skill 企查查接口：搜索公司信息，返回自然段落描述
-    免登录，支持 X-API-Key
+    免登录，**不需要 DeepSeek API key**，只用 Tavily 搜索
     """
     company_name = data.get("company_name", "")
     if not company_name:
         raise HTTPException(status_code=400, detail="缺少公司名称")
 
     # 用 Tavily 搜索获取真实信息
-    search_query = f"{company_name} 公司"
+    search_query = f"{company_name} 公司 简介 行业"
     search_result = tavily_search(search_query, max_results=5)
 
     if search_result.get("success") and search_result.get("results"):
-        results_text = "\n".join([
-            f"- {r['title']}: {r['content'][:150]}..."
-            for r in search_result["results"][:5]
-        ])
+        # 取前3条结果，拼成自然段落
+        parts = [company_name]
+        for r in search_result["results"][:3]:
+            content = r.get("content", "")[:100].strip()
+            if content:
+                parts.append(content)
+        description = "。".join(parts) + "。"
+        if len(description) > 300:
+            description = description[:300] + "..."
     else:
-        results_text = "（未找到公开信息）"
+        description = f"未找到 {company_name} 的公开信息，请手动补充。"
 
-    # 用 AI 生成自然段落描述
-    system_prompt = """你是一个熟悉企业微信定制开发的服务商顾问。
-
-根据搜索到的公司信息，生成一段简洁自然的客户背景描述。
-
-要求：
-- 3-5句话，像朋友介绍客户一样自然
-- 提到公司做什么业务、规模如何、有什么特点
-- 不要用表格或列表，只用段落
-- 搜索不到信息时，根据公司名称合理推断行业和业务
-- 不要编造具体数据，只说"大概"、"估计"等
-"""
-
-    user_prompt = f"公司名称：{company_name}\n\n搜索到的信息：\n{results_text}\n\n请生成一段客户背景描述："
-
-    try:
-        from main import call_codebuddy
-        result = call_codebuddy(system_prompt, user_prompt, max_tokens=300)
-        content = result.get("content", "") if isinstance(result, dict) else result
-        return {
-            "success": True,
-            "company_name": company_name,
-            "description": content.strip()
-        }
-    except Exception as e:
-        return {
-            "success": True,
-            "company_name": company_name,
-            "description": f"（搜索服务暂时不可用，请手动填写客户信息）"
-        }
+    return {
+        "success": True,
+        "company_name": company_name,
+        "description": description
+    }
 
 
 @app.get("/api/health")
