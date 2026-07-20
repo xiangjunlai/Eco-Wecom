@@ -6333,34 +6333,45 @@ async def company_search(body: dict, user: dict = Depends(require_auth)):
 @app.post("/api/skill/company_search")
 async def skill_company_search(data: dict, request: Request):
     """
-    Skill 企查查接口：搜索公司信息，返回自然段落描述
-    免登录，**不需要 DeepSeek API key**，只用 Tavily 搜索
+    Skill 企查查接口：搜索公司信息，结合新闻输出客户理解
+    免登录，不需要 DeepSeek，只用 Tavily 搜索
     """
     company_name = data.get("company_name", "")
     if not company_name:
         raise HTTPException(status_code=400, detail="缺少公司名称")
 
-    # 用 Tavily 搜索获取真实信息
-    search_query = f"{company_name} 公司 简介 行业"
-    search_result = tavily_search(search_query, max_results=5)
+    # 并行搜索：公司信息 + 新闻 + 行业动态
+    queries = [
+        (f"{company_name}", 3),
+        (f"{company_name} 最新动态", 2),
+        (f"{company_name} 企业微信 数字化", 2),
+    ]
 
-    if search_result.get("success") and search_result.get("results"):
-        # 取前3条结果，拼成自然段落
-        parts = [company_name]
-        for r in search_result["results"][:3]:
-            content = r.get("content", "")[:100].strip()
-            if content:
-                parts.append(content)
-        description = "。".join(parts) + "。"
-        if len(description) > 300:
-            description = description[:300] + "..."
+    all_results = []
+    for query, max_r in queries:
+        result = tavily_search(query, max_results=max_r)
+        if result.get("success") and result.get("results"):
+            all_results.extend(result["results"])
+
+    if all_results:
+        # 去重并格式化为客户理解
+        seen = set()
+        lines = [f"关于【{company_name}】的搜索结果："]
+        for item in all_results[:6]:
+            title = item.get("title", "").strip()
+            content = item.get("content", "")[:100].strip()
+            key = title[:20]  # 简单去重
+            if title and content and key not in seen:
+                seen.add(key)
+                lines.append(f"\n📌 {title}")
+                lines.append(f"   {content}...")
     else:
-        description = f"未找到 {company_name} 的公开信息，请手动补充。"
+        lines = [f"未找到 {company_name} 的公开信息。"]
 
     return {
         "success": True,
         "company_name": company_name,
-        "description": description
+        "description": "\n".join(lines)
     }
 
 
