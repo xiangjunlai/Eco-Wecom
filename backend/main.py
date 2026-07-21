@@ -6553,12 +6553,45 @@ async def skill_render_report(data: dict, request: Request):
 
 @app.post("/api/skill/submit")
 async def skill_submit(data: dict, request: Request):
-    """WB Skill 提交完整售前数据"""
+    """WB Skill 提交完整售前数据（必须通过 X-API-Key 或 Bearer Token 鉴权）"""
+    # 1) 先尝试 X-API-Key / ?api_key= 鉴权
+    auth = None
+    skill_auth_err = None
     try:
         auth = await require_skill_auth(request)
-    except HTTPException:
-        # 尝试用 Bearer Token（兼容旧方式）
-        auth = {"user_id": None, "username": "unknown", "provider_name": "unknown"}
+    except HTTPException as e:
+        skill_auth_err = e
+
+    # 2) 若 X-API-Key 缺失/失败，再尝试 Bearer Token（兼容旧客户端）
+    if auth is None:
+        bearer = request.headers.get("Authorization", "")
+        if bearer.startswith("Bearer "):
+            try:
+                from auth import decode_token
+                payload = decode_token(bearer[7:])
+                if payload and "sub" in payload and "user_id" in payload:
+                    conn_tmp = get_db()
+                    cur_tmp = conn_tmp.cursor()
+                    cur_tmp.execute(
+                        "SELECT id, username, provider_name FROM users WHERE id = ? AND username = ?",
+                        (payload["user_id"], payload["sub"]),
+                    )
+                    row = cur_tmp.fetchone()
+                    conn_tmp.close()
+                    if row:
+                        auth = {
+                            "user_id": row["id"],
+                            "username": row["username"],
+                            "provider_name": row["provider_name"] or "",
+                        }
+            except Exception:
+                auth = None
+
+    if auth is None:
+        # 优先把 Skill Auth 的原始 401 信息抛给调用方
+        if skill_auth_err is not None:
+            raise skill_auth_err
+        raise HTTPException(status_code=401, detail="缺少有效的 API Key 或 Bearer Token")
 
     conn = get_db()
     cursor = conn.cursor()
