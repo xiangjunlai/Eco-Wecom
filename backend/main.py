@@ -6614,8 +6614,9 @@ async def skill_submit(data: dict, request: Request):
             )
             client_id = cursor.lastrowid
     else:
+        # 无用户ID，使用默认值0（游客记录）
         cursor.execute(
-            "INSERT INTO clients (name, industry, scale, tags, initial_demand, step1_result, step2_report, step3_summary_full, step4_input_draft_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO clients (user_id, name, industry, scale, tags, initial_demand, step1_result, step2_report, step3_summary_full, step4_input_draft_json) VALUES (0, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (client_name, industry, scale, json.dumps(tags), initial_demand,
              json.dumps(profile_json), profile_text, md_outline,
              json.dumps(step4_draft, ensure_ascii=False))
