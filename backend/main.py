@@ -6342,9 +6342,9 @@ async def skill_company_search(data: dict, request: Request):
 
     # 并行搜索：公司信息 + 新闻 + 行业动态
     queries = [
-        (f"{company_name}", 3),
-        (f"{company_name} 最新动态", 2),
-        (f"{company_name} 企业微信 数字化", 2),
+        (f"{company_name} 公司 简介 工商信息", 3),
+        (f"{company_name} 企业 业务 经营", 2),
+        (f"{company_name} 企业微信 数字化转型", 2),
     ]
 
     all_results = []
