@@ -6578,24 +6578,47 @@ async def skill_submit(data: dict, request: Request):
     token_estimate = data.get("token_estimate", 0)
     cost_estimate = data.get("cost_estimate", 0)
 
-    # 创建或更新客户
+    # 创建或更新客户（SaaS 兼容的数据模型）
     user_id = auth.get("user_id")
+
+    # 构建 step4_input_draft_json（SaaS API 需要的数据结构）
+    step4_draft = {
+        "confirmedNeeds": [{"title": initial_demand or "待确认", "description": ""}],
+        "painPoints": profile_json.get("part1", {}).get("pain_points", []) if profile_json else [],
+        "involvedRoles": [],
+        "phaseOneScope": [],
+        "phaseTwoScope": [],
+        "pendingQuestions": profile_json.get("part2", {}).get("gaps", []) if profile_json else []
+    }
+
     if user_id:
         cursor.execute("SELECT id FROM clients WHERE user_id = ? AND name = ?", (user_id, client_name))
         existing = cursor.fetchone()
         if existing:
             client_id = existing["id"]
+            cursor.execute("""
+                UPDATE clients SET
+                    industry = ?, scale = ?, tags = ?, initial_demand = ?,
+                    step1_result = ?, step2_report = ?, step3_summary_full = ?,
+                    step4_input_draft_json = ?
+                WHERE id = ?
+            """, (industry, scale, json.dumps(tags), initial_demand,
+                  json.dumps(profile_json), profile_text, md_outline,
+                  json.dumps(step4_draft, ensure_ascii=False), client_id))
         else:
             cursor.execute(
-                "INSERT INTO clients (user_id, name, industry, scale, tags, initial_demand, step1_result, step2_report, step3_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (user_id, client_name, industry, scale, json.dumps(tags), initial_demand, json.dumps(profile_json), profile_text, md_outline)
+                "INSERT INTO clients (user_id, name, industry, scale, tags, initial_demand, step1_result, step2_report, step3_summary_full, step4_input_draft_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (user_id, client_name, industry, scale, json.dumps(tags), initial_demand,
+                 json.dumps(profile_json), profile_text, md_outline,
+                 json.dumps(step4_draft, ensure_ascii=False))
             )
             client_id = cursor.lastrowid
     else:
-        # 无用户ID，创建临时记录
         cursor.execute(
-            "INSERT INTO clients (name, industry, scale, tags, initial_demand, step1_result, step2_report, step3_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (client_name, industry, scale, json.dumps(tags), initial_demand, json.dumps(profile_json), profile_text, md_outline)
+            "INSERT INTO clients (name, industry, scale, tags, initial_demand, step1_result, step2_report, step3_summary_full, step4_input_draft_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (client_name, industry, scale, json.dumps(tags), initial_demand,
+             json.dumps(profile_json), profile_text, md_outline,
+             json.dumps(step4_draft, ensure_ascii=False))
         )
         client_id = cursor.lastrowid
 
